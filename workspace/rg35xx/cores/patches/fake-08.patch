@@ -1,0 +1,34 @@
+diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
+index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..c757dfa3dca2ecf627a91078b7b8ddf47aff4161 100644
+--- forkSrcPrefix/platform/libretro/Makefile
++++ forkDstPrefix/platform/libretro/Makefile
+@@ -123,6 +123,16 @@ else ifeq ($(platform), miyoomini)
+    CXXFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7ve
+    fpic := -fPIC
+    SHARED := -shared -Wl,--version-script=link.T
++else ifeq ($(platform), rg35xx)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   STRIP = $(CROSS_COMPILE)strip
++   CXXFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a
++   CXXFLAGS += -fomit-frame-pointer -ffast-math -fno-common -ftree-vectorize -funswitch-loops
++   fpic := -fPIC
++   SHARED := -shared -Wl,--version-script=link.T
+ 
+ else ifeq ($(platform), gcw0)
+    TARGET := $(TARGET_NAME)_libretro_gcw0.so
+
+diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
+index 927ea8d4b8d1658a1d7521fe7e9abcbdede0ba5f..55fdd37925b26ac362ab2ad99c0739a405727b56 100644
+--- forkSrcPrefix/platform/libretro/libretro.cpp
++++ forkDstPrefix/platform/libretro/libretro.cpp
+@@ -463,6 +463,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+     }
+ 
+     _vm->QueueCartChange(info->path);
++	_vm->UpdateAndDraw();
+     return true;
+ }
+ 

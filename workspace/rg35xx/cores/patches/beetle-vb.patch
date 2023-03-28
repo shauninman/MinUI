@@ -1,0 +1,24 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index 1e94d9eae2e1ce664eecc3edfc5187f393f98a45..912369d4cfad20bc9a0852aa9faf1859e3fbbac7 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -320,6 +320,19 @@ else ifeq ($(platform), gcw0)
+    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+    FLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
+ 
++# RG35XX
++else ifeq ($(platform), rg35xx)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   fpic := -fPIC
++   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
++   FLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer -DRG35XX
++   FLAGS += -ffast-math -fdata-sections -ffunction-sections -fsingle-precision-constant -flto -fPIC
++   NEED_BPP = 16
++# STATIC_LINKING = 1
++
+ # Windows MSVC 2010 x64
+ else ifeq ($(platform), windows_msvc2010_x64)
+ 	CC  = cl.exe

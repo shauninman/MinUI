@@ -1,0 +1,12 @@
+#!/bin/sh
+
+SWAP_PATH=$USERDATA_PATH/swapfile
+if [ ! -f "$SWAP_PATH" ]; then
+	say "Creating swap file"
+	dd if="/dev/zero" of="$SWAP_PATH" bs=1M count=128
+	chmod 600 "$SWAP_PATH"
+	mkswap "$SWAP_PATH"
+fi
+swapon "$SWAP_PATH"
+
+touch "/tmp/using-swap"

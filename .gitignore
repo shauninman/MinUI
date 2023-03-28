@@ -1,0 +1,15 @@
+.DS_Store
+
+build
+releases
+toolchains
+libretro-common
+
+**/cores/src
+**/cores/output
+
+*.o
+*.so
+*.elf
+*.dtb
+*.zip

@@ -1,0 +1,24 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index ef2f9e7d1c6041bea8e2c8a61cdd363ed73a7482..6c525fe787e205fbd1352b74c00ebfca67d791e2 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -504,6 +504,19 @@ else ifeq ($(platform), retrofw)
+ 	CFLAGS += -ffast-math -fomit-frame-pointer -march=mips32 -mtune=mips32 -mhard-float
+ 	CFLAGS += -DDINGUX
+ 
++# RG35XX
++else ifeq ($(platform), rg35xx)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   SHARED := -shared -Wl,--version-script=libretro/link.T
++   fpic += -fPIC -flto
++   CFLAGS += $(PTHREAD_FLAGS)
++   CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer
++   CFLAGS += -fomit-frame-pointer -ffast-math -fPIC -flto
++   CFLAGS += -DDINGUX
++
+ else ifeq ($(platform), msvc)
+ 	OBJOUT = -Fo
+ 

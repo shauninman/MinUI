@@ -1,0 +1,24 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index ffaba21e7a88f90786d818ab550b68acd05738bf..3c5a057d89d12e6c34910350859e9842a98e224a 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -405,6 +405,19 @@ else ifeq ($(platform), miyoo)
+    CFLAGS += -fomit-frame-pointer -ffast-math -march=armv5te -mtune=arm926ej-s
+    CXXFLAGS += $(CFLAGS)
+ 
++# RG35XX
++else ifeq ($(platform), rg35xx)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   SHARED := -shared -Wl,--version-script=$(version_script)
++   LDFLAGS += -fPIC -flto
++   PLATFORM_DEFINES := -DCC_RESAMPLER -DCC_RESAMPLER_NO_HIGHPASS
++   CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer
++   CFLAGS += -fomit-frame-pointer -ffast-math -fPIC -flto
++   CXXFLAGS += $(CFLAGS)
++
+ # Windows MSVC 2003 Xbox 1
+ else ifeq ($(platform), xbox1_msvc2003)
+ TARGET := $(TARGET_NAME)_libretro_xdk1.lib

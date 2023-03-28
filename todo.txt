@@ -1,0 +1,27 @@
+1. makefile routes requests through makefile.toolchain
+2. which clones the toolchain repo if necessary and
+3. spins up a docker to run workspace/makefile build for each/the target platform
+4. which builds commone elfs and punts to workspace/PLATFORM/makefile
+5. which builds unique platform elfs
+
+
+
+question
+	does libsettings need to be separate if every app is build with api.c?
+	it's already built, don't fuck with it
+
+
+be sure to note libretro-common hash in commits.txt too
+
+restore msettings
+
+each platform will have its own cores folder
+	or what if it defined cores and contained the patches
+	but there remained one
+	unique patches (primarily makefile)
+	unique supported cores?
+TODO: may run into issues building cores for multiple platforms in the same build folder...
+
+potential mm+ identifier
+	/customer/app/axp_test exists
+	/miyoo354 instead of /miyoo

@@ -1,0 +1,24 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index d580571511b43d1ec4597db4a9611b0924bb2c53..d2a2f9929cee1f7fb45a1a002efd7b04812ded49 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -377,6 +377,19 @@ else ifeq ($(platform), miyoo)
+    CXXFLAGS += -std=c++11
+    CFLAGS += -std=gnu11
+ 
++# RG35XX
++else ifeq ($(platform), rg35xx)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   fpic := -fPIC
++   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
++   FLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer -DRG35XX
++   FLAGS += -fomit-frame-pointer -ffast-math -D_GNU_SOURCE -flto -fPIC
++   CXXFLAGS += -std=c++11
++   CFLAGS += -std=gnu11
++
+ # Windows MSVC 2017 all architectures
+ else ifneq (,$(findstring windows_msvc2017,$(platform)))
+ 
