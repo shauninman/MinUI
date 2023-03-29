@@ -7,6 +7,7 @@ libretro-common
 
 **/cores/src
 **/cores/output
+**/boot/output
 
 *.o
 *.so
