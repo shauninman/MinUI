@@ -3,7 +3,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_ttf.h>
-// #include <msettings.h>
+#include <msettings.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <ctype.h>

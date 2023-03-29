@@ -1,3 +1,5 @@
+#rg35xx
+
 ###########################################################
 
 ifeq (,$(PLATFORM))
@@ -11,10 +13,11 @@ endif
 ###########################################################
 
 all:
-	# $(PLATFORM) all
-	# cd overclock && make
-
+	cd ./overclock && make
+	cd ./boot && ./build.sh
+	
 clean:
-	# $(PLATFORM) clean
+	cd ./overclock && make clean
+	cd ./boot && rm -rf ./output
 	
 	

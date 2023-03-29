@@ -15,7 +15,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// #include <msettings.h>
+#include <msettings.h>
 
 #include "defines.h"
 #include "api.h"
@@ -1177,19 +1177,19 @@ int POW_getBattery(void) { // 10-100 in 10-20% fragments
 	return pow.charge;
 }
 
-///////////////////////////////
-
-void InitSettings(void) {}
-void QuitSettings(void) {}
-
-int GetBrightness(void) { return 4; }
-int GetVolume(void) { return 8; }
-
-void SetRawBrightness(int value) {}
-void SetRawVolume(int value) {}
-
-void SetBrightness(int value) {}
-void SetVolume(int value) {}
-
-int GetJack(void) { return 0; }
-void SetJack(int value) {}
+// ///////////////////////////////
+//
+// void InitSettings(void) {}
+// void QuitSettings(void) {}
+//
+// int GetBrightness(void) { return 4; }
+// int GetVolume(void) { return 8; }
+//
+// void SetRawBrightness(int value) {}
+// void SetRawVolume(int value) {}
+//
+// void SetBrightness(int value) {}
+// void SetVolume(int value) {}
+//
+// int GetJack(void) { return 0; }
+// void SetJack(int value) {}

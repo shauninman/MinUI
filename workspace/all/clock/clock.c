@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
-// #include <msettings.h>
+#include <msettings.h>
 
 #include "defines.h"
 #include "api.h"

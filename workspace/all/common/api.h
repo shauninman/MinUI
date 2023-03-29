@@ -217,33 +217,21 @@ char* PLAT_getModel(void);
 
 ///////////////////////////////
 
-void InitSettings(void);
-void QuitSettings(void);
-
-int GetBrightness(void);
-int GetVolume(void);
-
-void SetRawBrightness(int value); // 0-1024
-void SetRawVolume(int value); // 0-40
-
-void SetBrightness(int value); // 0-10
-void SetVolume(int value); // 0-20
-
-int GetJack(void);
-void SetJack(int value); // 0-1
+// void InitSettings(void);
+// void QuitSettings(void);
+//
+// int GetBrightness(void);
+// int GetVolume(void);
+//
+// void SetRawBrightness(int value); // 0-1024
+// void SetRawVolume(int value); // 0-40
+//
+// void SetBrightness(int value); // 0-10
+// void SetVolume(int value); // 0-20
+//
+// int GetJack(void);
+// void SetJack(int value); // 0-1
 
 ///////////////////////////////
-
-// TODO: tmp?
-// void PLAT_initSettings(void);
-// void PLAT_quitSettings(void);
-// int PLAT_getBrightness(void); // 0-10
-// int PLAT_getVolume(void); // 0-20
-// int PLAT_getJack(void); // 0-1
-// void PLAT_setRawBrightness(int value); // 0-1024
-// void PLAT_setRawVolume(int value); // 0-40
-// void PLAT_setJack(int value); // 0-1
-// void PLAT_setBrightness(int value); // 0-10
-// void PLAT_setVolume(int value); // 0-20
 
 #endif

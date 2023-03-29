@@ -1,5 +1,5 @@
 diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
-index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..c757dfa3dca2ecf627a91078b7b8ddf47aff4161 100644
+index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..b373d1adb1ba7b69d376f50ea019cb030fcd6c08 100644
 --- forkSrcPrefix/platform/libretro/Makefile
 +++ forkDstPrefix/platform/libretro/Makefile
 @@ -123,6 +123,16 @@ else ifeq ($(platform), miyoomini)
@@ -19,15 +19,15 @@ index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..c757dfa3dca2ecf627a91078b7b8ddf4
  
  else ifeq ($(platform), gcw0)
     TARGET := $(TARGET_NAME)_libretro_gcw0.so
-
 diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
-index 927ea8d4b8d1658a1d7521fe7e9abcbdede0ba5f..55fdd37925b26ac362ab2ad99c0739a405727b56 100644
+index fdd8068aaf4d64efdeda51344c7f77b634e83264..b554c0df846093e3402698b7237ce9560bb47efd 100644
 --- forkSrcPrefix/platform/libretro/libretro.cpp
 +++ forkDstPrefix/platform/libretro/libretro.cpp
-@@ -463,6 +463,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+@@ -513,7 +513,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+     else {
+         _vm->QueueCartChange(info->path);
      }
- 
-     _vm->QueueCartChange(info->path);
+-
 +	_vm->UpdateAndDraw();
      return true;
  }

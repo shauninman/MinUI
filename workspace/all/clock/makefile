@@ -26,7 +26,7 @@ CC = $(CROSS_COMPILE)gcc
 CFLAGS   = $(ARCH) -fomit-frame-pointer
 CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\"  -Ofast 
 LDFLAGS	 = -ldl -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
-# LDFLAGS +=  -lmsettings
+LDFLAGS +=  -lmsettings
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 

@@ -1,0 +1,8 @@
+$(PLATFORM):
+	# $@
+	cp ./workspace/$@/boot/output/dmenu.bin ./build/BASE/
+	cp ./workspace/$@/boot/output/dmenu.bin ./build/SYSTEM/$@/dat/
+	cp ./workspace/$@/boot/output/boot_logo.bmp.gz ./build/SYSTEM/$@/dat/
+	cp ./workspace/$@/boot/output/rootfs.ext2 ./build/SYSTEM/$@/
+	cp ./workspace/$@/install/install.sh ./build/SYSTEM/$@/bin/
+	cp ./workspace/$@/clock/clock.elf ./build/EXTRAS/Tools/$@/Clock.pak/

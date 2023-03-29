@@ -1,4 +1,4 @@
-# MinUI/workspace
+# workspace (all)
 
 ###########################################################
 
@@ -15,11 +15,17 @@ endif
 .PHONY: all
 
 all:
-	echo "workspace all"
-	# common libs
-	cd ./$(PLATFORM) && make
+	cd ./$(PLATFORM)/libmsettings && make
+	cd ./$(PLATFORM)/keymon && make
 	cd ./all/minui/ && make
-	# cd ./all/minarch/ && make
+	cd ./all/minarch/ && make
+	cd ./all/clock/ && make
+	cd ./$(PLATFORM)/cores && make
+	cd ./$(PLATFORM) && make
 
 clean:
-	echo "workspace clean"
+	cd ./$(PLATFORM)/libmsettings && make clean
+	cd ./$(PLATFORM)/keymon && make clean
+	cd ./all/minui/ && make clean
+	cd ./all/minarch/ && make clean
+	cd ./$(PLATFORM) && make clean
