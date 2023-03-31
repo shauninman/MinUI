@@ -1,0 +1,26 @@
+diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
+index fdd8068aaf4d64efdeda51344c7f77b634e83264..b554c0df846093e3402698b7237ce9560bb47efd 100644
+--- forkSrcPrefix/platform/libretro/libretro.cpp
++++ forkDstPrefix/platform/libretro/libretro.cpp
+@@ -513,7 +513,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+     else {
+         _vm->QueueCartChange(info->path);
+     }
+-
++	_vm->UpdateAndDraw();
+     return true;
+ }
+ 
+diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
+index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..5125c3b2f6a08f321a4cb42ff875c10ff15d76aa 100644
+--- forkSrcPrefix/platform/libretro/Makefile
++++ forkDstPrefix/platform/libretro/Makefile
+@@ -115,7 +115,7 @@ else ifeq ($(platform), vita)
+    CXXFLAGS += -Wl,-q -Wall -O3
+ 	STATIC_LINKING = 1
+ else ifeq ($(platform), miyoomini)
+-   TARGET := $(TARGET_NAME)_libretro_miyoomini.so
++   TARGET := $(TARGET_NAME)_libretro.so
+    CC = arm-linux-gnueabihf-gcc
+    CXX = arm-linux-gnueabihf-g++
+    AR = arm-linux-gnueabihf-ar

@@ -1,4 +1,9 @@
 .DS_Store
+*.o
+*.so
+*.elf
+*.dtb
+*.zip
 
 build
 releases
@@ -9,8 +14,4 @@ libretro-common
 **/cores/output
 **/boot/output
 
-*.o
-*.so
-*.elf
-*.dtb
-*.zip
+**/other/sdl

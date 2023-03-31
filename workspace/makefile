@@ -16,6 +16,7 @@ endif
 
 all:
 	cd ./$(PLATFORM)/libmsettings && make
+	cd ./$(PLATFORM) && make early
 	cd ./$(PLATFORM)/keymon && make
 	cd ./all/minui/ && make
 	cd ./all/minarch/ && make

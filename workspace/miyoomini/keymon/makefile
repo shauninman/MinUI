@@ -2,10 +2,13 @@ ifeq (,$(CROSS_COMPILE))
 $(error missing CROSS_COMPILE for this toolchain)
 endif
 
+TARGET = keymon
+PRODUCT = $(TARGET).elf
+
 CC = $(CROSS_COMPILE)gcc
 FLAGS	= -Os -lmsettings -lpthread -lrt -ldl -Wl,--gc-sections -s
 
 all:
-	$(CC) keymon.c -o keymon $(FLAGS)
+	$(CC) $(TARGET).c -o $(PRODUCT) $(FLAGS)
 clean:
-	rm -rf keymon
+	rm -rf $(PRODUCT)

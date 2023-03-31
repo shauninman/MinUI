@@ -1,4 +1,5 @@
 TARGET = screenshot
+PRODUCT = $(TARGET).elf
 
 CC 	= $(CROSS_COMPILE)g++
 
@@ -10,11 +11,11 @@ CFLAGS = -Os -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=arm
 CFLAGS += -ffunction-sections -fdata-sections -Wall
 LDFLAGS = -lpng -Wl,--gc-sections -s
 
-$(TARGET): $(OFILES)
+$(PRODUCT): $(OFILES)
 	$(CC) $(OFILES) -o $@ $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGET) $(OFILES)
+	rm -f $(PRODUCT) $(OFILES)

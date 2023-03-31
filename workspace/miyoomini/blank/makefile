@@ -3,12 +3,13 @@ $(error missing CROSS_COMPILE for this toolchain)
 endif
 
 TARGET = blank
+PRODUCT = $(TARGET).elf
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS   = -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7ve 
 LDFLAGS	 = 
 
 all:
-	$(CC) main.c -o $(TARGET) $(CFLAGS) $(LDFLAGS)
+	$(CC) $(TARGET).c -o $(PRODUCT) $(CFLAGS) $(LDFLAGS)
 clean:
-	rm -f $(TARGET)
+	rm -f $(PRODUCT)

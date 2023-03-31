@@ -1,7 +1,7 @@
 #!/bin/sh
 # MiniUI.pak
 
-/mnt/SDCARD/.system/bin/blank
+/mnt/SDCARD/.system/miyoomini/bin/blank.elf
 
 # init backlight
 echo 0 > /sys/class/pwm/pwmchip0/export

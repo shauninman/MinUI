@@ -1,11 +1,35 @@
-get the mini side of the build process set up
-	libmsettings!
 
-msettings
+	plus .tmp_update and miyoo folders
 
 
 I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
 
+README
+
+have a verbose version and a short list version
+
+---
+
+Installation
+
+MinUI has two essential parts: an installer/updater zip archive and a platform-specific "bootstrap" file or folder.
+
+On devices that support two SD cards I will use the name "TF1" to refer to the card that goes into slot one of the device. All other instances of "SD card" refer to the card that goes into the second slot or to the sole SD card of devices that only support a single card. To get the most out of MinUI, on devices that support two SD cards you should install MinUI on the second card.
+
+The SD card should be formatted FAT32.
+
+RG35XX
+
+MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it. The TF2 card should be formatted FAT32.
+
+Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" to the root of the TF2 card.
+
+MIYOO MINI
+
+Copy the "miyoo" folder and "MinUI.zip" to the root of the SD card.
+
+---
+	
 
 
 1. makefile routes requests through makefile.toolchain

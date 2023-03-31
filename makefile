@@ -16,7 +16,9 @@ RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 ###########################################################
 .PHONY: build
 
-all: setup $(PLATFORMS) package
+export MAKEFLAGS=--no-print-directory
+
+all: setup $(PLATFORMS) package done
 
 build:
 	# ----------------------------------------------------
@@ -71,6 +73,9 @@ setup:
 	# remove authoring detritus
 	cd ./build && find . -type f -name '.keep' -delete
 	cd ./build && find . -type f -name '*.meta' -delete
+
+done:
+	say "done"
 
 package:
 	# ----------------------------------------------------
