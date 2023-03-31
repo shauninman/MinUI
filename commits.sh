@@ -38,5 +38,6 @@ bump() {
 	list ./workspace/rg35xx/cores/src
 	bump
 	tell MIYOOMINI
+	show ./workspace/miyoomini/other/sdl
 	list ./workspace/miyoomini/cores/src
 } | sed 's/\n/ /g'

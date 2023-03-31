@@ -15,7 +15,10 @@ endif
 all:
 	cd ./overclock && make
 	cd ./boot && ./build.sh
+
+early:
 	
+
 clean:
 	cd ./overclock && make clean
 	cd ./boot && rm -rf ./output

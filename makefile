@@ -3,7 +3,11 @@
 # NOTE: this runs on the host system (eg. macOS) not in a docker image
 # it has too, otherwise we'd be running a docker in a docker and oof
 
-PLATFORMS= miyoomini # rg35xx trimuismart
+ifeq (,$(PLATFORMS))
+PLATFORMS = miyoomini rg35xx
+# rg35xx trimuismart
+endif
+
 
 ###########################################################
 

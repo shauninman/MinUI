@@ -3,6 +3,15 @@ $(PLATFORM):
 	cp ./workspace/$@/blank/blank.elf ./build/SYSTEM/$@/bin/
 	cp ./workspace/$@/batmon/batmon.elf ./build/SYSTEM/$@/bin/
 	cp ./workspace/$@/lumon/lumon.elf ./build/SYSTEM/$@/bin/
+	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
 	cp ./workspace/$@/other/sdl/build/.libs/libSDL-1.2.so.0.11.5 ./build/SYSTEM/$@/lib/libSDL-1.2.so.0
 	cp ./workspace/$@/other/latency_reduction/as_preload.so ./build/SYSTEM/$@/lib/
 	cp ./workspace/$@/other/latency_reduction/audioserver.mod ./build/SYSTEM/$@/bin/
+	# installer
+	mkdir -p ./build/BASE/miyoo/app/.tmp_update
+	cp ./workspace/$@/install/nop.sh ./build/BASE/miyoo/app/keymon
+	cp ./workspace/$@/install/install.sh ./build/BASE/miyoo/app/MainUI
+	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
+	cp ./workspace/$@/install/boot.sh ./build/BASE/miyoo/app/.tmp_update/updater
+	cp ./workspace/$@/install/*.png ./build/BASE/miyoo/app/.tmp_update
+	cp ./workspace/$@/show/show.elf ./build/BASE/miyoo/app/.tmp_update
