@@ -61,8 +61,12 @@
 
 ///////////////////////////////
 
-#define BTN_RESUME BTN_X
-#define BTN_SLEEP BTN_POWER
+#define BTN_RESUME 			BTN_X
+#define BTN_SLEEP 			BTN_POWER
+#define BTN_MOD_VOLUME 		BTN_SELECT
+#define BTN_MOD_BRIGHTNESS 	BTN_START
+#define BTN_MOD_PLUS 		BTN_R1
+#define BTN_MOD_MINUS 		BTN_L1
 
 ///////////////////////////////
 

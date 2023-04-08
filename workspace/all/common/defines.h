@@ -86,6 +86,7 @@
 ///////////////////////////////
 
 #ifndef BTN_A // prevent collisions with input.h in keymon
+// TODO: doesn't this belong in api.h? it's meaningless without PAD_*
 enum {
 	BTN_ID_NONE = -1,
 	BTN_ID_UP,

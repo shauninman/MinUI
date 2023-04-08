@@ -30,8 +30,6 @@ echo performance > "$CPU_PATH"
 if [ -f "$UPDATE_PATH" ]; then 
 	cd $(dirname "$0")
 	if [ -d "$SYSTEM_PATH" ]; then
-		# TODO: I don't love doing this here...but it worked
-		
 		# init backlight
 		echo 0 > /sys/class/pwm/pwmchip0/export
 		echo 800 > /sys/class/pwm/pwmchip0/pwm0/period

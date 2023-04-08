@@ -1364,8 +1364,10 @@ static int ignore_menu = 0;
 static void input_poll_callback(void) {
 	PAD_poll();
 
-	POW_update(NULL,NULL, Menu_beforeSleep, Menu_afterSleep);
+	int show_setting = 0;
+	POW_update(NULL, &show_setting, Menu_beforeSleep, Menu_afterSleep);
 
+	// I _think_ this can stay as is...
 	if (PAD_justPressed(BTN_MENU)) {
 		ignore_menu = 0;
 	}
@@ -1430,6 +1432,7 @@ static void input_poll_callback(void) {
 		int btn = 1 << config.controls[i].local;
 		if (btn==BTN_NONE) continue; // present buttons can still be unbound
 		if (PAD_isPressed(btn)) buttons |= 1 << config.controls[i].retro;
+		//  && !POW_ignoreSettingInput(btn, show_setting)
 	}
 	
 	// if (buttons) LOG_info("buttons: %i\n", buttons);

@@ -1190,6 +1190,8 @@ int main (int argc, char *argv[]) {
 		int selected = top->selected;
 		int total = top->entries->count;
 		
+		POW_update(&dirty, &show_setting, NULL, NULL);
+		
 		if (show_version) {
 			if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
 				show_version = 0;
@@ -1266,7 +1268,7 @@ int main (int argc, char *argv[]) {
 				}
 			}
 		
-			if (PAD_justRepeated(BTN_L1)) { // previous alpha
+			if (PAD_justRepeated(BTN_L1) && !POW_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha-1;
 				if (i>=0) {
@@ -1279,7 +1281,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-			else if (PAD_justRepeated(BTN_R1)) { // next alpha
+			else if (PAD_justRepeated(BTN_R1) && !POW_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha+1;
 				if (i<top->alphas->count) {
@@ -1320,8 +1322,6 @@ int main (int argc, char *argv[]) {
 				if (total>0) readyResume(top->entries->items[top->selected]);
 			}
 		}
-		
-		POW_update(&dirty, &show_setting, NULL, NULL);
 		
 		if (dirty) {
 			GFX_clear(screen);

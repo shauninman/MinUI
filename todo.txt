@@ -1,14 +1,27 @@
 miyoomini
-	make sure LCD_INIT is preventing a second init during update
 	tearing
-	apps don't ignore shortcuts (they're ignoring rg35xx shortcuts)
-	
+	scaling
+	volume/brightness settings button labels wrong
+
+rg35xx
+	MENU+UP shortcut binding weirdness (disappears after restart, only MENU remains bound?)
+		probably has something to do with UP being the first (0) button
+
+
+
+replace 
+	git clone repo && cd repo && git checkout branch 
+with
+	git clone --depth 1 --branch branch repo
+note: doesn't work with commits only branches
+
+shows games in alt collated folders even if the alt pak isn't present...
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 
 what if MinUI.zip was actually inside a folder?
 	might eliminate confusion about whether it needs to be unzipped or not...
-	random installer assets could be put in there too?
+	random installer assets could be put in there too? :thinking:
 
 I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
 
@@ -64,11 +77,6 @@ TODO: cores and extras bundle should probably be included from a platform-specif
 TODO: 
 
 had a detour because it was using an ancient rg35xx-toolchain because the union-rg35xx-toolchain was creating rg35xx-toolchain-new :facepalm:
-
-question
-	does libsettings need to be separate if every app is build with api.c?
-	it's already built, don't fuck with it
-
 
 be sure to note libretro-common hash in commits.txt too
 

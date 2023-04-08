@@ -1,5 +1,6 @@
 $(PLATFORM):
 	# $@
+	cp ./workspace/$@/overclock/overclock.elf ./build/SYSTEM/$@/bin/
 	cp ./workspace/$@/blank/blank.elf ./build/SYSTEM/$@/bin/
 	cp ./workspace/$@/batmon/batmon.elf ./build/SYSTEM/$@/bin/
 	cp ./workspace/$@/lumon/lumon.elf ./build/SYSTEM/$@/bin/

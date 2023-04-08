@@ -2,6 +2,7 @@
 # MiniUI.pak
 
 if [ -z "$LCD_INIT" ]; then
+	# an update may have already initilized the LCD
 	/mnt/SDCARD/.system/miyoomini/bin/blank.elf
 
 	# init backlight
@@ -39,8 +40,11 @@ mkdir -p "$USERDATA_PATH/.minui"
 
 #######################################
 
-CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-echo performance > "$CPU_PATH"
+export CPU_SPEED_MENU=504000
+export CPU_SPEED_GAME=1296000
+export CPU_SPEED_PERF=1488000
+echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+overclock.elf $CPU_SPEED_PERF
 
 MIYOO_VERSION=`/etc/fw_printenv miyoo_version`
 export MIYOO_VERSION=${MIYOO_VERSION#miyoo_version=}
@@ -100,11 +104,10 @@ EXEC_PATH=/tmp/minui_exec
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH"  && sync
 while [ -f "$EXEC_PATH" ]; do
-	echo ondemand > "$CPU_PATH"
+	overclock.elf $CPU_SPEED_PERF
 	minui.elf &> $LOGS_PATH/minui.txt
 	
 	echo `date +'%F %T'` > "$DATETIME_PATH"
-	echo performance > "$CPU_PATH"
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
@@ -117,6 +120,7 @@ while [ -f "$EXEC_PATH" ]; do
 		fi
 		
 		echo `date +'%F %T'` > "$DATETIME_PATH"
+		overclock.elf $CPU_SPEED_PERF
 		sync
 	fi
 done

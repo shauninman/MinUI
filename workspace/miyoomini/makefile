@@ -10,7 +10,7 @@ endif
 
 ###########################################################
 
-REQUIRES_SDL=other/sdl/make.sh
+REQUIRES_SDL=other/sdl
 
 all: 
 	cd blank && make
@@ -30,8 +30,6 @@ clean:
 
 ###########################################################
 
-other/sdl: $(REQUIRES_SDL)
-	git clone https://github.com/shauninman/SDL-1.2.git other/sdl
-other/sdl/make.sh:
-	cd other/sdl && git checkout miniui-miyoomini
+$(REQUIRES_SDL):
+	git clone --depth 1 --branch miniui-miyoomini https://github.com/shauninman/SDL-1.2.git other/sdl
 

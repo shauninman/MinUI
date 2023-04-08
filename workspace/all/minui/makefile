@@ -25,7 +25,7 @@ SOURCE = $(TARGET).c ../common/utils.c ../common/api.c ../../$(PLATFORM)/platfor
 CC = $(CROSS_COMPILE)gcc
 CFLAGS   = $(ARCH) -fomit-frame-pointer
 CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\"  -Ofast 
-LDFLAGS	 = -ldl -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
+LDFLAGS	 = -ldl $(LIBS) -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
 LDFLAGS +=  -lmsettings
 # CFLAGS  += -Wall -Wno-unused-variable -Wno-unused-function -Wno-format-overflow
 # CFLAGS  += -fsanitize=address -fno-common

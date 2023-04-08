@@ -1,3 +1,4 @@
+// rg35xx
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -382,7 +383,8 @@ void PLAT_flip(SDL_Surface* screen, int sync) {
 }
 
 SDL_Surface* PLAT_getVideoBufferCopy(void) {
-	 // TODO: this is just copying the backbuffer!
+	// TODO: this is just copying the backbuffer!
+	// TODO: should it be copying the frontbuffer?
 	SDL_Surface* copy = SDL_CreateRGBSurface(SDL_SWSURFACE, vid.screen->w,vid.screen->h,FIXED_DEPTH,0,0,0,0);
 	SDL_BlitSurface(vid.screen, NULL, copy, NULL);
 	return copy;

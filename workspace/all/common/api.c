@@ -905,7 +905,7 @@ int PAD_tappedMenu(uint32_t now) {
 		ignore_menu = 0;
 		menu_start = now;
 	}
-	else if (PAD_isPressed(BTN_MENU) && (PAD_justPressed(BTN_PLUS) || PAD_justPressed(BTN_MINUS))) {
+	else if (PAD_isPressed(BTN_MENU) && BTN_MOD_BRIGHTNESS==BTN_MENU && (PAD_justPressed(BTN_MOD_PLUS) || PAD_justPressed(BTN_MOD_MINUS))) {
 		ignore_menu = 1;
 	}
 	return (!ignore_menu && PAD_justReleased(BTN_MENU) && now-menu_start<MENU_DELAY);
@@ -1023,6 +1023,15 @@ void POW_warn(int enable) {
 	PLAT_enableOverlay(pow.should_warn && pow.charge<=POW_LOW_CHARGE);
 }
 
+// TODO: generalize this into BTN_MOD_VOLUME, BTN_MOD_BRIGHTNESS, BTN_MOD_PLUS, and BTN_MOD_MINUS
+// TODO: rg35x, no BTN_MOD_VOLUME, BTN_MOD_BRIGHTNESS is BTN_MENU, plus/minus are volume so only has to worry about mod
+// TODO: mini BTN_MOD_VOLUME is BTN_SELECT, BTN_MOD_BRIGHTNESS is BTN_START, plus/minus are L1 and R1, must worry about any combo
+// TODO: create a POW_ignoreSettingInput(btn) if btn==BTN_MOD_PLUS and () couldn't it just be if show_setting && (btn==PLUS || btn==MINUS)?
+
+int POW_ignoreSettingInput(int btn, int show_setting) {
+	return show_setting && (btn==BTN_MOD_PLUS || btn==BTN_MOD_MINUS);
+}
+
 void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, POW_callback_t after_sleep) {
 	int dirty = _dirty ? *_dirty : 0;
 	int show_setting = _show_setting ? *_show_setting : 0;
@@ -1030,6 +1039,7 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	static uint32_t cancel_start = 0;
 	static uint32_t power_start = 0;
 	
+	// TODO: menu_start and MENU_DELAY are now more accurately mod_start and MOD_DELAY...
 	static uint32_t menu_start = 0;
 	static uint32_t setting_start = 0;
 	static uint32_t charge_start = 0;
@@ -1076,19 +1086,21 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	int was_dirty = dirty; // dirty list (not including settings/battery)
 	
 	#define SETTING_DELAY 500
-	if (show_setting && now-setting_start>=SETTING_DELAY && !PAD_isPressed(BTN_MENU)) {
+	if (show_setting && now-setting_start>=SETTING_DELAY && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 		show_setting = 0;
 		dirty = 1;
 	}
 	
-	if (!show_setting && !PAD_isPressed(BTN_MENU)) {
+	if (!show_setting && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 		menu_start = now; // this is weird, updates until pressed
 	}
 	
 	#define MENU_DELAY 250 // also in PAD_tappedMenu()
-	if (PAD_justRepeated(BTN_PLUS) || PAD_justRepeated(BTN_MINUS) || (PAD_isPressed(BTN_MENU) && now-menu_start>=MENU_DELAY)) {
+	if (((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && now-menu_start>=MENU_DELAY) || 
+		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))) {
+	// if (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS) || ((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && now-menu_start>=MENU_DELAY)) {
 		setting_start = now;
-		if (PAD_isPressed(BTN_MENU)) {
+		if (PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 			show_setting = 1;
 		}
 		else {
@@ -1176,20 +1188,3 @@ int POW_isCharging(void) {
 int POW_getBattery(void) { // 10-100 in 10-20% fragments
 	return pow.charge;
 }
-
-// ///////////////////////////////
-//
-// void InitSettings(void) {}
-// void QuitSettings(void) {}
-//
-// int GetBrightness(void) { return 4; }
-// int GetVolume(void) { return 8; }
-//
-// void SetRawBrightness(int value) {}
-// void SetRawVolume(int value) {}
-//
-// void SetBrightness(int value) {}
-// void SetVolume(int value) {}
-//
-// int GetJack(void) { return 0; }
-// void SetJack(int value) {}

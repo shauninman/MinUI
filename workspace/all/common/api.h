@@ -165,6 +165,7 @@ void POW_init(void);
 void POW_quit(void);
 void POW_warn(int enable);
 
+int POW_ignoreSettingInput(int btn, int show_setting);
 void POW_update(int* dirty, int* show_setting, POW_callback_t before_sleep, POW_callback_t after_sleep);
 
 void POW_disablePowerOff(void);
@@ -214,24 +215,5 @@ void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 
 char* PLAT_getModel(void);
-
-///////////////////////////////
-
-// void InitSettings(void);
-// void QuitSettings(void);
-//
-// int GetBrightness(void);
-// int GetVolume(void);
-//
-// void SetRawBrightness(int value); // 0-1024
-// void SetRawVolume(int value); // 0-40
-//
-// void SetBrightness(int value); // 0-10
-// void SetVolume(int value); // 0-20
-//
-// int GetJack(void);
-// void SetJack(int value); // 0-1
-
-///////////////////////////////
 
 #endif
