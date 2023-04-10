@@ -73,7 +73,7 @@ static struct VID_Context {
 	MI_GFX_Rect_t mi_src_rect;
 	MI_GFX_Opt_t mi_opt;
 	
-	HWBuffer pages[PAGE_COUNT];
+	HWBuffer buffer;
 		
 	int page;
 	int width;
@@ -120,15 +120,13 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.mi_opt.eSrcDfbBldOp = E_MI_GFX_DFB_BLD_ONE;
 	vid.mi_opt.eRotate = E_MI_GFX_ROTATE_180;
 	
-	for (int i=0; i<PAGE_COUNT; i++) {
-		MI_SYS_MMA_Alloc(NULL, ALIGN4K(PAGE_SIZE), &vid.pages[i].padd);
-		MI_SYS_Mmap(vid.pages[i].padd, ALIGN4K(PAGE_SIZE), &vid.pages[i].vadd, true);
-	}
+	MI_SYS_MMA_Alloc(NULL, ALIGN4K(PAGE_SIZE), &vid.buffer.padd);
+	MI_SYS_Mmap(vid.buffer.padd, ALIGN4K(PAGE_SIZE), &vid.buffer.vadd, true);
 	
-	vid.screen = SDL_CreateRGBSurfaceFrom(vid.pages[vid.page].vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
 	memset(vid.screen->pixels, 0, PAGE_SIZE);
 	
-	vid.mi_src.phyAddr = vid.pages[vid.page].padd;
+	vid.mi_src.phyAddr = vid.buffer.padd;
 	vid.mi_src.eColorFmt = GFX_ColorFmt(vid.screen);
 	vid.mi_src.u32Width = vid.width;
 	vid.mi_src.u32Height = vid.height;
@@ -145,11 +143,8 @@ SDL_Surface* PLAT_initVideo(void) {
 void PLAT_quitVideo(void) {
 	SDL_FreeSurface(vid.screen);
 	
-	// tear down both pages
-	for (int i=0; i<PAGE_COUNT; i++) {
-		MI_SYS_Munmap(vid.pages[i].vadd, ALIGN4K(PAGE_SIZE));
-		MI_SYS_MMA_Free(vid.pages[i].padd);
-	}
+	MI_SYS_Munmap(vid.buffer.vadd, ALIGN4K(PAGE_SIZE));
+	MI_SYS_MMA_Free(vid.buffer.padd);
 
 	vid.vinfo.yoffset = 0;
 	ioctl(vid.fd_fb, FBIOPUT_VSCREENINFO, &vid.vinfo);
@@ -176,7 +171,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 	vid.pitch = pitch;
 	
 	SDL_FreeSurface(vid.screen);
-	vid.screen = SDL_CreateRGBSurfaceFrom(vid.pages[vid.page].vadd, vid.width,vid.height,FIXED_DEPTH,vid.pitch, RGBA_MASK_AUTO);
+	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd, vid.width,vid.height,FIXED_DEPTH,vid.pitch, RGBA_MASK_AUTO);
 	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
 
 	vid.mi_src.u32Width = vid.width;
@@ -213,8 +208,6 @@ void PLAT_flip(SDL_Surface* screen, int sync) {
 	ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
 	
 	vid.page ^= 1;
-	vid.screen->pixels = vid.pages[vid.page].vadd;
-	vid.mi_src.phyAddr = vid.pages[vid.page].padd;
 	vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
 	
 	if (vid.cleared) {
