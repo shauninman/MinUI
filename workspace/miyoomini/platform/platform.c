@@ -19,6 +19,7 @@
 
 #include <mi_sys.h>
 #include <mi_gfx.h>
+#include <pthread.h>
 
 #define SSTAR_BPP 	4
 #define SSTAR_DEPTH (SSTAR_BPP * 8)
@@ -75,12 +76,44 @@ static struct VID_Context {
 	
 	HWBuffer buffer;
 		
-	int page;
 	int width;
 	int height;
 	int pitch;
 	int cleared;
 } vid;
+
+///////////////////////////////
+
+static pthread_t			flip_pt;
+static pthread_mutex_t		flip_mx;
+static pthread_cond_t		flip_req;
+static pthread_cond_t		flip_start;
+static MI_U16				flipFence;
+static uint32_t				flipFlags;
+static volatile uint32_t	now_flipping;
+
+static void* GFX_FlipThread(void* param) {
+	uint32_t	target_offset;
+	MI_U16		Fence;
+	pthread_mutex_lock(&flip_mx);
+	while(1) {
+		while (!now_flipping) pthread_cond_wait(&flip_req, &flip_mx);
+		Fence = flipFence;
+		do {
+			target_offset = vid.vinfo.yoffset + FIXED_HEIGHT;
+			if (target_offset == vid.vinfo.yres_virtual) target_offset = 0;
+			vid.vinfo.yoffset = target_offset;
+			pthread_cond_signal(&flip_start);
+			pthread_mutex_unlock(&flip_mx);
+			if (Fence) { MI_GFX_WaitAllDone(FALSE, Fence); Fence = 0; }
+			ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
+			pthread_mutex_lock(&flip_mx);
+		} while(--now_flipping);
+	}
+	return 0;
+}
+
+///////////////////////////////
 
 SDL_Surface* PLAT_initVideo(void) {
 	putenv("SDL_HIDE_BATTERY=1"); // using MiniUI's custom SDL
@@ -100,13 +133,12 @@ SDL_Surface* PLAT_initVideo(void) {
 	ioctl(vid.fd_fb, FBIOPUT_VSCREENINFO, &vid.vinfo);
 	ioctl(vid.fd_fb, FBIOGET_FSCREENINFO, &vid.finfo);
 	
-	vid.page = 1;
 	vid.width = FIXED_WIDTH;
 	vid.height = FIXED_HEIGHT;
 	vid.pitch = FIXED_PITCH;
 	
 	// framebuffer
-	vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
+	vid.mi_dst.phyAddr = vid.finfo.smem_start; //  + vid.page * SSTAR_SIZE;
 	vid.mi_dst.eColorFmt = E_MI_GFX_FMT_ARGB8888;
 	vid.mi_dst.u32Width = FIXED_WIDTH;
 	vid.mi_dst.u32Height = FIXED_HEIGHT;
@@ -122,6 +154,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	MI_SYS_MMA_Alloc(NULL, ALIGN4K(PAGE_SIZE), &vid.buffer.padd);
 	MI_SYS_Mmap(vid.buffer.padd, ALIGN4K(PAGE_SIZE), &vid.buffer.vadd, true);
+	memset(vid.buffer.vadd, 0, PAGE_SIZE);
 	
 	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
 	memset(vid.screen->pixels, 0, PAGE_SIZE);
@@ -137,10 +170,21 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.mi_src_rect.u32Width = vid.width;
 	vid.mi_src_rect.u32Height = vid.height;
 	
+	flip_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+	flip_req = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+	flip_start = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+	now_flipping = 0;
+	flipFence = 0;
+	pthread_create(&flip_pt, NULL, GFX_FlipThread, NULL);
+	
 	return vid.screen;
 }
 
 void PLAT_quitVideo(void) {
+	pthread_cancel(flip_pt);
+	pthread_join(flip_pt, NULL);
+	MI_GFX_WaitAllDone(TRUE, 0);
+	
 	SDL_FreeSurface(vid.screen);
 	
 	MI_SYS_Munmap(vid.buffer.vadd, ALIGN4K(PAGE_SIZE));
@@ -157,12 +201,10 @@ void PLAT_quitVideo(void) {
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
-	// this buffer is offscreen when cleared
 	memset(screen->pixels, 0, PAGE_SIZE);
 }
 void PLAT_clearAll(void) {
-	GFX_clear(vid.screen); // clear backbuffer
-	vid.cleared = 1; // defer clearing frontbuffer until offscreen
+	memset(vid.buffer.vadd, 0, PAGE_SIZE);
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
@@ -189,31 +231,41 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 	// buh
 }
-
 void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
-
 void PLAT_vsync(void) {
 	// buh
 }
 
 void PLAT_flip(SDL_Surface* screen, int sync) {
-	vid.vinfo.yoffset = vid.page * FIXED_HEIGHT;
+	// vid.vinfo.yoffset = vid.page * FIXED_HEIGHT;
+	// FlushCacheNeeded(vid.screen->pixels, vid.screen->pitch, vid.mi_src_rect.s32Ypos, vid.mi_src_rect.u32Height);
+	// MI_GFX_BitBlit(&vid.mi_src, &vid.mi_src_rect, &vid.mi_dst, &vid.mi_dst_rect, &vid.mi_opt, NULL);
+	//
+	// // TODO: I have a feeling blocking won't be viable in practice...nope!
+	// // MI_GFX_WaitAllDone(true,0);
+	// ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
+	//
+	// vid.page ^= 1;
+	// vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
+	
 	FlushCacheNeeded(vid.screen->pixels, vid.screen->pitch, vid.mi_src_rect.s32Ypos, vid.mi_src_rect.u32Height);
-	MI_GFX_BitBlit(&vid.mi_src, &vid.mi_src_rect, &vid.mi_dst, &vid.mi_dst_rect, &vid.mi_opt, NULL);
-	
-	// TODO: I have a feeling blocking won't be viable in practice...nope!
-	// MI_GFX_WaitAllDone(true,0);
-	ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
-	
-	vid.page ^= 1;
-	vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
-	
-	if (vid.cleared) {
-		GFX_clear(vid.screen);
-		vid.cleared = 0;
+	pthread_mutex_lock(&flip_mx);
+	uint32_t target_offset = vid.vinfo.yoffset + FIXED_HEIGHT;
+	if ( target_offset == vid.vinfo.yres_virtual ) target_offset = 0;
+	vid.mi_dst.phyAddr = vid.finfo.smem_start + SSTAR_PITCH * target_offset;
+	MI_GFX_BitBlit(&vid.mi_src, &vid.mi_src_rect, &vid.mi_dst, &vid.mi_dst_rect, &vid.mi_opt, &flipFence);
+
+	// Request Flip
+	if (!now_flipping) {
+		now_flipping = 1;
+		pthread_cond_signal(&flip_req);
+		pthread_cond_wait(&flip_start, &flip_mx);
+	} else {
+		now_flipping = 2;
 	}
+	pthread_mutex_unlock(&flip_mx);
 }
 
 SDL_Surface* PLAT_getVideoBufferCopy(void) {
