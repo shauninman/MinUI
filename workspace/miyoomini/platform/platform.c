@@ -15,54 +15,155 @@
 #include "api.h"
 #include "utils.h"
 
+///////////////////////////////
+
 #include <mi_sys.h>
 #include <mi_gfx.h>
 
-/*
-	framebuffer only needs to be FIXED_WIDTH x FIXED_HEIGHT x PAGE_COUNT
-	because we need to do a copy from a buffer to rotate properly anyway
-	this should be vid.video and will use FBIOPAN_DISPLAY when flipping
-	the buffer will be vid.screen
-	still not sure how to vysnc
+#define SSTAR_BPP 	4
+#define SSTAR_DEPTH (SSTAR_BPP * 8)
+#define SSTAR_PITCH	(FIXED_WIDTH * SSTAR_BPP)
+#define SSTAR_SIZE 	(SSTAR_PITCH * FIXED_HEIGHT)
+#define SSTAR_COUNT 2
 
-*/
+// from eggs GFXSample_rev15/src/gfx.c
+
+#define	pixelsPa	unused1
+#define ALIGN4K(val)	((val+4095)&(~4095))
+static inline MI_GFX_ColorFmt_e	GFX_ColorFmt(SDL_Surface *surface) {
+	if (surface) {
+		if (surface->format->BytesPerPixel == 2) {
+			if (surface->format->Amask == 0x0000) return E_MI_GFX_FMT_RGB565;
+			if (surface->format->Amask == 0x8000) return E_MI_GFX_FMT_ARGB1555;
+			if (surface->format->Amask == 0xF000) return E_MI_GFX_FMT_ARGB4444;
+			if (surface->format->Amask == 0x0001) return E_MI_GFX_FMT_RGBA5551;
+			if (surface->format->Amask == 0x000F) return E_MI_GFX_FMT_RGBA4444;
+			return E_MI_GFX_FMT_RGB565;
+		}
+		if (surface->format->Bmask == 0x000000FF) return E_MI_GFX_FMT_ARGB8888;
+		if (surface->format->Rmask == 0x000000FF) return E_MI_GFX_FMT_ABGR8888;
+	}
+	return E_MI_GFX_FMT_ARGB8888;
+}
+static inline void FlushCacheNeeded(void* pixels, uint32_t pitch, uint32_t y, uint32_t h) {
+	uintptr_t pixptr = (uintptr_t)pixels;
+	uintptr_t startaddress = (pixptr + pitch*y)&(~4095);
+	uint32_t size = ALIGN4K(pixptr + pitch*(y+h)) - startaddress;
+	if (size) MI_SYS_FlushInvCache((void*)startaddress, size);
+}
 
 ///////////////////////////////
 
+typedef struct HWBuffer {
+	MI_PHY padd;
+	void* vadd;
+} HWBuffer;
+
 static struct VID_Context {
 	SDL_Surface* screen;
+	
+	int fd_fb;
+	// void* fb_map;
+	struct fb_fix_screeninfo finfo;
+	struct fb_var_screeninfo vinfo;
+	
+	MI_GFX_Surface_t mi_dst;
+	MI_GFX_Surface_t mi_src;
+	MI_GFX_Rect_t mi_dst_rect;
+	MI_GFX_Rect_t mi_src_rect;
+	MI_GFX_Opt_t mi_opt;
+	
+	HWBuffer pages[PAGE_COUNT];
+		
+	int page;
+	int width;
+	int height;
+	int pitch;
 	int cleared;
 } vid;
-static int _;
 
 SDL_Surface* PLAT_initVideo(void) {
-	putenv("SDL_HIDE_BATTERY=1");
-	
+	putenv("SDL_HIDE_BATTERY=1"); // using MiniUI's custom SDL
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	SDL_ShowCursor(0);
 	
-	// TODO: MI_SYS_Init() & MI_GFX_Open()
-	// TODO: init garbage videomode
-	// TODO: allocate video buffer memory, maybe MI_SYS_MMA_Alloc()? + MI_SYS_Mmap()?
-	// TODO: create our screen surface from that buffer
-	// TODO: setup vsync?
+	MI_SYS_Init();
+	MI_GFX_Open();
 	
-	vid.screen = SDL_SetVideoMode(FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,SDL_HWSURFACE|SDL_DOUBLEBUF);
+	SDL_Surface* video = // unused, sets up framebuffer for us
+	SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, SSTAR_DEPTH, SDL_SWSURFACE);
+	
+	vid.fd_fb = open("/dev/fb0", O_RDWR);
+	ioctl(vid.fd_fb, FBIOGET_VSCREENINFO, &vid.vinfo);
+	vid.vinfo.yres_virtual = FIXED_HEIGHT * SSTAR_COUNT;
+	vid.vinfo.yoffset = 0;
+	ioctl(vid.fd_fb, FBIOPUT_VSCREENINFO, &vid.vinfo);
+	ioctl(vid.fd_fb, FBIOGET_FSCREENINFO, &vid.finfo);
+	
+	vid.page = 1;
+	vid.width = FIXED_WIDTH;
+	vid.height = FIXED_HEIGHT;
+	vid.pitch = FIXED_PITCH;
+	
+	// framebuffer
+	vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
+	vid.mi_dst.eColorFmt = E_MI_GFX_FMT_ARGB8888;
+	vid.mi_dst.u32Width = FIXED_WIDTH;
+	vid.mi_dst.u32Height = FIXED_HEIGHT;
+	vid.mi_dst.u32Stride = SSTAR_PITCH;
+	vid.mi_dst_rect.s32Xpos = 0;
+	vid.mi_dst_rect.s32Ypos = 0;
+	vid.mi_dst_rect.u32Width = FIXED_WIDTH;
+	vid.mi_dst_rect.u32Height = FIXED_HEIGHT;
+	
+	memset(&vid.mi_opt, 0, sizeof(vid.mi_opt));
+	vid.mi_opt.eSrcDfbBldOp = E_MI_GFX_DFB_BLD_ONE;
+	vid.mi_opt.eRotate = E_MI_GFX_ROTATE_180;
+	
+	for (int i=0; i<PAGE_COUNT; i++) {
+		MI_SYS_MMA_Alloc(NULL, ALIGN4K(PAGE_SIZE), &vid.pages[i].padd);
+		MI_SYS_Mmap(vid.pages[i].padd, ALIGN4K(PAGE_SIZE), &vid.pages[i].vadd, true);
+	}
+	
+	vid.screen = SDL_CreateRGBSurfaceFrom(vid.pages[vid.page].vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+	memset(vid.screen->pixels, 0, PAGE_SIZE);
+	
+	vid.mi_src.phyAddr = vid.pages[vid.page].padd;
+	vid.mi_src.eColorFmt = GFX_ColorFmt(vid.screen);
+	vid.mi_src.u32Width = vid.width;
+	vid.mi_src.u32Height = vid.height;
+	vid.mi_src.u32Stride = vid.pitch;
+	
+	vid.mi_src_rect.s32Xpos = 0;
+	vid.mi_src_rect.s32Ypos = 0;
+	vid.mi_src_rect.u32Width = vid.width;
+	vid.mi_src_rect.u32Height = vid.height;
+	
 	return vid.screen;
 }
 
 void PLAT_quitVideo(void) {
-	// TODO: release video buffer memory, maybe MI_SYS_MMA_Free()?
-	// TODO: free screen surface
-	// TODO: MI_GFX_Close() && MI_SYS_Exit()
+	SDL_FreeSurface(vid.screen);
+	
+	// tear down both pages
+	for (int i=0; i<PAGE_COUNT; i++) {
+		MI_SYS_Munmap(vid.pages[i].vadd, ALIGN4K(PAGE_SIZE));
+		MI_SYS_MMA_Free(vid.pages[i].padd);
+	}
+
+	vid.vinfo.yoffset = 0;
+	ioctl(vid.fd_fb, FBIOPUT_VSCREENINFO, &vid.vinfo);
+	close(vid.fd_fb);
+	
+	MI_GFX_Close();
+	MI_SYS_Exit();
 	
 	SDL_Quit();
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
 	// this buffer is offscreen when cleared
-	// memset(screen->pixels, 0, PAGE_SIZE); 
-	SDL_FillRect(screen, NULL, 0);
+	memset(screen->pixels, 0, PAGE_SIZE);
 }
 void PLAT_clearAll(void) {
 	GFX_clear(vid.screen); // clear backbuffer
@@ -70,10 +171,23 @@ void PLAT_clearAll(void) {
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
-	// free screen surface
-	// create new screen surface from video buffer memory
+	vid.width = w;
+	vid.height = h;
+	vid.pitch = pitch;
 	
-	LOG_info("PLAT_resizeVideo(%i,%i,%i)\n", w,h,pitch);
+	SDL_FreeSurface(vid.screen);
+	vid.screen = SDL_CreateRGBSurfaceFrom(vid.pages[vid.page].vadd, vid.width,vid.height,FIXED_DEPTH,vid.pitch, RGBA_MASK_AUTO);
+	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
+
+	vid.mi_src.u32Width = vid.width;
+	vid.mi_src.u32Height = vid.height;
+	vid.mi_src.u32Stride = vid.pitch;
+
+	vid.mi_src_rect.s32Xpos = 0;
+	vid.mi_src_rect.s32Ypos = 0;
+	vid.mi_src_rect.u32Width = vid.width;
+	vid.mi_src_rect.u32Height = vid.height;
+	
 	return vid.screen;
 }
 
@@ -86,18 +200,25 @@ void PLAT_setNearestNeighbor(int enabled) {
 }
 
 void PLAT_vsync(void) {
-	// MI_GFX_WaitAllDone(true,0); // TODO: this helps but eventually locks up?
+	// buh
 }
 
 void PLAT_flip(SDL_Surface* screen, int sync) {
-	// TODO: FlushCacheNeeded()?
-	// TODO: MI_GFX_BitBlit()?
+	vid.vinfo.yoffset = vid.page * FIXED_HEIGHT;
+	FlushCacheNeeded(vid.screen->pixels, vid.screen->pitch, vid.mi_src_rect.s32Ypos, vid.mi_src_rect.u32Height);
+	MI_GFX_BitBlit(&vid.mi_src, &vid.mi_src_rect, &vid.mi_dst, &vid.mi_dst_rect, &vid.mi_opt, NULL);
 	
-	SDL_Flip(screen);
-	if (sync) PLAT_vsync();
+	// TODO: I have a feeling blocking won't be viable in practice...nope!
+	// MI_GFX_WaitAllDone(true,0);
+	ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
+	
+	vid.page ^= 1;
+	vid.screen->pixels = vid.pages[vid.page].vadd;
+	vid.mi_src.phyAddr = vid.pages[vid.page].padd;
+	vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
 	
 	if (vid.cleared) {
-		// GFX_clear(vid.screen);
+		GFX_clear(vid.screen);
 		vid.cleared = 0;
 	}
 }
