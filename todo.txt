@@ -1,6 +1,17 @@
 miyoomini
+	let's try reverting to the default SDL_Flip and
+		implementing more like picoarch
+	
 	tearing
+		fixed but now we have framerate issues
+			especially on aspect or fullscreen scaling
+		probably caused by blocking hardware blits
+		should be able to fix with a double double buffer
+			disabling MI_GFX_WaitAllDone seems to help some
+			maybe the two together will be sufficient
+		it's bad, don't commit yet
 	scaling
+		working
 	volume/brightness settings button labels wrong
 
 rg35xx
