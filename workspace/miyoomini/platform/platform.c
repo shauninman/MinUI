@@ -16,21 +16,18 @@
 #include "utils.h"
 
 ///////////////////////////////
+// based on eggs GFXSample_rev15
+
 
 #include <mi_sys.h>
 #include <mi_gfx.h>
-#include <pthread.h>
-
-#define SSTAR_BPP 	4
-#define SSTAR_DEPTH (SSTAR_BPP * 8)
-#define SSTAR_PITCH	(FIXED_WIDTH * SSTAR_BPP)
-#define SSTAR_SIZE 	(SSTAR_PITCH * FIXED_HEIGHT)
-#define SSTAR_COUNT 2
-
-// from eggs GFXSample_rev15/src/gfx.c
 
 #define	pixelsPa	unused1
 #define ALIGN4K(val)	((val+4095)&(~4095))
+
+//
+//	Get GFX_ColorFmt from SDL_Surface
+//
 static inline MI_GFX_ColorFmt_e	GFX_ColorFmt(SDL_Surface *surface) {
 	if (surface) {
 		if (surface->format->BytesPerPixel == 2) {
@@ -46,11 +43,104 @@ static inline MI_GFX_ColorFmt_e	GFX_ColorFmt(SDL_Surface *surface) {
 	}
 	return E_MI_GFX_FMT_ARGB8888;
 }
+
+//
+//	Flush write cache of needed segments
+//		x and w are not considered since 4K units
+//
 static inline void FlushCacheNeeded(void* pixels, uint32_t pitch, uint32_t y, uint32_t h) {
 	uintptr_t pixptr = (uintptr_t)pixels;
 	uintptr_t startaddress = (pixptr + pitch*y)&(~4095);
 	uint32_t size = ALIGN4K(pixptr + pitch*(y+h)) - startaddress;
 	if (size) MI_SYS_FlushInvCache((void*)startaddress, size);
+}
+
+//
+//	GFX BlitSurface (MI_GFX ver) / in place of SDL_BlitSurface
+//		with scale/bpp convert and rotate/mirror
+//		rotate : 1 = 90 / 2 = 180 / 3 = 270
+//		mirror : 1 = Horizontal / 2 = Vertical / 3 = Both
+//		nowait : 0 = wait until done / 1 = no wait
+//
+static inline void GFX_BlitSurfaceExec(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect,
+			 uint32_t rotate, uint32_t mirror, uint32_t nowait) {
+	if ((src)&&(dst)&&(src->pixelsPa)&&(dst->pixelsPa)) {
+		MI_GFX_Surface_t Src;
+		MI_GFX_Surface_t Dst;
+		MI_GFX_Rect_t SrcRect;
+		MI_GFX_Rect_t DstRect;
+		MI_GFX_Opt_t Opt;
+		MI_U16 Fence;
+
+		Src.phyAddr = src->pixelsPa;
+		Src.u32Width = src->w;
+		Src.u32Height = src->h;
+		Src.u32Stride = src->pitch;
+		Src.eColorFmt = GFX_ColorFmt(src);
+		if (srcrect) {
+			SrcRect.s32Xpos = srcrect->x;
+			SrcRect.s32Ypos = srcrect->y;
+			SrcRect.u32Width = srcrect->w;
+			SrcRect.u32Height = srcrect->h;
+		} else {
+			SrcRect.s32Xpos = 0;
+			SrcRect.s32Ypos = 0;
+			SrcRect.u32Width = Src.u32Width;
+			SrcRect.u32Height = Src.u32Height;
+		}
+		FlushCacheNeeded(src->pixels, src->pitch, SrcRect.s32Ypos, SrcRect.u32Height);
+
+		Dst.phyAddr = dst->pixelsPa;
+		Dst.u32Width = dst->w;
+		Dst.u32Height = dst->h;
+		Dst.u32Stride = dst->pitch;
+		Dst.eColorFmt = GFX_ColorFmt(dst);
+		if (dstrect) {
+			DstRect.s32Xpos = dstrect->x;
+			DstRect.s32Ypos = dstrect->y;
+			if (dstrect->w|dstrect->h) {
+				DstRect.u32Width = dstrect->w;
+				DstRect.u32Height = dstrect->h;
+			} else {
+				DstRect.u32Width = SrcRect.u32Width;
+				DstRect.u32Height = SrcRect.u32Height;
+			}
+		} else {
+			DstRect.s32Xpos = 0;
+			DstRect.s32Ypos = 0;
+			DstRect.u32Width = Dst.u32Width;
+			DstRect.u32Height = Dst.u32Height;
+		}
+		if (rotate & 1) FlushCacheNeeded(dst->pixels, dst->pitch, DstRect.s32Ypos, DstRect.u32Width);
+		else FlushCacheNeeded(dst->pixels, dst->pitch, DstRect.s32Ypos, DstRect.u32Height);
+
+		memset(&Opt, 0, sizeof(Opt));
+		if (src->flags & SDL_SRCALPHA) {
+			Opt.eDstDfbBldOp = E_MI_GFX_DFB_BLD_INVSRCALPHA;
+			if (src->format->alpha != SDL_ALPHA_OPAQUE) {
+				Opt.u32GlobalSrcConstColor = (src->format->alpha << (src->format->Ashift - src->format->Aloss)) & src->format->Amask;
+				Opt.eDFBBlendFlag = (MI_Gfx_DfbBlendFlags_e)
+						   (E_MI_GFX_DFB_BLEND_SRC_PREMULTIPLY | E_MI_GFX_DFB_BLEND_COLORALPHA | E_MI_GFX_DFB_BLEND_ALPHACHANNEL);
+			} else	Opt.eDFBBlendFlag = E_MI_GFX_DFB_BLEND_SRC_PREMULTIPLY;
+		}
+		if (src->flags & SDL_SRCCOLORKEY) {
+			Opt.stSrcColorKeyInfo.bEnColorKey = TRUE;
+			Opt.stSrcColorKeyInfo.eCKeyFmt = Src.eColorFmt;
+			Opt.stSrcColorKeyInfo.eCKeyOp = E_MI_GFX_RGB_OP_EQUAL;
+			Opt.stSrcColorKeyInfo.stCKeyVal.u32ColorStart =
+			Opt.stSrcColorKeyInfo.stCKeyVal.u32ColorEnd = src->format->colorkey;
+		}
+		Opt.eSrcDfbBldOp = E_MI_GFX_DFB_BLD_ONE;
+		Opt.eRotate = (MI_GFX_Rotate_e)rotate;
+		Opt.eMirror = (MI_GFX_Mirror_e)mirror;
+		Opt.stClipRect.s32Xpos = dst->clip_rect.x;
+		Opt.stClipRect.s32Ypos = dst->clip_rect.y;
+		Opt.stClipRect.u32Width = dst->clip_rect.w;
+		Opt.stClipRect.u32Height = dst->clip_rect.h;
+
+		MI_GFX_BitBlit(&Src, &SrcRect, &Dst, &DstRect, &Opt, &Fence);
+		if (!nowait) MI_GFX_WaitAllDone(FALSE, Fence);
+	} else SDL_BlitSurface(src, srcrect, dst, dstrect);
 }
 
 ///////////////////////////////
@@ -61,171 +151,89 @@ typedef struct HWBuffer {
 } HWBuffer;
 
 static struct VID_Context {
+	SDL_Surface* video;
 	SDL_Surface* screen;
-	
-	int fd_fb;
-	// void* fb_map;
-	struct fb_fix_screeninfo finfo;
-	struct fb_var_screeninfo vinfo;
-	
-	MI_GFX_Surface_t mi_dst;
-	MI_GFX_Surface_t mi_src;
-	MI_GFX_Rect_t mi_dst_rect;
-	MI_GFX_Rect_t mi_src_rect;
-	MI_GFX_Opt_t mi_opt;
-	
 	HWBuffer buffer;
-		
+	
 	int width;
 	int height;
 	int pitch;
-	int cleared;
+	
+	int direct;
 } vid;
-
-///////////////////////////////
-
-static pthread_t			flip_pt;
-static pthread_mutex_t		flip_mx;
-static pthread_cond_t		flip_req;
-static pthread_cond_t		flip_start;
-static MI_U16				flipFence;
-static uint32_t				flipFlags;
-static volatile uint32_t	now_flipping;
-
-static void* GFX_FlipThread(void* param) {
-	uint32_t	target_offset;
-	MI_U16		Fence;
-	pthread_mutex_lock(&flip_mx);
-	while(1) {
-		while (!now_flipping) pthread_cond_wait(&flip_req, &flip_mx);
-		Fence = flipFence;
-		do {
-			target_offset = vid.vinfo.yoffset + FIXED_HEIGHT;
-			if (target_offset == vid.vinfo.yres_virtual) target_offset = 0;
-			vid.vinfo.yoffset = target_offset;
-			pthread_cond_signal(&flip_start);
-			pthread_mutex_unlock(&flip_mx);
-			if (Fence) { MI_GFX_WaitAllDone(FALSE, Fence); Fence = 0; }
-			ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
-			pthread_mutex_lock(&flip_mx);
-		} while(--now_flipping);
-	}
-	return 0;
-}
-
-///////////////////////////////
 
 SDL_Surface* PLAT_initVideo(void) {
 	putenv("SDL_HIDE_BATTERY=1"); // using MiniUI's custom SDL
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	SDL_ShowCursor(0);
 	
-	MI_SYS_Init();
-	MI_GFX_Open();
-	
-	SDL_Surface* video = // unused, sets up framebuffer for us
-	SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, SSTAR_DEPTH, SDL_SWSURFACE);
-	
-	vid.fd_fb = open("/dev/fb0", O_RDWR);
-	ioctl(vid.fd_fb, FBIOGET_VSCREENINFO, &vid.vinfo);
-	vid.vinfo.yres_virtual = FIXED_HEIGHT * SSTAR_COUNT;
-	vid.vinfo.yoffset = 0;
-	ioctl(vid.fd_fb, FBIOPUT_VSCREENINFO, &vid.vinfo);
-	ioctl(vid.fd_fb, FBIOGET_FSCREENINFO, &vid.finfo);
-	
-	vid.width = FIXED_WIDTH;
-	vid.height = FIXED_HEIGHT;
-	vid.pitch = FIXED_PITCH;
-	
-	// framebuffer
-	vid.mi_dst.phyAddr = vid.finfo.smem_start; //  + vid.page * SSTAR_SIZE;
-	vid.mi_dst.eColorFmt = E_MI_GFX_FMT_ARGB8888;
-	vid.mi_dst.u32Width = FIXED_WIDTH;
-	vid.mi_dst.u32Height = FIXED_HEIGHT;
-	vid.mi_dst.u32Stride = SSTAR_PITCH;
-	vid.mi_dst_rect.s32Xpos = 0;
-	vid.mi_dst_rect.s32Ypos = 0;
-	vid.mi_dst_rect.u32Width = FIXED_WIDTH;
-	vid.mi_dst_rect.u32Height = FIXED_HEIGHT;
-	
-	memset(&vid.mi_opt, 0, sizeof(vid.mi_opt));
-	vid.mi_opt.eSrcDfbBldOp = E_MI_GFX_DFB_BLD_ONE;
-	vid.mi_opt.eRotate = E_MI_GFX_ROTATE_180;
+	vid.video = SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, SDL_SWSURFACE);
 	
 	MI_SYS_MMA_Alloc(NULL, ALIGN4K(PAGE_SIZE), &vid.buffer.padd);
 	MI_SYS_Mmap(vid.buffer.padd, ALIGN4K(PAGE_SIZE), &vid.buffer.vadd, true);
 	memset(vid.buffer.vadd, 0, PAGE_SIZE);
 	
+	vid.direct = 1;
+	vid.width = FIXED_WIDTH;
+	vid.height = FIXED_HEIGHT;
+	vid.pitch = FIXED_PITCH;
 	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+	vid.screen->pixelsPa = vid.buffer.padd;
 	memset(vid.screen->pixels, 0, PAGE_SIZE);
 	
-	vid.mi_src.phyAddr = vid.buffer.padd;
-	vid.mi_src.eColorFmt = GFX_ColorFmt(vid.screen);
-	vid.mi_src.u32Width = vid.width;
-	vid.mi_src.u32Height = vid.height;
-	vid.mi_src.u32Stride = vid.pitch;
-	
-	vid.mi_src_rect.s32Xpos = 0;
-	vid.mi_src_rect.s32Ypos = 0;
-	vid.mi_src_rect.u32Width = vid.width;
-	vid.mi_src_rect.u32Height = vid.height;
-	
-	flip_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-	flip_req = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-	flip_start = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-	now_flipping = 0;
-	flipFence = 0;
-	pthread_create(&flip_pt, NULL, GFX_FlipThread, NULL);
-	
-	return vid.screen;
+	return vid.direct ? vid.video : vid.screen;
 }
 
 void PLAT_quitVideo(void) {
-	pthread_cancel(flip_pt);
-	pthread_join(flip_pt, NULL);
-	MI_GFX_WaitAllDone(TRUE, 0);
-	
 	SDL_FreeSurface(vid.screen);
 	
 	MI_SYS_Munmap(vid.buffer.vadd, ALIGN4K(PAGE_SIZE));
 	MI_SYS_MMA_Free(vid.buffer.padd);
-
-	vid.vinfo.yoffset = 0;
-	ioctl(vid.fd_fb, FBIOPUT_VSCREENINFO, &vid.vinfo);
-	close(vid.fd_fb);
-	
-	MI_GFX_Close();
-	MI_SYS_Exit();
 	
 	SDL_Quit();
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
-	memset(screen->pixels, 0, PAGE_SIZE);
+	SDL_FillRect(screen, NULL, 0);
 }
 void PLAT_clearAll(void) {
-	memset(vid.buffer.vadd, 0, PAGE_SIZE);
+	// buh
+	MI_SYS_FlushInvCache(vid.buffer.vadd, ALIGN4K(PAGE_SIZE));
+	MI_SYS_MemsetPa(vid.buffer.padd, 0, PAGE_SIZE);
+}
+
+void PLAT_setVsync(int vsync) {
+	// TODO: Prevent Tearing/Vsync
+	// isn't a 1:1 mapping of what's happening here...
+	// default should be  
+	if (vsync==VSYNC_OFF || vsync==VSYNC_LENIENT) {
+		putenv("GFX_FLIPWAIT=0");
+		putenv("GFX_BLOCKING=0");
+	}
+	else if (vsync==VSYNC_STRICT) {
+		putenv("GFX_FLIPWAIT=1");
+		putenv("GFX_BLOCKING=1");
+	}
+	SDL_GetVideoInfo();
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
+	vid.direct = w==FIXED_WIDTH && h==FIXED_HEIGHT && pitch==FIXED_PITCH;
 	vid.width = w;
 	vid.height = h;
 	vid.pitch = pitch;
 	
-	SDL_FreeSurface(vid.screen);
-	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd, vid.width,vid.height,FIXED_DEPTH,vid.pitch, RGBA_MASK_AUTO);
-	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
-
-	vid.mi_src.u32Width = vid.width;
-	vid.mi_src.u32Height = vid.height;
-	vid.mi_src.u32Stride = vid.pitch;
-
-	vid.mi_src_rect.s32Xpos = 0;
-	vid.mi_src_rect.s32Ypos = 0;
-	vid.mi_src_rect.u32Width = vid.width;
-	vid.mi_src_rect.u32Height = vid.height;
+	if (vid.direct) {
+		memset(vid.video->pixels, 0, vid.pitch * vid.height);
+	}
+	else {
+		SDL_FreeSurface(vid.screen);
+		vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+		vid.screen->pixelsPa = vid.buffer.padd;
+		memset(vid.screen->pixels, 0, vid.pitch * vid.height);
+	}
 	
-	return vid.screen;
+	return vid.direct ? vid.video : vid.screen;
 }
 
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
@@ -239,40 +247,16 @@ void PLAT_vsync(void) {
 }
 
 void PLAT_flip(SDL_Surface* screen, int sync) {
-	// vid.vinfo.yoffset = vid.page * FIXED_HEIGHT;
-	// FlushCacheNeeded(vid.screen->pixels, vid.screen->pitch, vid.mi_src_rect.s32Ypos, vid.mi_src_rect.u32Height);
-	// MI_GFX_BitBlit(&vid.mi_src, &vid.mi_src_rect, &vid.mi_dst, &vid.mi_dst_rect, &vid.mi_opt, NULL);
-	//
-	// // TODO: I have a feeling blocking won't be viable in practice...nope!
-	// // MI_GFX_WaitAllDone(true,0);
-	// ioctl(vid.fd_fb, FBIOPAN_DISPLAY, &vid.vinfo);
-	//
-	// vid.page ^= 1;
-	// vid.mi_dst.phyAddr = vid.finfo.smem_start + vid.page * SSTAR_SIZE;
-	
-	FlushCacheNeeded(vid.screen->pixels, vid.screen->pitch, vid.mi_src_rect.s32Ypos, vid.mi_src_rect.u32Height);
-	pthread_mutex_lock(&flip_mx);
-	uint32_t target_offset = vid.vinfo.yoffset + FIXED_HEIGHT;
-	if ( target_offset == vid.vinfo.yres_virtual ) target_offset = 0;
-	vid.mi_dst.phyAddr = vid.finfo.smem_start + SSTAR_PITCH * target_offset;
-	MI_GFX_BitBlit(&vid.mi_src, &vid.mi_src_rect, &vid.mi_dst, &vid.mi_dst_rect, &vid.mi_opt, &flipFence);
-
-	// Request Flip
-	if (!now_flipping) {
-		now_flipping = 1;
-		pthread_cond_signal(&flip_req);
-		pthread_cond_wait(&flip_start, &flip_mx);
-	} else {
-		now_flipping = 2;
-	}
-	pthread_mutex_unlock(&flip_mx);
+	if (!vid.direct) GFX_BlitSurfaceExec(vid.screen, NULL, vid.video, NULL, 0,0,1); // TODO: handle aspect clipping
+	SDL_Flip(vid.video);
 }
 
 SDL_Surface* PLAT_getVideoBufferCopy(void) {
 	// TODO: this is just copying the backbuffer!
 	// TODO: should it be copying the frontbuffer?
-	SDL_Surface* copy = SDL_CreateRGBSurface(SDL_SWSURFACE, vid.screen->w,vid.screen->h,FIXED_DEPTH,0,0,0,0);
-	SDL_BlitSurface(vid.screen, NULL, copy, NULL);
+	SDL_Surface* source = vid.direct ? vid.video : vid.screen;
+	SDL_Surface* copy = SDL_CreateRGBSurface(SDL_SWSURFACE, source->w,source->h,FIXED_DEPTH,RGBA_MASK_AUTO);
+	SDL_BlitSurface(source, NULL, copy, NULL);
 	return copy;
 }
 

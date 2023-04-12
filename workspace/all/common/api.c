@@ -171,6 +171,7 @@ int GFX_getVsync(void) {
 	return gfx.vsync;
 }
 void GFX_setVsync(int vsync) {
+	PLAT_setVsync(vsync);
 	gfx.vsync = vsync;
 }
 
@@ -188,14 +189,14 @@ void GFX_flip(SDL_Surface* screen) {
 	PLAT_flip(screen, should_vsync);
 }
 void GFX_sync(void) {
+	uint32_t frame_duration = SDL_GetTicks() - frame_start;
 	if (gfx.vsync!=VSYNC_OFF) {
 		// this limiting condition helps SuperFX chip games
-		if (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET) { // only wait if we're under frame budget
+		if (gfx.vsync==VSYNC_STRICT || frame_start==0 || frame_duration<FRAME_BUDGET) { // only wait if we're under frame budget
 			PLAT_vsync();
 		}
 	}
 	else {
-		uint32_t frame_duration = SDL_GetTicks() - frame_start;
 		if (frame_duration<FRAME_BUDGET) SDL_Delay(FRAME_BUDGET-frame_duration);
 	}
 }
@@ -530,6 +531,18 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 	
 	return ow;
 }
+void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
+	if (BTN_MOD_VOLUME==BTN_SELECT && BTN_MOD_BRIGHTNESS==BTN_START) {
+		if (show_setting==1) GFX_blitButtonGroup((char*[]){ "SELECT","VOLUME",  NULL }, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ "START","BRIGHTNESS",  NULL }, dst, 0);
+	}
+	else {
+		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, dst, 0);
+	}
+	
+}
+
 int GFX_blitButtonGroup(char** pairs, SDL_Surface* dst, int align_right) {
 	int ox;
 	int oy;

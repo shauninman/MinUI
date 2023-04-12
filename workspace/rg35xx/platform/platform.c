@@ -330,6 +330,10 @@ void PLAT_clearAll(void) {
 	vid.cleared = 1; // defer clearing frontbuffer until offscreen
 }
 
+void PLAT_setVsync(int vsync) {
+	// buh
+}
+
 SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 	vid.width = w;
 	vid.height = h;

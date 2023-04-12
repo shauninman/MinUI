@@ -1389,13 +1389,8 @@ int main (int argc, char *argv[]) {
 				SDL_BlitSurface(version, NULL, screen, &(SDL_Rect){(screen->w-version->w)/2,(screen->h-version->h)/2});
 				
 				// buttons (duped and trimmed from below)
-				if (show_setting) {
-					if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, screen, 0);
-					else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, screen, 0);
-				}
-				else {
-					GFX_blitButtonGroup((char*[]){ "POWER","SLEEP",  NULL }, screen, 0);
-				}
+				if (show_setting) GFX_blitHardwareHints(screen, show_setting);
+				else GFX_blitButtonGroup((char*[]){ "POWER","SLEEP",  NULL }, screen, 0);
 				
 				GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, screen, 1);
 			}
@@ -1462,16 +1457,9 @@ int main (int argc, char *argv[]) {
 				}
 			
 				// buttons
-				if (show_setting) {
-					if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, screen, 0);
-					else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, screen, 0);
-				}
-				else if (can_resume) {
-					GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, screen, 0);
-				}
-				else {
-					GFX_blitButtonGroup((char*[]){ "POWER","SLEEP",  NULL }, screen, 0);
-				}
+				if (show_setting) GFX_blitHardwareHints(screen, show_setting);
+				else if (can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, screen, 0);
+				else GFX_blitButtonGroup((char*[]){ "POWER","SLEEP",  NULL }, screen, 0);
 			
 				if (total==0) {
 					if (stack->count>1) {

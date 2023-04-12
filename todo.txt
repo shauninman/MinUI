@@ -1,20 +1,16 @@
-miyoomini
-	let's try reverting to the default SDL_Flip and
-		implementing more like picoarch
-	
-	tearing
-		fixed but now we have framerate issues
-			especially on aspect or fullscreen scaling
-		probably caused by blocking hardware blits
-		should be able to fix with a double double buffer
-			disabling MI_GFX_WaitAllDone seems to help some
-			maybe the two together will be sufficient
-		it's bad, don't commit yet
-	scaling
-		working
-	volume/brightness settings button labels wrong
+both
+	add SHARED_TAG, cpu-yres eg. arm-480
 
-rg35xx
+miyoomini
+	batmon isn't launching anymore?
+	update tearing defaults to strict for
+		gb
+		gbc
+		gba
+		md
+		???
+
+rg35xx (actually probably both)
 	MENU+UP shortcut binding weirdness (disappears after restart, only MENU remains bound?)
 		probably has something to do with UP being the first (0) button
 
@@ -39,43 +35,6 @@ I think I might want to checkout a fresh copy of union-minui create a union bran
 README
 
 have a verbose version and a short list version
-
----
-
-Installing
-
-PREFACE
-
-MinUI has two essential parts: an installer/updater zip archive and a platform-specific "bootstrap" file or folder.
-
-TODO: simplify this paragraph
-On devices that support two SD cards (eg. RG35XX) I will use the name "TF1" to refer to the card that goes into slot one of the device. All other instances of "SD card" or "primary card" refer to the card that goes into the second slot or to the sole SD card of devices that only support a single card. To get the most out of MinUI, on devices that support two SD cards you should install MinUI on the second card.
-
-The primary card should be a reputable brand and freshly formatted as FAT32.
-
-RG35XX
-
-MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it. The TF2 card should be formatted FAT32.
-
-Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
-
-MIYOO MINI
-
-Copy the "miyoo" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
-
-Updating
-
-RG35XX
-
-Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
-
-MIYOO MINI
-
-Copy "MinUI.zip" (without unzipping) to the root of the SD card.
-
----
-	
-
 
 1. makefile routes requests through makefile.toolchain
 2. which clones the toolchain repo if necessary and
