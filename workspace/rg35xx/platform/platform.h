@@ -81,5 +81,6 @@
 ///////////////////////////////
 
 #define SDCARD_PATH "/mnt/sdcard"
+#define ARCH_TAG "arm-480"
 
 #endif

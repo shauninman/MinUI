@@ -1,8 +1,4 @@
-both
-	add SHARED_TAG, cpu-yres eg. arm-480
-
 miyoomini
-	batmon isn't launching anymore?
 	update tearing defaults to strict for
 		gb
 		gbc
@@ -10,25 +6,13 @@ miyoomini
 		md
 		???
 
-rg35xx (actually probably both)
-	MENU+UP shortcut binding weirdness (disappears after restart, only MENU remains bound?)
-		probably has something to do with UP being the first (0) button
-
-
-
-replace 
-	git clone repo && cd repo && git checkout branch 
-with
-	git clone --depth 1 --branch branch repo
-note: doesn't work with commits only branches
+rg35xx
+	see if I can replace ramdisk.img during install/update (maybe with rename/move/delete if not directly copying over?)
 
 shows games in alt collated folders even if the alt pak isn't present...
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
-
-what if MinUI.zip was actually inside a folder?
-	might eliminate confusion about whether it needs to be unzipped or not...
-	random installer assets could be put in there too? :thinking:
+	as do miyoomini/dat/ and rg35xx/ramdisk/
 
 I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
 
@@ -42,23 +26,12 @@ have a verbose version and a short list version
 4. which builds commone elfs and punts to workspace/PLATFORM/makefile
 5. which builds unique platform elfs
 
-
-TODO: cores and extras bundle should probably be included from a platform-specific makefile.bundle since not every device will support the same cores
-TODO: 
-
-had a detour because it was using an ancient rg35xx-toolchain because the union-rg35xx-toolchain was creating rg35xx-toolchain-new :facepalm:
-
-be sure to note libretro-common hash in commits.txt too
-
-restore msettings
-
-each platform will have its own cores folder
-	or what if it defined cores and contained the patches
-	but there remained one
-	unique patches (primarily makefile)
-	unique supported cores?
-TODO: may run into issues building cores for multiple platforms in the same build folder...
-
 potential mm+ identifier
 	/customer/app/axp_test exists
 	/miyoo354 instead of /miyoo
+
+replace 
+	git clone repo && cd repo && git checkout branch 
+with
+	git clone --depth 1 --branch branch repo
+note: doesn't work with commits only branches

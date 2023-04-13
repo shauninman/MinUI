@@ -69,6 +69,7 @@ static struct Core {
 	const char extensions[128]; // eg. gb|gbc|dmg
 	
 	const char config_dir[MAX_PATH]; // eg. /mnt/sdcard/.userdata/rg35xx/GB-gambatte
+	const char states_dir[MAX_PATH]; // eg. /mnt/sdcard/.userdata/arm-480/GB-gambatte
 	const char saves_dir[MAX_PATH]; // eg. /mnt/sdcard/Saves/GB
 	const char bios_dir[MAX_PATH]; // eg. /mnt/sdcard/Bios/GB
 	
@@ -426,7 +427,7 @@ static void SRAM_write(void) {
 
 static int state_slot = 0;
 static void State_getPath(char* filename) {
-	sprintf(filename, "%s/%s.st%i", core.config_dir, game.name, state_slot);
+	sprintf(filename, "%s/%s.st%i", core.states_dir, game.name, state_slot);
 }
 static void State_read(void) { // from picoarch
 	size_t state_size = core.serialize_size();
@@ -977,6 +978,7 @@ static void Config_readControlsString(char* cfg) {
 	if (!cfg) return;
 
 	LOG_info("Config_readControls\n");
+	
 	char key[256];
 	char value[256];
 	char* tmp;
@@ -984,6 +986,7 @@ static void Config_readControlsString(char* cfg) {
 		ButtonMapping* mapping = &config.controls[i];
 		sprintf(key, "bind %s", mapping->name);
 		sprintf(value, "NONE");
+		
 		if (!Config_getValue(cfg, key, value, NULL)) continue;
 		if ((tmp = strrchr(value, ':'))) *tmp = '\0'; // this is a binding artifact in default.cfg, ignore
 		
@@ -995,6 +998,7 @@ static void Config_readControlsString(char* cfg) {
 			}
 		}
 		// LOG_info("\t%s (%i)\n", value, id);
+		
 		mapping->local = id;
 		mapping->mod = 0;
 	}
@@ -1003,6 +1007,7 @@ static void Config_readControlsString(char* cfg) {
 		ButtonMapping* mapping = &config.shortcuts[i];
 		sprintf(key, "bind %s", mapping->name);
 		sprintf(value, "NONE");
+
 		if (!Config_getValue(cfg, key, value, NULL)) continue;
 		
 		int id = -1;
@@ -1014,10 +1019,12 @@ static void Config_readControlsString(char* cfg) {
 		}
 		
 		int mod = 0;
-		if (id>LOCAL_BUTTON_COUNT) {
+		if (id>=LOCAL_BUTTON_COUNT) {
 			id -= LOCAL_BUTTON_COUNT;
 			mod = 1;
 		}
+		// LOG_info("shortcut %s:%s (%i:%i)\n", key,value, id, mod);
+
 		mapping->local = id;
 		mapping->mod = mod;
 	}
@@ -1052,6 +1059,8 @@ static void Config_free(void) {
 static void Config_readOptions(void) {
 	Config_readOptionsString(config.default_cfg);
 	Config_readOptionsString(config.user_cfg);
+
+	// screen_scaling = SCALE_NATIVE; // TODO: tmp
 }
 static void Config_readControls(void) {
 	Config_readControlsString(config.default_cfg);
@@ -2881,10 +2890,12 @@ void Core_open(const char* core_path, const char* tag_name) {
 	LOG_info("core: %s version: %s tag: %s (valid_extensions: %s need_fullpath: %i)\n", core.name, core.version, core.tag, info.valid_extensions, info.need_fullpath);
 	
 	sprintf((char*)core.config_dir, SDCARD_PATH "/.userdata/" PLATFORM "/%s-%s", core.tag, core.name);
+	sprintf((char*)core.states_dir, SDCARD_PATH "/.userdata/" ARCH_TAG "/%s-%s", core.tag, core.name);
 	sprintf((char*)core.saves_dir, SDCARD_PATH "/Saves/%s", core.tag);
 	sprintf((char*)core.bios_dir, SDCARD_PATH "/Bios/%s", core.tag);
+	
 	char cmd[512];
-	sprintf(cmd, "mkdir -p \"%s\"", core.config_dir);
+	sprintf(cmd, "mkdir -p \"%s\"; mkdir -p \"%s\"", core.config_dir, core.states_dir);
 	system(cmd);
 
 	set_environment_callback(environment_callback);
@@ -3848,7 +3859,7 @@ static void Menu_loop(void) {
 	int rumble_strength = VIB_getStrength();
 	VIB_setStrength(0);
 	
-	fast_forward = 0;
+	fast_forward = 0; // TODO: I can't remember why I do this but I find it kinda annoying...
 	POW_enableAutosleep();
 	PAD_reset();
 	
@@ -3860,7 +3871,7 @@ static void Menu_loop(void) {
 	char minui_dir[256];
 		
 	getEmuName(game.path, emu_name);
-	sprintf(minui_dir, USERDATA_PATH "/.minui/%s", emu_name);
+	sprintf(minui_dir, ARCH_PATH "/.minui/%s", emu_name);
 	mkdir(minui_dir, 0755);
 	
 	int rom_disc = -1;

@@ -25,6 +25,7 @@ fi
 #######################################
 
 export PLATFORM="miyoomini"
+export ARCH_TAG=arm-480
 export SDCARD_PATH="/mnt/SDCARD"
 export BIOS_PATH="$SDCARD_PATH/Bios"
 export SAVES_PATH="$SDCARD_PATH/Saves"
@@ -33,10 +34,11 @@ export CORES_PATH="$SYSTEM_PATH/cores"
 export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
 export LOGS_PATH="$USERDATA_PATH/logs"
 export DATETIME_PATH=$USERDATA_PATH/.minui/datetime.txt # used by bin/shutdown
+export ARCH_PATH="$SDCARD_PATH/.userdata/$ARCH_TAG"
 
 mkdir -p "$USERDATA_PATH"
 mkdir -p "$LOGS_PATH"
-mkdir -p "$USERDATA_PATH/.minui"
+mkdir -p "$ARCH_PATH/.minui"
 
 #######################################
 
@@ -73,7 +75,7 @@ lumon.elf & # adjust lcd luma and saturation
 
 CHARGING=`cat /sys/devices/gpiochip0/gpio/gpio59/value`
 if [ "$CHARGING" == "1" ]; then
-	batmon.elf
+	batmon.elf &> /mnt/SDCARD/batmon.txt
 fi
 
 keymon.elf &

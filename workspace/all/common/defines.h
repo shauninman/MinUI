@@ -17,15 +17,17 @@
 #define FONT_PATH RES_PATH "/BPreplayBold-unhinted.otf"
 #define USERDATA_PATH SDCARD_PATH "/.userdata/" PLATFORM
 #define PAKS_PATH SYSTEM_PATH "/paks"
-#define RECENT_PATH USERDATA_PATH "/.minui/recent.txt"
+#define ARCH_PATH SDCARD_PATH "/.userdata/" ARCH_TAG
+#define RECENT_PATH ARCH_PATH "/.minui/recent.txt"
+#define AUTO_RESUME_PATH ARCH_PATH "/.minui/auto_resume.txt"
+#define AUTO_RESUME_SLOT 9
+
 #define FAUX_RECENT_PATH SDCARD_PATH "/Recently Played"
 #define COLLECTIONS_PATH SDCARD_PATH "/Collections"
 
 #define LAST_PATH "/tmp/last.txt" // transient
 #define CHANGE_DISC_PATH "/tmp/change_disc.txt"
 #define RESUME_SLOT_PATH "/tmp/resume_slot.txt"
-#define AUTO_RESUME_PATH USERDATA_PATH "/.minui/auto_resume.txt"
-#define AUTO_RESUME_SLOT 9
 
 #define TRIAD_WHITE 		0xff,0xff,0xff
 #define TRIAD_BLACK 		0x00,0x00,0x00

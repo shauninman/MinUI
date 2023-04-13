@@ -882,7 +882,7 @@ static void readyResumePath(char* rom_path, int type) {
 	tmp = strrchr(path, '/') + 1;
 	strcpy(rom_file, tmp);
 	
-	sprintf(slot_path, "%s/.minui/%s/%s.txt", USERDATA_PATH, emu_name, rom_file); // /.userdata/.minui/<EMU>/<romname>.ext.txt
+	sprintf(slot_path, "%s/.minui/%s/%s.txt", ARCH_PATH, emu_name, rom_file); // /.userdata/arm-480/.minui/<EMU>/<romname>.ext.txt
 	
 	can_resume = exists(slot_path);
 }
@@ -969,7 +969,7 @@ static void openRom(char* path, char* last) {
 			
 			// get disc for state
 			char disc_path_path[256];
-			sprintf(disc_path_path, "%s/.minui/%s/%s.%s.txt", USERDATA_PATH, emu_name, rom_file, slot); // /.userdata/.minui/<EMU>/<romname>.ext.0.txt
+			sprintf(disc_path_path, "%s/.minui/%s/%s.%s.txt", ARCH_PATH, emu_name, rom_file, slot); // /.userdata/arm-480/.minui/<EMU>/<romname>.ext.0.txt
 
 			if (exists(disc_path_path)) {
 				// switch to disc path
