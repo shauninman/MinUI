@@ -14,7 +14,7 @@ static int screen_on = 0;
 static unsigned long screen_start;
 void screenOn(void) {
 	screen_start = SDL_GetTicks();
-	if (!screen_on) system("echo 100 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle");
+	if (!screen_on) system("echo 50 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle");
 	screen_on = 1;
 }
 void screenOff(void) {
@@ -59,9 +59,7 @@ int main(void) {
 	
 	memset(fb0_map, 0, map_size); // clear screen
 	
-	char charging_path[128];
-	sprintf(charging_path, "%s/charging.png", getenv("RES_PATH"));
-	SDL_Surface* img = IMG_Load(charging_path); // 24-bit opaque png
+	SDL_Surface* img = IMG_Load("/mnt/SDCARD/.system/res/charging-640-480.png"); // 24-bit opaque png
 	
 	uint8_t* dst = (uint8_t*)fb0_map; // rgba
 	uint8_t* src = (uint8_t*)img->pixels; // bgr
