@@ -16,3 +16,6 @@ $(PLATFORM):
 	cp ./workspace/$@/install/boot.sh ./build/BASE/miyoo/app/.tmp_update/updater
 	cp ./workspace/$@/install/*.png ./build/BASE/miyoo/app/.tmp_update
 	cp ./workspace/$@/show/show.elf ./build/BASE/miyoo/app/.tmp_update
+	# extras
+	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
