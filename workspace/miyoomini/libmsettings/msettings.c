@@ -23,7 +23,7 @@ typedef struct Settings {
 } Settings;
 static Settings DefaultSettings = {
 	.version = 1,
-	.brightness = 2,
+	.brightness = 3,
 	.speaker = 20,
 };
 static Settings* settings;
