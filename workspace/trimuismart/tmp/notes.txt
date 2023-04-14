@@ -1,0 +1,16 @@
+we have to kick this off with /mnt/SDCARD/trimui/app/MainUI
+
+	cp -r .tmp_update /mnt/SDCARD/ # double-check path terminals
+
+restore tmp_update hook
+
+	if [ ! -f /etc/main.original ]; then
+		cp /etc/main /etc/main.original (cp not mv, in case we break something)
+		cp main.custom /etc/main
+	fi
+
+then start it all up
+
+	/mnt/SDCARD/.tmp_update/updater
+
+updater performs the install or update

@@ -16,3 +16,5 @@ libretro-common
 
 **/other/sdl
 **/other/DinguxCommander
+
+workspace/hash.txt

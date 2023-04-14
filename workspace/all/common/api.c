@@ -867,6 +867,7 @@ void PAD_poll(void) {
 		int btn = BTN_NONE;
 		int id = -1;
 		if (event.type==SDL_KEYDOWN || event.type==SDL_KEYUP) {
+			// TODO: can this be switched to use SDLK_*?
 			uint8_t code = event.key.keysym.scancode;
 				 if (code==CODE_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
  			else if (code==CODE_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }

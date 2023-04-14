@@ -77,6 +77,7 @@ setup:
 	# remove authoring detritus
 	cd ./build && find . -type f -name '.keep' -delete
 	cd ./build && find . -type f -name '*.meta' -delete
+	echo $(BUILD_HASH) > ./workspace/hash.txt
 
 done:
 	say "done"

@@ -35,9 +35,11 @@ bump() {
 	show ./workspace/all/minarch/libretro-common
 	bump
 	tell RG35XX
+	show ./workspace/rg35xx/other/DinguxCommander
 	list ./workspace/rg35xx/cores/src
 	bump
 	tell MIYOOMINI
 	show ./workspace/miyoomini/other/sdl
+	show ./workspace/miyoomini/other/DinguxCommander
 	list ./workspace/miyoomini/cores/src
 } | sed 's/\n/ /g'

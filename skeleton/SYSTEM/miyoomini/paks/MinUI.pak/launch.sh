@@ -75,7 +75,7 @@ lumon.elf & # adjust lcd luma and saturation
 
 CHARGING=`cat /sys/devices/gpiochip0/gpio/gpio59/value`
 if [ "$CHARGING" == "1" ]; then
-	batmon.elf &> /mnt/SDCARD/batmon.txt
+	batmon.elf # &> /mnt/SDCARD/batmon.txt
 fi
 
 keymon.elf &

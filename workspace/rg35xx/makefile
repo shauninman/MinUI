@@ -12,15 +12,19 @@ endif
 
 ###########################################################
 
+REQUIRES_COMMANDER=other/DinguxCommander
+
 all:
 	cd ./overclock && make
 	cd ./boot && ./build.sh
 
-early:
-	
+early: $(REQUIRES_COMMANDER)
+	cd other/DinguxCommander && make -j
 
 clean:
 	cd ./overclock && make clean
 	cd ./boot && rm -rf ./output
+	cd other/DinguxCommander && make clean
 	
-	
+$(REQUIRES_COMMANDER):
+	git clone --depth 1 --branch minui-rg35xx https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)

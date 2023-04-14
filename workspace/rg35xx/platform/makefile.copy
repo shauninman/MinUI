@@ -6,3 +6,8 @@ $(PLATFORM):
 	cp ./workspace/$@/boot/output/boot_logo.bmp.gz ./build/SYSTEM/$@/dat/
 	cp ./workspace/$@/boot/output/rootfs.ext2 ./build/SYSTEM/$@/
 	cp ./workspace/$@/install/install.sh ./build/SYSTEM/$@/bin/
+	cp ./workspace/$@/ramdisk/patched-ramdisk.img ./build/SYSTEM/$@/dat/ramdisk.img
+	cp ./workspace/$@/ramdisk/charging.png ./build/SYSTEM/$@/dat/
+	# extras
+	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/

@@ -1,4 +1,17 @@
+all
+	add a res (or many?) folder 
+		for install/update and charging gfx?
+	show
+	say
+	confirm
+	promote .userdata/arm-480 to /States
+
+smart?
+	libmsettings
+
 miyoomini
+	there should be no delay when pressing volume/brightness modifiers here
+		only desirable for MENU modifier on 35xx/plus
 	update tearing defaults to strict for
 		gb
 		gbc
@@ -7,9 +20,13 @@ miyoomini
 		???
 
 rg35xx
-	see if I can replace ramdisk.img during install/update (maybe with rename/move/delete if not directly copying over?)
+	how to handle updating on mini and missing TF1 updates as a result?
+		could I write the version to the .minstalled file
+		if it doesn't match the current one run the installer
+
 
 shows games in alt collated folders even if the alt pak isn't present...
+	not sure how that's possible...
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
@@ -20,11 +37,17 @@ README
 
 have a verbose version and a short list version
 
+---
+
 1. makefile routes requests through makefile.toolchain
 2. which clones the toolchain repo if necessary and
 3. spins up a docker to run workspace/makefile build for each/the target platform
 4. which builds commone elfs and punts to workspace/PLATFORM/makefile
 5. which builds unique platform elfs
+
+there's more to this now (eg. PLATFORM/makefile.copy)
+
+---
 
 potential mm+ identifier
 	/customer/app/axp_test exists

@@ -1,6 +1,7 @@
 #!/system/bin/sh
 
 # NOTE: this file is not chrooted so it's using stock's everything!
+{
 
 TF1_PATH=/mnt/mmc
 TF2_PATH=/mnt/sdcard # TF1 should be linked to this path if TF2 is missing or doesn't contain our system folder
@@ -27,6 +28,11 @@ was_updated() {
 			continue
 		fi
 		
+		if [[ "$A_NAME" == "charging.png" ]]; then
+			# we don't care if the user has changed their charging image
+			continue
+		fi
+		
 		if [ ! -f "$B_PATH" ]; then
 			continue
 		fi
@@ -46,11 +52,19 @@ if [ ! -f $FLAG_PATH ] || was_updated; then
 	echo "updating misc partition"
 	mount -o remount,rw /dev/block/actb /misc
 	cp $SYSTEM_PATH/dat/dmenu.bin /misc
+	cp $SYSTEM_PATH/dat/ramdisk.img /misc
+	
+	# boot logo, only installed, never updated
 	if [ ! -f $FLAG_PATH ]; then
-		# only replace boot logo on install not update!
 		cp $SYSTEM_PATH/dat/boot_logo.bmp.gz /misc
 	fi
+	# charging graphic, same
+	if [ ! -f $SYSTEM_PATH/dat/charging.png ]; then
+		cp $SYSTEM_PATH/dat/charging.png /misc
+	fi
+
 	touch $FLAG_PATH
 	sync && reboot
 fi
 
+} &> /mnt/sdcard/install.txt

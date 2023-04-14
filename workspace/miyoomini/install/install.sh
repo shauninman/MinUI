@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# NOTE: becomes miyoo/app/MainUI
+
 SDCARD_PATH=/mnt/SDCARD
 cd "$SDCARD_PATH/miyoo/app"
 

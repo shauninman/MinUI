@@ -37,6 +37,3 @@ $(REQUIRES_SDL):
 	git clone --depth 1 --branch miniui-miyoomini https://github.com/shauninman/SDL-1.2.git $(REQUIRES_SDL)
 $(REQUIRES_COMMANDER):
 	git clone --depth 1 --branch miniui-miyoomini https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)
-	
-
-

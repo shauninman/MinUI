@@ -31,11 +31,11 @@ LDFLAGS	 = -ldl $(LIBS) -lmsettings -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
 # LDFLAGS += -lasan
 
 # TODO: uncomment
-# BUILD_DATE!=date +%Y.%m.%d
-# BUILD_HASH!=git rev-parse --short HEAD
-# CFLAGS += -DBUILD_DATE=\"${BUILD_DATE}\" -DBUILD_HASH=\"${BUILD_HASH}\"
+BUILD_DATE!=date +%Y.%m.%d
+BUILD_HASH!=cat ../../hash.txt
+CFLAGS += -DBUILD_DATE=\"${BUILD_DATE}\" -DBUILD_HASH=\"${BUILD_HASH}\"
 
-CFLAGS += -DBUILD_DATE=\"20230326\" -DBUILD_HASH=\"d34db33f\"
+# CFLAGS += -DBUILD_DATE=\"20230326\" -DBUILD_HASH=\"d34db33f\"
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 
