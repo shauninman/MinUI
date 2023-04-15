@@ -13,6 +13,9 @@ endif
 all:
 	# $(PLATFORM) all
 
+early:
+	# $(PLATFORM) early
+
 clean:
 	# $(PLATFORM) clean
 	

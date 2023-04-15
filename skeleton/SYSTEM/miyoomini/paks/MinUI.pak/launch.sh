@@ -58,8 +58,8 @@ rm -f "$SDCARD_PATH/update.log"
 
 #######################################
 
-export LD_LIBRARY_PATH="/mnt/SDCARD/.system/miyoomini/lib:$LD_LIBRARY_PATH"
-export PATH="/mnt/SDCARD/.system/miyoomini/bin:$PATH"
+export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
+export PATH=$SYSTEM_PATH/bin:$PATH
 
 #######################################
 

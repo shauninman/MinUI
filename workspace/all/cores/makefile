@@ -39,6 +39,9 @@ output/$(1)_libretro.so: src/$(1)/.patched
 	mv src/$$($1_BUILD_PATH)/$(if $($(1)_CORE),$($(1)_CORE),$(1)_libretro.so) ./output
 
 clone-$(1): src/$(1)
+
+status-$(1): src/$(1)
+	cd src/$(1) && git show --oneline -s
 	
 patch-$(1): src/$(1)/.patched
 

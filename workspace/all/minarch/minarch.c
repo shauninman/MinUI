@@ -3025,7 +3025,7 @@ static SDL_Surface* Menu_thumbnail(SDL_Surface* src_img) {
 }
 
 void Menu_init(void) {
-	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE, FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, 0, 0, 0, 0);
+	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
 	SDL_SetAlpha(menu.overlay, SDL_SRCALPHA, 0x80);
 	SDL_FillRect(menu.overlay, NULL, 0);
 }
