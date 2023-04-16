@@ -1,37 +1,25 @@
 all
-	minarch
-		there should be no delay when pressing volume/brightness modifiers on systems without dedicated volume buttons
-			only desirable for MENU modifier on 35xx/plus
-		
+	promote .userdata/arm-480 to /States?
+		might depend on how the Model S fairs
+	hardware button lables need updating (eg. (POWER) SLEEP -> L+R+MENU)
 	add a res (or many?) folder 
 		for install/update and charging gfx?
 	show
 	say
 	confirm
-	promote .userdata/arm-480 to /States?
 
 smart
-	updating!
-	
 	keymon
-		key repeat
-	battery/charging
-		/sys/devices/platform/sunxi_usb_udc/udc/sunxi_usb_udc/
-		
-			current_speed == high-speed or UNKNOWN
-			is_otg == 0
-	
-	how to turn off display
-	figure out
-		sleep
-			hold L+R then press MENU
-			POWER button is hardcoded into faux sleep in api.c
-		quicksave (autoresume already works)
-			add as last item to Options?
-		save state preview images (always save 320x240 images?)
+		battery/usb monitoring
 	implement DE2_test
 		scaling
 		tearing
+		
+	how to turn off display
+	figure out
+		quicksave (autoresume already works)
+			add as last item to Options?
+		save state preview images (always save 320x240 images?)
 
 miyoomini
 	update tearing defaults to strict for

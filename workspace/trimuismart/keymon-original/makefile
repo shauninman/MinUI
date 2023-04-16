@@ -5,7 +5,7 @@ endif
 TARGET = keymon
 PRODUCT = $(TARGET).elf
 
-CC = $(CROSS_COMPILE)gcc -I../../all/common/ -I../platform/
+CC = $(CROSS_COMPILE)gcc
 FLAGS	= -Os -lmsettings -lpthread -lrt -ldl -Wl,--gc-sections -s
 
 all:
