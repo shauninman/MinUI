@@ -1,4 +1,6 @@
 all
+	minarch
+		support missing buttons with MENU+BUTTON?
 	promote .userdata/arm-480 to /States?
 		might depend on how the Model S fairs
 	hardware button lables need updating (eg. (POWER) SLEEP -> L+R+MENU)
@@ -9,6 +11,7 @@ all
 	confirm
 
 smart
+	update default.cfg that include bindings for L2/R2
 	keymon
 		battery/usb monitoring
 	implement DE2_test
