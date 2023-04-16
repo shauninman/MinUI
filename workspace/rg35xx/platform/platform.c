@@ -429,7 +429,7 @@ SDL_Surface* PLAT_initOverlay(void) {
 
 	int x,y,w,h;
 	w = h = ovl.overlay->w;
-	x = SCREEN_WIDTH - SCALE1(PADDING) - w;
+	x = FIXED_WIDTH - SCALE1(PADDING) - w;
 	y = SCALE1(PADDING);
 	
 	ovl.oinfo.mem_off = (uintptr_t)ovl.ov_info.padd - vid.finfo.smem_start;

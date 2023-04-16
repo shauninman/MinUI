@@ -48,14 +48,6 @@
 #define BASE_WIDTH 320
 #define BASE_HEIGHT 240
 
-#define SCREEN_WIDTH 	640
-#define SCREEN_HEIGHT 	480
-#define SCREEN_SCALE 	2 // SCREEN_HEIGHT / BASE_HEIGHT
-
-#define SCREEN_DEPTH 	16
-#define SCREEN_BPP 		2
-#define SCREEN_PITCH 	(SCREEN_WIDTH * SCREEN_BPP)
-
 // all before scale
 #define PILL_SIZE 30
 #define BUTTON_SIZE 20
@@ -64,7 +56,7 @@
 #define SETTINGS_SIZE 4
 #define SETTINGS_WIDTH 80
 
-#define MAIN_ROW_COUNT 6 // SCREEN_HEIGHT / (PILL_SIZE * SCREEN_SCALE) - 2 (floor and subtract 1 if not an integer)
+#define MAIN_ROW_COUNT 6 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
 #define PADDING 10 // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
 
 #define FONT_LARGE 16 	// menu
@@ -81,9 +73,10 @@
 #define MIN(a, b) (a) < (b) ? (a) : (b)
 #define CEIL_DIV(a,b) ((a) + (b) - 1) / (b)
 
-#define SCALE1(a) ((a)*SCREEN_SCALE)
-#define SCALE2(a,b) ((a)*SCREEN_SCALE),((b)*SCREEN_SCALE)
-#define SCALE4(a,b,c,d) ((a)*SCREEN_SCALE),((b)*SCREEN_SCALE),((c)*SCREEN_SCALE),((d)*SCREEN_SCALE)
+#define SCALE1(a) ((a)*FIXED_SCALE)
+#define SCALE2(a,b) ((a)*FIXED_SCALE),((b)*FIXED_SCALE)
+#define SCALE3(a,b,c) ((a)*FIXED_SCALE),((b)*FIXED_SCALE),((c)*FIXED_SCALE)
+#define SCALE4(a,b,c,d) ((a)*FIXED_SCALE),((b)*FIXED_SCALE),((c)*FIXED_SCALE),((d)*FIXED_SCALE)
 
 ///////////////////////////////
 
@@ -108,8 +101,9 @@ enum {
 	BTN_ID_MENU,
 	BTN_ID_PLUS,
 	BTN_ID_MINUS,
-	BTN_ID_POWER,
+	BTN_ID_POWER,	
 	BTN_ID_COUNT,
+	BTN_ID_COMBO,
 };
 enum {
 	BTN_NONE	= 0,
@@ -131,6 +125,7 @@ enum {
 	BTN_PLUS	= 1 << BTN_ID_PLUS,
 	BTN_MINUS	= 1 << BTN_ID_MINUS,
 	BTN_POWER	= 1 << BTN_ID_POWER,
+	BTN_COMBO	= 1 << BTN_ID_COMBO,
 };
 #endif
 

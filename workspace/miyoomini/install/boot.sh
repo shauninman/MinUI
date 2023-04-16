@@ -1,38 +1,17 @@
 #!/bin/sh
-
-# NOTE: becomes .tmp_update/updater
-
-# TODO: this file is shared with many Trimui and Miyoo devices, which owns it?
-# TODO: add a "many" folder to workspace for stuff like this?
-# TODO: copy boot folder to build/BASE/ as .tmp_update and rename boot.sh to updater
-
-# TODO: Linux version dffers 
-# 	smart	3.4.39
-#	mini	4.9.84 
-#	models	3.10.65
-
-# VERSION=`cat /proc/version 2> /dev/null`
-# case $VERSION in
-# *"@alfchen-ubuntu"*)
-# 	SYSTEM_NAME="trimui"
-# 	;;
-# *"@alfchen-NUC"*)
-# 	SYSTEM_NAME="miyoomini" # or smart :thinking_face:
-# 	;;
-# esac
+# NOTE: becomes .tmp_update/miyoomini.sh
 
 PLATFORM="miyoomini"
 SDCARD_PATH="/mnt/SDCARD"
 UPDATE_PATH="$SDCARD_PATH/MinUI.zip"
 SYSTEM_PATH="$SDCARD_PATH/.system"
 
-# TODO: this might not be available on trimuis, check!
 CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 echo performance > "$CPU_PATH"
 
 # install/update
 if [ -f "$UPDATE_PATH" ]; then 
-	cd $(dirname "$0")
+	cd $(dirname "$0")/$PLATFORM
 	if [ -d "$SYSTEM_PATH" ]; then
 		# init backlight
 		echo 0 > /sys/class/pwm/pwmchip0/export

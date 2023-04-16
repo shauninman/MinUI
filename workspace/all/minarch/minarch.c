@@ -2453,9 +2453,9 @@ static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, ui
 
 static SDL_Surface* scaler_surface;
 static void selectScaler_PAR(int width, int height, int pitch) {
-	int device_width = SCREEN_WIDTH;
-	int device_height = SCREEN_HEIGHT;
-	int device_pitch = SCREEN_PITCH;
+	int device_width = FIXED_WIDTH;
+	int device_height = FIXED_HEIGHT;
+	int device_pitch = FIXED_PITCH;
 
 	renderer.scaler = scaleNull;
 	renderer.dst_p = device_pitch;
@@ -2614,8 +2614,8 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	int src_w = width;
 	int src_h = height;
 	
-	int scale_x = CEIL_DIV(SCREEN_WIDTH, src_w);
-	int scale_y = CEIL_DIV(SCREEN_HEIGHT,src_h);
+	int scale_x = CEIL_DIV(FIXED_WIDTH, src_w);
+	int scale_y = CEIL_DIV(FIXED_HEIGHT,src_h);
 	int scale = MAX(scale_x, scale_y);
 	
 	// TODO: this "logic" is a disaster
@@ -3847,8 +3847,8 @@ static void Menu_loop(void) {
 	int target_h = FIXED_HEIGHT;
 	int target_p = target_w * FIXED_BPP;
 	
-	if (screen->w!=SCREEN_WIDTH || screen->h!=SCREEN_HEIGHT) {
-		screen = GFX_resize(SCREEN_WIDTH,SCREEN_HEIGHT,SCREEN_PITCH);
+	if (screen->w!=FIXED_WIDTH || screen->h!=FIXED_HEIGHT) {
+		screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 	}
 	
 	SRAM_write();

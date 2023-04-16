@@ -1,11 +1,6 @@
 #!/bin/sh
 # MiniUI.pak
 
-# leds off
-echo 0 > /sys/devices/platform/sunxi-led/leds/led1/brightness
-echo 0 > /sys/devices/platform/sunxi-led/leds/led2/brightness
-echo 0 > /sys/devices/platform/sunxi-led/leds/led3/brightness
-
 # recover from readonly SD card -------------------------------
 touch /mnt/writetest
 sync
@@ -38,17 +33,22 @@ mkdir -p "$ARCH_PATH/.minui"
 
 # TODO: overclock
 
-echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo performance > $CPU_PATH
 echo A,B,X,Y,L,R > /sys/module/gpio_keys_polled/parameters/button_config
 
 #######################################
 
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:/usr/trimui/lib:$LD_LIBRARY_PATH
 export PATH=$SYSTEM_PATH/bin:/usr/trimui/bin:$PATH
-env
 
-# TODO:
-# keymon.elf &
+leds_off.sh
+
+killall MtpDaemon
+killall wpa_supplicant
+ifconfig wlan0 down
+
+keymon.elf &
 
 #######################################
 
@@ -66,12 +66,15 @@ NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH"  && sync
 while [ -f "$EXEC_PATH" ]; do
 	# overclock.elf $CPU_SPEED_PERF
+	echo performance > $CPU_PATH
 	minui.elf &> $LOGS_PATH/minui.txt
+	echo performance > $CPU_PATH
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
+		echo performance > $CPU_PATH
 		rm -f $NEXT_PATH
 		# if [ -f "/tmp/using-swap" ]; then
 		# 	swapoff $USERDATA_PATH/swapfile

@@ -1,13 +1,8 @@
 $(PLATFORM):
 	# $@
-	# installer
-	# mkdir -p ./build/BASE/miyoo/app/.tmp_update
-	# cp ./workspace/$@/install/nop.sh ./build/BASE/miyoo/app/keymon
-	# cp ./workspace/$@/install/install.sh ./build/BASE/miyoo/app/MainUI
-	# cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
-	# cp ./workspace/$@/install/boot.sh ./build/BASE/miyoo/app/.tmp_update/updater
-	# cp ./workspace/$@/install/*.png ./build/BASE/miyoo/app/.tmp_update
-	# cp ./workspace/$@/show/show.elf ./build/BASE/miyoo/app/.tmp_update
+	# installer (new)
+	mkdir -p ./build/BASE/trimui/app
+	cp ./workspace/$@/install/boot.sh ./build/BOOT/$@.sh
 	# extras
-	# cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
-	# cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
+	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/

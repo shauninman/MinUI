@@ -38,10 +38,6 @@ static int shm_fd = -1;
 static int is_host = 0;
 static int shm_size = sizeof(Settings);
 
-#define BACKLIGHT_PATH "/sys/class/backlight/backlight.2/bl_power"
-#define BRIGHTNESS_PATH "/sys/class/backlight/backlight.2/brightness"
-#define VOLUME_PATH "/sys/class/volume/value"
-
 void InitSettings(void) {
 	sprintf(SettingsPath, "%s/msettings.bin", getenv("USERDATA_PATH"));
 	
@@ -94,51 +90,37 @@ int GetBrightness(void) { // 0-10
 	return settings->brightness;
 }
 void SetBrightness(int value) {
-	// int raw;
-	// switch (value) {
-	// 	case 0: raw=16; break; 		//   0
-	// 	case 1: raw=24; break; 		//   8
-	// 	case 2: raw=40; break; 		//  16
-	// 	case 3: raw=64; break; 		//  24
-	// 	case 4: raw=128; break;		//	64
-	// 	case 5: raw=192; break;		//  64
-	// 	case 6: raw=256; break;		//  64
-	// 	case 7: raw=384; break;		// 128
-	// 	case 8: raw=512; break;		// 128
-	// 	case 9: raw=768; break;		// 256
-	// 	case 10: raw=1024; break;	// 256
-	// }
-	// SetRawBrightness(raw);
-	// settings->brightness = value;
-	// SaveSettings();
+	settings->brightness = value;
+
+	#define BRIGHTNESS_MIN 30
+	#define BRIGHTNESS_MAX 255
+	int raw = value * (BRIGHTNESS_MAX - BRIGHTNESS_MIN) / 10 + BRIGHTNESS_MIN;
+	
+	SetRawBrightness(raw);
+	SaveSettings();
 }
 
 int GetVolume(void) { // 0-20
 	return settings->jack ? settings->headphones : settings->speaker;
 }
 void SetVolume(int value) {
-	// if (settings->jack) settings->headphones = value;
-	// else settings->speaker = value;
-	//
-	// int raw = value * 2;
-	// SetRawVolume(raw);
-	// SaveSettings();
+	if (settings->jack) settings->headphones = value;
+	else settings->speaker = value;
+
+	int raw = value * 31 / 20;
+	SetRawVolume(raw);
+	SaveSettings();
 }
 
-void SetRawBrightness(int val) { // 0 - 1024
-	// printf("SetRawBrightness(%i)\n", val); fflush(stdout);
-	// int fd = open(BRIGHTNESS_PATH, O_WRONLY);
-	// if (fd>=0) {
-	// 	dprintf(fd,"%d",val);
-	// 	close(fd);
-	// }
+void SetRawBrightness(int val) { // 0 - 255
+	char cmd[256];
+	sprintf(cmd, "iodisp 0 %i", val);
+	system(cmd);
 }
 void SetRawVolume(int val) { // 0 - 40
-	// int fd = open(VOLUME_PATH, O_WRONLY);
-	// if (fd>=0) {
-	// 	dprintf(fd,"%d",val);
-	// 	close(fd);
-	// }
+	char cmd[256];
+	sprintf(cmd, "amixer sset 'Lineout volume' %i", val);
+	system(cmd);
 }
 
 // monitored and set by thread in keymon

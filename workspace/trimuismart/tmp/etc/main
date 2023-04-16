@@ -3,7 +3,7 @@
 #wait for SDCARD mounted
 mounted=`cat /proc/mounts | grep SDCARD`
 cnt=0
-while [ "$mounted"=="" ] && [ $cnt -lt 6 ] ; do
+while [ "$mounted" == "" ] && [ $cnt -lt 6 ] ; do
    sleep 0.5
    cnt=`expr $cnt + 1`
    mounted=`cat /proc/mounts | grep SDCARD`

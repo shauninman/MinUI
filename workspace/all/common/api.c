@@ -140,7 +140,7 @@ SDL_Surface* GFX_init(int mode) {
 	asset_rgbs[ASSET_DOT]			= RGB_LIGHT_GRAY;
 	
 	char asset_path[MAX_PATH];
-	sprintf(asset_path, RES_PATH "/assets@%ix.png", SCREEN_SCALE);
+	sprintf(asset_path, RES_PATH "/assets@%ix.png", FIXED_SCALE);
 	gfx.assets = IMG_Load(asset_path);
 	
 	TTF_Init();
@@ -339,7 +339,7 @@ void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	SDL_Rect rect = asset_rects[ASSET_BATTERY];
 	int x = dst_rect->x;
 	int y = dst_rect->y;
-	x += (SCALE1(PILL_SIZE) - (rect.w + SCREEN_SCALE)) / 2;
+	x += (SCALE1(PILL_SIZE) - (rect.w + FIXED_SCALE)) / 2;
 	y += (SCALE1(PILL_SIZE) - rect.h) / 2;
 	
 	if (pow.is_charging) {
@@ -845,6 +845,7 @@ void PAD_reset(void) {
 	pad.just_pressed = BTN_NONE;
 	pad.is_pressed = BTN_NONE;
 	pad.just_released = BTN_NONE;
+	pad.just_repeated = BTN_NONE;
 }
 void PAD_poll(void) {
 	// reset transient state
@@ -1080,14 +1081,14 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 		if (before_sleep) before_sleep();
 		POW_powerOff();
 	}
-	if (PAD_justPressed(BTN_SLEEP)) {
+	if ((BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justPressed(BTN_MENU)) || PAD_justPressed(BTN_SLEEP)) {
 		power_start = now;
 	}
 	
 	#define SLEEP_DELAY 30000
 	if (now-cancel_start>=SLEEP_DELAY && POW_preventAutosleep()) cancel_start = now;
 	
-	if (now-cancel_start>=SLEEP_DELAY || PAD_justReleased(BTN_SLEEP)) {
+	if (now-cancel_start>=SLEEP_DELAY || (BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justReleased(BTN_MENU)) || PAD_justReleased(BTN_SLEEP)) {
 		if (before_sleep) before_sleep();
 		POW_fauxSleep();
 		if (after_sleep) after_sleep();
@@ -1099,8 +1100,9 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	
 	int was_dirty = dirty; // dirty list (not including settings/battery)
 	
+	int delay_settings = BTN_MOD_VOLUME==BTN_MENU || BTN_MOD_BRIGHTNESS==BTN_MENU;
 	#define SETTING_DELAY 500
-	if (show_setting && now-setting_start>=SETTING_DELAY && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
+	if (show_setting && (now-setting_start>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 		show_setting = 0;
 		dirty = 1;
 	}
@@ -1110,7 +1112,7 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	}
 	
 	#define MENU_DELAY 250 // also in PAD_tappedMenu()
-	if (((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && now-menu_start>=MENU_DELAY) || 
+	if (((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && (!delay_settings || now-menu_start>=MENU_DELAY)) || 
 		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))) {
 	// if (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS) || ((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && now-menu_start>=MENU_DELAY)) {
 		setting_start = now;
@@ -1155,6 +1157,7 @@ static void POW_exitSleep(void) {
 	
 	sync();
 }
+// TODO: this needs to account for devices without power buttons
 static void POW_waitForWake(void) {
 	SDL_Event event;
 	int wake = 0;
@@ -1162,8 +1165,8 @@ static void POW_waitForWake(void) {
 	while (!wake) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type==SDL_KEYUP) {
-				uint8_t code = event.key.keysym.scancode;
-				if (code==CODE_POWER) {
+				SDLKey key = event.key.keysym.sym;
+				if ((BTN_WAKE==BTN_POWER && key==BUTTON_POWER) || (BTN_WAKE==BTN_MENU && key==BUTTON_MENU)) {
 					wake = 1;
 					break;
 				}

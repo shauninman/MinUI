@@ -10,13 +10,17 @@ endif
 
 ###########################################################
 
+REQUIRES_COMMANDER=other/DinguxCommander
+
 all:
 	# $(PLATFORM) all
 
 early:
-	# $(PLATFORM) early
+	cd other/DinguxCommander && make -j
 
 clean:
-	# $(PLATFORM) clean
+	cd other/DinguxCommander && make clean
 	
-	
+
+$(REQUIRES_COMMANDER):
+	git clone --depth 1 --branch trimui-smart https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)

@@ -4,17 +4,16 @@
 # it has too, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-# PLATFORMS = miyoomini rg35xx
-PLATFORMS = trimuismart
+PLATFORMS = miyoomini rg35xx trimuismart
 endif
-
 
 ###########################################################
 
 BUILD_HASH:=$(shell git rev-parse --short HEAD)
 RELEASE_TIME:=$(shell date +%Y%m%d)
-RELEASE_BASE=MinUI-$(RELEASE_TIME)b
-RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
+RELEASE_BETA=b
+RELEASE_BASE=MinUI-$(RELEASE_TIME)$(RELEASE_BETA)
+RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
@@ -22,7 +21,10 @@ RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 export MAKEFLAGS=--no-print-directory
 
-all: setup $(PLATFORMS) package done
+all: setup $(PLATFORMS) special package done
+
+name: 
+	echo $(RELEASE_NAME)
 
 build:
 	# ----------------------------------------------------
@@ -48,7 +50,9 @@ bundle:
 	cp ./workspace/$(PLATFORM)/cores/output/snes9x2005_plus_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	
 	# extras
-	# cp ./workspace/$(PLATFORM)/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
+ifneq ($(PLATFORM), trimuismart)
+	cp ./workspace/$(PLATFORM)/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
+endif
 	cp ./workspace/$(PLATFORM)/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/MGBA.pak
 	cp ./workspace/$(PLATFORM)/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/SGB.pak
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_pce_fast_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/PCE.pak
@@ -81,6 +85,13 @@ setup:
 
 done:
 	say "done"
+
+special:
+	# ----------------------------------------------------
+	# setup miyoomini/trimui family .tmp_update in BOOT
+	mv ./build/BOOT/updater.sh ./build/BOOT/updater
+	test -f ./build/BASE/miyoo  && cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update || true
+	test -f ./build/BASE/trimui && cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update || true
 
 package:
 	# ----------------------------------------------------

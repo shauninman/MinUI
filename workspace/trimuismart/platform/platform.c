@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <msettings.h>
+
 #include "defines.h"
 #include "platform.h"
 #include "api.h"
@@ -19,20 +21,31 @@
 
 static struct VID_Context {
 	SDL_Surface* screen;
+	int fd_fb;
 } vid;
+static int _;
+
+int initBatteryADC();
+int uninitBatteryADC();
 
 SDL_Surface* PLAT_initVideo(void) {
+	initBatteryADC();
+	
 	putenv("SDL_VIDEO_FBCON_ROTATION=CCW");
 	putenv("SDL_USE_PAN=true");
 	
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
+	vid.fd_fb = open("/dev/fb0", O_RDWR);
 	vid.screen = SDL_SetVideoMode(FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,SDL_SWSURFACE);
 	return vid.screen;
 }
 
 void PLAT_quitVideo(void) {
+	uninitBatteryADC();
+	
+	close(vid.fd_fb);
 	SDL_Quit();
 }
 
@@ -60,12 +73,12 @@ void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
 void PLAT_vsync(void) {
-	// TODO:
+	// ioctl(vid.fd_fb, FBIO_WAITFORVSYNC, &_); // TODO: this slows MinUI/menu's roll but hurts FC framerate
 }
 
 void PLAT_flip(SDL_Surface* screen, int sync) {
-	// TODO:
 	SDL_Flip(screen);
+	if (sync) PLAT_vsync();
 }
 
 SDL_Surface* PLAT_getVideoBufferCopy(void) {
@@ -101,42 +114,103 @@ void PLAT_enableOverlay(int enable) {
 }
 
 ///////////////////////////////
+// TODO: move to keymon?
+// TODO: simplify and rewrite these
+#define LRADC_BASE 0x01C22800
+#define LRADC_CTRL 0x00
+#define LRADC_INTC 0x04
+#define LRADC_DAT0 0x0C
+#define LRADC_DAT1 0x10
 
+int lradcfd = -1;
+volatile uint8_t * lradcaddr = NULL; 
+int initBatteryADC(){
+	uint32_t PageSize, PageMask;
+	uint32_t addr_start, addr_offset;
+
+	if ((lradcfd = open("/dev/mem", O_RDWR | O_SYNC)) < 0) // O_RDWR
+	{
+        printf("initBatteryADC open mem fail: %d\n", errno);
+        return -1;
+    }
+
+	PageSize = sysconf(_SC_PAGESIZE);
+	PageMask = (~(PageSize - 1));
+
+	addr_start = LRADC_BASE & PageMask;
+	addr_offset = LRADC_BASE & ~PageMask;
+	lradcaddr = (uint8_t*)mmap(0, PageSize * 2, PROT_READ|PROT_WRITE, MAP_SHARED, lradcfd, addr_start);
+	if (lradcaddr == MAP_FAILED){
+        close(lradcfd);
+        lradcfd = -1;
+        lradcaddr = NULL;
+        printf("initBatteryADC mmap fail: %d\n", errno);
+        return -1;
+    }else{
+        lradcaddr += addr_offset;
+    }    
+    return 0;
+}
+int readBatteryADC(){
+    if(lradcaddr){
+        uint32_t val;
+        val = *((uint32_t *)(lradcaddr + LRADC_DAT1));
+        return val;
+    }
+    return -1;
+}
+int uninitBatteryADC(){
+    uint32_t PageSize = sysconf(_SC_PAGESIZE);
+    if(lradcaddr) munmap((void*)lradcaddr, PageSize * 2);
+    if(lradcfd >= 0) close(lradcfd);    
+    return 0;
+}
+
+///////////////////////////////
+
+#define USB_SPEED "/sys/devices/platform/sunxi_usb_udc/udc/sunxi_usb_udc/current_speed"
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
-	// TODO: tmp
-	*is_charging = 1; // prevent sleep
+	*is_charging = 0;
 	*charge = POW_LOW_CHARGE;
-
-	// *is_charging = getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
-	//
-	// int i = getInt("/tmp/battery"); // 0-100?
-	//
-	// // worry less about battery and more about the game you're playing
-	//      if (i>80) *charge = 100;
-	// else if (i>60) *charge =  80;
-	// else if (i>40) *charge =  60;
-	// else if (i>20) *charge =  40;
-	// else if (i>10) *charge =  20;
-	// else           *charge =  10;
+	return;
+	
+	// TODO: is this causing hangs?
+	char value[16]; memset(value, 0, 16);
+	getFile(USB_SPEED, value, 16);
+	*is_charging = !exactMatch(value, "UNKNOWN\n");
+		
+	// TODO: this eventually hangs...I think
+	int raw = readBatteryADC();
+	
+	char cmd[256];
+	sprintf(cmd, "echo \"adc: %i\" > /mnt/SDCARD/adc.txt", raw);
+	system(cmd);
+	
+	int i = raw * 100 / 63; // TODO: test this!
+	// worry less about battery and more about the game you're playing
+	     if (i>80) *charge = 100;
+	else if (i>60) *charge =  80;
+	else if (i>40) *charge =  60;
+	else if (i>20) *charge =  40;
+	else if (i>10) *charge =  20;
+	else           *charge =  10;
 }
 
 void PLAT_enableBacklight(int enable) {
-	// if (enable) {
-	// 	putInt("/sys/class/gpio/gpio4/value", 1);
-	// 	putInt("/sys/class/gpio/unexport", 4);
-	// 	putInt("/sys/class/pwm/pwmchip0/export", 0);
-	// 	putInt("/sys/class/pwm/pwmchip0/pwm0/enable",0);
-	// 	putInt("/sys/class/pwm/pwmchip0/pwm0/enable",1);
-	// }
-	// else {
-	// 	putInt("/sys/class/gpio/export", 4);
-	// 	putFile("/sys/class/gpio/gpio4/direction", "out");
-	// 	putInt("/sys/class/gpio/gpio4/value", 0);
-	// }
+	if (enable) {
+		// TODO: restore screen
+		SetBrightness(GetBrightness());
+		system("leds_off.sh");
+	}
+	else {
+		// TODO: copy screen
+		// TODO: clear screen
+		SetRawBrightness(0);
+		system("leds_on.sh");
+	}
 }
 void PLAT_powerOff(void) {
-	// system("shutdown");
-	// while (1) pause(); // lolwat
+	// buh
 }
 
 ///////////////////////////////
@@ -165,22 +239,7 @@ void PLAT_setCPUSpeed(int speed) {
 }
 
 void PLAT_setRumble(int strength) {
-    // static char lastvalue = 0;
-    // const char str_export[2] = "48";
-    // const char str_direction[3] = "out";
-    // char value[1];
-    // int fd;
-    //
-    // value[0] = (strength == 0 ? 0x31 : 0x30); // '0' : '1'
-    // if (lastvalue != value[0]) {
-    //    fd = open("/sys/class/gpio/export", O_WRONLY);
-    //    if (fd > 0) { write(fd, str_export, 2); close(fd); }
-    //    fd = open("/sys/class/gpio/gpio48/direction", O_WRONLY);
-    //    if (fd > 0) { write(fd, str_direction, 3); close(fd); }
-    //    fd = open("/sys/class/gpio/gpio48/value", O_WRONLY);
-    //    if (fd > 0) { write(fd, value, 1); close(fd); }
-    //    lastvalue = value[0];
-    // }
+	// buh
 }
 
 int PLAT_pickSampleRate(int requested, int max) {

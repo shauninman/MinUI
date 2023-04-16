@@ -28,10 +28,10 @@
 #define BUTTON_R2		SDLK_BACKSLASH
 
 #define BUTTON_MENU		SDLK_ESCAPE
-#define	BUTTON_POWER	SDLK_UNDEFINED
+#define	BUTTON_POWER	SDLK_UNKNOWN
 
-#define	BUTTON_PLUS		SDLK_UNDEFINED
-#define	BUTTON_MINUS	SDLK_UNDEFINED
+#define	BUTTON_PLUS		SDLK_UNKNOWN
+#define	BUTTON_MINUS	SDLK_UNKNOWN
 
 ///////////////////////////////
 
@@ -62,7 +62,8 @@
 ///////////////////////////////
 
 #define BTN_RESUME 			BTN_X
-#define BTN_SLEEP 			BTN_MENU
+#define BTN_SLEEP 			BTN_COMBO // TODO: something like BTN_COMBO L + R + MENU
+#define BTN_WAKE 			BTN_MENU
 #define BTN_MOD_VOLUME 		BTN_SELECT
 #define BTN_MOD_BRIGHTNESS 	BTN_START
 #define BTN_MOD_PLUS 		BTN_R1
