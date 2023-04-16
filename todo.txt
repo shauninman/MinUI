@@ -11,6 +11,8 @@ all
 	promote .userdata/arm-480 to /States?
 
 smart
+	updating!
+	
 	keymon
 		key repeat
 	battery/charging
@@ -20,7 +22,6 @@ smart
 			is_otg == 0
 	
 	how to turn off display
-	sort out sharing tmp_update with miyoomini + model s
 	figure out
 		sleep
 			hold L+R then press MENU
@@ -28,6 +29,7 @@ smart
 		quicksave (autoresume already works)
 			add as last item to Options?
 		save state preview images (always save 320x240 images?)
+	implement DE2_test
 		scaling
 		tearing
 
@@ -43,6 +45,8 @@ rg35xx
 	how to handle updating on mini and missing TF1 updates as a result?
 		could I write the version to the .minstalled file
 		if it doesn't match the current one run the installer
+		trimui smart has a similar issue now
+			the bootstrap folder updates /etc/main
 
 
 shows games in alt collated folders even if the alt pak isn't present...
@@ -78,3 +82,7 @@ replace
 with
 	git clone --depth 1 --branch branch repo
 note: doesn't work with commits only branches
+
+---
+
+https://discord.com/invite/p4uRmCd

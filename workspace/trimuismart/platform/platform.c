@@ -170,16 +170,14 @@ int uninitBatteryADC(){
 
 #define USB_SPEED "/sys/devices/platform/sunxi_usb_udc/udc/sunxi_usb_udc/current_speed"
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
-	*is_charging = 0;
-	*charge = POW_LOW_CHARGE;
-	return;
+	// *is_charging = 0;
+	// *charge = POW_LOW_CHARGE;
+	// return;
 	
-	// TODO: is this causing hangs?
 	char value[16]; memset(value, 0, 16);
 	getFile(USB_SPEED, value, 16);
 	*is_charging = !exactMatch(value, "UNKNOWN\n");
 		
-	// TODO: this eventually hangs...I think
 	int raw = readBatteryADC();
 	
 	char cmd[256];
@@ -215,27 +213,19 @@ void PLAT_powerOff(void) {
 
 ///////////////////////////////
 
-// #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
-// void PLAT_setCPUSpeed(int speed) {
-// 	// TODO: this isn't quite right
-// 	if (speed==CPU_SPEED_MENU) putFile(GOVERNOR_PATH, "powersave");
-// 	else if (speed==CPU_SPEED_POWERSAVE) putFile(GOVERNOR_PATH, "ondemand");
-// 	else putFile(GOVERNOR_PATH, "performance");
-// }
-
-// copy/paste of 35XX version now that we have our own overclock.elf
+#define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
 void PLAT_setCPUSpeed(int speed) {
-	// int freq = 0;
-	// switch (speed) {
-	// 	case CPU_SPEED_MENU: 		freq =  504000; break;
-	// 	case CPU_SPEED_POWERSAVE:	freq = 1104000; break;
-	// 	case CPU_SPEED_NORMAL: 		freq = 1296000; break;
-	// 	case CPU_SPEED_PERFORMANCE: freq = 1488000; break;
-	// }
-	//
-	// char cmd[32];
-	// sprintf(cmd,"overclock.elf %d\n", freq);
-	// system(cmd);
+	int freq = 0;
+	switch (speed) {
+		case CPU_SPEED_MENU: 		freq =  504000; break;
+		case CPU_SPEED_POWERSAVE:	freq = 1104000; break;
+		case CPU_SPEED_NORMAL: 		freq = 1344000; break;
+		case CPU_SPEED_PERFORMANCE: freq = 1536000; break;
+	}
+
+	char cmd[256];
+	sprintf(cmd,"echo %i > %s\n", freq, GOVERNOR_PATH);
+	system(cmd);
 }
 
 void PLAT_setRumble(int strength) {

@@ -31,11 +31,12 @@ mkdir -p "$ARCH_PATH/.minui"
 
 #######################################
 
-# TODO: overclock
-
-CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-echo performance > $CPU_PATH
 echo A,B,X,Y,L,R > /sys/module/gpio_keys_polled/parameters/button_config
+
+echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
+CPU_SPEED_PERF=1536000
+echo $CPU_SPEED_PERF > $CPU_PATH
 
 #######################################
 
@@ -66,21 +67,19 @@ NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH"  && sync
 while [ -f "$EXEC_PATH" ]; do
 	# overclock.elf $CPU_SPEED_PERF
-	echo performance > $CPU_PATH
 	minui.elf &> $LOGS_PATH/minui.txt
-	echo performance > $CPU_PATH
+	echo $CPU_SPEED_PERF > $CPU_PATH
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
-		echo performance > $CPU_PATH
 		rm -f $NEXT_PATH
 		# if [ -f "/tmp/using-swap" ]; then
 		# 	swapoff $USERDATA_PATH/swapfile
 		# 	rm -f "/tmp/using-swap"
 		# fi
-		# overclock.elf $CPU_SPEED_PERF
+		echo $CPU_SPEED_PERF > $CPU_PATH
 		sync
 	fi
 done

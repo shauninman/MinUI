@@ -15,6 +15,7 @@ libretro-common
 **/boot/output
 
 **/other/sdl
+**/other/unzip60
 **/other/DinguxCommander
 
 workspace/hash.txt

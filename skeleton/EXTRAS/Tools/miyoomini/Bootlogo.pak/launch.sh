@@ -6,7 +6,7 @@ cd $(dirname "$0")
 
 SUPPORTED_VERSION="202205010000" # there is no 202205010000 firmware, it's when I created this pak originally
 if [ $MIYOO_VERSION -gt $SUPPORTED_VERSION ]; then
-	echo "Unknown firmware version. Aborted." >> ./log.txt
+	echo "Unknown firmware version. Aborted."
 	exit 1
 fi
 
@@ -19,12 +19,12 @@ else
 fi
 
 if ! ./logomake.elf; then
-	echo "Preparing bootlogo failed. Aborted." >> ./log.txt
+	echo "Preparing bootlogo failed. Aborted."
 	exit 1
 fi
 
 if ! ./logowrite.elf; then
-	echo "Flashing bootlogo failed. Aborted." >> ./log.txt
+	echo "Flashing bootlogo failed. Aborted."
 	exit 1
 fi
 

@@ -15,7 +15,7 @@ case $INFO in
 	;;
 esac
 
-/mnt/SDCARD/.tmp_update/$PLATFORM.sh
+/mnt/SDCARD/.tmp_update/$PLATFORM.sh # &> /mnt/SDCARD/boot.txt
 
 # force shutdown so nothing can modify the SD card
 echo s > /proc/sysrq-trigger

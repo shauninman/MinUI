@@ -28,18 +28,31 @@ bump() {
 	tell UNION
 	show ./
 	bump
+	
 	tell TOOLCHAINS
 	list ./toolchains
 	bump
+	
 	tell LIBRETRO
 	show ./workspace/all/minarch/libretro-common
 	bump
+	
 	tell RG35XX
 	show ./workspace/rg35xx/other/DinguxCommander
+	echo CORES
 	list ./workspace/rg35xx/cores/src
 	bump
+	
 	tell MIYOOMINI
-	show ./workspace/miyoomini/other/sdl
 	show ./workspace/miyoomini/other/DinguxCommander
+	show ./workspace/miyoomini/other/sdl
+	echo CORES
 	list ./workspace/miyoomini/cores/src
+	bump
+	
+	tell TRIMUISMART
+	show ./workspace/trimuismart/other/DinguxCommander
+	show ./workspace/trimuismart/other/unzip60
+	echo CORES
+	list ./workspace/trimuismart/cores/src
 } | sed 's/\n/ /g'

@@ -28,7 +28,7 @@ name:
 
 build:
 	# ----------------------------------------------------
-	make build -f makefile.toolchain PLATFORM=$(PLATFORM)
+	# make build -f makefile.toolchain PLATFORM=$(PLATFORM)
 	# ----------------------------------------------------
 
 bundle:
@@ -90,8 +90,8 @@ special:
 	# ----------------------------------------------------
 	# setup miyoomini/trimui family .tmp_update in BOOT
 	mv ./build/BOOT/updater.sh ./build/BOOT/updater
-	test -f ./build/BASE/miyoo  && cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update || true
-	test -f ./build/BASE/trimui && cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update || true
+	test -d ./build/BASE/miyoo  && cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update || true
+	test -d ./build/BASE/trimui && cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update || true
 
 package:
 	# ----------------------------------------------------

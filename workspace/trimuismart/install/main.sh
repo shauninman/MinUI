@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# TODO: add LD_LIBRARY_PATH and PATH?
+
 #wait for SDCARD mounted
 mounted=`cat /proc/mounts | grep SDCARD`
 cnt=0

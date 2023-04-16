@@ -17,6 +17,7 @@ all:
 	cd blank && make
 	cd batmon && make
 	cd lumon && make
+	cd show && make
 
 early: $(REQUIRES_SDL) $(REQUIRES_COMMANDER)
 	cd other/sdl && ./make.sh
@@ -27,6 +28,7 @@ clean:
 	cd blank && make clean
 	cd batmon && make clean
 	cd lumon && make clean
+	cd show && make clean
 	cd other/sdl && make distclean
 	cd other/latency_reduction && make clean
 	cd other/DinguxCommander && make clean
