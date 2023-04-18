@@ -28,7 +28,7 @@ name:
 
 build:
 	# ----------------------------------------------------
-	# make build -f makefile.toolchain PLATFORM=$(PLATFORM)
+	make build -f makefile.toolchain PLATFORM=$(PLATFORM)
 	# ----------------------------------------------------
 
 bundle:

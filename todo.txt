@@ -11,12 +11,15 @@ all
 	confirm
 
 smart
-	update default.cfg that include bindings for L2/R2
+	implement eggs version of
+		brightness
 	keymon
 		battery/usb monitoring
 	implement DE2_test
 		scaling
 		tearing
+
+	update default.cfg that include bindings for L2/R2?
 		
 	how to turn off display
 	figure out
@@ -25,6 +28,7 @@ smart
 		save state preview images (always save 320x240 images?)
 
 miyoomini
+	battery overlay
 	update tearing defaults to strict for
 		gb
 		gbc
@@ -33,20 +37,27 @@ miyoomini
 		???
 
 rg35xx
+	move from all/common to rg35xx/platform?
+		de_atm7059.h
+		ion-owl.h
+		ion.h
 	how to handle updating on mini and missing TF1 updates as a result?
 		could I write the version to the .minstalled file
 		if it doesn't match the current one run the installer
 		trimui smart has a similar issue now
 			the bootstrap folder updates /etc/main
 
+minui
+	shows games in alt collated folders even if the alt pak isn't present...
+		not sure how that's possible...
 
-shows games in alt collated folders even if the alt pak isn't present...
-	not sure how that's possible...
+
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
 
 I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
+no, rename and archive the original union (union-prototype) and rename this to just union
 
 README
 

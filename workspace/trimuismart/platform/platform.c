@@ -148,6 +148,8 @@ int initBatteryADC(){
         return -1;
     }else{
         lradcaddr += addr_offset;
+		// eggs pointed out this init requirement
+		*(uint32_t*)lradcaddr = 0xC0004D;
     }    
     return 0;
 }
@@ -178,13 +180,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	getFile(USB_SPEED, value, 16);
 	*is_charging = !exactMatch(value, "UNKNOWN\n");
 		
-	int raw = readBatteryADC();
-	
-	char cmd[256];
-	sprintf(cmd, "echo \"adc: %i\" > /mnt/SDCARD/adc.txt", raw);
-	system(cmd);
-	
-	int i = raw * 100 / 63; // TODO: test this!
+	int i = readBatteryADC() * 100 / 63;
 	// worry less about battery and more about the game you're playing
 	     if (i>80) *charge = 100;
 	else if (i>60) *charge =  80;
