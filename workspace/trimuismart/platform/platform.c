@@ -25,11 +25,11 @@ static struct VID_Context {
 } vid;
 static int _;
 
-int initBatteryADC();
-int uninitBatteryADC();
+void ADC_init();
+void ADC_quit();
 
 SDL_Surface* PLAT_initVideo(void) {
-	initBatteryADC();
+	ADC_init();
 	
 	putenv("SDL_VIDEO_FBCON_ROTATION=CCW");
 	putenv("SDL_USE_PAN=true");
@@ -43,7 +43,7 @@ SDL_Surface* PLAT_initVideo(void) {
 }
 
 void PLAT_quitVideo(void) {
-	uninitBatteryADC();
+	ADC_quit();
 	
 	close(vid.fd_fb);
 	SDL_Quit();
@@ -114,58 +114,33 @@ void PLAT_enableOverlay(int enable) {
 }
 
 ///////////////////////////////
-// TODO: move to keymon?
-// TODO: simplify and rewrite these
-#define LRADC_BASE 0x01C22800
-#define LRADC_CTRL 0x00
-#define LRADC_INTC 0x04
-#define LRADC_DAT0 0x0C
-#define LRADC_DAT1 0x10
 
-int lradcfd = -1;
-volatile uint8_t * lradcaddr = NULL; 
-int initBatteryADC(){
-	uint32_t PageSize, PageMask;
-	uint32_t addr_start, addr_offset;
+#define LRADC 0x01C22800
+#define LRADC_VALUE 0x10
+static struct ADC_Context {
+	int	mem_fd;
+	int page_size;
+	void* mem_map;
+	void* adc_addr;
+} adc;
 
-	if ((lradcfd = open("/dev/mem", O_RDWR | O_SYNC)) < 0) // O_RDWR
-	{
-        printf("initBatteryADC open mem fail: %d\n", errno);
-        return -1;
-    }
-
-	PageSize = sysconf(_SC_PAGESIZE);
-	PageMask = (~(PageSize - 1));
-
-	addr_start = LRADC_BASE & PageMask;
-	addr_offset = LRADC_BASE & ~PageMask;
-	lradcaddr = (uint8_t*)mmap(0, PageSize * 2, PROT_READ|PROT_WRITE, MAP_SHARED, lradcfd, addr_start);
-	if (lradcaddr == MAP_FAILED){
-        close(lradcfd);
-        lradcfd = -1;
-        lradcaddr = NULL;
-        printf("initBatteryADC mmap fail: %d\n", errno);
-        return -1;
-    }else{
-        lradcaddr += addr_offset;
-		// eggs pointed out this init requirement
-		*(uint32_t*)lradcaddr = 0xC0004D;
-    }    
-    return 0;
+void ADC_init(void) {
+	adc.page_size = sysconf(_SC_PAGESIZE);
+	int page_mask = (~(adc.page_size - 1));
+	int addr_start = LRADC & page_mask;
+	int addr_offset = LRADC & ~page_mask;
+	
+	adc.mem_fd = open("/dev/mem",O_RDWR);
+	adc.mem_map = mmap(0, adc.page_size*2, PROT_READ|PROT_WRITE, MAP_SHARED, adc.mem_fd, addr_start);
+	adc.adc_addr = adc.mem_map + addr_offset;
+	*(uint32_t*)adc.adc_addr = 0xC0004D;
 }
-int readBatteryADC(){
-    if(lradcaddr){
-        uint32_t val;
-        val = *((uint32_t *)(lradcaddr + LRADC_DAT1));
-        return val;
-    }
-    return -1;
+int ADC_read(void) {
+	return *((uint32_t *)(adc.adc_addr + LRADC_VALUE));
 }
-int uninitBatteryADC(){
-    uint32_t PageSize = sysconf(_SC_PAGESIZE);
-    if(lradcaddr) munmap((void*)lradcaddr, PageSize * 2);
-    if(lradcfd >= 0) close(lradcfd);    
-    return 0;
+void ADC_quit(void) {
+	munmap(adc.mem_map, adc.page_size*2);
+	close(adc.mem_fd);
 }
 
 ///////////////////////////////
@@ -180,7 +155,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	getFile(USB_SPEED, value, 16);
 	*is_charging = !exactMatch(value, "UNKNOWN\n");
 		
-	int i = readBatteryADC() * 100 / 63;
+	int i = ADC_read() * 100 / 63;
 	// worry less about battery and more about the game you're playing
 	     if (i>80) *charge = 100;
 	else if (i>60) *charge =  80;
