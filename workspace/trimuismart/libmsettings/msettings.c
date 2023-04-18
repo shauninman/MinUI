@@ -7,8 +7,10 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <dlfcn.h>
+#include <sys/ioctl.h>
 #include <string.h>
 
+#include "sunxi_display2.h"
 #include "msettings.h"
 
 ///////////////////////////////////////
@@ -35,6 +37,7 @@ static Settings* settings;
 #define SHM_KEY "/SharedSettings"
 static char SettingsPath[256];
 static int shm_fd = -1;
+static int disp_fd = -1;
 static int is_host = 0;
 static int shm_size = sizeof(Settings);
 
@@ -69,11 +72,14 @@ void InitSettings(void) {
 		// settings->jack = 0;
 	}
 	printf("brightness: %i\nspeaker: %i \n", settings->brightness, settings->speaker);
-
+	
+	disp_fd = open("/dev/disp", O_RDWR);
+	
 	SetVolume(GetVolume());
 	SetBrightness(GetBrightness());
 }
 void QuitSettings(void) {
+	close(disp_fd);
 	munmap(settings, shm_size);
 	if (is_host) shm_unlink(SHM_KEY);
 }
@@ -92,9 +98,20 @@ int GetBrightness(void) { // 0-10
 void SetBrightness(int value) {
 	settings->brightness = value;
 
-	#define BRIGHTNESS_MIN 30
-	#define BRIGHTNESS_MAX 255
-	int raw = value * (BRIGHTNESS_MAX - BRIGHTNESS_MIN) / 10 + BRIGHTNESS_MIN;
+	int raw;
+	switch (value) {
+		case  0: raw =   8; break;
+		case  1: raw =  12; break;
+		case  2: raw =  16; break;
+		case  3: raw =  24; break;
+		case  4: raw =  32; break;
+		case  5: raw =  48; break;
+		case  6: raw =  64; break;
+		case  7: raw =  96; break;
+		case  8: raw = 128; break;
+		case  9: raw = 192; break;
+		case 10: raw = 256; break;
+	}
 	
 	SetRawBrightness(raw);
 	SaveSettings();
@@ -113,9 +130,13 @@ void SetVolume(int value) {
 }
 
 void SetRawBrightness(int val) { // 0 - 255
-	char cmd[256];
-	sprintf(cmd, "iodisp 0 %i", val);
-	system(cmd);
+	// char cmd[256];
+	// sprintf(cmd, "iodisp 0 %i", val);
+	// system(cmd);
+
+	u32 args[4] = {0};
+	args[1] = val;
+	ioctl(disp_fd, DISP_LCD_SET_BRIGHTNESS, args);
 }
 void SetRawVolume(int val) { // 0 - 40
 	char cmd[256];
