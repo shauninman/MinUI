@@ -2738,6 +2738,7 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	// 10 seems to be the sweet spot that allows 2x in NES and SNES and 8x in GB at 60fps
 	// 14 will let GB hit 10x but NES and SNES will drop to 1.5x at 30fps (not sure why)
 	// but 10 hurts PS...
+	// TODO: 10 was based on rg35xx, probably different results on other supported platforms
 	if (fast_forward && SDL_GetTicks()-last_flip_time<10) return;
 	
 	// FFVII menus 

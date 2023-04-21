@@ -1,21 +1,24 @@
 smart
-	sync rtc
-		also sync rtc when saving (game or state) in minarch?
-	keymon
-		battery/usb monitoring
 	implement DE2_test
 		scaling
 		tearing
 
+	sync rtc
+		also sync rtc when saving (game or state) in minarch?
+	keymon
+		battery/usb monitoring
 	update default.cfg that include bindings for L2/R2?
 		
 	figure out
 		quicksave (autoresume already works)
 			add as last item to Options?
-		save state preview images (always save 320x240 images?)
 
 all
+	api
+		quicksave created message is too small when using aspect scaling
 	minarch
+		save state previews should be unscaled, unfiltered
+		scaling and filtering can be performed at load time
 		support missing buttons with MENU+BUTTON? (smart)
 	promote .userdata/arm-480 to /States?
 		might depend on how the Model S fairs

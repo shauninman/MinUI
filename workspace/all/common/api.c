@@ -1134,11 +1134,12 @@ void POW_disablePowerOff(void) {
 }
 void POW_powerOff(void) {
 	if (pow.can_poweroff) {
+		GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH); // TODO: only if necessary (which depends on platform.c implementation...)
+		// GFX_clear(gfx.screen); // TODO: performed by resize
+		
 		char* msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
-		GFX_clear(gfx.screen);
 		GFX_blitMessage(font.large, msg, gfx.screen, NULL);
 		GFX_flip(gfx.screen);
-		
 		PLAT_powerOff();
 	}
 }
