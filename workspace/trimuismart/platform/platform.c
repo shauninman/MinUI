@@ -328,6 +328,7 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 			vid.rotated_pitch
 			);
 	}
+	// TODO: do a normal blit if we're doing nearest neighbor to FIXED_WIDTH x FIXED_HEIGHT?
 	rotate_16bpp(renderer->src, vid.special->pixels, renderer->src_w,renderer->src_h,renderer->src_p);
 	((scale_neon_t)renderer->blit)(vid.special->pixels, vid.buffer->pixels+vid.rotated_offset, vid.special->w,vid.special->h, vid.special->pitch, vid.renderer->dst_h, vid.renderer->dst_w,vid.rotated_pitch);
 	

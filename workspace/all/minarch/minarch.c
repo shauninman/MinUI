@@ -2514,6 +2514,7 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	// fixed to allow things like 640x478 to pass through as 1x instead of NN_C
 	if (scale<=1 && (near_ratio<ACCEPTABLE_LOWER_BOUNDS || near_ratio>ACCEPTABLE_UPPER_BOUNDS)) {
 		LOG_info("nearest\n");
+		scale = scale_x>0 || scale_y>0;
 		use_nearest = 1;
 		// TODO: handle unscaled size too big for FIXED_* size
 		if (scale_y>scale_x) {
@@ -2592,7 +2593,8 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 			}
 		}
 	}
-	else if (scale==0) {
+	
+	if (scale==0) {
 		sprintf(scaler_name, "NN0");
 		LOG_info("downsample\n");
 		use_nearest = 1;
@@ -2603,7 +2605,7 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 			renderer.dst_h = FIXED_WIDTH / core.aspect_ratio;
 		}
 	}
-	else {
+	else if (!use_nearest) {
 		LOG_info("integer\n");
 		
 		// sane consoles :joy:
