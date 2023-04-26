@@ -1757,6 +1757,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 ///////////////////////////////
 
 // TODO: this is a dumb API
+// TODO: this hasn't been adjusted for SCALE
 SDL_Surface* digits;
 #define DIGIT_WIDTH 18
 #define DIGIT_HEIGHT 16
@@ -2242,6 +2243,45 @@ static void scale4x_scanline(void* __restrict src, void* __restrict dst, uint32_
 		}
 	}
 }
+
+static void scaleNN_WORKING(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
+	LOG_info("scaleNN_WORKING(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
+	
+	// TODO: I think all NN are broken on Smart because we're dealing with a mix of rotated and unrotated values...
+	
+	uint16_t* s = (uint16_t*)src;
+	uint16_t* d = (uint16_t*)dst;
+	
+	int rw = dst_w;
+	int rh = dst_h;
+
+	int sp = pitch / FIXED_BPP;
+	int dp = dst_pitch / FIXED_BPP;
+	
+	int mx = (w << 16) / rw;
+	int my = (h << 16) / rh;
+	int sx = 0;
+	int sy = 0;
+	int lr = -1;
+	int sr = 0;
+	int dr = 0;
+	int cp = dp * FIXED_BPP;
+	for (int dy=0; dy<rh; dy++) {
+		sx = 0;
+		sr = (sy >> 16) * sp;
+		if (sr==lr) memcpy(d+dr,d+dr-dp,cp);
+		else {
+	        for (int dx=0; dx<rw; dx++) {
+	            d[dr + dx] = s[sr + (sx >> 16)];
+				sx += mx;
+	        }
+		}
+		lr = sr;
+		sy += my;
+		dr += dp;
+    }
+}
+
 // TODO: NN versions of scanline need updating to use blended scanlines (or maybe not for performance?) 
 static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	// LOG_info("scaleNN(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
@@ -3008,42 +3048,6 @@ static struct {
 		[ITEM_QUIT] = "Quit",
 	}
 };
-
-typedef struct __attribute__((__packed__)) uint24_t {
-	uint8_t a,b,c;
-} uint24_t;
-static SDL_Surface* Menu_thumbnail(SDL_Surface* src_img) {
-	SDL_Surface* dst_img = SDL_CreateRGBSurface(0,FIXED_WIDTH/2, FIXED_HEIGHT/2,src_img->format->BitsPerPixel,src_img->format->Rmask,src_img->format->Gmask,src_img->format->Bmask,src_img->format->Amask);
-
-	uint8_t* src_px = src_img->pixels;
-	uint8_t* dst_px = dst_img->pixels;
-	int step = dst_img->format->BytesPerPixel;
-	int step2 = step * 2;
-	int stride = src_img->pitch;
-	for (int y=0; y<dst_img->h; y++) {
-		for (int x=0; x<dst_img->w; x++) {
-			switch(step) {
-				case 1:
-					*dst_px = *src_px;
-					break;
-				case 2:
-					*(uint16_t*)dst_px = *(uint16_t*)src_px;
-					break;
-				case 3:
-					*(uint24_t*)dst_px = *(uint24_t*)src_px;
-					break;
-				case 4:
-					*(uint32_t*)dst_px = *(uint32_t*)src_px;
-					break;
-			}
-			dst_px += step;
-			src_px += step2;
-		}
-		src_px += stride;
-	}
-
-	return dst_img;
-}
 
 void Menu_init(void) {
 	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
@@ -3831,44 +3835,106 @@ static int Menu_options(MenuList* list) {
 	return 0;
 }
 
-static void downsample(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
-	uint32_t ox = 0;
-	uint32_t oy = 0;
-	uint32_t ix = (w<<16) / FIXED_WIDTH;
-	uint32_t iy = (h<<16) / FIXED_HEIGHT;
+static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
+	uint16_t* s = src->pixels;
+	uint16_t* d = dst->pixels;
+
+	int sw = src->w;
+	int sh = src->h;
+	int sp = src->pitch / FIXED_BPP;
+
+	int dw = dst->w;
+	int dh = dst->h;
+	int dp = dst->pitch / FIXED_BPP;
 	
-	for (int y=0; y<FIXED_HEIGHT; y++) {
-		uint16_t* restrict src_row = (void*)src + (oy>>16) * pitch;
-		uint16_t* restrict dst_row = (void*)dst + y * dst_pitch;
-		for (int x=0; x<FIXED_WIDTH; x++) {
-			*dst_row = *(src_row + (ox>>16));
-			dst_row += 1;
-			ox += ix;
+	int rx = 0;
+	int ry = 0;
+	int rw = dw;
+	int rh = dh;
+	
+	if (screen_scaling==SCALE_NATIVE) {
+		// LOG_info("native\n");
+		rx = renderer.dst_x;
+		ry = renderer.dst_y;
+		rw = renderer.dst_w;
+		rh = renderer.dst_h;
+		
+		if (dw==FIXED_WIDTH/2) {
+			// LOG_info("adjusted\n");
+			rx /=2;
+			ry /=2;
+			rw /=2;
+			rh /=2;
 		}
-		ox = 0;
-		oy += iy;
 	}
+	
+	if (screen_scaling==SCALE_ASPECT || rw>dw || rh>dh) {
+		// LOG_info("aspect\n");
+		rw = dh * core.aspect_ratio;
+		if (rw>dw) {
+			// LOG_info("adjusted\n");
+			rw = dw;
+			rh = dw / core.aspect_ratio;
+		}
+		rx = (dw - rw) / 2;
+		ry = (dh - rh) / 2;
+	}
+	// else {
+	// 	LOG_info("full\n");
+	// }
+	
+	// LOG_info("Menu_scale: %i,%i %ix%i\n",rx,ry,rw,rh);
+	
+	// TODO: apply screen effects/scanline?
+	// for (int dy=0; dy<rh; dy++) {
+	//         for (int dx=0; dx<rw; dx++) {
+	//             int sx = dx * sw / rw;
+	//             int sy = dy * sh / rh;
+	//             d[(ry+dy) * dp + (rx+dx)] = s[sy * sp + sx];
+	//         }
+	//     }
+	
+	int mx = (sw << 16) / rw;
+	int my = (sh << 16) / rh;
+	int sx = 0;
+	int sy = 0;
+	int lr = -1;
+	int sr = 0;
+	int dr = ry * dp;
+	int cp = dp * FIXED_BPP;
+	for (int dy=0; dy<rh; dy++) {
+		sx = 0;
+		sr = (sy >> 16) * sp;
+		if (sr==lr) {
+			memcpy(d+dr,d+dr-dp,cp);
+		}
+		else {
+	        for (int dx=0; dx<rw; dx++) {
+	            d[dr + rx + dx] = s[sr + (sx >> 16)];
+				sx += mx;
+	        }
+		}
+		lr = sr;
+		sy += my;
+		dr += dp;
+    }
+	
+	// LOG_info("successful\n");
 }
 
 static void Menu_loop(void) {
-	// current screen is on the previous buffer
+	SDL_Surface* bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
 	
-	// because we need an undeformed copy for save state screenshots
-	SDL_Surface* backing = GFX_getBufferCopy();
-	SDL_Surface* snapshot = SDL_CreateRGBSurface(SDL_SWSURFACE, FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,0,0,0,0);
+	// TODO: update backing if screen_scaling changes while in options menu
+	// TODO: create this from a persistent FIXED_WIDTH,FIXED_HEIGHT buffer	
+	SDL_Surface* backing = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_565); 
+	// LOG_info("intial backing\n");
+	Menu_scale(bitmap, backing);
 	
-	if (backing->w==FIXED_WIDTH && backing->h==FIXED_HEIGHT) {
-		SDL_BlitSurface(backing, NULL, snapshot, NULL);
-	}
-	else {
-		downsample(backing->pixels,snapshot->pixels,backing->w,backing->h,backing->pitch,snapshot->pitch);
-	}
-	
-	int target_w = FIXED_WIDTH; // 640 * 480 / 720 rounded up to nearest 8
-	int target_h = FIXED_HEIGHT;
-	int target_p = target_w * FIXED_BPP;
-	
-	if (screen->w!=FIXED_WIDTH || screen->h!=FIXED_HEIGHT) {
+	int restore_w = screen->w;
+	int restore_h = screen->h;
+	int restore_p = screen->pitch;
+	if (restore_w!=FIXED_WIDTH || restore_h!=FIXED_HEIGHT) {
 		screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 	}
 	
@@ -3957,6 +4023,8 @@ static void Menu_loop(void) {
 	int ignore_menu = 0;
 	int menu_start = 0;
 	
+	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH/2,FIXED_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
+	
 	while (show_menu) {
 		GFX_startFrame();
 		uint32_t now = SDL_GetTicks();
@@ -4037,15 +4105,13 @@ static void Menu_loop(void) {
 					state_slot = menu.slot;
 					State_write();
 					status = STATUS_SAVE;
-					SDL_Surface* preview = Menu_thumbnail(snapshot);
 					SDL_RWops* out = SDL_RWFromFile(bmp_path, "wb");
 					if (total_discs) {
 						char* disc_path = disc_paths[disc];
 						putFile(txt_path, disc_path + strlen(base_path));
 						sprintf(bmp_path, "%s/%s.%d.bmp", minui_dir, game.name, menu.slot);
 					}
-					SDL_SaveBMP_RW(preview, out, 1);
-					SDL_FreeSurface(preview);
+					SDL_SaveBMP_RW(bitmap, out, 1);
 					putInt(slot_path, menu.slot);
 					show_menu = 0;
 				}
@@ -4069,9 +4135,25 @@ static void Menu_loop(void) {
 					show_menu = 0;
 				}
 				break;
-				case ITEM_OPTS:
+				case ITEM_OPTS: {
+					int old_scaling = screen_scaling;
 					Menu_options(&options_menu);
+					if (screen_scaling!=old_scaling) {
+						// update renderer data
+						// TODO: src_w is set to 0 to trigger reselect so this will be invalid
+						// LOG_info("update scaling %ix%i (%i)\n", renderer.src_w,renderer.src_h,renderer.src_p);
+						(screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(renderer.src_w,renderer.src_h,renderer.src_p);
+						
+						restore_w = screen->w;
+						restore_h = screen->h;
+						restore_p = screen->pitch;
+						screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
+						
+						SDL_FillRect(backing, NULL, 0);
+						Menu_scale(bitmap, backing);
+					}
 					dirty = 1;
+				}
 				break;
 				case ITEM_QUIT:
 					status = STATUS_QUIT;
@@ -4087,7 +4169,7 @@ static void Menu_loop(void) {
 		if (dirty) {
 			GFX_clear(screen);
 			
-			SDL_BlitSurface(snapshot, NULL, screen, NULL);
+			SDL_BlitSurface(backing, NULL, screen, NULL);
 			SDL_BlitSurface(menu.overlay, NULL, screen, NULL);
 
 			int ox, oy;
@@ -4184,17 +4266,21 @@ static void Menu_loop(void) {
 				int hw = FIXED_WIDTH / 2;
 				int hh = FIXED_HEIGHT / 2;
 				
-				// preview window
-				// GFX_blitWindow(screen, Screen.menu.preview.x, Screen.menu.preview.y, Screen.menu.preview.width, Screen.menu.preview.height, 1);
-				
 				// window
 				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){SCALE2(ox-WINDOW_RADIUS,oy-WINDOW_RADIUS),hw+SCALE1(WINDOW_RADIUS*2),hh+SCALE1(WINDOW_RADIUS*3+6)});
 				
 				if (preview_exists) { // has save, has preview
-					SDL_Surface* preview = IMG_Load(bmp_path);
-					if (!preview) printf("IMG_Load: %s\n", IMG_GetError());
+					// lotta memory churn here
+					SDL_Surface* bmp = IMG_Load(bmp_path);
+					SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
+					
+					// LOG_info("preview\n");
+					
+					SDL_FillRect(preview, NULL, 0);
+					Menu_scale(raw_preview, preview);
 					SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){SCALE2(ox,oy)});
-					SDL_FreeSurface(preview);
+					SDL_FreeSurface(raw_preview);
+					SDL_FreeSurface(bmp);
 				}
 				else {
 					SDL_Rect preview_rect = {SCALE2(ox,oy),hw,hh};
@@ -4218,27 +4304,26 @@ static void Menu_loop(void) {
 		else GFX_sync();
 	}
 	
+	SDL_FreeSurface(preview);
+	
 	PAD_reset();
 
 	GFX_clearAll();
 	POW_warn(1);
 	
 	if (!quit) {
-		LOG_info("restore backing\n");
-		if (backing->w!=FIXED_WIDTH || backing->h!=FIXED_HEIGHT) {
-			screen = GFX_resize(renderer.dst_w,renderer.dst_h, renderer.dst_p);
+		if (restore_w!=FIXED_WIDTH || restore_h!=FIXED_HEIGHT) {
+			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
 		
-		SDL_BlitSurface(backing, NULL, screen, NULL);
-		GFX_flip(screen);
+		video_refresh_callback(renderer.src, renderer.src_w, renderer.src_h, renderer.src_p);
 
-		GFX_setVsync(prevent_tearing); // restore vsync value
 		setOverclock(overclock); // restore overclock value
 		if (rumble_strength) VIB_setStrength(rumble_strength);
 	}
-		
+	
+	SDL_FreeSurface(bitmap);
 	SDL_FreeSurface(backing);
-	SDL_FreeSurface(snapshot);
 	POW_disableAutosleep();
 }
 
