@@ -30,7 +30,6 @@ LDFLAGS	 = -ldl $(LIBS) -lmsettings -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
 # CFLAGS  += -fsanitize=address -fno-common
 # LDFLAGS += -lasan
 
-# TODO: uncomment
 BUILD_DATE!=date +%Y.%m.%d
 BUILD_HASH!=cat ../../hash.txt
 CFLAGS += -DBUILD_DATE=\"${BUILD_DATE}\" -DBUILD_HASH=\"${BUILD_HASH}\"
@@ -39,7 +38,7 @@ CFLAGS += -DBUILD_DATE=\"${BUILD_DATE}\" -DBUILD_HASH=\"${BUILD_HASH}\"
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 
-all: libretro-common
+all: libretro-common $(PREFIX)/include/msettings.h
 	mkdir -p build/$(PLATFORM)
 	$(CC) $(SOURCE) -o $(PRODUCT) $(CFLAGS) $(LDFLAGS)
 clean:
@@ -47,3 +46,6 @@ clean:
 
 libretro-common:
 	git clone https://github.com/libretro/libretro-common
+	
+$(PREFIX)/include/msettings.h:
+	cd /root/workspace/$(PLATFORM)/libmsettings && make
