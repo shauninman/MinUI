@@ -44,7 +44,7 @@ int main(int argc , char* argv[]) {
 	while (c = chars[i]) {
 		digit = TTF_RenderUTF8_Blended(font.large, c, COLOR_WHITE);
 		int y = i==CHAR_COLON ? SCALE1(-1.5) : 0; // : sits too low naturally
-		SDL_BlitSurface(digit, NULL, digits, &(SDL_Rect){ SCALE2((i * DIGIT_WIDTH) + (DIGIT_WIDTH - digit->w)/2, y + (DIGIT_HEIGHT - digit->h)/2) });
+		SDL_BlitSurface(digit, NULL, digits, &(SDL_Rect){ (i * SCALE1(DIGIT_WIDTH)) + (SCALE1(DIGIT_WIDTH) - digit->w)/2, y + (SCALE1(DIGIT_HEIGHT) - digit->h)/2 });
 		SDL_FreeSurface(digit);
 		i += 1;
 	}
@@ -72,7 +72,7 @@ int main(int argc , char* argv[]) {
 		return x + SCALE1(10);
 	}
 	void blitBar(int x, int y, int w) {
-		GFX_blitPill(ASSET_UNDERLINE, screen, &(SDL_Rect){ x,y,w});
+		GFX_blitPill(ASSET_UNDERLINE, screen, &(SDL_Rect){x,y,w});
 	}
 	int blitNumber(int num, int x, int y) {
 		int n;
