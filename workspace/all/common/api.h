@@ -80,6 +80,22 @@ typedef struct GFX_Fonts {
 } GFX_Fonts;
 extern GFX_Fonts font;
 
+typedef struct GFX_Renderer {
+	void* src;
+	void* dst;
+	void* blit;
+
+	int src_w;
+	int src_h;
+	int src_p;
+	
+	int dst_x;
+	int dst_y;
+	int dst_w;
+	int dst_h;
+	int dst_p;
+} GFX_Renderer;
+
 enum {
 	MODE_MAIN,
 	MODE_MENU,
@@ -111,6 +127,8 @@ void GFX_setVsync(int vsync);
 #define GFX_getBufferCopy PLAT_getVideoBufferCopy // SDL_Surface* (*)(void) // must be freed by caller
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
+
+#define GFX_blitRenderer PLAT_blitRenderer // (GFX_Renderer* renderer);
 
 // NOTE: all dimensions should be pre-scaled
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
@@ -200,7 +218,9 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch);
 void PLAT_setVideoScaleClip(int x, int y, int width, int height);
 void PLAT_setNearestNeighbor(int enabled);
 void PLAT_vsync(void);
+void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
+
 SDL_Surface* PLAT_getVideoBufferCopy(void); // must be freed by caller
 
 SDL_Surface* PLAT_initOverlay(void);

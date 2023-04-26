@@ -34,7 +34,7 @@ enum {
 };
 
 // default frontend options
-static int screen_scaling = SCALE_NATIVE; // TODO: SCALE_ASPECT;
+static int screen_scaling = SCALE_ASPECT;
 static int show_scanlines = 0;
 static int optimize_text = 1;
 static int prevent_tearing = 1; // lenient
@@ -43,19 +43,7 @@ static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
 static int overclock = 1; // normal
 
-static struct Renderer {
-	int src_w;
-	int src_h;
-	int src_p;
-	
-	int dst_offset;
-	int dst_w;
-	int dst_h;
-	int dst_p;
-
-	scale_neon_t scaler;
-	const void* data;
-} renderer;
+GFX_Renderer renderer;
 
 ///////////////////////////////////////
 
@@ -863,9 +851,9 @@ static void setOverclock(int i) {
 }
 static void Config_syncFrontend(int i, int value) {
 	switch (i) {
-		case FE_OPT_SCALING:	screen_scaling 	= value; renderer.src_w = 0; break;
-		case FE_OPT_SCANLINES:	show_scanlines 	= value; renderer.src_w = 0; break;
-		case FE_OPT_TEXT:		optimize_text 	= value; renderer.src_w = 0; break;
+		case FE_OPT_SCALING:	screen_scaling 	= value; renderer.dst_p = 0; break;
+		case FE_OPT_SCANLINES:	show_scanlines 	= value; renderer.dst_p = 0; break;
+		case FE_OPT_TEXT:		optimize_text 	= value; renderer.dst_p = 0; break;
 		case FE_OPT_TEARING:	prevent_tearing = value; break;
 		case FE_OPT_OVERCLOCK:	overclock		= value; break;
 		case FE_OPT_DEBUG:		show_debug 		= value; break;
@@ -1143,7 +1131,7 @@ static void Config_restore(void) {
 	Config_readControls();
 	Config_free();
 	
-	renderer.src_w = 0;
+	renderer.dst_p = 0;
 }
 
 ///////////////////////////////
@@ -1888,8 +1876,8 @@ static uint32_t sec_start = 0;
 #define Weight3_2(A, B)  (((((cR(B) << 1) + (cR(A) * 3)) / 5) & 0x1f) << 11 | ((((cG(B) << 1) + (cG(A) * 3)) / 5) & 0x3f) << 5 | ((((cB(B) << 1) + (cB(A) * 3)) / 5) & 0x1f))
 #define Weight1_1_1_1(A, B, C, D)  ((((cR(A) + cR(B) + cR(C) + cR(D)) >> 2) & 0x1f) << 11 | (((cG(A) + cG(B) + cG(C) + cG(D)) >> 2) & 0x3f) << 5 | (((cB(A) + cB(B) + cB(C) + cB(D)) >> 2) & 0x1f))
 
-static void scaleNull(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {}
-static void scale1x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scaleNull(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {}
+static void scale1x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	// pitch of src image not src buffer!
 	// eg. gb has a 160 pixel wide image but 
 	// gambatte uses a 256 pixel wide buffer
@@ -1908,7 +1896,7 @@ static void scale1x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 	}
 	
 }
-static void scale1x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale1x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	// pitch of src image not src buffer!
 	// eg. gb has a 160 pixel wide image but 
 	// gambatte uses a 256 pixel wide buffer
@@ -1933,7 +1921,7 @@ static void scale1x_scanline(void* __restrict src, void* __restrict dst, uint32_
 	}
 	
 }
-static void scale2x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale2x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	for (unsigned y = 0; y < h; y++) {
 		uint16_t* restrict src_row = (void*)src + y * pitch;
@@ -1954,7 +1942,7 @@ static void scale2x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		}
 	}
 }
-static void scale2x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale2x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
 	for (unsigned y = 0; y < h; y++) {
@@ -1977,7 +1965,7 @@ static void scale2x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, 
 		}
 	}
 }
-static void scale2x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale2x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
 	for (unsigned y = 0; y < h; y++) {
@@ -1998,7 +1986,7 @@ static void scale2x_scanline(void* __restrict src, void* __restrict dst, uint32_
 		}
 	}
 }
-static void scale2x_grid(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale2x_grid(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
 	for (unsigned y = 0; y < h; y++) {
@@ -2019,7 +2007,7 @@ static void scale2x_grid(void* __restrict src, void* __restrict dst, uint32_t w,
 		}
 	}
 }
-static void scale3x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale3x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	int row3 = screen_w * 2;
 	for (unsigned y = 0; y < h; y++) {
@@ -2048,7 +2036,7 @@ static void scale3x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		}
 	}
 }
-static void scale3x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale3x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
 	int row3 = screen_w * 2;
@@ -2081,7 +2069,7 @@ static void scale3x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, 
 		}
 	}
 }
-static void scale3x_dmg(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale3x_dmg(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t g = 0xffff;
 	int row3 = screen_w * 2;
@@ -2113,7 +2101,7 @@ static void scale3x_dmg(void* __restrict src, void* __restrict dst, uint32_t w, 
 		}
 	}
 }
-static void scale3x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale3x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
 	for (unsigned y = 0; y < h; y++) {
@@ -2143,7 +2131,7 @@ static void scale3x_scanline(void* __restrict src, void* __restrict dst, uint32_
 		}
 	}
 }
-static void scale3x_grid(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale3x_grid(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
 	for (unsigned y = 0; y < h; y++) {
@@ -2174,7 +2162,7 @@ static void scale3x_grid(void* __restrict src, void* __restrict dst, uint32_t w,
 		}
 	}
 }
-static void scale4x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale4x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	int row3 = screen_w * 2;
 	int row4 = screen_w * 3;
@@ -2213,7 +2201,7 @@ static void scale4x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		}
 	}
 }
-static void scale4x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
+static void scale4x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	int row3 = screen_w * 2;
 	int row4 = screen_w * 3;
@@ -2255,14 +2243,16 @@ static void scale4x_scanline(void* __restrict src, void* __restrict dst, uint32_
 	}
 }
 // TODO: NN versions of scanline need updating to use blended scanlines (or maybe not for performance?) 
-static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
-	int dy = -renderer.dst_h;
+static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
+	// LOG_info("scaleNN(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
+	
+	int dy = -dst_h;
 	unsigned lines = h;
 	bool copy = false;
-	size_t cpy_w = renderer.dst_w * FIXED_BPP;
+	size_t cpy_w = dst_w * FIXED_BPP;
 
 	while (lines) {
-		int dx = -renderer.dst_w;
+		int dx = -dst_w;
 		const uint16_t *psrc16 = src;
 		uint16_t *pdst16 = dst;
 
@@ -2279,7 +2269,7 @@ static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint
 					dx += w;
 				}
 
-				dx -= renderer.dst_w;
+				dx -= dst_w;
 				psrc16++;
 			}
 
@@ -2288,7 +2278,7 @@ static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		}
 
 		if (dy >= 0) {
-			dy -= renderer.dst_h;
+			dy -= dst_h;
 			src += pitch;
 			lines--;
 		} else {
@@ -2296,13 +2286,15 @@ static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		}
 	}
 }
-static void scaleNN_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
-	int dy = -renderer.dst_h;
+static void scaleNN_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
+	// LOG_info("scaleNN_scanline(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
+	
+	int dy = -dst_h;
 	unsigned lines = h;
 	int row = 0;
 	
 	while (lines) {
-		int dx = -renderer.dst_w;
+		int dx = -dst_w;
 		const uint16_t *psrc16 = src;
 		uint16_t *pdst16 = dst;
 		
@@ -2315,7 +2307,7 @@ static void scaleNN_scanline(void* __restrict src, void* __restrict dst, uint32_
 					dx += w;
 				}
 
-				dx -= renderer.dst_w;
+				dx -= dst_w;
 				psrc16++;
 			}
 		}
@@ -2324,33 +2316,34 @@ static void scaleNN_scanline(void* __restrict src, void* __restrict dst, uint32_
 		dy += h;
 				
 		if (dy >= 0) {
-			dy -= renderer.dst_h;
+			dy -= dst_h;
 			src += pitch;
 			lines--;
 		}
 		row += 1;
 	}
 }
-static void scaleNN_text(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
-	int dy = -renderer.dst_h;
+static void scaleNN_text(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
+	// LOG_info("scaleNN_text(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
+	
+	int dy = -dst_h;
 	unsigned lines = h;
 	bool copy = false;
 
-	size_t cpy_w = renderer.dst_w * FIXED_BPP;
-	int screen_p = screen->pitch;
+	size_t cpy_w = dst_w * FIXED_BPP;
 		
 	int safe = w - 1; // don't look behind when there's nothing to see
 	uint16_t l1,l2;
 	while (lines) {
-		int dx = -renderer.dst_w;
+		int dx = -dst_w;
 		const uint16_t *psrc16 = src;
 		uint16_t *pdst16 = dst;
 		l1 = l2 = 0x0;
 		
 		if (copy) {
 			copy = false;
-			memcpy(dst, dst - screen_p, cpy_w);
-			dst += screen_p;
+			memcpy(dst, dst - cpy_w, cpy_w);
+			dst += dst_pitch;
 			dy += h;
 		} else if (dy < 0) {
 			int col = w;
@@ -2377,16 +2370,16 @@ static void scaleNN_text(void* __restrict src, void* __restrict dst, uint32_t w,
 					d = 0;
 				}
 
-				dx -= renderer.dst_w;
+				dx -= dst_w;
 				psrc16++;
 			}
 
-			dst += screen_p;
+			dst += dst_pitch;
 			dy += h;
 		}
 
 		if (dy >= 0) {
-			dy -= renderer.dst_h;
+			dy -= dst_h;
 			src += pitch;
 			lines--;
 		} else {
@@ -2394,15 +2387,17 @@ static void scaleNN_text(void* __restrict src, void* __restrict dst, uint32_t w,
 		}
 	}
 }
-static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_pitch) {
-	int dy = -renderer.dst_h;
+static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
+	// LOG_info("scaleNN_text_scanline(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
+	
+	int dy = -dst_h;
 	unsigned lines = h;
 
 	int row = 0;
 	int safe = w - 1; // don't look behind when there's nothing to see
 	uint16_t l1,l2;
 	while (lines) {
-		int dx = -renderer.dst_w;
+		int dx = -dst_w;
 		const uint16_t *psrc16 = src;
 		uint16_t *pdst16 = dst;
 		l1 = l2 = 0x0;
@@ -2434,7 +2429,7 @@ static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, ui
 					d = 0;
 				}
 
-				dx -= renderer.dst_w;
+				dx -= dst_w;
 				psrc16 += 1;
 			}
 		}
@@ -2443,7 +2438,7 @@ static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, ui
 		dy += h;
 				
 		if (dy >= 0) {
-			dy -= renderer.dst_h;
+			dy -= dst_h;
 			src += pitch;
 			lines--;
 		}
@@ -2453,22 +2448,24 @@ static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, ui
 
 static SDL_Surface* scaler_surface;
 static void selectScaler_PAR(int width, int height, int pitch) {
-	int device_width = FIXED_WIDTH;
-	int device_height = FIXED_HEIGHT;
-	int device_pitch = FIXED_PITCH;
-
-	renderer.scaler = scaleNull;
-	renderer.dst_p = device_pitch;
+	LOG_info("selectScaler_PAR\n");
+	
+	renderer.blit = scaleNull;
+	renderer.src_w = width;
+	renderer.src_h = height;
+	renderer.src_p = pitch;
+	renderer.dst_p = FIXED_PITCH;
 
 	int use_nearest = 0;
 	
-	int scale_x = device_width / width;
-	int scale_y = device_height / height;
+	int scale_x = FIXED_WIDTH / width;
+	int scale_y = FIXED_HEIGHT / height;
 	int scale = MIN(scale_x,scale_y);
 	
 	// this is not an aspect ratio but rather the ratio between 
 	// the proposed aspect ratio and the target aspect ratio
 	double near_ratio = (double)width / height / core.aspect_ratio;
+	// TODO: not sure I like this anymore
 	#define ACCEPTABLE_UPPER_BOUNDS 1.14 // catch SotN/FFVII's 368x224 as needing nn scaling 
 	#define ACCEPTABLE_LOWER_BOUNDS 0.79 // but allow SotN's 512x240 scaled 1x2 to pass as core's 4/3 aspect ratio
 	
@@ -2476,7 +2473,9 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	
 	// fixed to allow things like 640x478 to pass through as 1x instead of NN_C
 	if (scale<=1 && (near_ratio<ACCEPTABLE_LOWER_BOUNDS || near_ratio>ACCEPTABLE_UPPER_BOUNDS)) {
+		LOG_info("nearest\n");
 		use_nearest = 1;
+		// TODO: handle unscaled size too big for FIXED_* size
 		if (scale_y>scale_x) {
 			strcpy(scaler_name, "NN_A");
 			// PS: SotN/FFVII (menus 368x224)
@@ -2494,11 +2493,11 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 				renderer.dst_w -= renderer.dst_w % 2;
 			}
 			
-			if (renderer.dst_w>device_width) {
-				renderer.dst_w = device_width;
+			if (renderer.dst_w>FIXED_WIDTH) {
+				renderer.dst_w = FIXED_WIDTH;
 				renderer.dst_h = renderer.dst_w / core.aspect_ratio;
 				renderer.dst_h -= renderer.dst_w % 2;
-				if (renderer.dst_h>device_height) renderer.dst_h = device_height;
+				if (renderer.dst_h>FIXED_HEIGHT) renderer.dst_h = FIXED_HEIGHT;
 			}
 		}
 		else if (scale_x>scale_y) {
@@ -2516,11 +2515,11 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 				renderer.dst_h -= renderer.dst_w % 2;
 			}
 		
-			if (renderer.dst_h>device_height) {
-				renderer.dst_h = device_height;
+			if (renderer.dst_h>FIXED_HEIGHT) {
+				renderer.dst_h = FIXED_HEIGHT;
 				renderer.dst_w = renderer.dst_h * core.aspect_ratio;
 				renderer.dst_w -= renderer.dst_w % 2;
-				if (renderer.dst_w>device_width) renderer.dst_w = device_width;
+				if (renderer.dst_w>FIXED_WIDTH) renderer.dst_w = FIXED_WIDTH;
 			}
 		}
 		else {
@@ -2545,58 +2544,72 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 				}
 			}
 		
-			if (renderer.dst_w>device_width) {
-				renderer.dst_w = device_width;
+			if (renderer.dst_w>FIXED_WIDTH) {
+				renderer.dst_w = FIXED_WIDTH;
 			}
-			if (renderer.dst_h>device_height) {
-				renderer.dst_h = device_height;
+			if (renderer.dst_h>FIXED_HEIGHT) {
+				renderer.dst_h = FIXED_HEIGHT;
 			}
 		}
 	}
+	else if (scale==0) {
+		sprintf(scaler_name, "NN0");
+		LOG_info("downsample\n");
+		use_nearest = 1;
+		renderer.dst_h = FIXED_HEIGHT;
+		renderer.dst_w = FIXED_HEIGHT * core.aspect_ratio;
+		if (renderer.dst_w>FIXED_WIDTH) {
+			renderer.dst_w = FIXED_WIDTH;
+			renderer.dst_h = FIXED_WIDTH / core.aspect_ratio;
+		}
+	}
 	else {
+		LOG_info("integer\n");
+		
 		// sane consoles :joy:
 		renderer.dst_w = width * scale;
 		renderer.dst_h = height * scale;
 	}
 	
-	int ox = (device_width - renderer.dst_w) / 2;
-	int oy = (device_height - renderer.dst_h) / 2;
-	renderer.dst_offset = (oy * device_pitch) + (ox * FIXED_BPP);
+	renderer.dst_x = (FIXED_WIDTH - renderer.dst_w) / 2;
+	renderer.dst_y = (FIXED_HEIGHT - renderer.dst_h) / 2;
+
+	LOG_info("%i,%i %ix%i (%i)\n", renderer.dst_x,renderer.dst_y,renderer.dst_w,renderer.dst_h,renderer.dst_p);
 
 	if (use_nearest) 
-		if (show_scanlines) renderer.scaler = optimize_text ? scaleNN_text_scanline : scaleNN_scanline;
-		else renderer.scaler = optimize_text ? scaleNN_text : scaleNN;
+		if (show_scanlines) renderer.blit = optimize_text ? scaleNN_text_scanline : scaleNN_scanline;
+		else renderer.blit = optimize_text ? scaleNN_text : scaleNN;
 	else {
 		sprintf(scaler_name, "%iX", scale);
 		if (show_scanlines) {
 			switch (scale) {
-				case 6: 	renderer.scaler = scaleNN_scanline; break;
-				case 5: 	renderer.scaler = scaleNN_scanline; break;
-				case 4: 	renderer.scaler = scale4x_scanline; break;
-				case 3: 	renderer.scaler = scale3x_grid; break;
-				case 2: 	renderer.scaler = scale2x_scanline; break;
-				default:	renderer.scaler = scale1x_scanline; break;
+				case 6: 	renderer.blit = scaleNN_scanline; break;
+				case 5: 	renderer.blit = scaleNN_scanline; break;
+				case 4: 	renderer.blit = scale4x_scanline; break;
+				case 3: 	renderer.blit = scale3x_grid; break;
+				case 2: 	renderer.blit = scale2x_scanline; break;
+				default:	renderer.blit = scale1x_scanline; break;
 			}
 		}
 		else {
 			switch (scale) {
-				case 6: 	renderer.scaler = scale6x6_n16; break;
-				case 5: 	renderer.scaler = scale5x5_n16; break;
-				case 4: 	renderer.scaler = scale4x4_n16; break;
-				case 3: 	renderer.scaler = scale3x3_n16; break;
-				case 2: 	renderer.scaler = scale2x2_n16; break;
-				default:	renderer.scaler = scale1x1_n16; break;
+				case 6: 	renderer.blit = scale6x6_n16; break;
+				case 5: 	renderer.blit = scale5x5_n16; break;
+				case 4: 	renderer.blit = scale4x4_n16; break;
+				case 3: 	renderer.blit = scale3x3_n16; break;
+				case 2: 	renderer.blit = scale2x2_n16; break;
+				default:	renderer.blit = scale1x1_n16; break;
 
 				// my lesser scalers :sweat_smile:
-				// case 4: 	renderer.scaler = scale4x; break;
-				// case 3: 	renderer.scaler = scale3x; break;
-				// case 3: 	renderer.scaler = scale3x_dmg; break;
-				// case 3: 	renderer.scaler = scale3x_lcd; break;
-				// case 3: 	renderer.scaler = scale3x_scanline; break;
-				// case 2: 	renderer.scaler = scale2x; break;
-				// case 2: 	renderer.scaler = scale2x_lcd; break;
-				// case 2: 	renderer.scaler = scale2x_scanline; break;
-				// default:	renderer.scaler = scale1x; break;
+				// case 4: 	renderer.blit = scale4x; break;
+				// case 3: 	renderer.blit = scale3x; break;
+				// case 3: 	renderer.blit = scale3x_dmg; break;
+				// case 3: 	renderer.blit = scale3x_lcd; break;
+				// case 3: 	renderer.blit = scale3x_scanline; break;
+				// case 2: 	renderer.blit = scale2x; break;
+				// case 2: 	renderer.blit = scale2x_lcd; break;
+				// case 2: 	renderer.blit = scale2x_scanline; break;
+				// default:	renderer.blit = scale1x; break;
 			}
 		}
 	}
@@ -2605,11 +2618,15 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	// DEBUG HUD
 	if (scaler_surface) SDL_FreeSurface(scaler_surface);
 	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
+	LOG_info("%s\n", scaler_name);
 	
-	screen = GFX_resize(device_width,device_height, device_pitch);
+	screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 }
 static void selectScaler_AR(int width, int height, int pitch) {
-	renderer.scaler = scaleNull;
+	renderer.blit = scaleNull;
+	renderer.src_w = width;
+	renderer.src_h = height;
+	renderer.src_p = pitch;
 	
 	int src_w = width;
 	int src_h = height;
@@ -2617,6 +2634,7 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	int scale_x = CEIL_DIV(FIXED_WIDTH, src_w);
 	int scale_y = CEIL_DIV(FIXED_HEIGHT,src_h);
 	int scale = MAX(scale_x, scale_y);
+	// scale = 1;
 	
 	// TODO: this "logic" is a disaster
 	
@@ -2637,9 +2655,7 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	int target_h = dst_h;
 	
 	char scaler_name[8];
-#define FOUR_THREE 4.0f / 3
-	
-	double target_ratio = FOUR_THREE;
+	double target_ratio = 4.0f / 3;
 	
 	// TODO: sotn moon is busted 512x240 ends up 2x but targeting 864x480
 	
@@ -2715,15 +2731,16 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.dst_w = target_w;
 	renderer.dst_h = target_h;
 	renderer.dst_p = target_pitch;
-	renderer.dst_offset = (dy * target_pitch) + (dx * FIXED_BPP);
+	renderer.dst_x = dx;
+	renderer.dst_y = dy;
 	
 	switch (scale) {
-		case 6: renderer.scaler = scale6x6_n16; break;
-		case 5: renderer.scaler = scale5x5_n16; break;
-		case 4: renderer.scaler = scale4x4_n16; break;
-		case 3: renderer.scaler = scale3x3_n16; break;
-		case 2: renderer.scaler = scale2x2_n16; break;
-		default: renderer.scaler = scale1x1_n16; break;
+		case 6: renderer.blit = scale6x6_n16; break;
+		case 5: renderer.blit = scale5x5_n16; break;
+		case 4: renderer.blit = scale4x4_n16; break;
+		case 3: renderer.blit = scale3x3_n16; break;
+		case 2: renderer.blit = scale2x2_n16; break;
+		default: renderer.blit = scale1x1_n16; break;
 	}
 	
 	// DEBUG HUD
@@ -2752,15 +2769,12 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	// eg. PS@10 60/240
 	
 	if (!data) return;
-	renderer.data = data; // this pointer isn't guaranteed to hang around but this approach worked on the Mini
 
 	fps_ticks += 1;
 	
-	if (width!=renderer.src_w || height!=renderer.src_h) {
-		renderer.src_w = width;
-		renderer.src_h = height;
-		renderer.src_p = pitch;
-
+	if (renderer.dst_p==0 || width!=renderer.src_w || height!=renderer.src_h) {
+		
+		// TODO: merge selectScaler_* into a single updateRenderer(width,height,pitch,resize_screen)
 		(screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(width,height,pitch);
 		GFX_clearAll();
 	}
@@ -2771,7 +2785,13 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	if (top_width) SDL_FillRect(screen, &(SDL_Rect){0,0,top_width,DIGIT_HEIGHT}, RGB_BLACK);
 	if (bottom_width) SDL_FillRect(screen, &(SDL_Rect){0,screen->h-DIGIT_HEIGHT,bottom_width,DIGIT_HEIGHT}, RGB_BLACK);
 	
-	renderer.scaler((void*)data,screen->pixels+renderer.dst_offset,width,height,pitch,renderer.dst_p);
+	// uint64_t start = getMicroseconds();
+	// renderer.scaler((void*)data,screen->pixels+renderer.dst_offset,width,height,pitch,renderer.dst_p);
+	// printf("scale: %ius\n", (int)(getMicroseconds()-start));
+	
+	renderer.src = (void*)data;
+	renderer.dst = screen->pixels;
+	GFX_blitRenderer(&renderer);
 	
 	if (show_debug) {
 		int x = 0;
@@ -4179,24 +4199,16 @@ static void Menu_loop(void) {
 				else {
 					SDL_Rect preview_rect = {SCALE2(ox,oy),hw,hh};
 					SDL_FillRect(screen, &preview_rect, 0);
-					if (save_exists) { // has save but no preview
-						GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
-					}
-					else { // no save
-						GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
-					}
+					if (save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
+					else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
 				}
 				
 				// pagination
 				ox += 24;
 				oy += 124;
 				for (int i=0; i<MENU_SLOT_COUNT; i++) {
-					if (i==menu.slot) {
-						GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15),oy)});
-					}
-					else {
-						GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15)+4,oy+2)});
-					}
+					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15),oy)});
+					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15)+4,oy+2)});
 				}
 			}
 	

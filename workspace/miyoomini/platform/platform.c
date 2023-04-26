@@ -14,6 +14,7 @@
 #include "platform.h"
 #include "api.h"
 #include "utils.h"
+#include "scaler_neon.h"
 
 ///////////////////////////////
 // based on eggs GFXSample_rev15
@@ -62,8 +63,7 @@ static inline void FlushCacheNeeded(void* pixels, uint32_t pitch, uint32_t y, ui
 //		mirror : 1 = Horizontal / 2 = Vertical / 3 = Both
 //		nowait : 0 = wait until done / 1 = no wait
 //
-static inline void GFX_BlitSurfaceExec(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect,
-			 uint32_t rotate, uint32_t mirror, uint32_t nowait) {
+static inline void GFX_BlitSurfaceExec(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect, uint32_t rotate, uint32_t mirror, uint32_t nowait) {
 	if ((src)&&(dst)&&(src->pixelsPa)&&(dst->pixelsPa)) {
 		MI_GFX_Surface_t Src;
 		MI_GFX_Surface_t Dst;
@@ -205,7 +205,6 @@ void PLAT_clearAll(void) {
 void PLAT_setVsync(int vsync) {
 	// TODO: Prevent Tearing/Vsync
 	// isn't a 1:1 mapping of what's happening here...
-	// default should be  
 	if (vsync==VSYNC_OFF || vsync==VSYNC_LENIENT) {
 		putenv("GFX_FLIPWAIT=0");
 		putenv("GFX_BLOCKING=0");
@@ -223,9 +222,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 	vid.height = h;
 	vid.pitch = pitch;
 	
-	if (vid.direct) {
-		memset(vid.video->pixels, 0, vid.pitch * vid.height);
-	}
+	if (vid.direct) memset(vid.video->pixels, 0, vid.pitch * vid.height);
 	else {
 		SDL_FreeSurface(vid.screen);
 		vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
@@ -246,7 +243,13 @@ void PLAT_vsync(void) {
 	// buh
 }
 
-void PLAT_flip(SDL_Surface* screen, int sync) {
+void PLAT_blitRenderer(GFX_Renderer* renderer) {
+	// TODO: will this target the correct surface, ie video vs screen?
+	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP); // TODO: cache this offset?
+	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+}
+
+void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	if (!vid.direct) GFX_BlitSurfaceExec(vid.screen, NULL, vid.video, NULL, 0,0,1); // TODO: handle aspect clipping
 	SDL_Flip(vid.video);
 }

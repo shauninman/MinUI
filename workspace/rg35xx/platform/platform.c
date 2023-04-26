@@ -18,6 +18,7 @@
 #include "ion.h"
 #include "ion-owl.h"
 #include "de_atm7059.h"
+#include "scaler_neon.h"
 
 ///////////////////////////////
 
@@ -326,7 +327,7 @@ void PLAT_clearVideo(SDL_Surface* screen) {
 	memset(screen->pixels, 0, PAGE_SIZE); 
 }
 void PLAT_clearAll(void) {
-	GFX_clear(vid.screen); // clear backbuffer
+	PLAT_clearVideo(vid.screen); // clear backbuffer
 	vid.cleared = 1; // defer clearing frontbuffer until offscreen
 }
 
@@ -370,7 +371,12 @@ void PLAT_vsync(void) {
 	if (ioctl(vid.fd_fb, OWLFB_WAITFORVSYNC, &_)) LOG_info("OWLFB_WAITFORVSYNC failed %s\n", strerror(errno));
 }
 
-void PLAT_flip(SDL_Surface* screen, int sync) {
+void PLAT_blitRenderer(GFX_Renderer* renderer) {
+	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP); // TODO: cache this offset
+	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+}
+
+void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	vid.de_mem[DE_OVL_BA0(0)/4] = vid.de_mem[DE_OVL_BA0(2)/4] = (uintptr_t)(vid.fb_info.padd + vid.page * PAGE_SIZE);
 	DE_enableLayer(vid.de_mem);
 
@@ -381,7 +387,7 @@ void PLAT_flip(SDL_Surface* screen, int sync) {
 	vid.screen->pixels = vid.fb_info.vadd + vid.page * PAGE_SIZE;
 
 	if (vid.cleared) {
-		GFX_clear(vid.screen);
+		PLAT_clearVideo(vid.screen);
 		vid.cleared = 0;
 	}
 }

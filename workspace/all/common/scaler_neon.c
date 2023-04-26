@@ -9,6 +9,8 @@
 //		sw  :	src width		pixels
 //		sh  :	src height		pixels
 //		sp  :	src pitch (stride)	bytes	if 0, (src width * [2|4]) is used
+//		dw  :	dst width		pixels
+//		dh  :	dst height		pixels
 //		dp  :	dst pitch (stride)	bytes	if 0, (src width * [2|4] * multiplier) is used
 //
 //	** NOTE **
@@ -20,7 +22,7 @@
 //
 //	C scalers
 //
-void scale1x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale1x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*1; }
@@ -32,16 +34,16 @@ void scale1x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale1x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c16(src, dst, sw, sh, sp, dp, 1); }
-void scale1x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c16(src, dst, sw, sh, sp, dp, 2); }
-void scale1x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c16(src, dst, sw, sh, sp, dp, 3); }
-void scale1x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c16(src, dst, sw, sh, sp, dp, 4); }
+void scale1x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale1x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale1x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale1x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale1x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale1x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*1; }
@@ -53,16 +55,16 @@ void scale1x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale1x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c32(src, dst, sw, sh, sp, dp, 1); }
-void scale1x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c32(src, dst, sw, sh, sp, dp, 2); }
-void scale1x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c32(src, dst, sw, sh, sp, dp, 3); }
-void scale1x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale1x_c32(src, dst, sw, sh, sp, dp, 4); }
+void scale1x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale1x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale1x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale1x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale1x_c32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale2x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale2x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } swl*=2; if (!dp) { dp = swl; }
@@ -85,16 +87,16 @@ void scale2x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale2x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c16(src, dst, sw, sh, sp, dp, 1); }
-void scale2x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c16(src, dst, sw, sh, sp, dp, 2); }
-void scale2x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c16(src, dst, sw, sh, sp, dp, 3); }
-void scale2x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c16(src, dst, sw, sh, sp, dp, 4); }
+void scale2x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale2x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale2x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale2x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale2x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale2x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } swl*=2; if (!dp) { dp = swl; }
@@ -110,16 +112,16 @@ void scale2x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale2x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c32(src, dst, sw, sh, sp, dp, 1); }
-void scale2x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c32(src, dst, sw, sh, sp, dp, 2); }
-void scale2x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c32(src, dst, sw, sh, sp, dp, 3); }
-void scale2x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale2x_c32(src, dst, sw, sh, sp, dp, 4); }
+void scale2x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale2x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale2x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale2x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale2x_c32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale3x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale3x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } swl*=3; if (!dp) { dp = swl; }
@@ -144,16 +146,16 @@ void scale3x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale3x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c16(src, dst, sw, sh, sp, dp, 1); }
-void scale3x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c16(src, dst, sw, sh, sp, dp, 2); }
-void scale3x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c16(src, dst, sw, sh, sp, dp, 3); }
-void scale3x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c16(src, dst, sw, sh, sp, dp, 4); }
+void scale3x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale3x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale3x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale3x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale3x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale3x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } swl*=3; if (!dp) { dp = swl; }
@@ -169,16 +171,16 @@ void scale3x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale3x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c32(src, dst, sw, sh, sp, dp, 1); }
-void scale3x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c32(src, dst, sw, sh, sp, dp, 2); }
-void scale3x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c32(src, dst, sw, sh, sp, dp, 3); }
-void scale3x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale3x_c32(src, dst, sw, sh, sp, dp, 4); }
+void scale3x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale3x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale3x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale3x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale3x_c32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale4x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale4x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } swl*=4; if (!dp) { dp = swl; }
@@ -202,16 +204,16 @@ void scale4x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale4x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c16(src, dst, sw, sh, sp, dp, 1); }
-void scale4x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c16(src, dst, sw, sh, sp, dp, 2); }
-void scale4x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c16(src, dst, sw, sh, sp, dp, 3); }
-void scale4x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c16(src, dst, sw, sh, sp, dp, 4); }
+void scale4x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale4x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale4x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale4x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale4x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale4x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } swl*=4; if (!dp) { dp = swl; }
@@ -227,16 +229,16 @@ void scale4x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale4x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c32(src, dst, sw, sh, sp, dp, 1); }
-void scale4x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c32(src, dst, sw, sh, sp, dp, 2); }
-void scale4x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c32(src, dst, sw, sh, sp, dp, 3); }
-void scale4x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale4x_c32(src, dst, sw, sh, sp, dp, 4); }
+void scale4x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale4x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale4x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale4x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale4x_c32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
 
-void scale5x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale5x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } swl*=5; if (!dp) { dp = swl; }
@@ -261,18 +263,18 @@ void scale5x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale5x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c16(src, dst, sw, sh, sp, dp, 1); }
-void scale5x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c16(src, dst, sw, sh, sp, dp, 2); }
-void scale5x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c16(src, dst, sw, sh, sp, dp, 3); }
-void scale5x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c16(src, dst, sw, sh, sp, dp, 4); }
-void scale5x5_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c16(src, dst, sw, sh, sp, dp, 5); }
+void scale5x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale5x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale5x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale5x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale5x5_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c16(src, dst, sw, sh, sp, dw, dh, dp, 5); }
 
-void scale5x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale5x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } swl*=5; if (!dp) { dp = swl; }
@@ -288,18 +290,18 @@ void scale5x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale5x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c32(src, dst, sw, sh, sp, dp, 1); }
-void scale5x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c32(src, dst, sw, sh, sp, dp, 2); }
-void scale5x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c32(src, dst, sw, sh, sp, dp, 3); }
-void scale5x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c32(src, dst, sw, sh, sp, dp, 4); }
-void scale5x5_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_c32(src, dst, sw, sh, sp, dp, 5); }
+void scale5x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale5x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale5x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale5x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale5x5_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_c32(src, dst, sw, sh, sp, dw, dh, dp, 5); }
 
-void scale6x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale6x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } swl*=6; if (!dp) { dp = swl; }
@@ -323,20 +325,20 @@ void scale6x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale6x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c16(src, dst, sw, sh, sp, dp, 1); }
-void scale6x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c16(src, dst, sw, sh, sp, dp, 2); }
-void scale6x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c16(src, dst, sw, sh, sp, dp, 3); }
-void scale6x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c16(src, dst, sw, sh, sp, dp, 4); }
-void scale6x5_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c16(src, dst, sw, sh, sp, dp, 5); }
-void scale6x6_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c16(src, dst, sw, sh, sp, dp, 6); }
+void scale6x1_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale6x2_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale6x3_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale6x4_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale6x5_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, 5); }
+void scale6x6_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, 6); }
 
-void scale6x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale6x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t x, dx, pix, swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } swl*=6; if (!dp) { dp = swl; }
@@ -352,18 +354,18 @@ void scale6x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale6x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c32(src, dst, sw, sh, sp, dp, 1); }
-void scale6x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c32(src, dst, sw, sh, sp, dp, 2); }
-void scale6x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c32(src, dst, sw, sh, sp, dp, 3); }
-void scale6x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c32(src, dst, sw, sh, sp, dp, 4); }
-void scale6x5_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c32(src, dst, sw, sh, sp, dp, 5); }
-void scale6x6_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_c32(src, dst, sw, sh, sp, dp, 6); }
+void scale6x1_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale6x2_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale6x3_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale6x4_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale6x5_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 5); }
+void scale6x6_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 6); }
 
 //
 //	memcpy_neon (dst/src must be aligned 4, size must be aligned 2)
@@ -420,20 +422,20 @@ void memcpy_neon(void* dst, void* src, uint32_t size) {
 //	NEON scalers
 //
 
-void scale1x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*1; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x1_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x1_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	if ((swl == sp)&&(sp == dp)) memcpy_neon(dst, src, sp*sh);
 	else for (; sh>0; sh--, src=(uint8_t*)src+sp, dst=(uint8_t*)dst+dp) memcpy_neon(dst, src, swl);
 }
 
-void scale1x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x2_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x2_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl;
@@ -492,11 +494,11 @@ void scale1x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale1x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x3_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x3_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl;
@@ -562,11 +564,11 @@ void scale1x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale1x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x4_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x4_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl;
@@ -639,26 +641,26 @@ void scale1x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale1x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale1x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale1x1_n16, &scale1x2_n16, &scale1x3_n16, &scale1x4_n16 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
-void scale1x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*1; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x1_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x1_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	if ((swl == sp)&&(sp == dp)) memcpy_neon(dst, src, sp*sh);
 	else for (; sh>0; sh--, src=(uint8_t*)src+sp, dst=(uint8_t*)dst+dp) memcpy_neon(dst, src, swl);
 }
 
-void scale1x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x2_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x2_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl;
@@ -717,11 +719,11 @@ void scale1x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale1x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x3_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x3_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl;
@@ -787,11 +789,11 @@ void scale1x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale1x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale1x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw*sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x4_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x4_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl;
@@ -864,18 +866,18 @@ void scale1x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale1x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale1x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale1x1_n32, &scale1x2_n32, &scale1x3_n32, &scale1x4_n32 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scale2x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x1_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x1_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl*2;
@@ -984,11 +986,11 @@ void scale2x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x2_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x2_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl*2;
@@ -1101,11 +1103,11 @@ void scale2x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x3_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x3_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl*2;
@@ -1222,11 +1224,11 @@ void scale2x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x3_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x3_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl*2;
@@ -1347,18 +1349,18 @@ void scale2x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale2x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale2x1_n16, &scale2x2_n16, &scale2x3_n16, &scale2x4_n16 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scale2x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x1_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x1_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl*2;
@@ -1405,11 +1407,11 @@ void scale2x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x2_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x2_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl*2;
@@ -1459,11 +1461,11 @@ void scale2x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x3_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x3_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl*2;
@@ -1516,11 +1518,11 @@ void scale2x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale2x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*2; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x4_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale2x4_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl*2;
@@ -1576,18 +1578,18 @@ void scale2x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale2x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale2x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale2x1_n32, &scale2x2_n32, &scale2x3_n32, &scale2x4_n32 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scale3x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x1_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x1_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl*3;
@@ -1647,11 +1649,11 @@ void scale3x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x2_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x2_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl*3;
@@ -1715,11 +1717,11 @@ void scale3x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x3_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x3_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl*3;
@@ -1787,11 +1789,11 @@ void scale3x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x4_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x4_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl*3;
@@ -1863,18 +1865,18 @@ void scale3x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale3x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale3x1_n16, &scale3x2_n16, &scale3x3_n16, &scale3x4_n16 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scale3x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x1_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x1_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl*3;
@@ -1920,11 +1922,11 @@ void scale3x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x2_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x2_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl*3;
@@ -1974,11 +1976,11 @@ void scale3x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x3_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x3_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl*3;
@@ -2032,11 +2034,11 @@ void scale3x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale3x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*3; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x4_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale3x4_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl*3;
@@ -2094,18 +2096,18 @@ void scale3x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale3x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale3x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale3x1_n32, &scale3x2_n32, &scale3x3_n32, &scale3x4_n32 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scale4x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x1_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x1_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl*4;
@@ -2152,11 +2154,11 @@ void scale4x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x2_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x2_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl*4;
@@ -2206,11 +2208,11 @@ void scale4x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x3_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x3_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl*4;
@@ -2263,11 +2265,11 @@ void scale4x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x4_c16(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x4_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl*4;
@@ -2323,18 +2325,18 @@ void scale4x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale4x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale4x1_n16, &scale4x2_n16, &scale4x3_n16, &scale4x4_n16 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scale4x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x1_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x1_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl*4;
@@ -2373,11 +2375,11 @@ void scale4x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x2_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x2_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*2 - swl*4;
@@ -2419,11 +2421,11 @@ void scale4x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x3_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x3_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*3 - swl*4;
@@ -2468,11 +2470,11 @@ void scale4x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
+void scale4x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*4; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x4_c32(src,dst,sw,sh,sp,dp); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale4x4_c32(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp*4 - swl*4;
@@ -2520,10 +2522,10 @@ void scale4x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	);
 }
 
-void scale4x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
-	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t)
+void scale4x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
+	void (* const func[4])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 		 = { &scale4x1_n32, &scale4x2_n32, &scale4x3_n32, &scale4x4_n32 };
-	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dp);
+	if (--ymul < 4) func[ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
@@ -2568,12 +2570,12 @@ void scale5x_n16line(void* src, void* dst, uint32_t swl) {
 	);
 }
 
-void scale5x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale5x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	uint32_t dwl = swl*5;
 	if (!sp) { sp = swl; } if (!dp) { dp = dwl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale5x_c16(src,dst,sw,sh,sp,dp,ymul); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale5x_c16(src,dst,sw,sh,sp,dw,dh,dp,ymul); return; }
 	void* __restrict dstsrc;
 	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
 		scale5x_n16line(src, dst, swl);
@@ -2582,16 +2584,16 @@ void scale5x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale5x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n16(src, dst, sw, sh, sp, dp, 1); }
-void scale5x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n16(src, dst, sw, sh, sp, dp, 2); }
-void scale5x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n16(src, dst, sw, sh, sp, dp, 3); }
-void scale5x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n16(src, dst, sw, sh, sp, dp, 4); }
-void scale5x5_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n16(src, dst, sw, sh, sp, dp, 5); }
+void scale5x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale5x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale5x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale5x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale5x5_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n16(src, dst, sw, sh, sp, dw, dh, dp, 5); }
 
 void scale5x_n32line(void* src, void* dst, uint32_t swl) {
 	asm volatile (
@@ -2626,12 +2628,12 @@ void scale5x_n32line(void* src, void* dst, uint32_t swl) {
 	);
 }
 
-void scale5x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale5x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	uint32_t dwl = swl*5;
 	if (!sp) { sp = swl; } if (!dp) { dp = dwl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale5x_c32(src,dst,sw,sh,sp,dp,ymul); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale5x_c32(src,dst,sw,sh,sp,dw,dh,dp,ymul); return; }
 	void* __restrict dstsrc;
 	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
 		scale5x_n32line(src, dst, swl);
@@ -2640,16 +2642,16 @@ void scale5x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale5x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n32(src, dst, sw, sh, sp, dp, 1); }
-void scale5x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n32(src, dst, sw, sh, sp, dp, 2); }
-void scale5x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n32(src, dst, sw, sh, sp, dp, 3); }
-void scale5x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n32(src, dst, sw, sh, sp, dp, 4); }
-void scale5x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale5x_n32(src, dst, sw, sh, sp, dp, 5); }
+void scale5x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale5x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale5x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale5x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale5x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale5x_n32(src, dst, sw, sh, sp, dw, dh, dp, 5); }
 
 void scale6x_n16line(void* src, void* dst, uint32_t swl) {
 	asm volatile (
@@ -2690,12 +2692,12 @@ void scale6x_n16line(void* src, void* dst, uint32_t swl) {
 	);
 }
 
-void scale6x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale6x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t swl = sw * sizeof(uint16_t);
 	uint32_t dwl = swl*6;
 	if (!sp) { sp = swl; } if (!dp) { dp = dwl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale6x_c16(src,dst,sw,sh,sp,dp,ymul); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale6x_c16(src,dst,sw,sh,sp,dw,dh,dp,ymul); return; }
 	void* __restrict dstsrc;
 	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
 		scale6x_n16line(src, dst, swl);
@@ -2704,18 +2706,18 @@ void scale6x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale6x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n16(src, dst, sw, sh, sp, dp, 1); }
-void scale6x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n16(src, dst, sw, sh, sp, dp, 2); }
-void scale6x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n16(src, dst, sw, sh, sp, dp, 3); }
-void scale6x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n16(src, dst, sw, sh, sp, dp, 4); }
-void scale6x5_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n16(src, dst, sw, sh, sp, dp, 5); }
-void scale6x6_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n16(src, dst, sw, sh, sp, dp, 6); }
+void scale6x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale6x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale6x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale6x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale6x5_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 5); }
+void scale6x6_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 6); }
 
 void scale6x_n32line(void* src, void* dst, uint32_t swl) {
 	asm volatile (
@@ -2749,12 +2751,12 @@ void scale6x_n32line(void* src, void* dst, uint32_t swl) {
 	);
 }
 
-void scale6x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp, uint32_t ymul) {
+void scale6x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul) {
 	if (!sw||!sh||!ymul) return;
 	uint32_t swl = sw * sizeof(uint32_t);
 	uint32_t dwl = swl*6;
 	if (!sp) { sp = swl; } if (!dp) { dp = dwl; }
-	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale6x_c32(src,dst,sw,sh,sp,dp,ymul); return; }
+	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale6x_c32(src,dst,sw,sh,sp,dw,dh,dp,ymul); return; }
 	void* __restrict dstsrc;
 	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
 		scale6x_n32line(src, dst, swl);
@@ -2763,23 +2765,23 @@ void scale6x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	}
 }
 
-void scale6x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n32(src, dst, sw, sh, sp, dp, 1); }
-void scale6x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n32(src, dst, sw, sh, sp, dp, 2); }
-void scale6x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n32(src, dst, sw, sh, sp, dp, 3); }
-void scale6x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n32(src, dst, sw, sh, sp, dp, 4); }
-void scale6x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n32(src, dst, sw, sh, sp, dp, 5); }
-void scale6x6_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	scale6x_n32(src, dst, sw, sh, sp, dp, 6); }
+void scale6x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 1); }
+void scale6x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 2); }
+void scale6x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 3); }
+void scale6x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 4); }
+void scale6x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 5); }
+void scale6x6_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 6); }
 
-static void dummy(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {}
+static void dummy(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {}
 
-void scaler_n16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t) = {
+void scaler_n16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) = {
 			{ &scale1x1_n16, &scale1x2_n16, &scale1x3_n16, &scale1x4_n16, &dummy, &dummy, &dummy, &dummy },
 			{ &scale2x1_n16, &scale2x2_n16, &scale2x3_n16, &scale2x4_n16, &dummy, &dummy, &dummy, &dummy },
 			{ &scale3x1_n16, &scale3x2_n16, &scale3x3_n16, &scale3x4_n16, &dummy, &dummy, &dummy, &dummy },
@@ -2787,12 +2789,12 @@ void scaler_n16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __rest
 			{ &scale5x1_n16, &scale5x2_n16, &scale5x3_n16, &scale5x4_n16, &scale5x5_n16, &dummy, &dummy, &dummy },
 			{ &scale6x1_n16, &scale6x2_n16, &scale6x3_n16, &scale6x4_n16, &scale6x5_n16, &scale6x6_n16, &dummy, &dummy }
 		   };
-	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dp);
+	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scaler_n32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t) = {
+void scaler_n32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) = {
 			{ &scale1x1_n32, &scale1x2_n32, &scale1x3_n32, &scale1x4_n32, &dummy, &dummy, &dummy, &dummy },
 			{ &scale2x1_n32, &scale2x2_n32, &scale2x3_n32, &scale2x4_n32, &dummy, &dummy, &dummy, &dummy },
 			{ &scale3x1_n32, &scale3x2_n32, &scale3x3_n32, &scale3x4_n32, &dummy, &dummy, &dummy, &dummy },
@@ -2800,12 +2802,12 @@ void scaler_n32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __rest
 			{ &scale5x1_n32, &scale5x2_n32, &scale5x3_n32, &scale5x4_n32, &scale5x5_n32, &dummy, &dummy, &dummy },
 			{ &scale6x1_n32, &scale6x2_n32, &scale6x3_n32, &scale6x4_n32, &scale6x5_n32, &scale6x6_n32, &dummy, &dummy }
 		   };
-	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dp);
+	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scaler_c16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t) = {
+void scaler_c16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) = {
 			{ &scale1x1_c16, &scale1x2_c16, &scale1x3_c16, &scale1x4_c16, &dummy, &dummy, &dummy, &dummy },
 			{ &scale2x1_c16, &scale2x2_c16, &scale2x3_c16, &scale2x4_c16, &dummy, &dummy, &dummy, &dummy },
 			{ &scale3x1_c16, &scale3x2_c16, &scale3x3_c16, &scale3x4_c16, &dummy, &dummy, &dummy, &dummy },
@@ -2813,12 +2815,12 @@ void scaler_c16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __rest
 			{ &scale5x1_c16, &scale5x2_c16, &scale5x3_c16, &scale5x4_c16, &scale5x5_c16, &dummy, &dummy, &dummy },
 			{ &scale6x1_c16, &scale6x2_c16, &scale6x3_c16, &scale6x4_c16, &scale6x5_c16, &scale6x6_c16, &dummy, &dummy }
 		   };
-	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dp);
+	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
 
-void scaler_c32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
-	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t) = {
+void scaler_c32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) = {
 			{ &scale1x1_c32, &scale1x2_c32, &scale1x3_c32, &scale1x4_c32, &dummy, &dummy, &dummy, &dummy },
 			{ &scale2x1_c32, &scale2x2_c32, &scale2x3_c32, &scale2x4_c32, &dummy, &dummy, &dummy, &dummy },
 			{ &scale3x1_c32, &scale3x2_c32, &scale3x3_c32, &scale3x4_c32, &dummy, &dummy, &dummy, &dummy },
@@ -2826,6 +2828,6 @@ void scaler_c32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __rest
 			{ &scale5x1_c32, &scale5x2_c32, &scale5x3_c32, &scale5x4_c32, &scale5x5_c32, &dummy, &dummy, &dummy },
 			{ &scale6x1_c32, &scale6x2_c32, &scale6x3_c32, &scale6x4_c32, &scale6x5_c32, &scale6x6_c32, &dummy, &dummy }
 		   };
-	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dp);
+	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
