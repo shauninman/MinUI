@@ -4322,6 +4322,8 @@ static void Menu_loop(void) {
 
 		setOverclock(overclock); // restore overclock value
 		if (rumble_strength) VIB_setStrength(rumble_strength);
+		
+		GFX_setVsync(prevent_tearing);
 	}
 	
 	SDL_FreeSurface(bitmap);
@@ -4370,6 +4372,8 @@ static void trackFPS(void) {
 		sec_start = now;
 		cpu_ticks = 0;
 		fps_ticks = 0;
+		
+		// LOG_info("fps: %f cpu: %f\n", fps_double, cpu_double);
 	}
 }
 

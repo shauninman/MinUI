@@ -1,18 +1,11 @@
 all
 	minarch
-		tekken 3 native ends up 0x0 res
 		some aspect scaling isn't working correctly
 			fceumm is ending up not-quite-native but also not the full aspect ratio
 				something to do with PAGE_SIZE limitations?
 			I think I should redo both scaler selectors
-		NN scalers are broken because of a mix of rotated and unrotated values
-			will need to add dst_w and dst_h args (at least)
-			
 		doesn't pickup on core setting ratio changes? eg. fceumm
 		support missing buttons with MENU+BUTTON? (smart)
-	vb
-		just opening the menu tanks performance
-			affects all platforms so it might be core related
 	api
 		GFX_blitDebug(text,x,y)?
 			simple for everything but trimuismart with its -90° screen
@@ -28,6 +21,9 @@ all
 	confirm
 	
 smart
+	quicksave!
+		currently shows message when waking from sleep
+	
 	optimize text doesn't work with a rotated surface
 		what if I only did rotation before scaling if dimensions are larger than fixed size?
 	hardware button lables need updating (eg. (POWER) SLEEP -> L+R+MENU)
