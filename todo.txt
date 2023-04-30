@@ -7,8 +7,10 @@ known issues
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoomini: audio popping between launches
 	miyoomini: low battery overlay isn't implemented yet
+	miyoominiplus: doesn't always display installing/updating message
 
 all
+	instead of specifying separate sleep/wake buttons what if this was just based onto a HAS_POWER_BUTTON flag which is just (BUTTON_POWER!=SDLK_UNKNOWN)
 	cores
 		vb slow on smart
 		fake08 crashes when resuming states

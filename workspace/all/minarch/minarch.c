@@ -4085,7 +4085,7 @@ static void Menu_loop(void) {
 		}
 		
 		
-		if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
+		if (PAD_justPressed(BTN_B) || (BTN_WAKE!=BTN_MENU && PAD_tappedMenu(now))) {
 			status = STATUS_CONT;
 			show_menu = 0;
 		}

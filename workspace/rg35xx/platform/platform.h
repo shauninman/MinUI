@@ -82,5 +82,6 @@
 ///////////////////////////////
 
 #define SDCARD_PATH "/mnt/sdcard"
+#define MUTE_VOLUME_RAW 0
 
 #endif

@@ -1046,71 +1046,78 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	int dirty = _dirty ? *_dirty : 0;
 	int show_setting = _show_setting ? *_show_setting : 0;
 	
-	static uint32_t cancel_start = 0;
-	static uint32_t power_start = 0;
+	static uint32_t last_input_at = 0; // timestamp of last input (autosleep)
+	static uint32_t checked_charge_at = 0; // timestamp of last time checking charge
+	static uint32_t setting_shown_at = 0; // timestamp when settings started being shown
+	static uint32_t power_pressed_at = 0; // timestamp when power button was just pressed
+	static uint32_t mod_unpressed_at = 0; // timestamp of last time settings modifier key was NOT down
 	
-	// TODO: menu_start and MENU_DELAY are now more accurately mod_start and MOD_DELAY...
-	static uint32_t menu_start = 0;
-	static uint32_t setting_start = 0;
-	static uint32_t charge_start = 0;
 	static int was_charging = -1;
 	if (was_charging==-1) was_charging = pow.is_charging;
 
 	uint32_t now = SDL_GetTicks();
-	if (cancel_start==0) cancel_start = now;
-	if (charge_start==0) charge_start = now;
-	
-	if (PAD_anyPressed()) cancel_start = now;
+	if (was_charging || PAD_anyPressed() || last_input_at==0) last_input_at = now;
 	
 	#define CHARGE_DELAY 1000
-	if (dirty || now-charge_start>=CHARGE_DELAY) {
+	if (dirty || now-checked_charge_at>=CHARGE_DELAY) {
 		int is_charging = pow.is_charging;
 		if (was_charging!=is_charging) {
 			was_charging = is_charging;
 			dirty = 1;
 		}
-		charge_start = now;
+		checked_charge_at = now;
 	}
 	
-	if (power_start && now-power_start>=1000) {
+	if (power_pressed_at && now-power_pressed_at>=1000) {
 		if (before_sleep) before_sleep();
 		POW_powerOff();
 	}
-	if ((BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justPressed(BTN_MENU)) || PAD_justPressed(BTN_SLEEP)) {
-		power_start = now;
+	
+	if (PAD_justPressed(BTN_POWER)) {
+		power_pressed_at = now;
 	}
 	
-	#define SLEEP_DELAY 30000
-	if (now-cancel_start>=SLEEP_DELAY && POW_preventAutosleep()) cancel_start = now;
+	#define SLEEP_DELAY 30000 // 30 seconds
+	if (now-last_input_at>=SLEEP_DELAY && POW_preventAutosleep()) last_input_at = now;
 	
-	if (now-cancel_start>=SLEEP_DELAY || (BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justReleased(BTN_MENU)) || PAD_justReleased(BTN_SLEEP)) {
+	if (
+		now-last_input_at>=SLEEP_DELAY || // autosleep
+		(BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justReleased(BTN_MENU)) || // combo sleep button
+		PAD_justReleased(BTN_SLEEP) // single sleep button
+	) {
 		if (before_sleep) before_sleep();
 		POW_fauxSleep();
 		if (after_sleep) after_sleep();
 		
-		cancel_start = now = SDL_GetTicks();
-		power_start = 0;
+		last_input_at = now = SDL_GetTicks();
+		power_pressed_at = 0;
 		dirty = 1;
 	}
 	
 	int was_dirty = dirty; // dirty list (not including settings/battery)
 	
-	int delay_settings = BTN_MOD_VOLUME==BTN_MENU || BTN_MOD_BRIGHTNESS==BTN_MENU;
+	// TODO: only delay hiding setting changes if that setting didn't require a modifier button be held, otherwise release as soon as modifier is released
+	
+	int delay_settings = BTN_MOD_BRIGHTNESS==BTN_MENU; // when both volume and brighness require a modifier hide settings as soon as it is released
 	#define SETTING_DELAY 500
-	if (show_setting && (now-setting_start>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
+	if (show_setting && (now-setting_shown_at>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 		show_setting = 0;
 		dirty = 1;
 	}
 	
 	if (!show_setting && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
-		menu_start = now; // this is weird, updates until pressed
+		mod_unpressed_at = now; // this feels backwards but is correct
 	}
 	
-	#define MENU_DELAY 250 // also in PAD_tappedMenu()
-	if (((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && (!delay_settings || now-menu_start>=MENU_DELAY)) || 
-		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))) {
-	// if (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS) || ((PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && now-menu_start>=MENU_DELAY)) {
-		setting_start = now;
+	#define MOD_DELAY 250
+	if (
+		(
+			(PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && 
+			(!delay_settings || now-mod_unpressed_at>=MOD_DELAY)
+		) || 
+		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))
+	) {
+		setting_shown_at = now;
 		if (PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 			show_setting = 1;
 		}
@@ -1118,8 +1125,8 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 			show_setting = 2;
 		}
 	}
+	
 	if (show_setting) dirty = 1; // shm is slow or keymon is catching input on the next frame
-
 	if (_dirty) *_dirty = dirty;
 	if (_show_setting) *_show_setting = show_setting;
 }
@@ -1140,7 +1147,7 @@ void POW_powerOff(void) {
 }
 
 static void POW_enterSleep(void) {
-	SetRawVolume(0);
+	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
 	system("killall -STOP keymon.elf");
 	
