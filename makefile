@@ -50,7 +50,9 @@ bundle:
 	cp ./workspace/$(PLATFORM)/cores/output/snes9x2005_plus_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	
 	# extras
-ifneq ($(PLATFORM), trimuismart)
+ifeq ($(PLATFORM), trimuismart) # TODO tmp?
+	cp ./workspace/miyoomini/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/trimuismart/P8.pak
+else
 	cp ./workspace/$(PLATFORM)/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
 endif
 	cp ./workspace/$(PLATFORM)/cores/output/mgba_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/MGBA.pak
