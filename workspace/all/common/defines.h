@@ -16,10 +16,10 @@
 #define RES_PATH SDCARD_PATH "/.system/res"
 #define FONT_PATH RES_PATH "/BPreplayBold-unhinted.otf"
 #define USERDATA_PATH SDCARD_PATH "/.userdata/" PLATFORM
+#define SHARED_USERDATA_PATH SDCARD_PATH "/.userdata/shared"
 #define PAKS_PATH SYSTEM_PATH "/paks"
-#define ARCH_PATH SDCARD_PATH "/.userdata/" ARCH_TAG
-#define RECENT_PATH ARCH_PATH "/.minui/recent.txt"
-#define AUTO_RESUME_PATH ARCH_PATH "/.minui/auto_resume.txt"
+#define RECENT_PATH SHARED_USERDATA_PATH "/.minui/recent.txt"
+#define AUTO_RESUME_PATH SHARED_USERDATA_PATH "/.minui/auto_resume.txt"
 #define AUTO_RESUME_SLOT 9
 
 #define FAUX_RECENT_PATH SDCARD_PATH "/Recently Played"

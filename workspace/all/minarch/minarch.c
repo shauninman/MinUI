@@ -2952,8 +2952,8 @@ void Core_open(const char* core_path, const char* tag_name) {
 	
 	LOG_info("core: %s version: %s tag: %s (valid_extensions: %s need_fullpath: %i)\n", core.name, core.version, core.tag, info.valid_extensions, info.need_fullpath);
 	
-	sprintf((char*)core.config_dir, SDCARD_PATH "/.userdata/" PLATFORM "/%s-%s", core.tag, core.name);
-	sprintf((char*)core.states_dir, SDCARD_PATH "/.userdata/" ARCH_TAG "/%s-%s", core.tag, core.name);
+	sprintf((char*)core.config_dir, USERDATA_PATH "/%s-%s", core.tag, core.name);
+	sprintf((char*)core.states_dir, SHARED_USERDATA_PATH "/%s-%s", core.tag, core.name);
 	sprintf((char*)core.saves_dir, SDCARD_PATH "/Saves/%s", core.tag);
 	sprintf((char*)core.bios_dir, SDCARD_PATH "/Bios/%s", core.tag);
 	
@@ -3960,7 +3960,7 @@ static void Menu_loop(void) {
 	char minui_dir[256];
 		
 	getEmuName(game.path, emu_name);
-	sprintf(minui_dir, ARCH_PATH "/.minui/%s", emu_name);
+	sprintf(minui_dir, SHARED_USERDATA_PATH "/.minui/%s", emu_name);
 	mkdir(minui_dir, 0755);
 	
 	int rom_disc = -1;

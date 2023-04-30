@@ -32,20 +32,19 @@ else
 fi
 export IS_PLUS
 export PLATFORM="miyoomini"
-export ARCH_TAG=arm-480
 export SDCARD_PATH="/mnt/SDCARD"
 export BIOS_PATH="$SDCARD_PATH/Bios"
 export SAVES_PATH="$SDCARD_PATH/Saves"
 export SYSTEM_PATH="$SDCARD_PATH/.system/$PLATFORM"
 export CORES_PATH="$SYSTEM_PATH/cores"
 export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
+export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
 export DATETIME_PATH=$USERDATA_PATH/.minui/datetime.txt # used by bin/shutdown
-export ARCH_PATH="$SDCARD_PATH/.userdata/$ARCH_TAG"
 
 mkdir -p "$USERDATA_PATH"
 mkdir -p "$LOGS_PATH"
-mkdir -p "$ARCH_PATH/.minui"
+mkdir -p "$SHARED_USERDATA_PATH/.minui"
 
 #######################################
 
