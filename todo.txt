@@ -9,6 +9,10 @@ known issues
 	miyoomini: low battery overlay isn't implemented yet
 
 all
+	cores
+		vb slow on smart
+		fake08 crashes when resuming states
+			segfault after opening audio state
 	minarch
 		some aspect scaling isn't working correctly
 			fceumm is ending up not-quite-native but also not the full aspect ratio
@@ -22,10 +26,6 @@ all
 	minui
 		shows games in alt collated folders even if the alt pak isn't present...
 			not sure how that's possible...
-	promote .userdata/arm-480 to /States?
-		rename ARCH_PATH to SHARED_PATH or SHARED_USERDATA_PATH and keep all non-state data there?
-			I think the original Union had something like that
-		might depend on how the Model S fairs
 	add a "res" (or "many"?) folder 
 		for install/update and charging gfx?
 	show
@@ -33,6 +33,7 @@ all
 	confirm
 	
 smart
+	ffs VB is slow again :sob:
 	sleep (I think current code assumes BTN_SLEEP is always BTN_POWER, used interchangeably)
 		pow.can_sleep
 		POW_disableSleep()

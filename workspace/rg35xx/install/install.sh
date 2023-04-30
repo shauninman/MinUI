@@ -1,7 +1,7 @@
 #!/system/bin/sh
 
 # NOTE: this file is not chrooted so it's using stock's everything!
-{
+# {
 
 TF1_PATH=/mnt/mmc
 TF2_PATH=/mnt/sdcard # TF1 should be linked to this path if TF2 is missing or doesn't contain our system folder
@@ -9,6 +9,14 @@ SYSTEM_PATH=${TF2_PATH}/.system/rg35xx
 FLAG_PATH=/misc/.minstalled
 
 echo "installing/updating"
+
+# TODO: alpha only
+SDCARD_PATH="/mnt/sdcard"
+ARCH_PATH="$SDCARD_PATH/.userdata/arm-480"
+SHARED_PATH="$SDCARD_PATH/.userdata/shared"
+if [ -d "$ARCH_PATH" ] && [ ! -d "$SHARED_PATH" ]; then
+	mv "$ARCH_PATH" "$SHARED_PATH"
+fi
 
 if [ ! -f $FLAG_PATH ]; then
 	echo "backing up"
@@ -67,4 +75,4 @@ if [ ! -f $FLAG_PATH ] || was_updated; then
 	sync && reboot
 fi
 
-} &> /mnt/sdcard/install.txt
+# } &> /mnt/sdcard/install.txt
