@@ -2,8 +2,20 @@
 
 # NOTE: becomes miyoo/app/MainUI
 
+IS_PLUS=false
+if [ -f "/customer/app/axp_test" ]; then
+	IS_PLUS=true
+fi
+
+if $IS_PLUS; then
+	FAUX_DIR="miyoo354"
+else
+	FAUX_DIR="miyoo"
+fi
+
+
 SDCARD_PATH=/mnt/SDCARD
-cd "$SDCARD_PATH/miyoo/app"
+cd "$SDCARD_PATH/$FAUX_DIR/app"
 
 export LD_LIBRARY_PATH=/lib:/config/lib:/customer/lib
 
@@ -24,8 +36,13 @@ fi
 
 # .tmp_update/updater does the actual installation (and later, updating)
 cp -rf .tmp_update $SDCARD_PATH/
-rm -rf "$SDCARD_PATH/miyoo"
+rm -rf "$SDCARD_PATH/$FAUX_DIR"
 sync
 $SDCARD_PATH/.tmp_update/updater
 
-reboot # under no circumstances should stock be allowed to touch this card
+# under no circumstances should stock be allowed to touch this card
+if $IS_PLUS; then
+	poweroff
+else
+	reboot
+fi

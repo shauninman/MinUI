@@ -4,7 +4,7 @@ cd $(dirname "$0")
 
 {
 
-SUPPORTED_VERSION="202205010000" # there is no 202205010000 firmware, it's when I created this pak originally
+SUPPORTED_VERSION="202304280000" # there is no 202304280000 firmware, it's when I updated this pak originally
 if [ $MIYOO_VERSION -gt $SUPPORTED_VERSION ]; then
 	echo "Unknown firmware version. Aborted."
 	exit 1

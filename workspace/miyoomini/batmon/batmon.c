@@ -9,6 +9,83 @@
 #include <linux/input.h>
 #include <pthread.h>
 
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+
+//	mmplus axp223 (via eggs)
+#define	AXPDEV	"/dev/i2c-1"
+#define	AXPID	(0x34)
+
+//
+//	AXP223 write (plus)
+//		32 .. bit7: Shutdown Control
+//
+int axp_write(unsigned char address, unsigned char val) {
+	struct i2c_msg msg[1];
+	struct i2c_rdwr_ioctl_data packets;
+	unsigned char buf[2];
+	int ret;
+	int fd = open(AXPDEV, O_RDWR);
+	ioctl(fd, I2C_TIMEOUT, 5);
+	ioctl(fd, I2C_RETRIES, 1);
+
+	buf[0] = address;
+	buf[1] = val;
+	msg[0].addr = AXPID;
+	msg[0].flags = 0;
+	msg[0].len = 2;
+	msg[0].buf = buf;
+
+	packets.nmsgs = 1;
+	packets.msgs = &msg[0];
+	ret = ioctl(fd, I2C_RDWR, &packets);
+
+	close(fd);
+	if (ret < 0) return -1;
+	return 0;
+}
+
+//
+//	AXP223 read (plus)
+//		00 .. C4/C5(USBDC connected) 00(discharging)
+//			bit7: ACIN presence indication 0:ACIN not exist, 1:ACIN exists
+//			bit6: Indicating whether ACIN is usable (used by axp_test)
+//			bit4: Indicating whether VBUS is usable (used by axp_test)
+//			bit2: Indicating the Battery current direction 0: discharging, 1: charging
+//			bit0: Indicating whether the boot source is ACIN or VBUS
+//		01 .. 70(charging) 30(non-charging)
+//			bit6: Charge indication 0:not charge or charge finished, 1: in charging
+//		B9 .. (& 0x7F) battery percentage
+//
+int axp_read(unsigned char address) {
+	struct i2c_msg msg[2];
+	struct i2c_rdwr_ioctl_data packets;
+	unsigned char val;
+	int ret;
+	int fd = open(AXPDEV, O_RDWR);
+	ioctl(fd, I2C_TIMEOUT, 5);
+	ioctl(fd, I2C_RETRIES, 1);
+
+	msg[0].addr = AXPID;
+	msg[0].flags = 0;
+	msg[0].len = 1;
+	msg[0].buf = &address;
+	msg[1].addr = AXPID;
+	msg[1].flags = I2C_M_RD;
+	msg[1].len = 1;
+	msg[1].buf = &val;
+
+	packets.nmsgs = 2;
+	packets.msgs = &msg[0];
+	ret = ioctl(fd, I2C_RDWR, &packets);
+
+	close(fd);
+	if(ret < 0) return -1;
+	return val;
+}
+
+static int is_plus = 0;
 static int is_charging = 1;
 static int screen_on = 0;
 static unsigned long screen_start;
@@ -21,20 +98,22 @@ void screenOff(void) {
 	system("echo 0 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle");
 	screen_on = 0;
 }
-void checkCharging(void) {
+int isCharging(void) {
+	if (is_plus) return (axp_read(0x00) & 0x4) > 0;
+	
 	int i = 0;
 	FILE *file = fopen("/sys/devices/gpiochip0/gpio/gpio59/value", "r");
 	if (file!=NULL) {
 		fscanf(file, "%i", &i);
 		fclose(file);
 	}
-	is_charging = i;
+	return i;
 }
 static pthread_t charging_pt;
 void* chargingThread(void* arg) {
 	while (1) {
 		sleep(1);
-		checkCharging();
+		is_charging = isCharging();
 	}
 }
 
@@ -51,6 +130,7 @@ void* inputThread(void* arg) {
 }
 
 int main(void) {
+	is_plus = access("/customer/app/axp_test", F_OK)==0;
 	int fb0_fd = open("/dev/fb0", O_RDWR);
 	struct fb_var_screeninfo vinfo;
 	ioctl(fb0_fd, FBIOGET_VSCREENINFO, &vinfo);

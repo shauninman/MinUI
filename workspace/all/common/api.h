@@ -179,6 +179,7 @@ void VIB_setStrength(int strength);
 ///////////////////////////////
 
 #define BRIGHTNESS_BUTTON_LABEL "+ -" // ew
+
 typedef void (*POW_callback_t)(void);
 void POW_init(void);
 void POW_quit(void);
@@ -192,6 +193,7 @@ void POW_powerOff(void);
 int POW_isPoweringOff(void);
 
 void POW_fauxSleep(void);
+
 void POW_disableAutosleep(void);
 void POW_enableAutosleep(void);
 int POW_preventAutosleep(void);

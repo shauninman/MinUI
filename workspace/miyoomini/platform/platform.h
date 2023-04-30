@@ -31,8 +31,8 @@
 #define BUTTON_POWER 	SDLK_POWER
 
 // TODO: should these be SDLK_UNKNOWN?
-#define	BUTTON_PLUS		SDLK_UNDEFINED
-#define	BUTTON_MINUS	SDLK_UNDEFINED
+#define	BUTTON_PLUS		SDLK_RSUPER
+#define	BUTTON_MINUS	SDLK_LSUPER
 
 ///////////////////////////////
 
@@ -57,18 +57,19 @@
 #define CODE_MENU		1
 #define CODE_POWER		116
 
-#define CODE_PLUS		0 // RESERVED=0,UNKNOWN=240
-#define CODE_MINUS		0 // RESERVED=0,UNKNOWN=240
+#define CODE_PLUS		115
+#define CODE_MINUS		114
 
 ///////////////////////////////
 
+extern int is_plus;
 #define BTN_RESUME 			BTN_X
 #define BTN_SLEEP 			BTN_POWER
 #define BTN_WAKE 			BTN_POWER
-#define BTN_MOD_VOLUME 		BTN_SELECT
-#define BTN_MOD_BRIGHTNESS 	BTN_START
-#define BTN_MOD_PLUS 		BTN_R1
-#define BTN_MOD_MINUS 		BTN_L1
+#define BTN_MOD_VOLUME 		(is_plus ? BTN_NONE : BTN_SELECT)
+#define BTN_MOD_BRIGHTNESS 	(is_plus ? BTN_MENU : BTN_START)
+#define BTN_MOD_PLUS 		(is_plus ? BTN_PLUS : BTN_R1)
+#define BTN_MOD_MINUS 		(is_plus ? BTN_MINUS : BTN_L1)
 
 ///////////////////////////////
 

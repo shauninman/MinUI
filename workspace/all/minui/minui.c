@@ -1268,7 +1268,7 @@ int main (int argc, char *argv[]) {
 				}
 			}
 		
-			if (PAD_justRepeated(BTN_L1) && !POW_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
+			if (PAD_justRepeated(BTN_L1) && !PAD_isPressed(BTN_R1) && !POW_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha-1;
 				if (i>=0) {
@@ -1281,7 +1281,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-			else if (PAD_justRepeated(BTN_R1) && !POW_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
+			else if (PAD_justRepeated(BTN_R1) && !PAD_isPressed(BTN_L1) && !POW_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha+1;
 				if (i<top->alphas->count) {
@@ -1390,7 +1390,7 @@ int main (int argc, char *argv[]) {
 				
 				// buttons (duped and trimmed from below)
 				if (show_setting) GFX_blitHardwareHints(screen, show_setting);
-				else GFX_blitButtonGroup((char*[]){ "POWER","SLEEP",  NULL }, screen, 0);
+				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"COMBO","SLEEP",  NULL }, screen, 0);
 				
 				GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, screen, 1);
 			}
@@ -1459,7 +1459,7 @@ int main (int argc, char *argv[]) {
 				// buttons
 				if (show_setting) GFX_blitHardwareHints(screen, show_setting);
 				else if (can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, screen, 0);
-				else GFX_blitButtonGroup((char*[]){ "POWER","SLEEP",  NULL }, screen, 0);
+				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"COMBO","SLEEP",  NULL }, screen, 0);
 			
 				if (total==0) {
 					if (stack->count>1) {

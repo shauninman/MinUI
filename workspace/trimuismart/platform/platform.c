@@ -377,12 +377,13 @@ SDL_Surface* PLAT_getVideoBufferCopy(void) {
 
 ///////////////////////////////
 
+// TODO: 
 #define OVERLAY_WIDTH PILL_SIZE // unscaled
 #define OVERLAY_HEIGHT PILL_SIZE // unscaled
 #define OVERLAY_BPP 4
 #define OVERLAY_DEPTH 16
 #define OVERLAY_PITCH (OVERLAY_WIDTH * OVERLAY_BPP) // unscaled
-#define OVERLAY_RGBA_MASK 0x00ff0000,0x0000ff00,0x000000ff,0xff000000
+#define OVERLAY_RGBA_MASK 0x00ff0000,0x0000ff00,0x000000ff,0xff000000 // ARGB
 static struct OVL_Context {
 	SDL_Surface* overlay;
 } ovl;

@@ -92,8 +92,6 @@ int main (int argc, char *argv[]) {
 	then = tod.tv_sec * 1000 + tod.tv_usec / 1000; // essential SDL_GetTicks()
 	ignore = 0;
 	
-	
-	// TODO: enable key repeat (not supported natively)
 	while (1) {
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;

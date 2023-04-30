@@ -3,4 +3,9 @@
 if [ -n "$DATETIME_PATH" ]; then
 	echo `date +'%F %T'` > "$DATETIME_PATH"
 fi
-sync && reboot && sleep 10
+
+if $IS_PLUS; then
+	sync && poweroff
+else
+	sync && reboot && sleep 10
+fi

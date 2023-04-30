@@ -44,6 +44,8 @@ int main(int argc , char* argv[]) {
 	while (c = chars[i]) {
 		digit = TTF_RenderUTF8_Blended(font.large, c, COLOR_WHITE);
 		int y = i==CHAR_COLON ? SCALE1(-1.5) : 0; // : sits too low naturally
+		// TODO: y offset is wrong here
+		// printf("%s x:%i y:%i SCALE1(DIGIT_HEIGHT):%i SCALE1(DIGIT_HEIGHT) - digit->h:%i\n", c, (i * SCALE1(DIGIT_WIDTH)), y, SCALE1(DIGIT_HEIGHT), SCALE1(DIGIT_HEIGHT) - digit->h); fflush(stdout);
 		SDL_BlitSurface(digit, NULL, digits, &(SDL_Rect){ (i * SCALE1(DIGIT_WIDTH)) + (SCALE1(DIGIT_WIDTH) - digit->w)/2, y + (SCALE1(DIGIT_HEIGHT) - digit->h)/2 });
 		SDL_FreeSurface(digit);
 		i += 1;

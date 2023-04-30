@@ -22,8 +22,15 @@ if [ ! -f /sys/devices/gpiochip0/gpio/gpio59/direction ]; then
 	echo in > /sys/devices/gpiochip0/gpio/gpio59/direction
 fi
 
+
 #######################################
 
+if [ -f /customer/app/axp_test ]; then
+	IS_PLUS=true
+else
+	IS_PLUS=false
+fi
+export IS_PLUS
 export PLATFORM="miyoomini"
 export ARCH_TAG=arm-480
 export SDCARD_PATH="/mnt/SDCARD"
@@ -63,22 +70,34 @@ export PATH=$SYSTEM_PATH/bin:$PATH
 
 #######################################
 
-# NOTE: could cause performance issues on more demanding cores...maybe?
-if [ -f /customer/lib/libpadsp.so ]; then
-    LD_PRELOAD=as_preload.so audioserver.mod &
-    export LD_PRELOAD=libpadsp.so
+if $IS_PLUS; then
+	echo
+	# /customer/app/audioserver -60 &> $SDCARD_PATH/audioserver.txt &
+	# export LD_PRELOAD=/customer/lib/libpadsp.so
+else
+	if [ -f /customer/lib/libpadsp.so ]; then
+	    LD_PRELOAD=as_preload.so audioserver.mod &
+	    export LD_PRELOAD=libpadsp.so
+	fi
 fi
 
 #######################################
 
 lumon.elf & # adjust lcd luma and saturation
 
-CHARGING=`cat /sys/devices/gpiochip0/gpio/gpio59/value`
-if [ "$CHARGING" == "1" ]; then
-	batmon.elf # &> /mnt/SDCARD/batmon.txt
+if $IS_PLUS; then
+	CHARGING=`/customer/app/axp_test | awk -F'[,: {}]+' '{print $7}'`
+	if [ "$CHARGING" == "3" ]; then
+		batmon.elf &> /mnt/SDCARD/batmon.txt
+	fi
+else
+	CHARGING=`cat /sys/devices/gpiochip0/gpio/gpio59/value`
+	if [ "$CHARGING" == "1" ]; then
+		batmon.elf # &> /mnt/SDCARD/batmon.txt
+	fi
 fi
 
-keymon.elf &
+keymon.elf & # &> /mnt/SDCARD/keymon.txt &
 
 #######################################
 

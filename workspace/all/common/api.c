@@ -1038,11 +1038,6 @@ void POW_warn(int enable) {
 	PLAT_enableOverlay(pow.should_warn && pow.charge<=POW_LOW_CHARGE);
 }
 
-// TODO: generalize this into BTN_MOD_VOLUME, BTN_MOD_BRIGHTNESS, BTN_MOD_PLUS, and BTN_MOD_MINUS
-// TODO: rg35x, no BTN_MOD_VOLUME, BTN_MOD_BRIGHTNESS is BTN_MENU, plus/minus are volume so only has to worry about mod
-// TODO: mini BTN_MOD_VOLUME is BTN_SELECT, BTN_MOD_BRIGHTNESS is BTN_START, plus/minus are L1 and R1, must worry about any combo
-// TODO: create a POW_ignoreSettingInput(btn) if btn==BTN_MOD_PLUS and () couldn't it just be if show_setting && (btn==PLUS || btn==MINUS)?
-
 int POW_ignoreSettingInput(int btn, int show_setting) {
 	return show_setting && (btn==BTN_MOD_PLUS || btn==BTN_MOD_MINUS);
 }

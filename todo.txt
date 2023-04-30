@@ -1,3 +1,13 @@
+known issues
+	trimuismart: quicksave isn't implemented yet
+	trimuismart: faux rtc isn't implemented yet
+	trimuismart: debug hud isn't available 
+	trimuismart: low battery overlay isn't implemented yet
+	trimuismart: L+R+MENU to sleep, MENU to wake
+	miyoomini: prevent tearing strict introduces tearing :sob:
+	miyoomini: audio popping between launches
+	miyoomini: low battery overlay isn't implemented yet
+
 all
 	minarch
 		some aspect scaling isn't working correctly
@@ -13,6 +23,8 @@ all
 		shows games in alt collated folders even if the alt pak isn't present...
 			not sure how that's possible...
 	promote .userdata/arm-480 to /States?
+		rename ARCH_PATH to SHARED_PATH or SHARED_USERDATA_PATH and keep all non-state data there?
+			I think the original Union had something like that
 		might depend on how the Model S fairs
 	add a "res" (or "many"?) folder 
 		for install/update and charging gfx?
@@ -21,12 +33,23 @@ all
 	confirm
 	
 smart
+	sleep (I think current code assumes BTN_SLEEP is always BTN_POWER, used interchangeably)
+		pow.can_sleep
+		POW_disableSleep()
+		POW_enableSleep() // default
+		#define MISSING_POWER_BUTTON BUTTON_POWER==SDLK_UNKNOWN
+		
+		if (MISSING_POWER_BUTTON) {
+			"(MENU) INFO or SLEEP"
+			on MinUI version screen and minarch menu always "(MENU) SLEEP"
+		}
+		
 	quicksave!
 		currently shows message when waking from sleep
 	
 	optimize text doesn't work with a rotated surface
 		what if I only did rotation before scaling if dimensions are larger than fixed size?
-	hardware button lables need updating (eg. (POWER) SLEEP -> L+R+MENU)
+	
 	sync rtc
 		also sync rtc when saving (game or state) in minarch?
 		what happens when two device you're swapping the sd card between disagree on datetime?
@@ -41,6 +64,9 @@ smart
 			add as last item to Options?
 
 miyoomini
+	prevent tearing modes are in conflict
+		lenient has no tearing, flickering settings overlay
+		strict has tearing, flicker-free settings overlay
 	battery overlay
 	update tearing defaults to strict for
 		gb
@@ -48,6 +74,14 @@ miyoomini
 		gba
 		md
 		???
+
+miniplus
+	installing message takes a while to appear
+	
+	audio fix isn't working
+		audio is working but it pops between launches
+		not muting when volume hits 0
+		is it because I'm using MI_AO_* functions instead of ioctls?
 
 rg35xx
 	how to handle updating on mini and missing TF1 updates as a result?

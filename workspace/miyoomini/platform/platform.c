@@ -10,6 +10,9 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
+
 #include "defines.h"
 #include "platform.h"
 #include "api.h"
@@ -19,9 +22,10 @@
 ///////////////////////////////
 // based on eggs GFXSample_rev15
 
-
 #include <mi_sys.h>
 #include <mi_gfx.h>
+
+int is_plus = 0;
 
 #define	pixelsPa	unused1
 #define ALIGN4K(val)	((val+4095)&(~4095))
@@ -163,6 +167,8 @@ static struct VID_Context {
 } vid;
 
 SDL_Surface* PLAT_initVideo(void) {
+	is_plus = exists("/customer/app/axp_test");
+	
 	putenv("SDL_HIDE_BATTERY=1"); // using MiniUI's custom SDL
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	SDL_ShowCursor(0);
@@ -205,11 +211,15 @@ void PLAT_clearAll(void) {
 void PLAT_setVsync(int vsync) {
 	// TODO: Prevent Tearing/Vsync
 	// isn't a 1:1 mapping of what's happening here...
-	if (vsync==VSYNC_OFF || vsync==VSYNC_LENIENT) {
+	if (vsync==VSYNC_OFF) {
 		putenv("GFX_FLIPWAIT=0");
 		putenv("GFX_BLOCKING=0");
 	}
-	else if (vsync==VSYNC_STRICT) {
+	else if (vsync==VSYNC_LENIENT) { // this is tear free but results in flicker issues with settings overlay
+		putenv("GFX_FLIPWAIT=0");
+		putenv("GFX_BLOCKING=1");
+	}
+	else if (vsync==VSYNC_STRICT) { // this actually introduce tearing but fixes flicker issues with settings overlay
 		putenv("GFX_FLIPWAIT=1");
 		putenv("GFX_BLOCKING=1");
 	}
@@ -244,12 +254,12 @@ void PLAT_vsync(void) {
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
-	// TODO: will this target the correct surface, ie video vs screen?
 	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP); // TODO: cache this offset?
 	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
+	// TODO: this is tearing...
 	if (!vid.direct) GFX_BlitSurfaceExec(vid.screen, NULL, vid.video, NULL, 0,0,1); // TODO: handle aspect clipping
 	SDL_Flip(vid.video);
 }
@@ -265,12 +275,13 @@ SDL_Surface* PLAT_getVideoBufferCopy(void) {
 
 ///////////////////////////////
 
+// TODO:
 #define OVERLAY_WIDTH PILL_SIZE // unscaled
 #define OVERLAY_HEIGHT PILL_SIZE // unscaled
 #define OVERLAY_BPP 4
 #define OVERLAY_DEPTH 16
 #define OVERLAY_PITCH (OVERLAY_WIDTH * OVERLAY_BPP) // unscaled
-#define OVERLAY_RGBA_MASK 0x00ff0000,0x0000ff00,0x000000ff,0xff000000
+#define OVERLAY_RGBA_MASK 0x00ff0000,0x0000ff00,0x000000ff,0xff000000 // ARGB
 static struct OVL_Context {
 	SDL_Surface* overlay;
 } ovl;
@@ -289,8 +300,82 @@ void PLAT_enableOverlay(int enable) {
 
 ///////////////////////////////
 
+//	mmplus axp223 (via eggs)
+#define	AXPDEV	"/dev/i2c-1"
+#define	AXPID	(0x34)
+
+//
+//	AXP223 write (plus)
+//		32 .. bit7: Shutdown Control
+//
+int axp_write(unsigned char address, unsigned char val) {
+	struct i2c_msg msg[1];
+	struct i2c_rdwr_ioctl_data packets;
+	unsigned char buf[2];
+	int ret;
+	int fd = open(AXPDEV, O_RDWR);
+	ioctl(fd, I2C_TIMEOUT, 5);
+	ioctl(fd, I2C_RETRIES, 1);
+
+	buf[0] = address;
+	buf[1] = val;
+	msg[0].addr = AXPID;
+	msg[0].flags = 0;
+	msg[0].len = 2;
+	msg[0].buf = buf;
+
+	packets.nmsgs = 1;
+	packets.msgs = &msg[0];
+	ret = ioctl(fd, I2C_RDWR, &packets);
+
+	close(fd);
+	if (ret < 0) return -1;
+	return 0;
+}
+
+//
+//	AXP223 read (plus)
+//		00 .. C4/C5(USBDC connected) 00(discharging)
+//			bit7: ACIN presence indication 0:ACIN not exist, 1:ACIN exists
+//			bit6: Indicating whether ACIN is usable (used by axp_test)
+//			bit4: Indicating whether VBUS is usable (used by axp_test)
+//			bit2: Indicating the Battery current direction 0: discharging, 1: charging
+//			bit0: Indicating whether the boot source is ACIN or VBUS
+//		01 .. 70(charging) 30(non-charging)
+//			bit6: Charge indication 0:not charge or charge finished, 1: in charging
+//		B9 .. (& 0x7F) battery percentage
+//
+int axp_read(unsigned char address) {
+	struct i2c_msg msg[2];
+	struct i2c_rdwr_ioctl_data packets;
+	unsigned char val;
+	int ret;
+	int fd = open(AXPDEV, O_RDWR);
+	ioctl(fd, I2C_TIMEOUT, 5);
+	ioctl(fd, I2C_RETRIES, 1);
+
+	msg[0].addr = AXPID;
+	msg[0].flags = 0;
+	msg[0].len = 1;
+	msg[0].buf = &address;
+	msg[1].addr = AXPID;
+	msg[1].flags = I2C_M_RD;
+	msg[1].len = 1;
+	msg[1].buf = &val;
+
+	packets.nmsgs = 2;
+	packets.msgs = &msg[0];
+	ret = ioctl(fd, I2C_RDWR, &packets);
+
+	close(fd);
+	if(ret < 0) return -1;
+	return val;
+}
+
+///////////////////////////////
+
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
-	*is_charging = getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
+	*is_charging = is_plus ? (axp_read(0x00) & 0x4) > 0 : getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
 	
 	int i = getInt("/tmp/battery"); // 0-100?
 
@@ -322,6 +407,7 @@ void PLAT_enableBacklight(int enable) {
 	}
 }
 void PLAT_powerOff(void) {
+	if (is_plus) sleep(2);
 	system("shutdown");
 	while (1) pause(); // lolwat
 }
@@ -375,5 +461,5 @@ int PLAT_pickSampleRate(int requested, int max) {
 }
 
 char* PLAT_getModel(void) {
-	return "Miyoo Mini";
+	return is_plus ? "Miyoo Mini Plus" : "Miyoo Mini";
 }

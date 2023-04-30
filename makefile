@@ -92,6 +92,7 @@ special:
 	mv ./build/BOOT/updater.sh ./build/BOOT/updater
 	test -d ./build/BASE/miyoo  && cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update || true
 	test -d ./build/BASE/trimui && cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update || true
+	test -d ./build/BASE/miyoo  && cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 
 package:
 	# ----------------------------------------------------
@@ -109,7 +110,7 @@ package:
 	cd ./build/PAYLOAD && zip -r MinUI.zip .system
 	mv ./build/PAYLOAD/MinUI.zip ./build/BASE
 	
-	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo dmenu.bin MinUI.zip README.txt
+	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo miyoo354 trimui dmenu.bin MinUI.zip README.txt
 	cd ./build/EXTRAS && zip -r ../../releases/$(RELEASE_NAME)-extras.zip Bios Emus Roms Saves Tools README.txt
 	echo "$(RELEASE_NAME)" > ./build/latest.txt
 	
