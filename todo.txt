@@ -1,8 +1,4 @@
-current goals
-	
-
 known issues
-	macos: fmt isn't respecting list formatting in READMEs
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet
@@ -12,11 +8,12 @@ known issues
 	miyoominiplus: doesn't always display installing/updating message
 
 all
-	use HAS_POWER_BUTTON flag
 	cores
-		vb slow on smart
-		fake08 crashes when resuming states
-			segfault after opening audio state
+		vb slow (smart)
+		fake08 crashes when resuming states (all)
+			segfault after opening audio state?
+			or an issue with rotated scaling?
+			or a core issue
 	minarch
 		some aspect scaling isn't working correctly
 			fceumm is ending up not-quite-native but also not the full aspect ratio
@@ -37,21 +34,6 @@ all
 	confirm
 	
 smart
-	ffs VB is slow again :sob:
-	sleep (I think current code assumes BTN_SLEEP is always BTN_POWER, used interchangeably)
-		pow.can_sleep
-		POW_disableSleep()
-		POW_enableSleep() // default
-		#define MISSING_POWER_BUTTON BUTTON_POWER==SDLK_UNKNOWN
-		
-		if (MISSING_POWER_BUTTON) {
-			"(MENU) INFO or SLEEP"
-			on MinUI version screen and minarch menu always "(MENU) SLEEP"
-		}
-		
-	quicksave!
-		currently shows message when waking from sleep
-	
 	optimize text doesn't work with a rotated surface
 		what if I only did rotation before scaling if dimensions are larger than fixed size?
 	
@@ -64,9 +46,6 @@ smart
 			might be fine where it is
 	update default.cfg that include bindings for L2/R2?
 	battery overlay
-	figure out
-		quicksave (autoresume already works)
-			add as last item to Options?
 
 miyoomini
 	prevent tearing modes are in conflict
@@ -81,7 +60,7 @@ miyoomini
 		???
 
 miniplus
-	installing message takes a while to appear
+	installing/updating message takes a while to appear (if it ever does)
 	
 	audio fix isn't working
 		audio is working but it pops between launches

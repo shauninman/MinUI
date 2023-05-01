@@ -16,11 +16,11 @@ The primary card should be a reputable brand and freshly formatted as FAT32.
 
 CAVEATS
 
-While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 and therefore need to be installed from the specific device. For example, installing MinUI on the RG35XX allows it to work on the Miyoo Mini family. But installing on a Miyoo Mini device would require installing again directly on the RG35XX.
+While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 and therefore need to be installed from the specific device before using. For example, installing MinUI on the RG35XX or Trimui Smart allows it to work on the Miyoo Mini family. But installing on a Miyoo Mini device would require installing again directly on the RG35XX and/or Trimui Smart.
 
 RG35XX
 
-MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it. The TF2 card should be formatted FAT32.
+MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
 
 Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
@@ -60,28 +60,32 @@ MIYOO MINI / TRIMUI SMART
   Volume: SELECT + L or R
   Brightness: START + L or R1
 
-TRIMUI SMART
-  
-  Sleep: MENU
-  Wake: MENU
-  
 RG35XX / MIYOO MINI / MIYOO MINI PLUS
   
   Sleep: POWER
   Wake: POWER
   
+TRIMUI SMART
+  
+  Sleep: MENU (twice)
+  Wake: MENU
+
 ----------------------------------------
-Known Issues 
+Known Issues
+
+ALL
+
+- Pico-8 crashes loading save states
 
 TRIMUI SMART
 
-- quicksave isn't implemented yet
 - faux rtc isn't implemented yet
-- debug hud isn't available 
-- low battery overlay isn't implemented yet
+- debug hud isn't available yet
+- battery overlay isn't implemented yet
+- Virtual Boy extra slow
 
 MIYOO MINI / MIYOO MINI PLUS
 
-- prevent tearing strict introduces tearing :sob:
+- prevent tearing strict has tearing
 - audio popping between launches
-- low battery overlay isn't implemented yet
+- battery overlay isn't implemented yet

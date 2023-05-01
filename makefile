@@ -23,6 +23,9 @@ export MAKEFLAGS=--no-print-directory
 
 all: setup $(PLATFORMS) special package done
 
+shell:
+	make -f makefile.toolchain PLATFORM=$(PLATFORM)
+
 name: 
 	echo $(RELEASE_NAME)
 
@@ -64,9 +67,6 @@ endif
 	
 common: build bundle
 	
-shell:
-	make -f makefile.toolchain PLATFORM=$(PLATFORM)
-
 clean:
 	rm -rf ./build
 
@@ -84,7 +84,12 @@ setup:
 	cd ./build && find . -type f -name '.keep' -delete
 	cd ./build && find . -type f -name '*.meta' -delete
 	echo $(BUILD_HASH) > ./workspace/hash.txt
-
+	
+	# copy readmes to workspace so we can use Linux fmt instead of host's
+	mkdir -p ./workspace/readmes
+	cp ./skeleton/BASE/README.txt ./workspace/readmes/BASE-in.txt
+	cp ./skeleton/EXTRAS/README.txt ./workspace/readmes/EXTRAS-in.txt
+	
 done:
 	say "done"
 
@@ -99,9 +104,11 @@ special:
 package:
 	# ----------------------------------------------------
 	# zip up build
-
-	fmt -w 40 -s ./skeleton/BASE/README.txt > ./build/BASE/README.txt
-	fmt -w 40 -s ./skeleton/EXTRAS/README.txt > ./build/EXTRAS/README.txt
+	
+	# move formatted readmes from workspace to build
+	cp ./workspace/readmes/BASE-out.txt ./build/BASE/README.txt
+	cp ./workspace/readmes/EXTRAS-out.txt ./build/EXTRAS/README.txt
+	rm -rf ./workspace/readmes
 	
 	cd ./build/SYSTEM && echo "$(RELEASE_NAME)\n$(BUILD_HASH)" > version.txt
 	./commits.sh > ./build/SYSTEM/commits.txt
