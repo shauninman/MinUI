@@ -1,7 +1,9 @@
-INCOMPLETE ROUGH DRAFT
+MinUI is a minimal launcher for the Miyoo Mini (and Plus), Trimui Smart, and RG35XX
 
-----
+Source:
+https://github.com/shauninman/union-minui
 
+----------------------------------------
 Installing
 
 PREFACE
@@ -34,8 +36,7 @@ TRIMUI SMART
 
 Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
-----
-
+----------------------------------------
 Updating
 
 RG35XX
@@ -46,31 +47,30 @@ MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card.
 
-----
-
+----------------------------------------
 Shortcuts
 
 RG35XX / MIYOO MINI PLUS
-
-  Brightness	MENU + VOLUME UP or VOLUME DOWN
-
+  
+  Brightness: MENU + VOLUME UP
+                  or VOLUME DOWN
+  
 MIYOO MINI / TRIMUI SMART
 
-  Volume		SELECT + L or R
-  Brightness	START + L or R1
+  Volume: SELECT + L or R
+  Brightness: START + L or R1
 
 TRIMUI SMART
-
-  Sleep		L + R + MENU
-  Wake		MENU
-
+  
+  Sleep: MENU
+  Wake: MENU
+  
 RG35XX / MIYOO MINI / MIYOO MINI PLUS
-
-  Sleep		POWER
-  Wake		POWER
-
-----
-
+  
+  Sleep: POWER
+  Wake: POWER
+  
+----------------------------------------
 Known Issues 
 
 TRIMUI SMART
@@ -79,7 +79,6 @@ TRIMUI SMART
 - faux rtc isn't implemented yet
 - debug hud isn't available 
 - low battery overlay isn't implemented yet
-- L+R+MENU to sleep, MENU to wake
 
 MIYOO MINI / MIYOO MINI PLUS
 

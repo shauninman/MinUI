@@ -99,6 +99,7 @@ GFX_Fonts font;
 ///////////////////////////////
 
 static struct POW_Context {
+	int can_sleep;
 	int can_poweroff;
 	int can_autosleep;
 	
@@ -1016,6 +1017,7 @@ static void* POW_monitorBattery(void *arg) {
 }
 
 void POW_init(void) {
+	pow.can_sleep = 1;
 	pow.can_poweroff = 1;
 	pow.can_autosleep = 1;
 	pow.should_warn = 0;
@@ -1082,8 +1084,8 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	
 	if (
 		now-last_input_at>=SLEEP_DELAY || // autosleep
-		(BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justReleased(BTN_MENU)) || // combo sleep button
-		PAD_justReleased(BTN_SLEEP) // single sleep button
+		(pow.can_sleep && BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justReleased(BTN_MENU)) || // TODO: remove combo sleep button
+		(pow.can_sleep && PAD_justReleased(BTN_SLEEP)) // single sleep button
 	) {
 		if (before_sleep) before_sleep();
 		POW_fauxSleep();
@@ -1131,15 +1133,25 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	if (_show_setting) *_show_setting = show_setting;
 }
 
+// TODO: this isn't whether it can sleep but more if it should sleep in response to the sleep button
+void POW_disableSleep(void) {
+	pow.can_sleep = 0;
+}
+void POW_enableSleep(void) {
+	pow.can_sleep = 1;
+}
+
 void POW_disablePowerOff(void) {
 	pow.can_poweroff = 0;
 }
 void POW_powerOff(void) {
 	if (pow.can_poweroff) {
-		GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH); // TODO: only if necessary (which depends on platform.c implementation...)
-		// GFX_clear(gfx.screen); // TODO: performed by resize
+		GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 		
-		char* msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
+		char* msg;
+		if (HAS_POWER_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
+		else msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npower off now" : "Power off now";
+		
 		GFX_blitMessage(font.large, msg, gfx.screen, NULL);
 		GFX_flip(gfx.screen);
 		PLAT_powerOff();
@@ -1147,6 +1159,7 @@ void POW_powerOff(void) {
 }
 
 static void POW_enterSleep(void) {
+	SDL_PauseAudio(1);
 	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
 	system("killall -STOP keymon.elf");
@@ -1157,6 +1170,7 @@ static void POW_exitSleep(void) {
 	system("killall -CONT keymon.elf");
 	PLAT_enableBacklight(1);
 	SetVolume(GetVolume());
+	SDL_PauseAudio(0);
 	
 	sync();
 }
@@ -1178,7 +1192,7 @@ static void POW_waitForWake(void) {
 		SDL_Delay(200);
 		if (pow.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
 			if (pow.is_charging) sleep_ticks += 60000; // check again in a minute
-			else POW_powerOff(); // TODO: not working...
+			else POW_powerOff();
 		}
 	}
 	return;

@@ -1167,6 +1167,7 @@ int main (int argc, char *argv[]) {
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
 	POW_init();
+	if (!HAS_POWER_BUTTON) POW_disableSleep();
 	PAD_reset();
 	
 	SDL_Surface* version = NULL;
@@ -1196,12 +1197,14 @@ int main (int argc, char *argv[]) {
 			if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
 				show_version = 0;
 				dirty = 1;
+				if (!HAS_POWER_BUTTON) POW_disableSleep();
 			}
 		}
 		else {
 			if (PAD_tappedMenu(now)) {
 				show_version = 1;
 				dirty = 1;
+				if (!HAS_POWER_BUTTON) POW_enableSleep();
 			}
 			else if (total>0) {
 				if (PAD_justRepeated(BTN_UP)) {
@@ -1390,7 +1393,7 @@ int main (int argc, char *argv[]) {
 				
 				// buttons (duped and trimmed from below)
 				if (show_setting) GFX_blitHardwareHints(screen, show_setting);
-				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"COMBO","SLEEP",  NULL }, screen, 0);
+				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, screen, 0);
 				
 				GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, screen, 1);
 			}
@@ -1459,7 +1462,7 @@ int main (int argc, char *argv[]) {
 				// buttons
 				if (show_setting) GFX_blitHardwareHints(screen, show_setting);
 				else if (can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, screen, 0);
-				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"COMBO","SLEEP",  NULL }, screen, 0);
+				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU",BTN_SLEEP==BTN_POWER?"SLEEP":"INFO",  NULL }, screen, 0);
 			
 				if (total==0) {
 					if (stack->count>1) {

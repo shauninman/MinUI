@@ -3942,6 +3942,7 @@ static void Menu_loop(void) {
 	
 	SRAM_write();
 	POW_warn(0);
+	if (!HAS_POWER_BUTTON) POW_enableSleep();
 	POW_setCPUSpeed(CPU_SPEED_MENU); // set Hz directly
 	GFX_setVsync(VSYNC_STRICT);
 	
@@ -4202,7 +4203,7 @@ static void Menu_loop(void) {
 			SDL_FreeSurface(text);
 			
 			if (show_setting) GFX_blitHardwareHints(screen, show_setting);
-			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"COMBO","SLEEP", NULL }, screen, 0);
+			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, screen, 0);
 			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, screen, 1);
 			
 			// list
@@ -4324,6 +4325,7 @@ static void Menu_loop(void) {
 		if (rumble_strength) VIB_setStrength(rumble_strength);
 		
 		GFX_setVsync(prevent_tearing);
+		if (!HAS_POWER_BUTTON) POW_disableSleep();
 	}
 	
 	SDL_FreeSurface(bitmap);
@@ -4421,7 +4423,7 @@ int main(int argc , char* argv[]) {
 	screen = GFX_init(MODE_MENU);
 	VIB_init();
 	POW_init();
-	
+	if (!HAS_POWER_BUTTON) POW_disableSleep();
 	MSG_init();
 	
 	// Overrides_init();
@@ -4487,6 +4489,7 @@ finish:
 	QuitSettings();
 	POW_quit();
 	VIB_quit();
+	SND_quit();
 	GFX_quit();
 	
 	return EXIT_SUCCESS;

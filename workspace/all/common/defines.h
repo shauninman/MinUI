@@ -80,6 +80,8 @@
 
 ///////////////////////////////
 
+#define HAS_POWER_BUTTON (BUTTON_POWER!=SDLK_UNKNOWN)
+
 #ifndef BTN_A // prevent collisions with input.h in keymon
 // TODO: doesn't this belong in api.h? it's meaningless without PAD_*
 enum {

@@ -1,16 +1,19 @@
+current goals
+	
+
 known issues
+	macos: fmt isn't respecting list formatting in READMEs
 	trimuismart: quicksave isn't implemented yet
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet
-	trimuismart: L+R+MENU to sleep, MENU to wake
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoomini: audio popping between launches
 	miyoomini: low battery overlay isn't implemented yet
 	miyoominiplus: doesn't always display installing/updating message
 
 all
-	instead of specifying separate sleep/wake buttons what if this was just based onto a HAS_POWER_BUTTON flag which is just (BUTTON_POWER!=SDLK_UNKNOWN)
+	use HAS_POWER_BUTTON flag
 	cores
 		vb slow on smart
 		fake08 crashes when resuming states

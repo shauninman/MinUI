@@ -194,6 +194,9 @@ int POW_isPoweringOff(void);
 
 void POW_fauxSleep(void);
 
+void POW_disableSleep(void);
+void POW_enableSleep(void);
+
 void POW_disableAutosleep(void);
 void POW_enableAutosleep(void);
 int POW_preventAutosleep(void);

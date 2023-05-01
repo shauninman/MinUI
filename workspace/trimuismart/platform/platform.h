@@ -62,7 +62,7 @@
 ///////////////////////////////
 
 #define BTN_RESUME 			BTN_X
-#define BTN_SLEEP 			BTN_COMBO // TODO: tmp
+#define BTN_SLEEP 			BTN_MENU
 #define BTN_WAKE 			BTN_MENU
 #define BTN_MOD_VOLUME 		BTN_SELECT
 #define BTN_MOD_BRIGHTNESS 	BTN_START

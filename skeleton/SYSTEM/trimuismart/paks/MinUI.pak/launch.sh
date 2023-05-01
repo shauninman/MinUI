@@ -61,11 +61,10 @@ cd $(dirname "$0")
 
 #######################################
 
-EXEC_PATH=/tmp/minui_exec
+EXEC_PATH="/tmp/minui_exec"
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH"  && sync
-while [ -f "$EXEC_PATH" ]; do
-	# overclock.elf $CPU_SPEED_PERF
+while [ -f $EXEC_PATH ]; do
 	minui.elf &> $LOGS_PATH/minui.txt
 	echo $CPU_SPEED_PERF > $CPU_PATH
 	sync
@@ -80,6 +79,24 @@ while [ -f "$EXEC_PATH" ]; do
 		# fi
 		echo $CPU_SPEED_PERF > $CPU_PATH
 		sync
+	fi
+	
+	# physical powerswitch, enter low power mode
+	if [ -f "/tmp/poweroff" ]; then
+		rm -f "/tmp/poweroff"
+		killall keymon.elf
+		echo 60000 > $CPU_PATH
+		LED_ON=true
+		while :; do
+			if $LED_ON; then
+				LED_ON=false
+				leds_off.sh
+			else
+				LED_ON=true
+				leds_on.sh
+			fi
+			sleep 1
+		done
 	fi
 done
 

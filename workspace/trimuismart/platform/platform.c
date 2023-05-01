@@ -465,13 +465,33 @@ void PLAT_enableBacklight(int enable) {
 		system("leds_on.sh");
 	}
 }
+
+#define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
+
 void PLAT_powerOff(void) {
-	// buh
+	touch("/tmp/poweroff");
+	exit(0);
+	
+	// // TODO: move to shell script
+	// system("killall -KILL keymon.elf");
+	// system("echo 60000 > " GOVERNOR_PATH);
+	// QuitSettings();
+	// POW_quit();
+	// VIB_quit();
+	// SND_quit();
+	// GFX_quit();
+	//
+	// int led_on = 1;
+	// while (1) {
+	// 	sleep(1);
+	// 	if (led_on) system("leds_off.sh");
+	// 	else system("leds_on.sh");
+	// 	led_on = !led_on;
+	// }
 }
 
 ///////////////////////////////
 
-#define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
