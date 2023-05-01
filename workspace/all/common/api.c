@@ -99,6 +99,8 @@ GFX_Fonts font;
 ///////////////////////////////
 
 static struct POW_Context {
+	int initialized;
+	
 	int can_sleep;
 	int can_poweroff;
 	int can_autosleep;
@@ -109,7 +111,7 @@ static struct POW_Context {
 	int should_warn;
 
 	SDL_Surface* overlay;
-} pow;
+} pow = {0};
 
 ///////////////////////////////
 
@@ -677,6 +679,7 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 
 typedef int (*SND_Resampler)(const SND_Frame frame);
 static struct SND_Context {
+	int initialized;
 	double frame_rate;
 	
 	int sample_rate_in;
@@ -691,7 +694,7 @@ static struct SND_Context {
 	int frame_filled; // max_buf_w
 	
 	SND_Resampler resample;
-} snd;
+} snd = {0};
 static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // plat_sound_callback
 	if (snd.frame_count==0) return;
 	
@@ -820,8 +823,11 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	SDL_PauseAudio(0);
 
 	LOG_info("sample rate: %i (req) %i (rec)\n", snd.sample_rate_in, snd.sample_rate_out);
+	snd.initialized = 1;
 }
 void SND_quit(void) { // plat_sound_finish
+	if (!snd.initialized) return;
+	
 	SDL_PauseAudio(1);
 	SDL_CloseAudio();
 	
@@ -930,10 +936,11 @@ int PAD_tappedMenu(uint32_t now) {
 ///////////////////////////////
 
 static struct VIB_Context {
+	int initialized;
 	pthread_t pt;
 	int queued_strength;
 	int strength;
-} vib;
+} vib = {0};
 // based on eggs retroarch miyoomini rumble
 static void miyoomini_rumble(uint16_t strength) {
    static char lastvalue = 0;
@@ -974,8 +981,11 @@ static void* VIB_thread(void *arg) {
 void VIB_init(void) {
 	vib.queued_strength = vib.strength = 0;
 	pthread_create(&vib.pt, NULL, &VIB_thread, NULL);
+	vib.initialized = 1;
 }
 void VIB_quit(void) {
+	if (!vib.initialized) return;
+	
 	VIB_setStrength(0);
 	pthread_cancel(vib.pt);
 	pthread_join(vib.pt, NULL);
@@ -1027,8 +1037,11 @@ void POW_init(void) {
 
 	POW_updateBatteryStatus();
 	pthread_create(&pow.battery_pt, NULL, &POW_monitorBattery, NULL);
+	pow.initialized = 1;
 }
 void POW_quit(void) {
+	if (!pow.initialized) return;
+	
 	PLAT_quitOverlay();
 	
 	// cancel battery thread
@@ -1174,7 +1187,7 @@ static void POW_exitSleep(void) {
 	
 	sync();
 }
-// TODO: this needs to account for devices without power buttons
+
 static void POW_waitForWake(void) {
 	SDL_Event event;
 	int wake = 0;

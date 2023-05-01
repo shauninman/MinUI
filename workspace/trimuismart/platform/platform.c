@@ -466,32 +466,24 @@ void PLAT_enableBacklight(int enable) {
 	}
 }
 
-#define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
-
 void PLAT_powerOff(void) {
+	system("leds_on.sh");
+	sleep(2);
+
+	SetRawVolume(MUTE_VOLUME_RAW);
+	PLAT_enableBacklight(0);
+	SND_quit();
+	VIB_quit();
+	POW_quit();
+	GFX_quit();
+	
 	touch("/tmp/poweroff");
 	exit(0);
-	
-	// // TODO: move to shell script
-	// system("killall -KILL keymon.elf");
-	// system("echo 60000 > " GOVERNOR_PATH);
-	// QuitSettings();
-	// POW_quit();
-	// VIB_quit();
-	// SND_quit();
-	// GFX_quit();
-	//
-	// int led_on = 1;
-	// while (1) {
-	// 	sleep(1);
-	// 	if (led_on) system("leds_off.sh");
-	// 	else system("leds_on.sh");
-	// 	led_on = !led_on;
-	// }
 }
 
 ///////////////////////////////
 
+#define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
@@ -502,7 +494,7 @@ void PLAT_setCPUSpeed(int speed) {
 	}
 
 	char cmd[256];
-	sprintf(cmd,"echo %i > %s\n", freq, GOVERNOR_PATH);
+	sprintf(cmd,"echo %i > %s", freq, GOVERNOR_PATH);
 	system(cmd);
 }
 

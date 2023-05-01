@@ -95,7 +95,7 @@ while [ -f $EXEC_PATH ]; do
 				LED_ON=true
 				leds_on.sh
 			fi
-			sleep 1
+			sleep 0.5
 		done
 	fi
 done

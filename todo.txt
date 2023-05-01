@@ -3,7 +3,6 @@ current goals
 
 known issues
 	macos: fmt isn't respecting list formatting in READMEs
-	trimuismart: quicksave isn't implemented yet
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet

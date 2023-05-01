@@ -3068,7 +3068,6 @@ void Menu_beforeSleep(void) {
 void Menu_afterSleep(void) {
 	unlink(AUTO_RESUME_PATH);
 	setOverclock(overclock);
-	// POW_setCPUSpeed(CPU_SPEED_NORMAL);
 }
 
 typedef struct MenuList MenuList;
@@ -3444,6 +3443,11 @@ static int OptionSaveChanges_openMenu(MenuList* list, int i) {
 	return MENU_CALLBACK_NOP;
 }
 
+static int OptionQuicksave_onConfirm(MenuList* list, int i) {
+	Menu_beforeSleep();
+	POW_powerOff();
+}
+
 static MenuList options_menu = {
 	.type = MENU_LIST,
 	.items = (MenuItem[]) {
@@ -3452,6 +3456,8 @@ static MenuList options_menu = {
 		{"Controls",.on_confirm=OptionControls_openMenu},
 		{"Shortcuts",.on_confirm=OptionShortcuts_openMenu}, 
 		{"Save Changes",.on_confirm=OptionSaveChanges_openMenu},
+		{NULL},
+		{NULL},
 		{NULL},
 	}
 };
@@ -3952,6 +3958,13 @@ static void Menu_loop(void) {
 	fast_forward = 0; // TODO: I can't remember why I do this but I find it kinda annoying...
 	POW_enableAutosleep();
 	PAD_reset();
+	
+	if (!HAS_POWER_BUTTON) {
+		MenuItem* item = &options_menu.items[5];
+		item->name = "Quicksave";
+		item->desc = "Automatically resume current state next power on.";
+		item->on_confirm = OptionQuicksave_onConfirm;
+	}
 	
 	// path and string things
 	char* tmp;
