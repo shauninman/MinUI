@@ -1,4 +1,8 @@
+try inlining other functions
+	can I dereference the renderer pointer for more speed? (or is the compiler already doing that?)
+
 known issues
+	rg35xx: has quicksave menu item because BUTTON_POWER==SDLK_UNKNOWN
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet
@@ -7,9 +11,18 @@ known issues
 	miyoomini: low battery overlay isn't implemented yet
 	miyoominiplus: doesn't always display installing/updating message
 
+rg35xx
+	patch sdl to give powerbutton a proper keysym
+	how to handle updating on mini and missing TF1 updates as a result?
+		could I write the version to the .minstalled file
+		if it doesn't match the current one run the installer
+		trimui smart has a similar issue now
+			the bootstrap folder updates /etc/main
+
 all
 	cores
 		vb slow (smart)
+			fixed by std=gnu99?
 		fake08 crashes when resuming states (all)
 			segfault after opening audio state?
 			or an issue with rotated scaling?
@@ -34,6 +47,9 @@ all
 	confirm
 	
 smart
+	what if led always flashed while sleeping (once the quicksave is created, then you know it's safe to poweroff)
+		we don't have a hook into POW_fauxSleep to do that...unless we thread it 
+			but that goes against the idea of an idle sleep state :sweat_smile:
 	optimize text doesn't work with a rotated surface
 		what if I only did rotation before scaling if dimensions are larger than fixed size?
 	
@@ -66,14 +82,6 @@ miniplus
 		audio is working but it pops between launches
 		not muting when volume hits 0
 		is it because I'm using MI_AO_* functions instead of ioctls?
-
-rg35xx
-	how to handle updating on mini and missing TF1 updates as a result?
-		could I write the version to the .minstalled file
-		if it doesn't match the current one run the installer
-		trimui smart has a similar issue now
-			the bootstrap folder updates /etc/main
-
 
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files

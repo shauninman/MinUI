@@ -223,7 +223,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch);
 void PLAT_setVideoScaleClip(int x, int y, int width, int height);
 void PLAT_setNearestNeighbor(int enabled);
 void PLAT_vsync(void);
-void PLAT_blitRenderer(GFX_Renderer* renderer);
+// void PLAT_blitRenderer(GFX_Renderer* renderer); declared by platform (allow for inlining where possible)
 void PLAT_flip(SDL_Surface* screen, int sync);
 
 SDL_Surface* PLAT_getVideoBufferCopy(void); // must be freed by caller

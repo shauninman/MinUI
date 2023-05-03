@@ -219,7 +219,7 @@ void PLAT_setVsync(int vsync) {
 		putenv("GFX_FLIPWAIT=0");
 		putenv("GFX_BLOCKING=1");
 	}
-	else if (vsync==VSYNC_STRICT) { // this actually introduce tearing but fixes flicker issues with settings overlay
+	else if (vsync==VSYNC_STRICT) { // this actually introduces tearing but reduces/eliminates judder and fixes flicker issues with settings overlay
 		putenv("GFX_FLIPWAIT=1");
 		putenv("GFX_BLOCKING=1");
 	}
@@ -253,13 +253,19 @@ void PLAT_vsync(void) {
 	// buh
 }
 
-void PLAT_blitRenderer(GFX_Renderer* renderer) {
-	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP); // TODO: cache this offset?
-	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
-}
+// uncomment to test tearing
+// static int which_flip = 0;
+// void PLAT_blitRenderer(GFX_Renderer* renderer) {
+// 	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP); // TODO: cache this offset?
+// 	// which_flip = !which_flip;
+// 	// if (which_flip) {
+// 	// 	memset(dst, 0, renderer->dst_h * renderer->dst_p);
+// 	// 	return;
+// 	// }
+// 	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+// }
 
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
-	// TODO: this is tearing...
 	if (!vid.direct) GFX_BlitSurfaceExec(vid.screen, NULL, vid.video, NULL, 0,0,1); // TODO: handle aspect clipping
 	SDL_Flip(vid.video);
 }

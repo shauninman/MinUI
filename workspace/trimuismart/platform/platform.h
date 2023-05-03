@@ -84,4 +84,10 @@
 #define SDCARD_PATH "/mnt/SDCARD"
 #define MUTE_VOLUME_RAW 0
 
+///////////////////////////////
+
+#include "api.h"
+typedef struct GFX_Renderer GFX_Renderer;
+void PLAT_blitRenderer(GFX_Renderer* renderer);
+
 #endif

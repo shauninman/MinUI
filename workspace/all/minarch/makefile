@@ -24,7 +24,7 @@ SOURCE = $(TARGET).c ../common/scaler_neon.c ../common/utils.c ../common/api.c .
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS   = $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\"  -Ofast 
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -Ofast -std=gnu99
 LDFLAGS	 = -ldl $(LIBS) -lmsettings -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
 # CFLAGS  += -Wall -Wno-unused-variable -Wno-unused-function -Wno-format-overflow
 # CFLAGS  += -fsanitize=address -fno-common
