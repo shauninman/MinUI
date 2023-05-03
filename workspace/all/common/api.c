@@ -1195,6 +1195,12 @@ static void POW_waitForWake(void) {
 	while (!wake) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type==SDL_KEYUP) {
+				// uint8_t code = event.key.keysym.scancode;
+				// if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && code==CODE_MENU)) {
+				// 	wake = 1;
+				// 	break;
+				// }
+				
 				SDLKey key = event.key.keysym.sym;
 				if ((BTN_WAKE==BTN_POWER && key==BUTTON_POWER) || (BTN_WAKE==BTN_MENU && key==BUTTON_MENU)) {
 					wake = 1;
