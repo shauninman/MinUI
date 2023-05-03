@@ -2,17 +2,16 @@ try inlining other functions
 	can I dereference the renderer pointer for more speed? (or is the compiler already doing that?)
 
 known issues
-	rg35xx: has quicksave menu item because BUTTON_POWER==SDLK_UNKNOWN
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet
+	trimuismart: missing L2/R2
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoomini: audio popping between launches
 	miyoomini: low battery overlay isn't implemented yet
 	miyoominiplus: doesn't always display installing/updating message
 
 rg35xx
-	patch sdl to give powerbutton a proper keysym
 	how to handle updating on mini and missing TF1 updates as a result?
 		could I write the version to the .minstalled file
 		if it doesn't match the current one run the installer
@@ -21,13 +20,12 @@ rg35xx
 
 all
 	cores
-		vb slow (smart)
-			fixed by std=gnu99?
 		fake08 crashes when resuming states (all)
 			segfault after opening audio state?
 			or an issue with rotated scaling?
 			or a core issue
 	minarch
+		support hiding frontend options (by platform? could just be hardcoded into default.cfg)
 		some aspect scaling isn't working correctly
 			fceumm is ending up not-quite-native but also not the full aspect ratio
 				something to do with PAGE_SIZE limitations?
