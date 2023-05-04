@@ -4393,19 +4393,22 @@ static void trackFPS(void) {
 }
 
 static void limitFF(void) {
+	static uint64_t ff_frame_time = 0;
 	static uint64_t last_time = 0;
-	const uint64_t now = getMicroseconds();
-
+	static int last_max_speed = -1;
+	if (last_max_speed!=max_ff_speed) {
+		last_max_speed = max_ff_speed;
+		ff_frame_time = 1000000 / (core.fps * (max_ff_speed + 1));
+	}
+	
+	uint64_t now = getMicroseconds();
 	if (fast_forward && max_ff_speed) {
 		if (last_time == 0) last_time = now;
 		int elapsed = now - last_time;
 		if (elapsed>0 && elapsed<0x80000) {
-			uint64_t ff_frame_time = 1000000 / (core.fps * (max_ff_speed + 1)); // TODO: define this only when max_ff_speed changes
 			if (elapsed<ff_frame_time) {
 				int delay = (ff_frame_time - elapsed) / 1000;
-				if (delay>0) {
-					// TODO: huh, this isn't causing the Tekken 3 hangs...
-					// printf("limitFF delay: %i\n", delay); fflush(stdout);
+				if (delay>0 && delay<17) { // don't allow a delay any greater than a frame
 					SDL_Delay(delay);
 				}
 			}
