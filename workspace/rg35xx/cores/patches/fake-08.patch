@@ -1,11 +1,24 @@
+diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
+index 2b289ee827b641adc1ecb6002efe00f120d9b40c..968e4998ab4a1bc84df297e063bca9f5a6f83639 100644
+--- forkSrcPrefix/platform/libretro/libretro.cpp
++++ forkDstPrefix/platform/libretro/libretro.cpp
+@@ -475,6 +475,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+         printf("using file path for rom %s\n", info->path);
+         _vm->QueueCartChange(info->path);
+     }
++	_vm->UpdateAndDraw();
+ 
+     return true;
+ }
 diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
-index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..b373d1adb1ba7b69d376f50ea019cb030fcd6c08 100644
+index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..78d9b0ec1916ca809adf25e97a098270832982b9 100644
 --- forkSrcPrefix/platform/libretro/Makefile
 +++ forkDstPrefix/platform/libretro/Makefile
-@@ -123,6 +123,16 @@ else ifeq ($(platform), miyoomini)
+@@ -123,7 +123,16 @@ else ifeq ($(platform), miyoomini)
     CXXFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7ve
     fpic := -fPIC
     SHARED := -shared -Wl,--version-script=link.T
+-
 +else ifeq ($(platform), rg35xx)
 +   TARGET := $(TARGET_NAME)_libretro.so
 +   CC = $(CROSS_COMPILE)gcc
@@ -16,19 +29,6 @@ index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..b373d1adb1ba7b69d376f50ea019cb03
 +   CXXFLAGS += -fomit-frame-pointer -ffast-math -fno-common -ftree-vectorize -funswitch-loops
 +   fpic := -fPIC
 +   SHARED := -shared -Wl,--version-script=link.T
- 
  else ifeq ($(platform), gcw0)
     TARGET := $(TARGET_NAME)_libretro_gcw0.so
-diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
-index fdd8068aaf4d64efdeda51344c7f77b634e83264..b554c0df846093e3402698b7237ce9560bb47efd 100644
---- forkSrcPrefix/platform/libretro/libretro.cpp
-+++ forkDstPrefix/platform/libretro/libretro.cpp
-@@ -513,7 +513,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
-     else {
-         _vm->QueueCartChange(info->path);
-     }
--
-+	_vm->UpdateAndDraw();
-     return true;
- }
- 
+    CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc

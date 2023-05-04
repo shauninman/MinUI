@@ -10,6 +10,12 @@ endif
 
 ###############################
 
+# overrides shared by all cores
+
+fake-08_HASH = 6279216964e351409201e987653e3d708fd4ad78 # last known working save states
+
+###############################
+
 # this logic was broken out from picoarch's all-in-one makefile
 
 PATCH = git apply
