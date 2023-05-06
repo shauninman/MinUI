@@ -70,9 +70,8 @@ export PATH=$SYSTEM_PATH/bin:$PATH
 #######################################
 
 if $IS_PLUS; then
-	echo
-	# /customer/app/audioserver -60 &> $SDCARD_PATH/audioserver.txt &
-	# export LD_PRELOAD=/customer/lib/libpadsp.so
+	/customer/app/audioserver -60 & # &> $SDCARD_PATH/audioserver.txt &
+	export LD_PRELOAD=/customer/lib/libpadsp.so
 else
 	if [ -f /customer/lib/libpadsp.so ]; then
 	    LD_PRELOAD=as_preload.so audioserver.mod &

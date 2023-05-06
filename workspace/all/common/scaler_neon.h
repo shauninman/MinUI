@@ -9,6 +9,8 @@
 //		sw  :	src width		pixels
 //		sh  :	src height		pixels
 //		sp  :	src pitch (stride)	bytes	if 0, (src width * [2|4]) is used
+//		dw  :	dst width		pixels
+//		dh  :	dst height		pixels
 //		dp  :	dst pitch (stride)	bytes	if 0, (src width * [2|4] * multiplier) is used
 //
 //	** NOTE **

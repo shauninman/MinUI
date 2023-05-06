@@ -34,7 +34,7 @@ build:
 	make build -f makefile.toolchain PLATFORM=$(PLATFORM)
 	# ----------------------------------------------------
 
-bundle:
+system:
 	make -f ./workspace/$(PLATFORM)/platform/makefile.copy PLATFORM=$(PLATFORM)
 	
 	# populate system
@@ -43,7 +43,8 @@ bundle:
 	cp ./workspace/all/minui/build/$(PLATFORM)/minui.elf ./build/SYSTEM/$(PLATFORM)/bin/
 	cp ./workspace/all/minarch/build/$(PLATFORM)/minarch.elf ./build/SYSTEM/$(PLATFORM)/bin/
 	cp ./workspace/all/clock/build/$(PLATFORM)/clock.elf ./build/EXTRAS/Tools/$(PLATFORM)/Clock.pak/
-	
+
+cores:
 	# stock cores
 	cp ./workspace/$(PLATFORM)/cores/output/fceumm_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	cp ./workspace/$(PLATFORM)/cores/output/gambatte_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
@@ -65,7 +66,7 @@ endif
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_vb_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/VB.pak
 	cp ./workspace/$(PLATFORM)/cores/output/pokemini_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/PKM.pak
 	
-common: build bundle
+common: build system cores
 	
 clean:
 	rm -rf ./build
@@ -114,9 +115,10 @@ package:
 	./commits.sh > ./build/SYSTEM/commits.txt
 	cd ./build && find . -type f -name '.DS_Store' -delete
 	mkdir -p ./build/PAYLOAD
-	mv ./build/SYSTEM ./build/PAYLOAD/.system	
+	mv ./build/SYSTEM ./build/PAYLOAD/.system
+	cp -R ./build/BOOT ./build/PAYLOAD/.tmp_update
 	
-	cd ./build/PAYLOAD && zip -r MinUI.zip .system
+	cd ./build/PAYLOAD && zip -r MinUI.zip .system .tmp_update
 	mv ./build/PAYLOAD/MinUI.zip ./build/BASE
 	
 	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo miyoo354 trimui dmenu.bin MinUI.zip README.txt

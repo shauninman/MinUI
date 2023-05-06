@@ -21,7 +21,7 @@ if [ -f "$UPDATE_PATH" ]; then
 
 		# init lcd
 		cat /proc/ls
-		sleep 0.5
+		sleep 1
 		export LCD_INIT=1
 
 		./show.elf ./updating.png
@@ -29,11 +29,13 @@ if [ -f "$UPDATE_PATH" ]; then
 		./show.elf ./installing.png
 	fi
 	
+	mv $SDCARD_PATH/.tmp_update $SDCARD_PATH/.tmp_update-old
 	unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH"
 	rm -f "$UPDATE_PATH"
+	rm -rf $SDCARD_PATH/.tmp_update-old
 	
 	# the updated system finishes the install/update
-	$SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/install.txt
+	$SYSTEM_PATH/$PLATFORM/bin/install.sh
 fi
 
 # or launch (and keep launched)
