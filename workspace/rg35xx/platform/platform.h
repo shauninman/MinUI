@@ -26,10 +26,11 @@
 #define	BUTTON_R1		SDLK_BREAK
 #define	BUTTON_L2		SDLK_HOME
 #define	BUTTON_R2		SDLK_UP
+#define BUTTON_L3 		BUTTON_NA
+#define BUTTON_R3 		BUTTON_NA
 
 #define	BUTTON_MENU		SDLK_PAGEUP
 #define	BUTTON_POWER	SDLK_POWER
-
 #define	BUTTON_PLUS		SDLK_DOWN
 #define	BUTTON_MINUS	SDLK_PAGEDOWN
 
@@ -58,6 +59,33 @@
 
 #define CODE_PLUS		0x6C
 #define CODE_MINUS		0x6D
+
+///////////////////////////////
+
+#define JOY_UP			JOY_NA
+#define JOY_DOWN		JOY_NA
+#define JOY_LEFT		JOY_NA
+#define JOY_RIGHT		JOY_NA
+
+#define JOY_SELECT		JOY_NA
+#define JOY_START		JOY_NA
+
+#define JOY_A			JOY_NA
+#define JOY_B			JOY_NA
+#define JOY_X			JOY_NA
+#define JOY_Y			JOY_NA
+
+#define JOY_L1			JOY_NA
+#define JOY_R1			JOY_NA
+#define JOY_L2			JOY_NA
+#define JOY_R2			JOY_NA
+#define JOY_L3			JOY_NA
+#define JOY_R3			JOY_NA
+
+#define JOY_MENU		JOY_NA
+#define JOY_POWER		JOY_NA
+#define JOY_PLUS		JOY_NA
+#define JOY_MINUS		JOY_NA
 
 ///////////////////////////////
 

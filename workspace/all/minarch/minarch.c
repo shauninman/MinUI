@@ -582,7 +582,7 @@ enum {
 	SHORTCUT_COUNT,
 };
 
-#define LOCAL_BUTTON_COUNT 14
+#define LOCAL_BUTTON_COUNT 16 // depends on device
 #define RETRO_BUTTON_COUNT 16 // allow L3/R3 to be remapped by user if desired, eg. Virtual Boy uses extra buttons for right d-pad
 
 typedef struct ButtonMapping { 
@@ -609,8 +609,8 @@ static ButtonMapping default_button_mapping[] = { // used if pak.cfg doesn't exi
 	{"R1 Button",	RETRO_DEVICE_ID_JOYPAD_R,		BTN_ID_R1},
 	{"L2 Button",	RETRO_DEVICE_ID_JOYPAD_L2,		BTN_ID_L2},
 	{"R2 Button",	RETRO_DEVICE_ID_JOYPAD_R2,		BTN_ID_R2},
-	{"L3 Button",	RETRO_DEVICE_ID_JOYPAD_L3,		BTN_ID_NONE},
-	{"R3 Button",	RETRO_DEVICE_ID_JOYPAD_R3,		BTN_ID_NONE},
+	{"L3 Button",	RETRO_DEVICE_ID_JOYPAD_L3,		BTN_ID_L3},
+	{"R3 Button",	RETRO_DEVICE_ID_JOYPAD_R3,		BTN_ID_R3},
 	{NULL,0,0}
 };
 static ButtonMapping button_label_mapping[] = { // used to lookup the retro_id and local btn_id from button name
@@ -629,8 +629,8 @@ static ButtonMapping button_label_mapping[] = { // used to lookup the retro_id a
 	{"R1",		RETRO_DEVICE_ID_JOYPAD_R,		BTN_ID_R1},
 	{"L2",		RETRO_DEVICE_ID_JOYPAD_L2,		BTN_ID_L2},
 	{"R2",		RETRO_DEVICE_ID_JOYPAD_R2,		BTN_ID_R2},
-	{"L3",		RETRO_DEVICE_ID_JOYPAD_L3,		BTN_ID_NONE},
-	{"R3",		RETRO_DEVICE_ID_JOYPAD_R3,		BTN_ID_NONE},
+	{"L3",		RETRO_DEVICE_ID_JOYPAD_L3,		BTN_ID_L3},
+	{"R3",		RETRO_DEVICE_ID_JOYPAD_R3,		BTN_ID_R3},
 	{NULL,0,0}
 };
 static ButtonMapping core_button_mapping[RETRO_BUTTON_COUNT+1] = {0};
@@ -650,6 +650,8 @@ static const char* device_button_names[LOCAL_BUTTON_COUNT] = {
 	[BTN_ID_R1]		= "R1",
 	[BTN_ID_L2]		= "L2",
 	[BTN_ID_R2]		= "R2",
+	[BTN_ID_L3]		= "L3",
+	[BTN_ID_R3]		= "R3",
 };
 
 
@@ -670,6 +672,8 @@ static char* button_labels[] = {
 	"R1",
 	"L2",
 	"R2",
+	"L3",
+	"R3",
 	NULL,
 };
 static char* shortcut_labels[] = {
@@ -688,6 +692,8 @@ static char* shortcut_labels[] = {
 	"R1",
 	"L2",
 	"R2",
+	"L3",
+	"R3",
 	"MENU+UP",
 	"MENU+DOWN",
 	"MENU+LEFT",
@@ -702,6 +708,8 @@ static char* shortcut_labels[] = {
 	"MENU+R1",
 	"MENU+L2",
 	"MENU+R2",
+	"MENU+L3",
+	"MENU+R3",
 	NULL,
 };
 static char* overclock_labels[] = {
@@ -2664,6 +2672,12 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	
 	screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 }
+
+#define SCALER_TYPE c
+#define MAKE_FN_NAME(num,type) scale ## num ## x ## num ## _ ## type ## 16
+#define FN_NAME(y,z) MAKE_FN_NAME(y,z)
+#define GET_SCALER(y) FN_NAME(y,SCALER_TYPE)
+
 static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.blit = scaleNull;
 	renderer.src_w = width;

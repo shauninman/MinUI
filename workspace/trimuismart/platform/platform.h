@@ -26,12 +26,13 @@
 #define BUTTON_R1		SDLK_BACKSPACE
 #define BUTTON_L2		SDLK_q
 #define BUTTON_R2		SDLK_BACKSLASH
+#define	BUTTON_L3		BUTTON_NA
+#define	BUTTON_R3		BUTTON_NA
 
 #define BUTTON_MENU		SDLK_ESCAPE
-#define	BUTTON_POWER	SDLK_UNKNOWN
-
-#define	BUTTON_PLUS		SDLK_UNKNOWN
-#define	BUTTON_MINUS	SDLK_UNKNOWN
+#define	BUTTON_POWER	BUTTON_NA
+#define	BUTTON_PLUS		BUTTON_NA
+#define	BUTTON_MINUS	BUTTON_NA
 
 ///////////////////////////////
 
@@ -50,14 +51,43 @@
 
 #define CODE_L1			15
 #define CODE_R1			14
-#define CODE_L2			240
-#define CODE_R2			240
+#define CODE_L2			CODE_NA
+#define CODE_R2			CODE_NA
+#define CODE_L3			CODE_NA
+#define CODE_R3			CODE_NA
 
 #define CODE_MENU		1
-#define CODE_POWER		240
+#define CODE_POWER		CODE_NA
 
-#define CODE_PLUS		240
-#define CODE_MINUS		240
+#define CODE_PLUS		CODE_NA
+#define CODE_MINUS		CODE_NA
+
+///////////////////////////////
+
+#define JOY_UP			JOY_NA
+#define JOY_DOWN		JOY_NA
+#define JOY_LEFT		JOY_NA
+#define JOY_RIGHT		JOY_NA
+
+#define JOY_SELECT		JOY_NA
+#define JOY_START		JOY_NA
+
+#define JOY_A			JOY_NA
+#define JOY_B			JOY_NA
+#define JOY_X			JOY_NA
+#define JOY_Y			JOY_NA
+
+#define JOY_L1			JOY_NA
+#define JOY_R1			JOY_NA
+#define JOY_L2			JOY_NA
+#define JOY_R2			JOY_NA
+#define JOY_L3			JOY_NA
+#define JOY_R3			JOY_NA
+
+#define JOY_MENU		JOY_NA
+#define JOY_POWER		JOY_NA
+#define JOY_PLUS		JOY_NA
+#define JOY_MINUS		JOY_NA
 
 ///////////////////////////////
 

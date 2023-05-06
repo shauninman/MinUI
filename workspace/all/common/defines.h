@@ -80,7 +80,11 @@
 
 ///////////////////////////////
 
-#define HAS_POWER_BUTTON (BUTTON_POWER!=SDLK_UNKNOWN)
+#define HAS_POWER_BUTTON (BUTTON_POWER!=BUTTON_NA)
+
+#define BUTTON_NA	-1
+#define CODE_NA		-1
+#define JOY_NA		-1
 
 #ifndef BTN_A // prevent collisions with input.h in keymon
 // TODO: doesn't this belong in api.h? it's meaningless without PAD_*
@@ -100,6 +104,8 @@ enum {
 	BTN_ID_R1,
 	BTN_ID_L2,
 	BTN_ID_R2,
+	BTN_ID_L3,
+	BTN_ID_R3,
 	BTN_ID_MENU,
 	BTN_ID_PLUS,
 	BTN_ID_MINUS,
@@ -123,6 +129,8 @@ enum {
 	BTN_R1		= 1 << BTN_ID_R1,
 	BTN_L2		= 1 << BTN_ID_L2,
 	BTN_R2		= 1 << BTN_ID_R2,
+	BTN_L3		= 1 << BTN_ID_L3,
+	BTN_R3		= 1 << BTN_ID_R3,
 	BTN_MENU	= 1 << BTN_ID_MENU,
 	BTN_PLUS	= 1 << BTN_ID_PLUS,
 	BTN_MINUS	= 1 << BTN_ID_MINUS,

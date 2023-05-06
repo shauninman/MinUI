@@ -875,7 +875,6 @@ void PAD_poll(void) {
 		int btn = BTN_NONE;
 		int id = -1;
 		if (event.type==SDL_KEYDOWN || event.type==SDL_KEYUP) {
-			// TODO: can this be switched to use SDLK_*?
 			uint8_t code = event.key.keysym.scancode;
 				 if (code==CODE_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
  			else if (code==CODE_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
@@ -896,10 +895,31 @@ void PAD_poll(void) {
 			else if (code==CODE_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
 			else if (code==CODE_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
 		}
+		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
+			uint8_t joy = event.jbutton.button;
+				 if (joy==JOY_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
+ 			else if (joy==JOY_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
+			else if (joy==JOY_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
+			else if (joy==JOY_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
+			else if (joy==JOY_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
+			else if (joy==JOY_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
+			else if (joy==JOY_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
+			else if (joy==JOY_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
+			else if (joy==JOY_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
+			else if (joy==JOY_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+			else if (joy==JOY_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+			else if (joy==JOY_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
+			else if (joy==JOY_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
+			else if (joy==JOY_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
+			else if (joy==JOY_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+			else if (joy==JOY_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
+			else if (joy==JOY_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
+			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+		}
 		
 		if (btn==BTN_NONE) continue;
 		
-		if (event.type==SDL_KEYUP) {
+		if (event.type==SDL_KEYUP || event.type==SDL_JOYBUTTONUP) {
 			pad.is_pressed		&= ~btn; // unset
 			pad.just_repeated	&= ~btn; // unset
 			pad.just_released	|= btn; // set
@@ -1207,6 +1227,13 @@ static void POW_waitForWake(void) {
 					break;
 				}
 			}
+			else if (event.type==SDL_JOYBUTTONUP) {
+				uint8_t joy = event.jbutton.button;
+				if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && joy==JOY_MENU)) {
+					wake = 1;
+					break;
+				}
+			} 
 		}
 		SDL_Delay(200);
 		if (pow.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
