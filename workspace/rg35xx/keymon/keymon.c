@@ -25,7 +25,6 @@
 static int inputs[INPUT_COUNT];
 static struct input_event ev;
 
-static int jack_fd;
 static pthread_t ports_pt;
 
 #define JACK_STATE_PATH "/sys/class/switch/h2w/state"

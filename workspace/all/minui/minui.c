@@ -1168,7 +1168,6 @@ int main (int argc, char *argv[]) {
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
 	POW_init();
 	if (!HAS_POWER_BUTTON) POW_disableSleep();
-	PAD_reset();
 	
 	SDL_Surface* version = NULL;
 	
