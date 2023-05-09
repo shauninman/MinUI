@@ -38,3 +38,7 @@ rm logo.img
 echo "Done."
 
 } &> ./log.txt
+
+# self-destruct
+DIR=$(dirname "$0")
+mv $DIR $DIR.disabled

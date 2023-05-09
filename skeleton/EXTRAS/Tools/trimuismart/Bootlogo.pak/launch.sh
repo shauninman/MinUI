@@ -20,3 +20,7 @@ dd if=$LOGO_PATH of=/dev/by-name/bootlogo bs=65536
 echo "Done."
 
 } &> ./log.txt
+
+# self-destruct
+DIR=$(dirname "$0")
+mv $DIR $DIR.disabled
