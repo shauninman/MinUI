@@ -116,8 +116,4 @@
 
 ///////////////////////////////
 
-#include "api.h"
-typedef struct GFX_Renderer GFX_Renderer;
-void PLAT_blitRenderer(GFX_Renderer* renderer);
-
 #endif

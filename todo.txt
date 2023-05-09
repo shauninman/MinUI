@@ -38,8 +38,6 @@ all
 		-
 		
 	minarch
-		revert inline-ing of GFX_blitRenderer()
-			it was a red herring
 		use C scalers on armv8 (they're fast enough and neon asm is different/incompatible with armv7)
 		call core.run() (and maybe core.reset()) once before State_resume()?
 				except core.reset() crashes PSX...
@@ -65,7 +63,6 @@ all
 	confirm
 
 rg353
-	volume not restored on boot?
 	toolchain: patch buildroot SDL for POWER/PLUS/MINUS (see rg35xx)
 	would love to get adbd working...
 	overclocking
@@ -98,14 +95,7 @@ smart
 	battery overlay
 
 miyoomini
-	performance issues are back :sob:
-		problem appeared after install/update
-		problem disappeard after manually installing minarch.elf...
-		nice -20 might have solved the issue (so far so good)
-		I think tearing solutions are causing audio pops in FFVI in SFC even though it should not be struggling
-		
-		use hexfiend to diff manual and updated versions of minarch.elf
-	
+	without a PLAT_vsync() menus use 95% cpu 
 	there's a long delay before installing, add a preparing install graphic?
 	distortion during resolution changes
 	

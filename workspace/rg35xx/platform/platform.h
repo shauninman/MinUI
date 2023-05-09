@@ -114,13 +114,4 @@
 
 ///////////////////////////////
 
-#include "api.h"
-#include "scaler_neon.h"
-typedef struct GFX_Renderer GFX_Renderer;
-inline void PLAT_blitRenderer(GFX_Renderer* renderer) {
-	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP);
-	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
-}
-
-
 #endif
