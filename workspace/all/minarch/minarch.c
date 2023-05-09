@@ -2643,12 +2643,21 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 		}
 		else {
 			switch (scale) {
-				case 6: 	renderer.blit = scale6x6_n16; break;
-				case 5: 	renderer.blit = scale5x5_n16; break;
-				case 4: 	renderer.blit = scale4x4_n16; break;
-				case 3: 	renderer.blit = scale3x3_n16; break;
-				case 2: 	renderer.blit = scale2x2_n16; break;
-				default:	renderer.blit = scale1x1_n16; break;
+#ifdef USE_C_SCALERS
+				case 6: renderer.blit  = scale6x6_c16; break;
+				case 5: renderer.blit  = scale5x5_c16; break;
+				case 4: renderer.blit  = scale4x4_c16; break;
+				case 3: renderer.blit  = scale3x3_c16; break;
+				case 2: renderer.blit  = scale2x2_c16; break;
+				default: renderer.blit = scale1x1_c16; break;
+#else
+				case 6: renderer.blit  = scale6x6_n16; break;
+				case 5: renderer.blit  = scale5x5_n16; break;
+				case 4: renderer.blit  = scale4x4_n16; break;
+				case 3: renderer.blit  = scale3x3_n16; break;
+				case 2: renderer.blit  = scale2x2_n16; break;
+				default: renderer.blit = scale1x1_n16; break;
+#endif
 
 				// my lesser scalers :sweat_smile:
 				// case 4: 	renderer.blit = scale4x; break;
@@ -2791,12 +2800,21 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.dst_y = dy;
 	
 	switch (scale) {
-		case 6: renderer.blit = scale6x6_n16; break;
-		case 5: renderer.blit = scale5x5_n16; break;
-		case 4: renderer.blit = scale4x4_n16; break;
-		case 3: renderer.blit = scale3x3_n16; break;
-		case 2: renderer.blit = scale2x2_n16; break;
+#ifdef USE_C_SCALERS
+		case 6: renderer.blit  = scale6x6_c16; break;
+		case 5: renderer.blit  = scale5x5_c16; break;
+		case 4: renderer.blit  = scale4x4_c16; break;
+		case 3: renderer.blit  = scale3x3_c16; break;
+		case 2: renderer.blit  = scale2x2_c16; break;
+		default: renderer.blit = scale1x1_c16; break;
+#else
+		case 6: renderer.blit  = scale6x6_n16; break;
+		case 5: renderer.blit  = scale5x5_n16; break;
+		case 4: renderer.blit  = scale4x4_n16; break;
+		case 3: renderer.blit  = scale3x3_n16; break;
+		case 2: renderer.blit  = scale2x2_n16; break;
 		default: renderer.blit = scale1x1_n16; break;
+#endif
 	}
 	
 	// DEBUG HUD
@@ -4435,7 +4453,6 @@ static void limitFF(void) {
 
 int main(int argc , char* argv[]) {
 	LOG_info("MinArch\n");
-	InitSettings();
 
 	setOverclock(overclock); // default to normal
 	// force a stack overflow to ensure asan is linked and actually working
@@ -4484,9 +4501,8 @@ int main(int argc , char* argv[]) {
 	Input_init(NULL);
 		
 	SND_init(core.sample_rate, core.fps);
-	
+	InitSettings(); // after we initialize audio
 	Menu_init();
-	
 	State_resume();
 	
 	POW_warn(1);
@@ -4504,6 +4520,7 @@ int main(int argc , char* argv[]) {
 	}
 	
 	Menu_quit();
+	QuitSettings();
 	
 finish:
 
@@ -4516,7 +4533,6 @@ finish:
 	Config_quit();
 	
 	MSG_quit();
-	QuitSettings();
 	POW_quit();
 	VIB_quit();
 	SND_quit();

@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "platform.h" // ugh for USE_C_SCALERS
+
 //
 //	arm NEON / C integer scalers for ARMv7 devices
 //	args/	src :	src offset		address of top left corner
@@ -18,6 +20,8 @@
 //	x-offset and stride pixels must be even# in the case of 16bpp,
 //	if odd#, then handled by the C scaler
 //
+
+static void dummy(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {}
 
 //
 //	C scalers
@@ -366,6 +370,8 @@ void scale6x5_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 5); }
 void scale6x6_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 6); }
+
+#ifndef USE_C_SCALERS
 
 //
 //	memcpy_neon (dst/src must be aligned 4, size must be aligned 2)
@@ -2778,8 +2784,6 @@ void scale6x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 void scale6x6_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	scale6x_n32(src, dst, sw, sh, sp, dw, dh, dp, 6); }
 
-static void dummy(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {}
-
 void scaler_n16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) = {
 			{ &scale1x1_n16, &scale1x2_n16, &scale1x3_n16, &scale1x4_n16, &dummy, &dummy, &dummy, &dummy },
@@ -2805,6 +2809,8 @@ void scaler_n32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __rest
 	if ((--xmul < 6)&&(--ymul < 6)) func[xmul][ymul](src, dst, sw, sh, sp, dw, dh, dp);
 	return;
 }
+
+#endif
 
 void scaler_c16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	void (* const func[6][8])(void* __restrict, void* __restrict, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) = {

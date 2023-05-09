@@ -1,4 +1,7 @@
 known issues
+
+WARNING! minarch is currently hardcoded to C scalers for RG353!
+
 	trimuismart: low battery overlay isn't implemented yet
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
@@ -8,8 +11,20 @@ known issues
 	miyoomini: audio popping between launches
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoominiplus: doesn't always display installing/updating message
+	
+	rg353: clock will reset to gmt after returning to stock on wifi
 
 all
+	abstract away scaler selection
+		move #include "scaler_neon.h" to individual "platform.c"s?
+			but we still need to link ../common/scaler_neon.c
+		add a generic scaler_t to defines.h
+		#define GFX_getScaler PLAT_getScaler
+		scaler_t PLAT_getScaler(int scale);
+		but also think about how this will be handled in SDL2 
+			which doesn't need scaling
+		what if the entire video_refresh_callback() was platform specific? PLAT_scale(...);
+	
 	simple progress animation for installing/updating
 		launch as a daemon with &
 		draws in a corner
@@ -17,11 +32,14 @@ all
 	main makefile
 		targets have too many dependencies
 	.tmp_update doesn't get updated?
+		I think it does now? double check
 
 	cores
 		-
 		
 	minarch
+		revert inline-ing of GFX_blitRenderer()
+			it was a red herring
 		use C scalers on armv8 (they're fast enough and neon asm is different/incompatible with armv7)
 		call core.run() (and maybe core.reset()) once before State_resume()?
 				except core.reset() crashes PSX...
@@ -30,6 +48,7 @@ all
 		some aspect scaling isn't working correctly
 			fceumm is ending up not-quite-native but also not the full aspect ratio
 				something to do with PAGE_SIZE limitations?
+				same for snes9x
 			I think I should redo both scaler selectors
 		doesn't pickup on core setting ratio changes? eg. fceumm
 		support missing buttons with MENU+BUTTON? (smart)
@@ -46,13 +65,21 @@ all
 	confirm
 
 rg353
-	yea or nay?
-	could rcS install main if [ ! -f .minstalled ]?
-		that way there's only one file to copy over
-		actually, could the initrc.gz do this?
-	#ifdef HAS_JOYSTICK
+	volume not restored on boot?
+	toolchain: patch buildroot SDL for POWER/PLUS/MINUS (see rg35xx)
+	would love to get adbd working...
+	overclocking
+	additional cores
+	rumble
+	vsync
+		appears to work
+		lets setup our own double buffer so we can use it
+	get latest MinUI/launch.sh from SD card
 
 smart
+	cores
+		supa starfox perf bad
+		pcsx freeze opening menu tekken 3
 	sync rtc
 		also sync rtc when saving (game or state) in minarch?
 		what happens when two device you're swapping the sd card between disagree on datetime?
@@ -74,10 +101,13 @@ miyoomini
 	performance issues are back :sob:
 		problem appeared after install/update
 		problem disappeard after manually installing minarch.elf...
+		nice -20 might have solved the issue (so far so good)
+		I think tearing solutions are causing audio pops in FFVI in SFC even though it should not be struggling
 		
 		use hexfiend to diff manual and updated versions of minarch.elf
 	
 	there's a long delay before installing, add a preparing install graphic?
+	distortion during resolution changes
 	
 	separate settings file for mini and plus
 	

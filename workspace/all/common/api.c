@@ -420,7 +420,9 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 	SDL_FreeSurface(text);
 }
 void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, SDL_Rect* dst_rect) {
-	if (dst_rect==NULL) dst_rect = &(SDL_Rect){0,0,dst->w,dst->h};
+	if (!dst_rect) dst_rect = &(SDL_Rect){0,0,dst->w,dst->h};
+	
+	LOG_info("GFX_blitMessage: %p (%ix%i)", dst, dst_rect->w,dst_rect->h);
 	
 	SDL_Surface* text;
 #define TEXT_BOX_MAX_ROWS 16
@@ -811,7 +813,7 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	spec_in.samples = 512;
 	spec_in.callback = SND_audioCallback;
 	
-	SDL_OpenAudio(&spec_in, &spec_out);
+	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio = %s\n", SDL_GetError());
 	
 	snd.buffer_seconds = 5;
 	snd.sample_rate_in  = sample_rate;
@@ -1185,7 +1187,10 @@ void POW_powerOff(void) {
 		if (HAS_POWER_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
 		else msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npower off now" : "Power off now";
 		
-		GFX_blitMessage(font.large, msg, gfx.screen, NULL);
+		// LOG_info("POW_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);
+		
+		// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
+		GFX_blitMessage(font.large, msg, gfx.screen,&(SDL_Rect){0,0,gfx.screen->w,gfx.screen->h}); //, NULL);
 		GFX_flip(gfx.screen);
 		PLAT_powerOff();
 	}
@@ -1215,17 +1220,17 @@ static void POW_waitForWake(void) {
 	while (!wake) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type==SDL_KEYUP) {
-				// uint8_t code = event.key.keysym.scancode;
-				// if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && code==CODE_MENU)) {
-				// 	wake = 1;
-				// 	break;
-				// }
-				
-				SDLKey key = event.key.keysym.sym;
-				if ((BTN_WAKE==BTN_POWER && key==BUTTON_POWER) || (BTN_WAKE==BTN_MENU && key==BUTTON_MENU)) {
+				uint8_t code = event.key.keysym.scancode;
+				if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && code==CODE_MENU)) {
 					wake = 1;
 					break;
 				}
+				
+				// SDLKey key = event.key.keysym.sym;
+				// if ((BTN_WAKE==BTN_POWER && key==BUTTON_POWER) || (BTN_WAKE==BTN_MENU && key==BUTTON_MENU)) {
+				// 	wake = 1;
+				// 	break;
+				// }
 			}
 			else if (event.type==SDL_JOYBUTTONUP) {
 				uint8_t joy = event.jbutton.button;

@@ -26,11 +26,14 @@ typedef void (*scale_neon_t)(void* __restrict src, void* __restrict dst, uint32_
 //		16/32	= bpp
 //		xmul	= 1,2,3,4,5,6
 //		ymul	= 1,2,3,4(xmul < 5) / 1,2,3,4,5(xmul == 5) / 1,2,3,4,5,6(xmul == 6)
+#ifndef USE_C_SCALERS
 void scaler_n16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 void scaler_n32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
+#endif
 void scaler_c16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 void scaler_c32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 
+#ifndef USE_C_SCALERS
 //	NEON memcpy
 void memcpy_neon(void* dst, void* src, uint32_t size);
 
@@ -102,6 +105,7 @@ void scale6x5_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 void scale6x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 void scale6x6_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 void scale6x6_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
+#endif
 
 //	C scalers
 void scale1x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp, uint32_t ymul);
