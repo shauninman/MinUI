@@ -196,7 +196,7 @@ void GFX_sync(void) {
 	if (gfx.vsync!=VSYNC_OFF) {
 		// this limiting condition helps SuperFX chip games
 		if (gfx.vsync==VSYNC_STRICT || frame_start==0 || frame_duration<FRAME_BUDGET) { // only wait if we're under frame budget
-			PLAT_vsync();
+			PLAT_vsync(FRAME_BUDGET-frame_duration);
 		}
 	}
 	else {

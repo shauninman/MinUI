@@ -95,9 +95,10 @@ smart
 	battery overlay
 
 miyoomini
-	without a PLAT_vsync() menus use 95% cpu 
-	there's a long delay before installing, add a preparing install graphic?
 	distortion during resolution changes
+	without a PLAT_vsync() menus use 95% cpu
+		adding SDL_Delay in there brought it down to ~55% cpi
+	there's a long delay before installing, add a preparing install graphic?
 	
 	separate settings file for mini and plus
 	

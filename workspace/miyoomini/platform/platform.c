@@ -249,8 +249,11 @@ void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
-void PLAT_vsync(void) {
-	// buh
+void PLAT_vsync(int remaining) {
+	if (remaining>0) {
+		LOG_info("fake sync: %ims\n", remaining);
+		SDL_Delay(remaining);
+	}
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
