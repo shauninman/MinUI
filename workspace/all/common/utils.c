@@ -25,7 +25,7 @@ int exactMatch(char* str1, char* str2) {
 	return (strncmp(str1,str2,len1)==0);
 }
 int hide(char* file_name) {
-	return file_name[0]=='.';
+	return file_name[0]=='.' || suffixMatch(".disabled", file_name);
 }
 
 void getDisplayName(const char* in_name, char* out_name) {
