@@ -62,6 +62,17 @@ all
 	say
 	confirm
 
+trimui
+	overclock
+	scaling
+	overlay
+	update toolchain to handle intel/arm platform split
+	create core patches
+	
+	cores
+		snes9x2005_plus has no sound
+		snes9x2005 is still only running at ~45fps
+	
 rg353
 	toolchain: patch buildroot SDL for POWER/PLUS/MINUS (see rg35xx)
 	would love to get adbd working...
@@ -95,9 +106,6 @@ smart
 	battery overlay
 
 miyoomini
-	distortion during resolution changes
-	without a PLAT_vsync() menus use 95% cpu
-		adding SDL_Delay in there brought it down to ~55% cpi
 	there's a long delay before installing, add a preparing install graphic?
 	
 	separate settings file for mini and plus

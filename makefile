@@ -128,6 +128,8 @@ package:
 
 ###########################################################
 
+# TODO: make this a template like the cores makefile?
+
 rg35xx:
 	# ----------------------------------------------------
 	make common PLATFORM=$@

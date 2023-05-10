@@ -260,6 +260,16 @@ int main (int argc, char *argv[]) {
 			break;
 		case BUTTON_SELECT:
 			if ( val != REPEAT ) button_flag = button_flag & (~SELECT) | (val<<SELECT_BIT);
+			// if (val) {
+			// 	static int tick = 0;
+			// 	char cmd[256];
+			//
+			// 	sprintf(cmd, "ps ax -o pid,nice,comm,args &> /mnt/SDCARD/%04i-nice.txt", tick);
+			// 	system(cmd);
+			//
+			// 	sprintf(cmd, "top -b -n 1 > /mnt/SDCARD/%04i-top.txt", tick++);
+			// 	system(cmd);
+			// }
 			break;
 		case BUTTON_START:
 			if ( val != REPEAT ) button_flag = button_flag & (~START) | (val<<START_BIT);
