@@ -159,11 +159,13 @@ static struct VID_Context {
 	SDL_Surface* screen;
 	HWBuffer buffer;
 	
+	int page;
 	int width;
 	int height;
 	int pitch;
 	
 	int direct;
+	int cleared;
 } vid;
 
 SDL_Surface* PLAT_initVideo(void) {
@@ -175,17 +177,21 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	vid.video = SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, SDL_SWSURFACE);
 	
-	MI_SYS_MMA_Alloc(NULL, ALIGN4K(PAGE_SIZE), &vid.buffer.padd);
-	MI_SYS_Mmap(vid.buffer.padd, ALIGN4K(PAGE_SIZE), &vid.buffer.vadd, true);
-	memset(vid.buffer.vadd, 0, PAGE_SIZE);
+	int buffer_size = ALIGN4K(PAGE_SIZE) * PAGE_COUNT;
+	MI_SYS_MMA_Alloc(NULL, ALIGN4K(buffer_size), &vid.buffer.padd);
+	MI_SYS_Mmap(vid.buffer.padd, ALIGN4K(buffer_size), &vid.buffer.vadd, true);
+	// memset(vid.buffer.vadd, 0, PAGE_SIZE);
 	
+	vid.page = 1;
 	vid.direct = 1;
 	vid.width = FIXED_WIDTH;
 	vid.height = FIXED_HEIGHT;
 	vid.pitch = FIXED_PITCH;
-	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-	vid.screen->pixelsPa = vid.buffer.padd;
-	memset(vid.screen->pixels, 0, PAGE_SIZE);
+	vid.cleared = 0;
+	
+	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd + ALIGN4K(vid.page*PAGE_SIZE),vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+	vid.screen->pixelsPa = vid.buffer.padd + ALIGN4K(vid.page*PAGE_SIZE);
+	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
 	
 	return vid.direct ? vid.video : vid.screen;
 }
@@ -200,12 +206,18 @@ void PLAT_quitVideo(void) {
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
+	MI_SYS_FlushInvCache(vid.buffer.vadd + ALIGN4K(vid.page*PAGE_SIZE), ALIGN4K(PAGE_SIZE));
+	MI_SYS_MemsetPa(vid.buffer.padd + ALIGN4K(vid.page*PAGE_SIZE), 0, PAGE_SIZE);
 	SDL_FillRect(screen, NULL, 0);
+	// memset(screen->pixels, 0, PAGE_SIZE); // this causes crashing
 }
 void PLAT_clearAll(void) {
 	// buh
-	MI_SYS_FlushInvCache(vid.buffer.vadd, ALIGN4K(PAGE_SIZE));
-	MI_SYS_MemsetPa(vid.buffer.padd, 0, PAGE_SIZE);
+	// MI_SYS_FlushInvCache(vid.buffer.vadd, ALIGN4K(PAGE_SIZE));
+	// MI_SYS_MemsetPa(vid.buffer.padd, 0, PAGE_SIZE);
+	
+	PLAT_clearVideo(vid.screen); // clear backbuffer
+	vid.cleared = 1; // defer clearing frontbuffer until offscreen
 }
 
 void PLAT_setVsync(int vsync) {
@@ -234,9 +246,12 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 	
 	if (vid.direct) memset(vid.video->pixels, 0, vid.pitch * vid.height);
 	else {
+		vid.screen->pixels = NULL;
+		vid.screen->pixelsPa = NULL; // otherwise custom SDL will try to free it?
 		SDL_FreeSurface(vid.screen);
-		vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-		vid.screen->pixelsPa = vid.buffer.padd;
+		
+		vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd + ALIGN4K(vid.page*PAGE_SIZE),vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+		vid.screen->pixelsPa = vid.buffer.padd + ALIGN4K(vid.page*PAGE_SIZE);
 		memset(vid.screen->pixels, 0, vid.pitch * vid.height);
 	}
 	
@@ -265,6 +280,18 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	if (!vid.direct) GFX_BlitSurfaceExec(vid.screen, NULL, vid.video, NULL, 0,0,1); // TODO: handle aspect clipping
 	SDL_Flip(vid.video);
+	
+	// swap backbuffer
+	if (!vid.direct) {
+		vid.page ^= 1;
+		vid.screen->pixels = vid.buffer.vadd + ALIGN4K(vid.page*PAGE_SIZE);
+		vid.screen->pixelsPa = vid.buffer.padd + ALIGN4K(vid.page*PAGE_SIZE);
+	}
+	
+	if (vid.cleared) {
+		PLAT_clearVideo(vid.screen);
+		vid.cleared = 0;
+	}
 }
 
 SDL_Surface* PLAT_getVideoBufferCopy(void) {
