@@ -36,6 +36,10 @@ TRIMUI SMART
 
 Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
+TRIMUI MODEL S
+
+Copy "trimui.zip" and "MinUI.zip" (without unzipping) to the root of the SD card. Unzip "trimui.zip" in place on the SD card.
+
 ----------------------------------------
 Updating
 
@@ -43,7 +47,7 @@ RG35XX
 
 Copy "MinUI.zip" (without unzipping) to the root of your primary card.
 
-MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART
+MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART / TRIMUI MODEL S
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card.
 
@@ -65,7 +69,7 @@ RG35XX / MIYOO MINI / MIYOO MINI PLUS
   Sleep: POWER
   Wake: POWER
   
-TRIMUI SMART
+TRIMUI SMART / TRIMUI MODEL S
   
   Sleep: MENU (twice)
   Wake: MENU
@@ -73,19 +77,20 @@ TRIMUI SMART
 ----------------------------------------
 Known Issues
 
-ALL
-
-- Pico-8 crashes loading save states
-
 TRIMUI SMART
 
 - faux rtc isn't implemented yet
-- debug hud isn't available yet
 - battery overlay isn't implemented yet
-- Virtual Boy extra slow
+- debug hud isn't available yet
+
+TRIMUI MODEL S
+
+- faux rtc isn't implemented yet
+- battery overlay isn't implemented yet
+- missing cores
+- Nintendo Entertainment System runs poorly
 
 MIYOO MINI / MIYOO MINI PLUS
 
-- prevent tearing strict has tearing
-- audio popping between launches
+- prevent tearing strict may produce tearing
 - battery overlay isn't implemented yet

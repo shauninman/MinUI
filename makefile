@@ -4,7 +4,7 @@
 # it has too, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = miyoomini rg35xx trimuismart
+PLATFORMS = miyoomini rg35xx trimuismart trimui
 endif
 
 ###########################################################
@@ -44,14 +44,15 @@ system:
 	cp ./workspace/all/minarch/build/$(PLATFORM)/minarch.elf ./build/SYSTEM/$(PLATFORM)/bin/
 	cp ./workspace/all/clock/build/$(PLATFORM)/clock.elf ./build/EXTRAS/Tools/$(PLATFORM)/Clock.pak/
 
-cores:
+cores: # TODO: can't assume every platform will have the same stock cores (platform shgould be )
 	# stock cores
 	cp ./workspace/$(PLATFORM)/cores/output/fceumm_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	cp ./workspace/$(PLATFORM)/cores/output/gambatte_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	cp ./workspace/$(PLATFORM)/cores/output/gpsp_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
-	cp ./workspace/$(PLATFORM)/cores/output/pcsx_rearmed_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	cp ./workspace/$(PLATFORM)/cores/output/picodrive_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
+ifneq ($(PLATFORM),trimui)
 	cp ./workspace/$(PLATFORM)/cores/output/snes9x2005_plus_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
+	cp ./workspace/$(PLATFORM)/cores/output/pcsx_rearmed_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	
 	# extras
 ifeq ($(PLATFORM), trimuismart) # TODO tmp?
@@ -65,7 +66,8 @@ endif
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_supafaust_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/SUPA.pak
 	cp ./workspace/$(PLATFORM)/cores/output/mednafen_vb_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/VB.pak
 	cp ./workspace/$(PLATFORM)/cores/output/pokemini_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/PKM.pak
-	
+endif
+
 common: build system cores
 	
 clean:
@@ -98,13 +100,16 @@ special:
 	# ----------------------------------------------------
 	# setup miyoomini/trimui family .tmp_update in BOOT
 	mv ./build/BOOT/updater.sh ./build/BOOT/updater
-	test -d ./build/BASE/miyoo  && cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update || true
-	test -d ./build/BASE/trimui && cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update || true
-	test -d ./build/BASE/miyoo  && cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
+	cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update
+	cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update
+	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 
 package:
 	# ----------------------------------------------------
 	# zip up build
+	
+	# TODO: tmp
+	rm -rf ./build/SYSTEM/rg353
 	
 	# move formatted readmes from workspace to build
 	cp ./workspace/readmes/BASE-out.txt ./build/BASE/README.txt
@@ -117,6 +122,7 @@ package:
 	mkdir -p ./build/PAYLOAD
 	mv ./build/SYSTEM ./build/PAYLOAD/.system
 	cp -R ./build/BOOT ./build/PAYLOAD/.tmp_update
+	cd ./build/PAYLOAD && zip -r ../BASE/trimui.zip .tmp_update
 	
 	cd ./build/PAYLOAD && zip -r MinUI.zip .system .tmp_update
 	mv ./build/PAYLOAD/MinUI.zip ./build/BASE
@@ -141,6 +147,16 @@ miyoomini:
 	# ----------------------------------------------------
 
 trimuismart:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+rg353:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+trimui:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------
