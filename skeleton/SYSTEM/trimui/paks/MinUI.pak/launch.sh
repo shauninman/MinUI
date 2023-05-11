@@ -76,10 +76,10 @@ while [ -f $EXEC_PATH ]; do
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
 		rm -f $NEXT_PATH
-		# if [ -f "/tmp/using-swap" ]; then
-		# 	swapoff $USERDATA_PATH/swapfile
-		# 	rm -f "/tmp/using-swap"
-		# fi
+		if [ -f "/tmp/using-swap" ]; then
+			swapoff $USERDATA_PATH/swapfile
+			rm -f "/tmp/using-swap"
+		fi
 		# echo $CPU_SPEED_PERF > $CPU_PATH
 		sync
 	fi

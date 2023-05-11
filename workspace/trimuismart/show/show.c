@@ -27,11 +27,12 @@ int main(int argc , char* argv[]) {
 	
 	SDL_Surface *screen = SDL_SetVideoMode(320,240,16,SDL_SWSURFACE);
 	SDL_Surface* img = IMG_Load(path); // 24-bit opaque png
+	if (img==NULL) puts(IMG_GetError());
 	SDL_BlitSurface(img, NULL, screen, NULL);
-	SDL_FreeSurface(img);
-
 	SDL_Flip(screen);
 
+	SDL_FreeSurface(img);
+	IMG_Quit();
 	SDL_Quit();
 	return EXIT_SUCCESS;
 }
