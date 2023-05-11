@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# NOTE: becomes .system/trimuismart/bin.install.h
+# NOTE: becomes .system/trimuismart/bin/install.h
 
 # TODO: alpha only
 SDCARD_PATH="/mnt/SDCARD"

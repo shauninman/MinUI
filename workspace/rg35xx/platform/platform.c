@@ -380,7 +380,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	vid.de_mem[DE_OVL_BA0(0)/4] = vid.de_mem[DE_OVL_BA0(2)/4] = (uintptr_t)(vid.fb_info.padd + vid.page * PAGE_SIZE);
 	DE_enableLayer(vid.de_mem);
 
-	if (sync) PLAT_vsync();
+	if (sync) PLAT_vsync(0);
 
 	// swap backbuffer
 	vid.page ^= 1;

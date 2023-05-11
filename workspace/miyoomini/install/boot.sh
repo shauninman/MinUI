@@ -12,18 +12,19 @@ echo performance > "$CPU_PATH"
 # install/update
 if [ -f "$UPDATE_PATH" ]; then 
 	cd $(dirname "$0")/$PLATFORM
+	
+	# init backlight
+	echo 0 > /sys/class/pwm/pwmchip0/export
+	echo 800 > /sys/class/pwm/pwmchip0/pwm0/period
+	echo 50 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+	echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
+
+	# init lcd
+	cat /proc/ls
+	sleep 1
+	export LCD_INIT=1
+
 	if [ -d "$SYSTEM_PATH" ]; then
-		# init backlight
-		echo 0 > /sys/class/pwm/pwmchip0/export
-		echo 800 > /sys/class/pwm/pwmchip0/pwm0/period
-		echo 50 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
-		echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
-
-		# init lcd
-		cat /proc/ls
-		sleep 1
-		export LCD_INIT=1
-
 		./show.elf ./updating.png
 	else
 		./show.elf ./installing.png

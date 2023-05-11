@@ -2824,6 +2824,9 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	screen = GFX_resize(target_w,target_h, target_pitch);
 }
 static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
+	// static int tmp_frameskip = 0;
+	// if ((tmp_frameskip++)%2) return;
+	
 	static uint32_t last_flip_time = 0;
 	
 	// 10 seems to be the sweet spot that allows 2x in NES and SNES and 8x in GB at 60fps

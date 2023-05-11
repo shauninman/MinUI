@@ -355,7 +355,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	vid.page ^= 1;
 	vid.buffer->pixels = vid.buffer_info.vadd + vid.page * PAGE_SIZE;
 	
-	if (sync) PLAT_vsync();
+	if (sync) PLAT_vsync(0);
 	
 	if (vid.cleared) {
 		PLAT_clearVideo(vid.buffer);
