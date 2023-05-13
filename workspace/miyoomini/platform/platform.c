@@ -17,7 +17,7 @@
 #include "platform.h"
 #include "api.h"
 #include "utils.h"
-#include "scaler_neon.h"
+#include "scaler.h"
 
 ///////////////////////////////
 // based on eggs GFXSample_rev15
@@ -271,9 +271,20 @@ void PLAT_vsync(int remaining) {
 	}
 }
 
+scaler_t PLAT_getScaler(int scale) {
+	switch (scale) {
+		case 6:  return scale6x6_n16;
+		case 5:  return scale5x5_n16;
+		case 4:  return scale4x4_n16;
+		case 3:  return scale3x3_n16;
+		case 2:  return scale2x2_n16;
+		default: return scale1x1_n16;
+	}
+}
+
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP);
-	((scale_neon_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+	((scaler_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
 }
 
 

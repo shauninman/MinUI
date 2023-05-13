@@ -3,6 +3,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include "platform.h"
+#include "scaler.h"
 
 ///////////////////////////////
 
@@ -128,6 +129,7 @@ void GFX_setVsync(int vsync);
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 
+#define GFX_getScaler PLAT_getScaler
 #define GFX_blitRenderer PLAT_blitRenderer // (GFX_Renderer* renderer);
 
 // NOTE: all dimensions should be pre-scaled
@@ -242,5 +244,7 @@ void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 
 char* PLAT_getModel(void);
+
+scaler_t PLAT_getScaler(int scale);
 
 #endif

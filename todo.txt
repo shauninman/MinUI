@@ -1,22 +1,26 @@
 next
-	trimui: swap
-	rg353: building with everything else
-	
+	trimui: scaling (there's a DE test somewhere around here)
 
+	trimui: test
+		swap
+		install/update graphics
+	
+	rg353: building with everything else
+	rg353: scaling
+	
 known issues
 
+	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet
 	trimuismart: faux rtc isn't implemented yet
-	trimuismart: debug hud isn't available 
 	trimuismart: missing L2/R2
 	
 	miyoomini: low battery overlay isn't implemented yet
 	miyoomini: audio popping between launches
 	miyoomini: prevent tearing strict introduces tearing :sob:
-	miyoominiplus: doesn't always display installing/updating message
 	
-	rg353: clock will reset to gmt after returning to stock on wifi
 	rg353: scaling isn't implemented yet
+	rg353: clock will reset to gmt after returning to stock on wifi
 
 	trimui: scaling isn't implemented yet
 	trimui: low battery overlay isn't implemented yet
@@ -28,7 +32,9 @@ all
 	abstract away scaler selection
 		move #include "scaler_neon.h" to individual "platform.c"s?
 			but we still need to link ../common/scaler_neon.c
+			renamed to just "scaler.h"
 		add a generic scaler_t to defines.h
+			might create/require circular includes?
 		#define GFX_getScaler PLAT_getScaler
 		scaler_t PLAT_getScaler(int scale);
 		but also think about how this will be handled in SDL2 
@@ -39,6 +45,7 @@ all
 		launch as a daemon with &
 		draws in a corner
 		kill after install/update complete
+		if it's circular we don't even need to worry about rotation :sweat_smile:
 	main makefile
 		targets have too many dependencies
 	.tmp_update doesn't get updated?
@@ -51,7 +58,9 @@ all
 		remove optimize text option
 			99% of people use aspect scaling for PS anyway (including me now) 
 			and it's too processor intesive for platforms that might not have a quality IPU
-		support hiding frontend options (by platform? could just be hardcoded into default.cfg)
+		remove scanline/grid option
+			its presence for native only created demands I can't meet
+		support adding or hiding frontend options (by platform? could just be hardcoded into default.cfg)
 			maybe even platform-based compile time exclusion (eg. overclocking doesn't work on trimui but it does need frameskip)
 		some aspect scaling isn't working correctly
 			fceumm is ending up not-quite-native but also not the full aspect ratio

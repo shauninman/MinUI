@@ -19,7 +19,7 @@
 #include "sunxi_display2.h"
 #include "ion.h"
 #include "ion_sunxi.h"
-#include "scaler_neon.h"
+#include "scaler.h"
 
 ///////////////////////////////
 // 100% eggs
@@ -298,6 +298,17 @@ void PLAT_vsync(int remaining) {
 	ioctl(vid.fb_fd, FBIO_WAITFORVSYNC, &_);
 }
 
+scaler_t PLAT_getScaler(int scale) {
+	switch (scale) {
+		case 6:  return scale6x6_n16;
+		case 5:  return scale5x5_n16;
+		case 4:  return scale4x4_n16;
+		case 3:  return scale3x3_n16;
+		case 2:  return scale2x2_n16;
+		default: return scale1x1_n16;
+	}
+}
+
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.renderer = renderer;
 	if (!vid.special || vid.special->w!=renderer->src_h || vid.special->h!=renderer->src_w || vid.special->pitch!=renderer->src_h*FIXED_BPP || !vid.rotated_pitch) {
@@ -331,7 +342,7 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	// TODO: do a normal blit if we're doing nearest neighbor to FIXED_WIDTH x FIXED_HEIGHT?
 	// otherwise optimize text doesn't work
 	rotate_16bpp(renderer->src, vid.special->pixels, renderer->src_w,renderer->src_h,renderer->src_p);
-	((scale_neon_t)renderer->blit)(vid.special->pixels, vid.buffer->pixels+vid.rotated_offset, vid.special->w,vid.special->h, vid.special->pitch, vid.renderer->dst_h, vid.renderer->dst_w,vid.rotated_pitch);
+	((scaler_t)renderer->blit)(vid.special->pixels, vid.buffer->pixels+vid.rotated_offset, vid.special->w,vid.special->h, vid.special->pitch, vid.renderer->dst_h, vid.renderer->dst_w,vid.rotated_pitch);
 	
 	// LOG_info("blit(%p,%p, %i,%i,%i, %i,%i,%i)\n", vid.special->pixels, vid.buffer->pixels+vid.rotated_offset, vid.special->w,vid.special->h, vid.special->pitch, vid.renderer->dst_h, vid.renderer->dst_w,vid.rotated_pitch);
 }

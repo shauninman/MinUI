@@ -1,5 +1,5 @@
-#ifndef __SCALER_NEON_H__
-#define __SCALER_NEON_H__
+#ifndef __SCALER_H__
+#define __SCALER_H__
 #include <stdint.h>
 
 //
@@ -19,21 +19,21 @@
 //	if odd#, then handled by the C scaler
 //
 
-typedef void (*scale_neon_t)(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
+typedef void (*scaler_t)(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 
 //	Functions for generic call
 //		n/c	= neon or c
 //		16/32	= bpp
 //		xmul	= 1,2,3,4,5,6
 //		ymul	= 1,2,3,4(xmul < 5) / 1,2,3,4,5(xmul == 5) / 1,2,3,4,5,6(xmul == 6)
-#ifndef USE_C_SCALERS
+#ifdef HAS_NEON
 void scaler_n16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 void scaler_n32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 #endif
 void scaler_c16(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 void scaler_c32(uint32_t xmul, uint32_t ymul, void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp);
 
-#ifndef USE_C_SCALERS
+#ifdef HAS_NEON
 //	NEON memcpy
 void memcpy_neon(void* dst, void* src, uint32_t size);
 

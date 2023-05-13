@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "platform.h" // ugh for USE_C_SCALERS
+#include "platform.h" // for HAS_NEON
 
 //
 //	arm NEON / C integer scalers for ARMv7 devices
@@ -371,7 +371,7 @@ void scale6x5_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 void scale6x6_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, 6); }
 
-#ifndef USE_C_SCALERS
+#ifdef HAS_NEON
 
 //
 //	memcpy_neon (dst/src must be aligned 4, size must be aligned 2)

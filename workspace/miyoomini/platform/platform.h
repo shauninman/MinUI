@@ -114,6 +114,7 @@ extern int is_plus;
 
 #define SDCARD_PATH "/mnt/SDCARD"
 #define MUTE_VOLUME_RAW -60
+#define HAS_NEON
 
 ///////////////////////////////
 

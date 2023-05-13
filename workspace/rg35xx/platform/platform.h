@@ -111,6 +111,7 @@
 
 #define SDCARD_PATH "/mnt/sdcard"
 #define MUTE_VOLUME_RAW 0
+#define HAS_NEON
 
 ///////////////////////////////
 

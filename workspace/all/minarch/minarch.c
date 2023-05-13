@@ -19,7 +19,7 @@
 #include "defines.h"
 #include "api.h"
 #include "utils.h"
-#include "scaler_neon.h"
+#include "scaler.h"
 
 ///////////////////////////////////////
 
@@ -2642,34 +2642,7 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 			}
 		}
 		else {
-			switch (scale) {
-#ifdef USE_C_SCALERS
-				case 6: renderer.blit  = scale6x6_c16; break;
-				case 5: renderer.blit  = scale5x5_c16; break;
-				case 4: renderer.blit  = scale4x4_c16; break;
-				case 3: renderer.blit  = scale3x3_c16; break;
-				case 2: renderer.blit  = scale2x2_c16; break;
-				default: renderer.blit = scale1x1_c16; break;
-#else
-				case 6: renderer.blit  = scale6x6_n16; break;
-				case 5: renderer.blit  = scale5x5_n16; break;
-				case 4: renderer.blit  = scale4x4_n16; break;
-				case 3: renderer.blit  = scale3x3_n16; break;
-				case 2: renderer.blit  = scale2x2_n16; break;
-				default: renderer.blit = scale1x1_n16; break;
-#endif
-
-				// my lesser scalers :sweat_smile:
-				// case 4: 	renderer.blit = scale4x; break;
-				// case 3: 	renderer.blit = scale3x; break;
-				// case 3: 	renderer.blit = scale3x_dmg; break;
-				// case 3: 	renderer.blit = scale3x_lcd; break;
-				// case 3: 	renderer.blit = scale3x_scanline; break;
-				// case 2: 	renderer.blit = scale2x; break;
-				// case 2: 	renderer.blit = scale2x_lcd; break;
-				// case 2: 	renderer.blit = scale2x_scanline; break;
-				// default:	renderer.blit = scale1x; break;
-			}
+			renderer.blit = GFX_getScaler(scale);
 		}
 	}
 	//////////////////////////////
@@ -2702,6 +2675,8 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	// scale = 1;
 	
 	// TODO: this "logic" is a disaster
+	
+	// TODO: platform should determine max scale
 	
 	// if (scale>6) scale = 6;
 	// else
@@ -2799,23 +2774,7 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.dst_x = dx;
 	renderer.dst_y = dy;
 	
-	switch (scale) {
-#ifdef USE_C_SCALERS
-		case 6: renderer.blit  = scale6x6_c16; break;
-		case 5: renderer.blit  = scale5x5_c16; break;
-		case 4: renderer.blit  = scale4x4_c16; break;
-		case 3: renderer.blit  = scale3x3_c16; break;
-		case 2: renderer.blit  = scale2x2_c16; break;
-		default: renderer.blit = scale1x1_c16; break;
-#else
-		case 6: renderer.blit  = scale6x6_n16; break;
-		case 5: renderer.blit  = scale5x5_n16; break;
-		case 4: renderer.blit  = scale4x4_n16; break;
-		case 3: renderer.blit  = scale3x3_n16; break;
-		case 2: renderer.blit  = scale2x2_n16; break;
-		default: renderer.blit = scale1x1_n16; break;
-#endif
-	}
+	renderer.blit = GFX_getScaler(scale);
 	
 	// DEBUG HUD
 	if (scaler_surface) SDL_FreeSurface(scaler_surface);
