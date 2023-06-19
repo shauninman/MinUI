@@ -35,7 +35,6 @@ enum {
 
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
-static int show_scanlines = 0;
 static int prevent_tearing = 1; // lenient
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
@@ -561,7 +560,6 @@ static char* max_ff_labels[] = {
 
 enum {
 	FE_OPT_SCALING,
-	FE_OPT_SCANLINES,
 	FE_OPT_TEARING,
 	FE_OPT_OVERCLOCK,
 	FE_OPT_DEBUG,
@@ -574,7 +572,6 @@ enum {
 	SHORTCUT_LOAD_STATE,
 	SHORTCUT_RESET_GAME,
 	SHORTCUT_CYCLE_SCALE,
-	SHORTCUT_TOGGLE_SCANLINES,
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
 	SHORTCUT_COUNT,
@@ -746,16 +743,6 @@ static struct Config {
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
-			[FE_OPT_SCANLINES] = {
-				.key	= "minarch_scanlines_grid", 
-				.name	= "Scanlines/Grid",
-				.desc	= "Simulate scanlines (or a pixel grid at odd scales).\nOnly applies to native scaling.",
-				.default_value = 0,
-				.value = 0,
-				.count = 2,
-				.values = onoff_labels,
-				.labels = onoff_labels,
-			},
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
 				.name	= "Prevent Tearing",
@@ -811,7 +798,6 @@ static struct Config {
 		[SHORTCUT_LOAD_STATE]			= {"Load State",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_RESET_GAME]			= {"Reset Game",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_CYCLE_SCALE]			= {"Cycle Scaling",		-1, BTN_ID_NONE, 0},
-		[SHORTCUT_TOGGLE_SCANLINES]		= {"Toggle Scanlines",	-1, BTN_ID_NONE, 0},
 		[SHORTCUT_TOGGLE_FF]			= {"Toggle FF",			-1, BTN_ID_NONE, 0},
 		[SHORTCUT_HOLD_FF]				= {"Hold FF",			-1, BTN_ID_NONE, 0},
 		{NULL}
@@ -848,7 +834,6 @@ static void setOverclock(int i) {
 static void Config_syncFrontend(int i, int value) {
 	switch (i) {
 		case FE_OPT_SCALING:	screen_scaling 	= value; renderer.dst_p = 0; break;
-		case FE_OPT_SCANLINES:	show_scanlines 	= value; renderer.dst_p = 0; break;
 		case FE_OPT_TEARING:	prevent_tearing = value; break;
 		case FE_OPT_OVERCLOCK:	overclock		= value; break;
 		case FE_OPT_DEBUG:		show_debug 		= value; break;
@@ -1402,11 +1387,6 @@ static void input_poll_callback(void) {
 						if (screen_scaling>=3) screen_scaling -= 3;
 						Config_syncFrontend(FE_OPT_SCALING, screen_scaling);
 						break;
-					case SHORTCUT_TOGGLE_SCANLINES:
-						if (screen_scaling==SCALE_NATIVE) {
-							Config_syncFrontend(FE_OPT_SCANLINES, !show_scanlines);
-						}
-						break;
 					default: break;
 				}
 				
@@ -1892,31 +1872,6 @@ static void scale1x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 	}
 	
 }
-static void scale1x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	// pitch of src image not src buffer!
-	// eg. gb has a 160 pixel wide image but 
-	// gambatte uses a 256 pixel wide buffer
-	// (only matters when using memcpy) 
-	int src_pitch = w * FIXED_BPP; 
-	int src_stride = 2 * pitch / FIXED_BPP;
-	int dst_stride = 2 * dst_pitch / FIXED_BPP;
-	int cpy_pitch = MIN(src_pitch, dst_pitch);
-	
-	uint16_t k = 0x0000;
-	uint16_t* restrict src_row = (uint16_t*)src;
-	uint16_t* restrict dst_row = (uint16_t*)dst;
-	for (int y=0; y<h; y+=2) {
-		memcpy(dst_row, src_row, cpy_pitch);
-		dst_row += dst_stride;
-		src_row += src_stride;
-		
-		for (unsigned x = 0; x < w; x++) {
-			uint16_t s = *(src_row + x);
-			*(dst_row + x) = Weight3_1(s, k);
-		}
-	}
-	
-}
 static void scale2x(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	for (unsigned y = 0; y < h; y++) {
@@ -1955,27 +1910,6 @@ static void scale2x_lcd(void* __restrict src, void* __restrict dst, uint32_t w, 
 			
 			*(dst_row + screen_w * 1    ) = g;
 			*(dst_row + screen_w * 1 + 1) = k;
-			
-			src_row += 1;
-			dst_row += 2;
-		}
-	}
-}
-static void scale2x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	int screen_w = screen->w;
-	uint16_t k = 0x0000;
-	for (unsigned y = 0; y < h; y++) {
-		uint16_t* restrict src_row = (void*)src + y * pitch;
-		uint16_t* restrict dst_row = (void*)dst + y * dst_pitch * 2;
-		for (unsigned x = 0; x < w; x++) {
-			uint16_t c1 = *src_row;
-			uint16_t c2 = Weight3_2( c1, k);
-			
-			*(dst_row     ) = c1;
-			*(dst_row + 1 ) = c1;
-			
-			*(dst_row + screen_w    ) = c2;
-			*(dst_row + screen_w + 1) = c2;
 			
 			src_row += 1;
 			dst_row += 2;
@@ -2097,36 +2031,6 @@ static void scale3x_dmg(void* __restrict src, void* __restrict dst, uint32_t w, 
 		}
 	}
 }
-static void scale3x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	int screen_w = screen->w;
-	uint16_t k = 0x0000;
-	for (unsigned y = 0; y < h; y++) {
-		uint16_t* restrict src_row = (void*)src + y * pitch;
-		uint16_t* restrict dst_row = (void*)dst + y * dst_pitch * 3;
-		for (unsigned x = 0; x < w; x++) {
-			uint16_t c1 = *src_row;
-			uint16_t c2 = Weight3_2( c1, k);
-			
-			// row 1
-			*(dst_row                       ) = c2;
-			*(dst_row                    + 1) = c2;
-			*(dst_row                    + 2) = c2;
-
-			// row 2
-			*(dst_row + screen_w * 1    ) = c1;
-			*(dst_row + screen_w * 1 + 1) = c1;
-			*(dst_row + screen_w * 1 + 2) = c1;
-
-			// row 3
-			*(dst_row + screen_w * 2    ) = c1;
-			*(dst_row + screen_w * 2 + 1) = c1;
-			*(dst_row + screen_w * 2 + 2) = c1;
-
-			src_row += 1;
-			dst_row += 3;
-		}
-	}
-}
 static void scale3x_grid(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	int screen_w = screen->w;
 	uint16_t k = 0x0000;
@@ -2197,85 +2101,6 @@ static void scale4x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		}
 	}
 }
-static void scale4x_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	int screen_w = screen->w;
-	int row3 = screen_w * 2;
-	int row4 = screen_w * 3;
-	uint16_t k = 0x0000;
-	for (unsigned y = 0; y < h; y++) {
-		uint16_t* restrict src_row = (void*)src + y * pitch;
-		uint16_t* restrict dst_row = (void*)dst + y * dst_pitch * 4;
-		for (unsigned x = 0; x < w; x++) {
-			uint16_t c1 = *src_row;
-			uint16_t c2 = Weight3_2( c1, k);
-			
-			// row 1
-			*(dst_row    ) = c1;
-			*(dst_row + 1) = c1;
-			*(dst_row + 2) = c1;
-			*(dst_row + 3) = c1;
-			
-			// row 2
-			*(dst_row + screen_w    ) = c2;
-			*(dst_row + screen_w + 1) = c2;
-			*(dst_row + screen_w + 2) = c2;
-			*(dst_row + screen_w + 3) = c2;
-
-			// row 3
-			*(dst_row + row3    ) = c1;
-			*(dst_row + row3 + 1) = c1;
-			*(dst_row + row3 + 2) = c1;
-			*(dst_row + row3 + 3) = c1;
-
-			// row 4
-			*(dst_row + row4    ) = c2;
-			*(dst_row + row4 + 1) = c2;
-			*(dst_row + row4 + 2) = c2;
-			*(dst_row + row4 + 3) = c2;
-
-			src_row += 1;
-			dst_row += 4;
-		}
-	}
-}
-
-static void scaleNN_WORKING(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	LOG_info("scaleNN_WORKING(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
-	
-	// TODO: I think all NN are broken on Smart because we're dealing with a mix of rotated and unrotated values...
-	
-	uint16_t* s = (uint16_t*)src;
-	uint16_t* d = (uint16_t*)dst;
-	
-	int rw = dst_w;
-	int rh = dst_h;
-
-	int sp = pitch / FIXED_BPP;
-	int dp = dst_pitch / FIXED_BPP;
-	
-	int mx = (w << 16) / rw;
-	int my = (h << 16) / rh;
-	int sx = 0;
-	int sy = 0;
-	int lr = -1;
-	int sr = 0;
-	int dr = 0;
-	int cp = dp * FIXED_BPP;
-	for (int dy=0; dy<rh; dy++) {
-		sx = 0;
-		sr = (sy >> 16) * sp;
-		if (sr==lr) memcpy(d+dr,d+dr-dp,cp);
-		else {
-	        for (int dx=0; dx<rw; dx++) {
-	            d[dr + dx] = s[sr + (sx >> 16)];
-				sx += mx;
-	        }
-		}
-		lr = sr;
-		sy += my;
-		dr += dp;
-    }
-}
 
 // TODO: NN versions of scanline need updating to use blended scanlines (or maybe not for performance?) 
 static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
@@ -2319,165 +2144,6 @@ static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint
 		} else {
 			copy = true;
 		}
-	}
-}
-static void scaleNN_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	// LOG_info("scaleNN_scanline(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
-	
-	int dy = -dst_h;
-	unsigned lines = h;
-	int row = 0;
-	
-	while (lines) {
-		int dx = -dst_w;
-		const uint16_t *psrc16 = src;
-		uint16_t *pdst16 = dst;
-		
-		if (row%2==0) {
-			int col = w;
-			while(col--) {
-				while (dx < 0) {
-					*pdst16 = *(pdst16 + dst_pitch) = *psrc16;
-					pdst16 += 1;
-					dx += w;
-				}
-
-				dx -= dst_w;
-				psrc16++;
-			}
-		}
-
-		dst += dst_pitch;
-		dy += h;
-				
-		if (dy >= 0) {
-			dy -= dst_h;
-			src += pitch;
-			lines--;
-		}
-		row += 1;
-	}
-}
-static void scaleNN_text(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	// LOG_info("scaleNN_text(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
-	
-	int dy = -dst_h;
-	unsigned lines = h;
-	bool copy = false;
-
-	size_t cpy_w = dst_w * FIXED_BPP;
-		
-	int safe = w - 1; // don't look behind when there's nothing to see
-	uint16_t l1,l2;
-	while (lines) {
-		int dx = -dst_w;
-		const uint16_t *psrc16 = src;
-		uint16_t *pdst16 = dst;
-		l1 = l2 = 0x0;
-		
-		if (copy) {
-			copy = false;
-			memcpy(dst, dst - cpy_w, cpy_w);
-			dst += dst_pitch;
-			dy += h;
-		} else if (dy < 0) {
-			int col = w;
-			while(col--) {
-				int d = 0;
-				if (col<safe && l1!=l2) {
-					// https://stackoverflow.com/a/71086522/145965
-					uint16_t r = (l1 >> 10) & 0x3E;
-					uint16_t g = (l1 >> 5) & 0x3F;
-					uint16_t b = (l1 << 1) & 0x3E;
-					uint16_t luma = (r * 218) + (g * 732) + (b * 74);
-					luma = (luma >> 10) + ((luma >> 9) & 1); // 0-63
-					d = luma > 24;
-				}
-
-				uint16_t s = *psrc16;
-				
-				while (dx < 0) {
-					*pdst16++ = d ? l1 : s;
-					dx += w;
-
-					l2 = l1;
-					l1 = s;
-					d = 0;
-				}
-
-				dx -= dst_w;
-				psrc16++;
-			}
-
-			dst += dst_pitch;
-			dy += h;
-		}
-
-		if (dy >= 0) {
-			dy -= dst_h;
-			src += pitch;
-			lines--;
-		} else {
-			copy = true;
-		}
-	}
-}
-static void scaleNN_text_scanline(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
-	// LOG_info("scaleNN_text_scanline(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
-	
-	int dy = -dst_h;
-	unsigned lines = h;
-
-	int row = 0;
-	int safe = w - 1; // don't look behind when there's nothing to see
-	uint16_t l1,l2;
-	while (lines) {
-		int dx = -dst_w;
-		const uint16_t *psrc16 = src;
-		uint16_t *pdst16 = dst;
-		l1 = l2 = 0x0;
-		
-		if (row%2==0) {
-			int col = w;
-			while(col--) {
-				int d = 0;
-				if (col<safe && l1!=l2) {
-					// https://stackoverflow.com/a/71086522/145965
-					uint16_t r = (l1 >> 10) & 0x3E;
-					uint16_t g = (l1 >> 5) & 0x3F;
-					uint16_t b = (l1 << 1) & 0x3E;
-					uint16_t luma = (r * 218) + (g * 732) + (b * 74);
-					luma = (luma >> 10) + ((luma >> 9) & 1); // 0-63
-					d = luma > 24;
-				}
-
-				uint16_t s = *psrc16;
-				
-				while (dx < 0) {
-					*pdst16 = *(pdst16 + dst_pitch) = d ? l1 : s;
-					pdst16 += 1;
-					
-					dx += w;
-
-					l2 = l1;
-					l1 = s;
-					d = 0;
-				}
-
-				dx -= dst_w;
-				psrc16 += 1;
-			}
-		}
-
-		dst += dst_pitch;
-		dy += h;
-				
-		if (dy >= 0) {
-			dy -= dst_h;
-			src += pitch;
-			lines--;
-		}
-		row += 1;
 	}
 }
 
@@ -2614,23 +2280,10 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	LOG_info("%i,%i %ix%i (%i)\n", renderer.dst_x,renderer.dst_y,renderer.dst_w,renderer.dst_h,renderer.dst_p);
 
 	if (use_nearest) 
-		if (show_scanlines) renderer.blit = scaleNN_scanline;
-		else renderer.blit = scaleNN;
+		renderer.blit = scaleNN;
 	else {
 		sprintf(scaler_name, "%iX", scale);
-		if (show_scanlines) {
-			switch (scale) {
-				case 6: 	renderer.blit = scaleNN_scanline; break;
-				case 5: 	renderer.blit = scaleNN_scanline; break;
-				case 4: 	renderer.blit = scale4x_scanline; break;
-				case 3: 	renderer.blit = scale3x_grid; break;
-				case 2: 	renderer.blit = scale2x_scanline; break;
-				default:	renderer.blit = scale1x_scanline; break;
-			}
-		}
-		else {
-			renderer.blit = GFX_getScaler(scale);
-		}
+		renderer.blit = GFX_getScaler(scale);
 	}
 	//////////////////////////////
 	
