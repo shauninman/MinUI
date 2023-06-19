@@ -70,4 +70,9 @@ bump() {
 	list ./workspace/rg353/cores/src
 	bump
 
+	tell RGNANO
+	echo CORES
+	list ./workspace/nano/cores/src
+	bump
+
 } | sed 's/\n/ /g'
