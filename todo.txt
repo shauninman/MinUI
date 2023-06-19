@@ -1,23 +1,23 @@
 next
 	trimui: scaling (there's a DE test somewhere around here)
-
-	trimui: test
-		swap
-		install/update graphics
-	
-	rg353: building with everything else
+		I think we'll be good to go once 
+		I dummy resolution switching
+		not quite there yet
+		I was really trying not to rewrite this to match logic of other platform.c
+			implementations but I think I need to in order to understand what it's
+			actually doing/how it works :\
 	rg353: scaling
+	rg353: building with everything else
 	
 known issues
-
+	miyoomini: low battery overlay isn't implemented yet
+	miyoomini: audio popping between launches (fixed?)
+	miyoomini: prevent tearing strict introduces tearing :sob:
+	
 	trimuismart: debug hud isn't available 
 	trimuismart: low battery overlay isn't implemented yet
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: missing L2/R2
-	
-	miyoomini: low battery overlay isn't implemented yet
-	miyoomini: audio popping between launches
-	miyoomini: prevent tearing strict introduces tearing :sob:
 	
 	rg353: scaling isn't implemented yet
 	rg353: clock will reset to gmt after returning to stock on wifi
@@ -25,21 +25,35 @@ known issues
 	trimui: scaling isn't implemented yet
 	trimui: low battery overlay isn't implemented yet
 	trimui: faux rtc isn't implemented yet
-	trimui: debug hud isn't available 
+	trimui: debug hud isn't available
 	trimui: missing L2/R2
+	
+	nano: scaling isn't implemented yet
+	nano: pokemini doesn't restore audio when resuming from minui
+
+nano
+	test nano MinUI SD in all other (fully) supported devices
+		no joy :sob:
+		can the boot partition be hidden from other devices?
+		or can I change the boot order to prioritize nand over sd?
+	minarch
+		cores
+		patches
+	scaling
+	is overclocking possible?
+		no?
 
 all
+	clock
+		- 
 	abstract away scaler selection
-		move #include "scaler_neon.h" to individual "platform.c"s?
-			but we still need to link ../common/scaler_neon.c
-			renamed to just "scaler.h"
-		add a generic scaler_t to defines.h
-			might create/require circular includes?
-		#define GFX_getScaler PLAT_getScaler
-		scaler_t PLAT_getScaler(int scale);
+		there are multiple things at play here
+			currently it assumes that there are two stages
+				integer software upscaling
+				non-integer hardware downsampling
 		but also think about how this will be handled in SDL2 
 			which doesn't need scaling
-		what if the entire video_refresh_callback() was platform specific? PLAT_scale(...);
+		what if the entire video_refresh_callback() was platform specific?
 	
 	simple progress animation for installing/updating
 		launch as a daemon with &
@@ -55,11 +69,6 @@ all
 		-
 		
 	minarch
-		remove optimize text option
-			99% of people use aspect scaling for PS anyway (including me now) 
-			and it's too processor intesive for platforms that might not have a quality IPU
-		remove scanline/grid option
-			its presence for native only created demands I can't meet
 		support adding or hiding frontend options (by platform? could just be hardcoded into default.cfg)
 			maybe even platform-based compile time exclusion (eg. overclocking doesn't work on trimui but it does need frameskip)
 		some aspect scaling isn't working correctly
@@ -67,12 +76,14 @@ all
 				something to do with PAGE_SIZE limitations?
 				same for snes9x
 			I think I should redo both scaler selectors
+
 		doesn't pickup on core setting ratio changes? eg. fceumm
-		support missing buttons with MENU+BUTTON? (smart)
+		support missing buttons with MENU+BUTTON? (smart,model s,nano)
 	api
 		GFX_blitDebug(text,x,y)?
 			simple for everything but trimuismart with its -90° screen
 	minui
+		info window vertical centering is off on 1x devices
 		support multiple tags in folder name?
 			eg. Super Nintendo (SFC,SFCALT)
 			where SFX.pak is only present on higher power systems and
@@ -128,8 +139,6 @@ smart
 	what if led always flashed while sleeping (once the quicksave is created, then you know it's safe to poweroff)
 		we don't have a hook into POW_fauxSleep to do that...unless we thread it 
 			but that goes against the idea of an idle sleep state :sweat_smile:
-	optimize text doesn't work with a rotated surface
-		what if I only did rotation before scaling if dimensions are larger than fixed size?
 	
 	keymon
 		battery/usb monitoring

@@ -3517,16 +3517,8 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	// }
 	
 	// LOG_info("Menu_scale: %i,%i %ix%i\n",rx,ry,rw,rh);
-	
-	// TODO: apply screen effects/scanline?
-	// for (int dy=0; dy<rh; dy++) {
-	//         for (int dx=0; dx<rw; dx++) {
-	//             int sx = dx * sw / rw;
-	//             int sy = dy * sh / rh;
-	//             d[(ry+dy) * dp + (rx+dx)] = s[sy * sp + sx];
-	//         }
-	//     }
-	
+
+	// dumb nearest neighbor scaling
 	int mx = (sw << 16) / rw;
 	int my = (sh << 16) / rh;
 	int sx = 0;
