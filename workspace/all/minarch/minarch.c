@@ -3848,7 +3848,7 @@ static void Menu_loop(void) {
 			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
 			
 			// list
-			oy = SCALE1((PILL_SIZE * 1.5) - PADDING);
+			oy = (PILL_SIZE * 1.5) - PADDING;
 			for (int i=0; i<MENU_ITEM_COUNT; i++) {
 				char* item = menu.items[i];
 				SDL_Color text_color = COLOR_WHITE;
@@ -3907,13 +3907,15 @@ static void Menu_loop(void) {
 				// unscaled
 				int hw = FIXED_WIDTH / 2;
 				int hh = FIXED_HEIGHT / 2;
-				int pw = hw+SCALE1(WINDOW_RADIUS*2);
-				int ph = hh+SCALE1(WINDOW_RADIUS*3+6);
+				int pw = hw + SCALE1(WINDOW_RADIUS*2);
+				int ph = hh + SCALE1(WINDOW_RADIUS + 6 + WINDOW_RADIUS*2);
 				ox = FIXED_WIDTH - pw - SCALE1(PADDING);
 				oy = (FIXED_HEIGHT - ph) / 2;
 				
 				// window
-				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){SCALE2(ox-WINDOW_RADIUS,oy-WINDOW_RADIUS),pw,ph});
+				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
+				ox += SCALE1(WINDOW_RADIUS);
+				oy += SCALE1(WINDOW_RADIUS);
 				
 				if (preview_exists) { // has save, has preview
 					// lotta memory churn here
@@ -3924,23 +3926,23 @@ static void Menu_loop(void) {
 					
 					SDL_FillRect(preview, NULL, 0);
 					Menu_scale(raw_preview, preview);
-					SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){SCALE2(ox,oy)});
+					SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){ox,oy});
 					SDL_FreeSurface(raw_preview);
 					SDL_FreeSurface(bmp);
 				}
 				else {
-					SDL_Rect preview_rect = {SCALE2(ox,oy),hw,hh};
+					SDL_Rect preview_rect = {ox,oy,hw,hh};
 					SDL_FillRect(screen, &preview_rect, 0);
 					if (save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
 					else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
 				}
 				
 				// pagination
-				ox += ((pw/FIXED_SCALE)-(15*MENU_SLOT_COUNT))/2;
-				oy += 124;
+				ox += (pw-SCALE1(15*MENU_SLOT_COUNT))/2;
+				oy += SCALE1(124);
 				for (int i=0; i<MENU_SLOT_COUNT; i++) {
-					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15),oy)});
-					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15)+4,oy+2)});
+					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15),oy});
+					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});
 				}
 			}
 	
