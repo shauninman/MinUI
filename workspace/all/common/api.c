@@ -879,24 +879,25 @@ void PAD_poll(void) {
 		int id = -1;
 		if (event.type==SDL_KEYDOWN || event.type==SDL_KEYUP) {
 			uint8_t code = event.key.keysym.scancode;
-				 if (code==CODE_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
- 			else if (code==CODE_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
-			else if (code==CODE_LEFT)	{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
-			else if (code==CODE_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
-			else if (code==CODE_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
-			else if (code==CODE_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
-			else if (code==CODE_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
-			else if (code==CODE_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
-			else if (code==CODE_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
-			else if (code==CODE_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-			else if (code==CODE_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-			else if (code==CODE_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
-			else if (code==CODE_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
-			else if (code==CODE_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
-			else if (code==CODE_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
-			else if (code==CODE_PLUS)	{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
-			else if (code==CODE_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
-			else if (code==CODE_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+				 if (code==CODE_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
+ 			else if (code==CODE_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
+			else if (code==CODE_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
+			else if (code==CODE_RIGHT)		{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
+			else if (code==CODE_A)			{ btn = BTN_A; 			id = BTN_ID_A; }
+			else if (code==CODE_B)			{ btn = BTN_B; 			id = BTN_ID_B; }
+			else if (code==CODE_X)			{ btn = BTN_X; 			id = BTN_ID_X; }
+			else if (code==CODE_Y)			{ btn = BTN_Y; 			id = BTN_ID_Y; }
+			else if (code==CODE_START)		{ btn = BTN_START; 		id = BTN_ID_START; }
+			else if (code==CODE_SELECT)		{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+			else if (code==CODE_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+			else if (code==CODE_L1)			{ btn = BTN_L1; 		id = BTN_ID_L1; }
+			else if (code==CODE_L2)			{ btn = BTN_L2; 		id = BTN_ID_L2; }
+			else if (code==CODE_R1)			{ btn = BTN_R1; 		id = BTN_ID_R1; }
+			else if (code==CODE_R2)			{ btn = BTN_R2; 		id = BTN_ID_R2; }
+			else if (code==CODE_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
+			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
+			else if (code==CODE_POWER)		{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;	id = BTN_ID_POWEROFF; }
 		}
 		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
@@ -1041,7 +1042,7 @@ static void POW_updateBatteryStatus(void) {
 
 static void* POW_monitorBattery(void *arg) {
 	while(1) {
-		// TODO: the frequency of checking should depend on whether 
+		// TODO: the frequency of checking could depend on whether 
 		// we're in game (less frequent) or menu (more frequent)
 		sleep(1);
 		POW_updateBatteryStatus();
@@ -1106,8 +1107,10 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 		checked_charge_at = now;
 	}
 	
-	if (power_pressed_at && now-power_pressed_at>=1000) {
-		if (before_sleep) before_sleep();
+	if (PAD_justReleased(BTN_POWEROFF) || (power_pressed_at && now-power_pressed_at>=1000)) {
+		if (before_sleep) {
+			before_sleep();
+		}
 		POW_powerOff();
 	}
 	
@@ -1120,8 +1123,7 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	
 	if (
 		now-last_input_at>=SLEEP_DELAY || // autosleep
-		(pow.can_sleep && BTN_SLEEP==BTN_COMBO && PAD_isPressed(BTN_L1) && PAD_isPressed(BTN_R1) && PAD_justReleased(BTN_MENU)) || // TODO: remove combo sleep button
-		(pow.can_sleep && PAD_justReleased(BTN_SLEEP)) // single sleep button
+		(pow.can_sleep && PAD_justReleased(BTN_SLEEP)) // manual sleep
 	) {
 		if (before_sleep) before_sleep();
 		POW_fauxSleep();
@@ -1185,7 +1187,7 @@ void POW_powerOff(void) {
 		GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 		
 		char* msg;
-		if (HAS_POWER_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
+		if (HAS_POWER_BUTTON || HAS_POWEROFF_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
 		else msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npower off now" : "Power off now";
 		
 		// LOG_info("POW_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);

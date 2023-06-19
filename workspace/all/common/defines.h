@@ -81,11 +81,22 @@
 ///////////////////////////////
 
 #define HAS_POWER_BUTTON (BUTTON_POWER!=BUTTON_NA)
+#define HAS_POWEROFF_BUTTON (BUTTON_POWEROFF!=BUTTON_NA)
+#define HAS_MENU_BUTTON (BUTTON_MENU!=BUTTON_NA)
 #define HAS_SKINNY_SCREEN (FIXED_WIDTH<320)
+
+///////////////////////////////
 
 #define BUTTON_NA	-1
 #define CODE_NA		-1
 #define JOY_NA		-1
+
+#ifndef BUTTON_POWEROFF
+#define BUTTON_POWEROFF BUTTON_NA
+#endif
+#ifndef CODE_POWEROFF
+#define CODE_POWEROFF CODE_NA
+#endif
 
 #ifndef BTN_A // prevent collisions with input.h in keymon
 // TODO: doesn't this belong in api.h? it's meaningless without PAD_*
@@ -111,6 +122,7 @@ enum {
 	BTN_ID_PLUS,
 	BTN_ID_MINUS,
 	BTN_ID_POWER,	
+	BTN_ID_POWEROFF,
 	BTN_ID_COUNT,
 };
 enum {
@@ -135,6 +147,7 @@ enum {
 	BTN_PLUS	= 1 << BTN_ID_PLUS,
 	BTN_MINUS	= 1 << BTN_ID_MINUS,
 	BTN_POWER	= 1 << BTN_ID_POWER,
+	BTN_POWEROFF= 1 << BTN_ID_POWEROFF,
 };
 #endif
 

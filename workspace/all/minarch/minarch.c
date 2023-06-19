@@ -3953,7 +3953,7 @@ static void Menu_loop(void) {
 	POW_enableAutosleep();
 	PAD_reset();
 	
-	if (!HAS_POWER_BUTTON) {
+	if (!HAS_POWER_BUTTON && !HAS_POWEROFF_BUTTON) {
 		MenuItem* item = &options_menu.items[5];
 		item->name = "Quicksave";
 		item->desc = "Automatically resume current state next power on.";
