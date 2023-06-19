@@ -1731,11 +1731,10 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 ///////////////////////////////
 
 // TODO: this is a dumb API
-// TODO: this hasn't been adjusted for SCALE
 SDL_Surface* digits;
-#define DIGIT_WIDTH 18
-#define DIGIT_HEIGHT 16
-#define DIGIT_TRACKING -4
+#define DIGIT_WIDTH 9
+#define DIGIT_HEIGHT 8
+#define DIGIT_TRACKING -2
 enum {
 	DIGIT_SLASH = 10,
 	DIGIT_DOT,
@@ -1747,8 +1746,7 @@ enum {
 };
 #define DIGIT_SPACE DIGIT_COUNT
 static void MSG_init(void) {
-	// TODO: scale
-	digits = SDL_CreateRGBSurface(SDL_SWSURFACE,DIGIT_WIDTH*DIGIT_COUNT,DIGIT_HEIGHT,FIXED_DEPTH, 0,0,0,0);
+	digits = SDL_CreateRGBSurface(SDL_SWSURFACE,SCALE2(DIGIT_WIDTH*DIGIT_COUNT,DIGIT_HEIGHT),FIXED_DEPTH, 0,0,0,0);
 	SDL_FillRect(digits, NULL, RGB_BLACK);
 	
 	SDL_Surface* digit;
@@ -1757,14 +1755,14 @@ static void MSG_init(void) {
 	int i = 0;
 	while ((c = chars[i])) {
 		digit = TTF_RenderUTF8_Blended(font.tiny, c, COLOR_WHITE);
-		SDL_BlitSurface(digit, NULL, digits, &(SDL_Rect){ (i * DIGIT_WIDTH) + (DIGIT_WIDTH - digit->w)/2, (DIGIT_HEIGHT - digit->h)/2});
+		SDL_BlitSurface(digit, NULL, digits, &(SDL_Rect){ (i * SCALE1(DIGIT_WIDTH)) + (SCALE1(DIGIT_WIDTH) - digit->w)/2, (SCALE1(DIGIT_HEIGHT) - digit->h)/2});
 		SDL_FreeSurface(digit);
 		i += 1;
 	}
 }
 static int MSG_blitChar(int n, int x, int y) {
-	if (n!=DIGIT_SPACE) SDL_BlitSurface(digits, &(SDL_Rect){n*DIGIT_WIDTH,0,DIGIT_WIDTH,DIGIT_HEIGHT}, screen, &(SDL_Rect){x,y});
-	return x + DIGIT_WIDTH + DIGIT_TRACKING;
+	if (n!=DIGIT_SPACE) SDL_BlitSurface(digits, &(SDL_Rect){n*SCALE1(DIGIT_WIDTH),0,SCALE2(DIGIT_WIDTH,DIGIT_HEIGHT)}, screen, &(SDL_Rect){x,y});
+	return x + SCALE1(DIGIT_WIDTH + DIGIT_TRACKING);
 }
 static int MSG_blitInt(int num, int x, int y) {
 	int i = num;
@@ -2293,7 +2291,6 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	
 	screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 }
-
 static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.blit = scaleNull;
 	renderer.src_w = width;
@@ -2465,7 +2462,7 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	
 	if (show_debug) {
 		int x = 0;
-		int y = screen->h - DIGIT_HEIGHT;
+		int y = screen->h - SCALE1(DIGIT_HEIGHT);
 		
 		if (fps_double) x = MSG_blitDouble(fps_double, x,y);
 		
@@ -2501,9 +2498,9 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 		x = MSG_blitChar(DIGIT_SPACE,x,y);
 		
 		if (scaler_surface) {
-			SDL_FillRect(screen, &(SDL_Rect){x,y,scaler_surface->w,DIGIT_HEIGHT}, RGB_BLACK);
-			SDL_BlitSurface(scaler_surface, NULL, screen, &(SDL_Rect){x,y+((DIGIT_HEIGHT - scaler_surface->h)/2)});
-			x += DIGIT_WIDTH * 3;
+			SDL_FillRect(screen, &(SDL_Rect){x,y,scaler_surface->w,SCALE1(DIGIT_HEIGHT)}, RGB_BLACK);
+			SDL_BlitSurface(scaler_surface, NULL, screen, &(SDL_Rect){x,y+((SCALE1(DIGIT_HEIGHT) - scaler_surface->h)/2)});
+			x += SCALE1(DIGIT_WIDTH) * 3;
 		}
 		
 		if (x>top_width) top_width = x; // keep the largest width because triple buffer
