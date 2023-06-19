@@ -139,8 +139,8 @@ void GFX_setVsync(int vsync);
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 
-#define GFX_getScaler PLAT_getScaler
-#define GFX_blitRenderer PLAT_blitRenderer // (GFX_Renderer* renderer);
+#define GFX_getScaler PLAT_getScaler		// scaler_t:(int scale)
+#define GFX_blitRenderer PLAT_blitRenderer	// void:(GFX_Renderer* renderer)
 
 // NOTE: all dimensions should be pre-scaled
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
@@ -235,6 +235,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch);
 void PLAT_setVideoScaleClip(int x, int y, int width, int height);
 void PLAT_setNearestNeighbor(int enabled);
 void PLAT_vsync(int remaining);
+scaler_t PLAT_getScaler(int scale);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
 
@@ -252,7 +253,5 @@ void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 
 char* PLAT_getModel(void);
-
-scaler_t PLAT_getScaler(int scale);
 
 #endif
