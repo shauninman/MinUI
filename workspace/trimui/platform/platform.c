@@ -22,12 +22,14 @@
 
 static struct VID_Context {
 	SDL_Surface* screen;
+	GFX_Renderer* renderer;
 } vid;
 static int _;
 
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
+	
 	vid.screen = SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, SDL_SWSURFACE);
 	memset(vid.screen->pixels, 0, FIXED_SIZE);
 
@@ -89,60 +91,8 @@ void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
-// TODO: move these to scalers
-static void scale1x_c16_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
-	if (!sw||!sh) return;
-	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint32_t);
-	if (!sp) { sp = swl; } swl*=2; if (!dp) { dp = swl; }
-	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
-		uint32_t *s = (uint32_t* __restrict)src;
-		uint32_t *d = (uint32_t* __restrict)dst;
-		for (x=dx=0; x<(sw/2); x++, dx+=2) {
-			pix = s[x];
-			dpix1=(pix & 0x0000FFFF)|(pix<<16);
-			dpix2=(pix & 0xFFFF0000)|(pix>>16);
-			dpix1 = 0xFF000000 | ((dpix1 & 0xF800) << 8) | ((dpix1 & 0x07E0) << 5) | ((dpix1 & 0x001F) << 3);
-			dpix2 = 0xFF000000 | ((dpix2 & 0xF800) << 8) | ((dpix2 & 0x07E0) << 5) | ((dpix2 & 0x001F) << 3);
-			d[dx  ] = dpix1; d[dx+1] = dpix2;
-		}
-		if (sw&1) {
-			uint16_t *s16 = (uint16_t*)s;
-			uint16_t pix16 = s16[x*2];
-			pix16 = 0xFF000000 | ((pix16 & 0xF800) << 8) | ((pix16 & 0x07E0) << 5) | ((pix16 & 0x001F) << 3);
-			d[dx  ] = pix16; d[dx+1] = pix16;
-		}
-		dst = (uint8_t*)dst+dp;
-	}
-}
-static void scale2x_c16_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
-	if (!sw||!sh) return;
-	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint32_t);
-	if (!sp) { sp = swl; } swl*=2; if (!dp) { dp = swl; }
-	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
-		uint32_t *s = (uint32_t* __restrict)src;
-		uint32_t *d = (uint32_t* __restrict)dst;
-		for (x=dx=0; x<(sw/2); x++, dx+=4) {
-			pix = s[x];
-			dpix1=(pix & 0x0000FFFF)|(pix<<16);
-			dpix2=(pix & 0xFFFF0000)|(pix>>16);
-			dpix1 = 0xFF000000 | ((dpix1 & 0xF800) << 8) | ((dpix1 & 0x07E0) << 5) | ((dpix1 & 0x001F) << 3);
-			dpix2 = 0xFF000000 | ((dpix2 & 0xF800) << 8) | ((dpix2 & 0x07E0) << 5) | ((dpix2 & 0x001F) << 3);
-			d[dx  ] = dpix1; d[dx+1] = dpix1;
-			d[dx+2] = dpix2; d[dx+3] = dpix2;
-		}
-		if (sw&1) {
-			uint16_t *s16 = (uint16_t*)s;
-			uint16_t pix16 = s16[x*2];
-			pix16 = 0xFF000000 | ((pix16 & 0xF800) << 8) | ((pix16 & 0x07E0) << 5) | ((pix16 & 0x001F) << 3);
-			d[dx  ] = pix16; d[dx+1] = pix16;
-		}
-		void* __restrict dstsrc = dst; dst = (uint8_t*)dst+dp;
-		memcpy(dst, dstsrc, swl); dst = (uint8_t*)dst+dp;
-	}
-}
-
 scaler_t PLAT_getScaler(int scale) {
-	return (scale==1) ? scale1x_c16 : scale2x_c16;
+	return scale==1 ? scale1x1_c16 : scale2x2_c16;
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {

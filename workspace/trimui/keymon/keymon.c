@@ -135,8 +135,6 @@ void main(void) {
 
 	// Set Initial Volume / Brightness
 	InitSettings();
-	SetVolume(GetVolume());
-	SetBrightness(GetBrightness());
 	
 	pthread_create(&usb_pt, NULL, &checkUSB, NULL);
 

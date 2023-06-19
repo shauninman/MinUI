@@ -31,6 +31,17 @@ void LOG_note(int level, const char* fmt, ...);
 
 ///////////////////////////////
 
+// used by minarch, optionally defined in platform.h
+#ifndef PLAT_PAGE_BPP
+#define PLAT_PAGE_BPP 	FIXED_BPP
+#endif
+
+#define PLAT_PAGE_DEPTH (PLAT_PAGE_BPP * 8)
+#define PLAT_PAGE_PITCH (PAGE_WIDTH * PLAT_PAGE_BPP)
+#define PLAT_PAGE_SIZE	(PLAT_PAGE_PITCH * PAGE_HEIGHT)
+
+///////////////////////////////
+
 #define RGBA_MASK_AUTO	0x0, 0x0, 0x0, 0x0
 #define RGBA_MASK_565	0xF800, 0x07E0, 0x001F, 0x0000
 #define RGBA_MASK_8888	0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000

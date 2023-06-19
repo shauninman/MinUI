@@ -2685,7 +2685,7 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	// reduce scale if we don't have enough memory to accomodate it
 	// scaled width and height can't be greater than our fixed page width or height
 	// TODO: some resolutions are getting through here unadjusted? oh maybe because of aspect ratio adjustments below? revisit
-	while (src_w * scale * FIXED_BPP * src_h * scale > PAGE_SIZE || src_w * scale > PAGE_WIDTH || src_h * scale > PAGE_HEIGHT) {
+	while (src_w * scale * PLAT_PAGE_BPP * src_h * scale > PLAT_PAGE_SIZE || src_w * scale > PAGE_WIDTH || src_h * scale > PAGE_HEIGHT) {
 		scale -= 1;
 	}
 	

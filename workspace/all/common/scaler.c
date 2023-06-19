@@ -23,6 +23,55 @@
 
 static void dummy(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {}
 
+// 
+// C scalers for Trimui Model S
+//
+void scale1x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	if (!sw||!sh) return;
+	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint32_t);
+	if (!sp) { sp = swl; } swl*=2; if (!dp) { dp = swl; }
+	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
+		uint32_t *s = (uint32_t* __restrict)src;
+		uint32_t *d = (uint32_t* __restrict)dst;
+		for (x=dx=0; x<(sw/2); x++, dx+=2) {
+			pix = s[x];
+			dpix1 = 0xFF000000 | ((pix & 0xF800) << 8) | ((pix & 0x07E0) << 5) | ((pix & 0x001F) << 3);
+			dpix2 = 0xFF000000 | ((pix & 0xF8000000) >> 8) | ((pix & 0x07E00000) >> 11) | ((pix & 0x001F0000) >> 13);			d[dx  ] = dpix1; d[dx+1] = dpix1;
+			d[dx  ] = dpix1; d[dx+1] = dpix2;
+		}
+		if (sw&1) {
+			uint16_t *s16 = (uint16_t*)s;
+			uint16_t pix16 = s16[x*2];
+			pix16 = 0xFF000000 | ((pix16 & 0xF800) << 8) | ((pix16 & 0x07E0) << 5) | ((pix16 & 0x001F) << 3);
+			d[dx  ] = pix16; d[dx+1] = pix16;
+		}
+		dst = (uint8_t*)dst+dp;
+	}
+}
+void scale2x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	if (!sw||!sh) return;
+	uint32_t x, dx, pix, dpix1, dpix2, swl = sw*sizeof(uint32_t);
+	if (!sp) { sp = swl; } swl*=2; if (!dp) { dp = swl; }
+	for (; sh>0; sh--, src=(uint8_t*)src+sp) {
+		uint32_t *s = (uint32_t* __restrict)src;
+		uint32_t *d = (uint32_t* __restrict)dst;
+		for (x=dx=0; x<(sw/2); x++, dx+=4) {
+			pix = s[x];
+			dpix1 = 0xFF000000 | ((pix & 0xF800) << 8) | ((pix & 0x07E0) << 5) | ((pix & 0x001F) << 3);
+			dpix2 = 0xFF000000 | ((pix & 0xF8000000) >> 8) | ((pix & 0x07E00000) >> 11) | ((pix & 0x001F0000) >> 13);			d[dx  ] = dpix1; d[dx+1] = dpix1;
+			d[dx+2] = dpix2; d[dx+3] = dpix2;
+		}
+		if (sw&1) {
+			uint16_t *s16 = (uint16_t*)s;
+			uint16_t pix16 = s16[x*2];
+			pix16 = 0xFF000000 | ((pix16 & 0xF800) << 8) | ((pix16 & 0x07E0) << 5) | ((pix16 & 0x001F) << 3);
+			d[dx  ] = pix16; d[dx+1] = pix16;
+		}
+		void* __restrict dstsrc = dst; dst = (uint8_t*)dst+dp;
+		memcpy(dst, dstsrc, swl); dst = (uint8_t*)dst+dp;
+	}
+}
+
 //
 //	C scalers
 //
