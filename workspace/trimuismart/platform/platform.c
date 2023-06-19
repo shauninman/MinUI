@@ -83,8 +83,8 @@ void ion_alloc(int ion_fd, ion_alloc_info_t* info) {
 //
 void ion_free(int ion_fd, ion_alloc_info_t* info) {
 	struct ion_handle_data	 ihd;
-
 	munmap(info->vadd, info->size);
+	close(info->fd);
 	ihd.handle = info->handle;
 	if (ioctl(ion_fd, ION_IOC_FREE, &ihd)<0) fprintf(stderr, "ION_FREE failed %s\n",strerror(errno));
 }
