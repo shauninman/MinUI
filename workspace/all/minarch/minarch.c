@@ -507,7 +507,7 @@ typedef struct Option {
 	char* key;
 	char* name; // desc
 	char* desc; // info, truncated
-	char* full; // info
+	char* full; // info, longer but possibly still truncated
 	char* var;
 	int default_value;
 	int value;
@@ -516,8 +516,6 @@ typedef struct Option {
 	char** values;
 	char** labels;
 } Option;
-typedef struct OptionList OptionList;
-// typedef void (*OptionList_callback_t)(OptionList* list, const char* key);
 typedef struct OptionList {
 	int count;
 	int changed;
@@ -736,7 +734,7 @@ static struct Config {
 			[FE_OPT_SCALING] = {
 				.key	= "minarch_screen_scaling", 
 				.name	= "Screen Scaling",
-				.desc	= "Native uses integer scaling. Aspect uses the core reported\naspect ratio. Fullscreen will produce non-square pixels. Gross.",
+				.desc	= "Native uses integer scaling. Aspect uses\nthe core reported aspect ratio. Fullscreen\nproduces non-square pixels.",
 				.default_value = 1,
 				.value = 1,
 				.count = 3,
@@ -746,7 +744,7 @@ static struct Config {
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
 				.name	= "Prevent Tearing",
-				.desc	= "Wait for vsync before drawing the next frame. Lenient\nonly waits when within frame budget. Strict always waits.",
+				.desc	= "Wait for vsync before drawing the next frame.\nLenient only waits when within frame budget.\nStrict always waits.",
 				.default_value = VSYNC_LENIENT,
 				.value = VSYNC_LENIENT,
 				.count = 3,
@@ -776,7 +774,7 @@ static struct Config {
 			[FE_OPT_MAXFF] = {
 				.key	= "minarch_max_ff_speed",
 				.name	= "Max FF Speed",
-				.desc	= "Fast forward will not exceed the selected speed\n(but may be less than depending on game and emulator).",
+				.desc	= "Fast forward will not exceed the\nselected speed (but may be less\ndepending on game and emulator).",
 				.default_value = 3, // 4x
 				.value = 3, // 4x
 				.count = 8,
@@ -1166,8 +1164,9 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 				
 				// these magic numbers are more about chars per line than pixel width 
 				// so it's not going to be relative to the screen size, only the scale
+				// what does that even mean?
 				GFX_wrapText(font.tiny, item->desc, SCALE1(240), 2); // TODO magic number!
-				GFX_wrapText(font.medium, item->full, SCALE1(260), 7); // TODO: magic number!
+				GFX_wrapText(font.medium, item->full, SCALE1(240), 7); // TODO: magic number!
 			}
 		
 			for (count=0; def->values[count].value; count++);
@@ -3197,7 +3196,7 @@ static int Menu_options(MenuList* list) {
 			if (item->on_confirm) result = item->on_confirm(list, selected); // item-specific action, eg. Save for all games
 			else if (item->submenu) result = Menu_options(item->submenu); // drill down, eg. main options menu
 			// TODO: is there a way to defer on_confirm for MENU_INPUT so we can clear the currently set value to indicate it is awaiting input? 
-			// eg. set a flag to call on_confirm at the beginning of the next frame
+			// eg. set a flag to call on_confirm at the beginning of the next frame?
 			else if (list->on_confirm) {
 				if (type==MENU_INPUT) await_input = 1;
 				else result = list->on_confirm(list, selected); // list-specific action, eg. show item detail view or input binding
