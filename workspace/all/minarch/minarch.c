@@ -3901,11 +3901,12 @@ static void Menu_loop(void) {
 			// slot preview
 			if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
 				#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
+				#define PAGINATION_HEIGHT 6
 				// unscaled
 				int hw = FIXED_WIDTH / 2;
 				int hh = FIXED_HEIGHT / 2;
 				int pw = hw + SCALE1(WINDOW_RADIUS*2);
-				int ph = hh + SCALE1(WINDOW_RADIUS + 6 + WINDOW_RADIUS*2);
+				int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
 				ox = FIXED_WIDTH - pw - SCALE1(PADDING);
 				oy = (FIXED_HEIGHT - ph) / 2;
 				
