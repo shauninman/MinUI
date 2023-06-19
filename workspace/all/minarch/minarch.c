@@ -36,7 +36,6 @@ enum {
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
 static int show_scanlines = 0;
-static int optimize_text = 1;
 static int prevent_tearing = 1; // lenient
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
@@ -563,7 +562,6 @@ static char* max_ff_labels[] = {
 enum {
 	FE_OPT_SCALING,
 	FE_OPT_SCANLINES,
-	FE_OPT_TEXT,
 	FE_OPT_TEARING,
 	FE_OPT_OVERCLOCK,
 	FE_OPT_DEBUG,
@@ -758,16 +756,6 @@ static struct Config {
 				.values = onoff_labels,
 				.labels = onoff_labels,
 			},
-			[FE_OPT_TEXT] = {
-				.key	= "minarch_optimize_text", 
-				.name	= "Optimize Text",
-				.desc	= "Prioritize a consistent stroke width when upscaling single\npixel lines using nearest neighbor scaler. Increases CPU load.\nOnly applies to native scaling.",
-				.default_value = 0,
-				.value = 0,
-				.count = 2,
-				.values = onoff_labels,
-				.labels = onoff_labels,
-			},
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
 				.name	= "Prevent Tearing",
@@ -861,7 +849,6 @@ static void Config_syncFrontend(int i, int value) {
 	switch (i) {
 		case FE_OPT_SCALING:	screen_scaling 	= value; renderer.dst_p = 0; break;
 		case FE_OPT_SCANLINES:	show_scanlines 	= value; renderer.dst_p = 0; break;
-		case FE_OPT_TEXT:		optimize_text 	= value; renderer.dst_p = 0; break;
 		case FE_OPT_TEARING:	prevent_tearing = value; break;
 		case FE_OPT_OVERCLOCK:	overclock		= value; break;
 		case FE_OPT_DEBUG:		show_debug 		= value; break;
@@ -2627,8 +2614,8 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	LOG_info("%i,%i %ix%i (%i)\n", renderer.dst_x,renderer.dst_y,renderer.dst_w,renderer.dst_h,renderer.dst_p);
 
 	if (use_nearest) 
-		if (show_scanlines) renderer.blit = optimize_text ? scaleNN_text_scanline : scaleNN_scanline;
-		else renderer.blit = optimize_text ? scaleNN_text : scaleNN;
+		if (show_scanlines) renderer.blit = scaleNN_scanline;
+		else renderer.blit = scaleNN;
 	else {
 		sprintf(scaler_name, "%iX", scale);
 		if (show_scanlines) {
@@ -2654,11 +2641,6 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	
 	screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 }
-
-#define SCALER_TYPE c
-#define MAKE_FN_NAME(num,type) scale ## num ## x ## num ## _ ## type ## 16
-#define FN_NAME(y,z) MAKE_FN_NAME(y,z)
-#define GET_SCALER(y) FN_NAME(y,SCALER_TYPE)
 
 static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.blit = scaleNull;
