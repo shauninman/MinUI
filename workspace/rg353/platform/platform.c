@@ -100,12 +100,6 @@ void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	// if (sync) PLAT_vsync(0); // TODO: this is disasterous
 }
 
-SDL_Surface* PLAT_getVideoBufferCopy(void) {
-	SDL_Surface* copy = SDL_CreateRGBSurface(SDL_SWSURFACE, vid.screen->w,vid.screen->h,FIXED_DEPTH,RGBA_MASK_AUTO);
-	SDL_BlitSurface(vid.screen, NULL, copy, NULL);
-	return copy;
-}
-
 ///////////////////////////////
 
 // TODO: 

@@ -125,7 +125,6 @@ enum {
 int GFX_getVsync(void);
 void GFX_setVsync(int vsync);
 
-#define GFX_getBufferCopy PLAT_getVideoBufferCopy // SDL_Surface* (*)(void) // must be freed by caller
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 
@@ -227,8 +226,6 @@ void PLAT_setNearestNeighbor(int enabled);
 void PLAT_vsync(int remaining);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
-
-SDL_Surface* PLAT_getVideoBufferCopy(void); // must be freed by caller
 
 SDL_Surface* PLAT_initOverlay(void);
 void PLAT_quitOverlay(void);

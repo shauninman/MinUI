@@ -154,14 +154,6 @@ void PLAT_flip(SDL_Surface* IGNORED, int sync) {
 	SDL_Flip(vid.screen);
 }
 
-SDL_Surface* PLAT_getVideoBufferCopy(void) {
-	// TODO: this is just copying the backbuffer!
-	// TODO: should it be copying the frontbuffer?
-	SDL_Surface* copy = SDL_CreateRGBSurface(SDL_SWSURFACE, vid.screen->w,vid.screen->h,FIXED_DEPTH,RGBA_MASK_AUTO);
-	SDL_BlitSurface(vid.screen, NULL, copy, NULL);
-	return copy;
-}
-
 ///////////////////////////////
 
 // TODO: 
