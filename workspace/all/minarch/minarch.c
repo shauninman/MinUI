@@ -3113,7 +3113,7 @@ static int Menu_message(char* message, char** pairs) {
 		if (dirty) {
 			GFX_clear(screen);
 			GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
-			GFX_blitButtonGroup(pairs, screen, 1);
+			GFX_blitButtonGroup(pairs, 0, screen, 1);
 			GFX_flip(screen);
 			dirty = 0;
 		}
@@ -4210,11 +4210,11 @@ static void Menu_loop(void) {
 			SDL_FreeSurface(text);
 			
 			if (show_setting) GFX_blitHardwareHints(screen, show_setting);
-			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, screen, 0);
-			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, screen, 1);
+			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, 0, screen, 0);
+			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
 			
 			// list
-			oy = 35;
+			oy = SCALE1((PILL_SIZE * 1.5) - PADDING);
 			for (int i=0; i<MENU_ITEM_COUNT; i++) {
 				char* item = menu.items[i];
 				SDL_Color text_color = COLOR_WHITE;
@@ -4271,13 +4271,15 @@ static void Menu_loop(void) {
 			if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
 				#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
 				// unscaled
-				ox = 146;
-				oy = 54;
 				int hw = FIXED_WIDTH / 2;
 				int hh = FIXED_HEIGHT / 2;
+				int pw = hw+SCALE1(WINDOW_RADIUS*2);
+				int ph = hh+SCALE1(WINDOW_RADIUS*3+6);
+				ox = FIXED_WIDTH - pw - SCALE1(PADDING);
+				oy = (FIXED_HEIGHT - ph) / 2;
 				
 				// window
-				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){SCALE2(ox-WINDOW_RADIUS,oy-WINDOW_RADIUS),hw+SCALE1(WINDOW_RADIUS*2),hh+SCALE1(WINDOW_RADIUS*3+6)});
+				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){SCALE2(ox-WINDOW_RADIUS,oy-WINDOW_RADIUS),pw,ph});
 				
 				if (preview_exists) { // has save, has preview
 					// lotta memory churn here
@@ -4300,7 +4302,7 @@ static void Menu_loop(void) {
 				}
 				
 				// pagination
-				ox += 24;
+				ox += ((pw/FIXED_SCALE)-(15*MENU_SLOT_COUNT))/2;
 				oy += 124;
 				for (int i=0; i<MENU_SLOT_COUNT; i++) {
 					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){SCALE2(ox+(i*15),oy)});

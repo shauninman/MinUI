@@ -56,8 +56,8 @@
 #define SETTINGS_SIZE 4
 #define SETTINGS_WIDTH 80
 
-#define MAIN_ROW_COUNT 6 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
-#define PADDING 10 // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
+#define MAIN_ROW_COUNT (HAS_SKINNY_SCREEN?7:6) // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
+#define PADDING (HAS_SKINNY_SCREEN?0:10) // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
 
 #define FONT_LARGE 16 	// menu
 #define FONT_MEDIUM 14 	// single char button label
@@ -81,6 +81,7 @@
 ///////////////////////////////
 
 #define HAS_POWER_BUTTON (BUTTON_POWER!=BUTTON_NA)
+#define HAS_SKINNY_SCREEN (FIXED_WIDTH<320)
 
 #define BUTTON_NA	-1
 #define CODE_NA		-1
@@ -111,7 +112,6 @@ enum {
 	BTN_ID_MINUS,
 	BTN_ID_POWER,	
 	BTN_ID_COUNT,
-	BTN_ID_COMBO,
 };
 enum {
 	BTN_NONE	= 0,
@@ -135,7 +135,6 @@ enum {
 	BTN_PLUS	= 1 << BTN_ID_PLUS,
 	BTN_MINUS	= 1 << BTN_ID_MINUS,
 	BTN_POWER	= 1 << BTN_ID_POWER,
-	BTN_COMBO	= 1 << BTN_ID_COMBO,
 };
 #endif
 

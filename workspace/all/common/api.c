@@ -422,7 +422,7 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	if (!dst_rect) dst_rect = &(SDL_Rect){0,0,dst->w,dst->h};
 	
-	LOG_info("GFX_blitMessage: %p (%ix%i)", dst, dst_rect->w,dst_rect->h);
+	// LOG_info("GFX_blitMessage: %p (%ix%i)", dst, dst_rect->w,dst_rect->h);
 	
 	SDL_Surface* text;
 #define TEXT_BOX_MAX_ROWS 16
@@ -538,17 +538,17 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 }
 void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
 	if (BTN_MOD_VOLUME==BTN_SELECT && BTN_MOD_BRIGHTNESS==BTN_START) {
-		if (show_setting==1) GFX_blitButtonGroup((char*[]){ "SELECT","VOLUME",  NULL }, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "START","BRIGHTNESS",  NULL }, dst, 0);
+		if (show_setting==1) GFX_blitButtonGroup((char*[]){ "SELECT","VOLUME",  NULL }, 0, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ "START","BRIGHTNESS",  NULL }, 0, dst, 0);
 	}
 	else {
-		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, dst, 0);
+		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, 0, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, 0, dst, 0);
 	}
 	
 }
 
-int GFX_blitButtonGroup(char** pairs, SDL_Surface* dst, int align_right) {
+int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_right) {
 	int ox;
 	int oy;
 	int ow;
@@ -568,6 +568,7 @@ int GFX_blitButtonGroup(char** pairs, SDL_Surface* dst, int align_right) {
 	
 	for (int i=0; i<2; i++) {
 		if (!pairs[i*2]) break;
+		if (HAS_SKINNY_SCREEN && i!=primary) continue;
 		
 		button = pairs[i * 2];
 		hint = pairs[i * 2 + 1];
