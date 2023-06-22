@@ -81,6 +81,7 @@ void scale1x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*1; }
 	if ((ymul == 1)&&(swl == sp)&&(sp == dp)) memcpy(dst, src, sp*sh);
 	else {
+		if (swl>dp) swl = dp;
 		for (; sh>0; sh--, src=(uint8_t*)src+sp) {
 			for (uint32_t i=ymul; i>0; i--, dst=(uint8_t*)dst+dp) memcpy(dst, src, swl);
 		}
@@ -483,7 +484,10 @@ void scale1x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	if (!sp) { sp = swl; } if (!dp) { dp = swl*1; }
 	if ( ((uintptr_t)src&3)||((uintptr_t)dst&3)||(sp&3)||(dp&3) ) { scale1x1_c16(src,dst,sw,sh,sp,dw,dh,dp); return; }
 	if ((swl == sp)&&(sp == dp)) memcpy_neon(dst, src, sp*sh);
-	else for (; sh>0; sh--, src=(uint8_t*)src+sp, dst=(uint8_t*)dst+dp) memcpy_neon(dst, src, swl);
+	else {
+		if (swl>dp) swl = dp;
+		for (; sh>0; sh--, src=(uint8_t*)src+sp, dst=(uint8_t*)dst+dp) memcpy_neon(dst, src, swl);
+	}
 }
 
 void scale1x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
