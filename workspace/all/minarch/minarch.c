@@ -2099,7 +2099,6 @@ static void scale4x(void* __restrict src, void* __restrict dst, uint32_t w, uint
 	}
 }
 
-// TODO: NN versions of scanline need updating to use blended scanlines (or maybe not for performance?) 
 static void scaleNN(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_pitch) {
 	// LOG_info("scaleNN(%p,%p,%i,%i,%i,%i,%i,%i)\n", src,dst,w,h,pitch,dst_w,dst_h,dst_pitch);
 	
@@ -2273,6 +2272,7 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	
 	renderer.dst_x = (FIXED_WIDTH - renderer.dst_w) / 2;
 	renderer.dst_y = (FIXED_HEIGHT - renderer.dst_h) / 2;
+	renderer.scale = scale;
 
 	LOG_info("%i,%i %ix%i (%i)\n", renderer.dst_x,renderer.dst_y,renderer.dst_w,renderer.dst_h,renderer.dst_p);
 
@@ -2280,7 +2280,7 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 		renderer.blit = scaleNN;
 	else {
 		sprintf(scaler_name, "%iX", scale);
-		renderer.blit = GFX_getScaler(scale);
+		renderer.blit = GFX_getScaler(&renderer);
 	}
 	//////////////////////////////
 	
@@ -2289,7 +2289,10 @@ static void selectScaler_PAR(int width, int height, int pitch) {
 	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
 	LOG_info("%s\n", scaler_name);
 	
-	screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
+	// resize screen (only if necessary?)
+	if (screen->w!=FIXED_WIDTH || screen->h!=FIXED_HEIGHT || screen->pitch!=FIXED_PITCH) {
+		screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
+	}
 }
 static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.blit = scaleNull;
@@ -2330,7 +2333,7 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	
 	// TODO: sotn moon is busted 512x240 ends up 2x but targeting 864x480
 	
-	if (screen_scaling==1) {
+	if (screen_scaling==SCALE_ASPECT) {
 		sprintf(scaler_name, "AR_%iX%s", scale, "R");
 		if (core.aspect_ratio==target_ratio) {
 			LOG_info("already correct ratio\n");
@@ -2404,14 +2407,176 @@ static void selectScaler_AR(int width, int height, int pitch) {
 	renderer.dst_p = target_pitch;
 	renderer.dst_x = dx;
 	renderer.dst_y = dy;
-	
-	renderer.blit = GFX_getScaler(scale);
+	renderer.scale = scale;
+	renderer.blit = GFX_getScaler(&renderer);
 	
 	// DEBUG HUD
 	if (scaler_surface) SDL_FreeSurface(scaler_surface);
 	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
 	
-	screen = GFX_resize(target_w,target_h, target_pitch);
+	// resize screen (only if necessary?)
+	if (screen->w!=target_w || screen->h!=target_h || screen->pitch!=target_pitch) {
+		screen = GFX_resize(target_w,target_h, target_pitch);
+	}
+}
+static void selectScaler(int src_w, int src_h, int src_p) {
+	// (screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(src_w,src_h,src_p);
+	// return;
+	
+	int src_x,src_y,dst_x,dst_y,dst_w,dst_h,dst_p,scale;
+	
+	int aspect_w = src_w;
+	int aspect_h = CEIL_DIV(aspect_w, core.aspect_ratio);
+	
+	int fit = 0; // TODO: this needs to come from somewhere, eg. platform.h
+	
+	char scaler_name[16];
+	
+	src_x = 0;
+	src_y = 0;
+	dst_x = 0;
+	dst_y = 0;
+	
+	if (screen_scaling==SCALE_NATIVE) {
+		// this is the same whether fit or oversized
+		scale = MIN(FIXED_WIDTH/src_w, FIXED_HEIGHT/src_h);
+		if (!scale) {
+			sprintf(scaler_name, "cropped");
+			dst_w = FIXED_WIDTH;
+			dst_h = FIXED_HEIGHT;
+			dst_p = FIXED_PITCH;
+			
+			int ox = (FIXED_WIDTH  - src_w) / 2; // may be negative
+			int oy = (FIXED_HEIGHT - src_h) / 2; // may be negative
+			
+			if (ox<0) src_x = -ox;
+			else dst_x = ox;
+			
+			if (oy<0) src_y = -oy;
+			else dst_y = oy;
+		}
+		else {
+			sprintf(scaler_name, "integer");
+			int scaled_w = src_w * scale;
+			int scaled_h = src_h * scale;
+			dst_w = FIXED_WIDTH;
+			dst_h = FIXED_HEIGHT;
+			dst_p = FIXED_PITCH;
+			dst_x = (FIXED_WIDTH  - scaled_w) / 2; // should always be positive
+			dst_y = (FIXED_HEIGHT - scaled_h) / 2; // should always be positive
+		}
+	}
+	else if (fit) {
+		// these both will use a generic nn scaler
+		if (screen_scaling==SCALE_FULLSCREEN) {
+			sprintf(scaler_name, "full fit");
+			dst_w = FIXED_WIDTH;
+			dst_h = FIXED_HEIGHT;
+			dst_p = FIXED_PITCH;
+			scale = -1; // nearest neighbor
+		}
+		else {
+			double scale_f = MIN(((double)FIXED_WIDTH)/src_w, ((double)FIXED_HEIGHT)/src_h);
+			LOG_info("scale_f:%f\n", scale_f);
+			
+			sprintf(scaler_name, "aspect fit");
+			dst_w = aspect_w * scale_f;
+			dst_h = aspect_h * scale_f;
+			dst_p = FIXED_PITCH;
+			dst_x = (FIXED_WIDTH  - dst_w) / 2;
+			dst_y = (FIXED_HEIGHT - dst_h) / 2;
+			scale = scale_f==1.0 ? 1 : -1;
+		}
+	}
+	else {
+		scale = MAX(CEIL_DIV(FIXED_WIDTH, src_w), CEIL_DIV(FIXED_HEIGHT,src_h));
+		// if (scale>4) scale = 4;
+		// if (scale>2) scale = 4; // TODO: restore, requires sanity checking
+		
+		int scaled_w = src_w * scale;
+		int scaled_h = src_h * scale;
+		
+		if (screen_scaling==SCALE_FULLSCREEN) {
+			sprintf(scaler_name, "full%i", scale);
+			// type = 'full (oversized)';
+			dst_w = scaled_w;
+			dst_h = scaled_h;
+			dst_p = dst_w * FIXED_BPP;
+		}
+		else {
+			double fixed_aspect_ratio = (double)(FIXED_WIDTH) / FIXED_HEIGHT;
+			int core_aspect = core.aspect_ratio * 1000;
+			int fixed_aspect = fixed_aspect_ratio * 1000;
+			
+			// TODO: still has trouble with P8 1:1
+			if (core_aspect>fixed_aspect) {
+				sprintf(scaler_name, "aspect%iL", scale);
+				// letterbox
+				dst_w = scaled_w;
+				dst_h = scaled_w / fixed_aspect_ratio;
+				dst_h += dst_h%2;
+
+				dst_y = (dst_h - scaled_h) / 2;
+			}
+			else if (core_aspect<fixed_aspect) {
+				sprintf(scaler_name, "aspect%iP", scale);
+				// pillarbox
+				dst_w = scaled_h * fixed_aspect_ratio;
+				dst_w += dst_w%2;
+				dst_h = scaled_h;
+
+				dst_x = (dst_w - scaled_w) / 2;
+			}
+			else {
+				sprintf(scaler_name, "aspect%iM", scale);
+				// perfect match
+				dst_w = scaled_w;
+				dst_h = scaled_h;
+			}
+			dst_w = (dst_w/8)*8; // probably necessary here since we're not scaling by an integer
+			dst_p = dst_w * FIXED_BPP;
+		}
+	}
+	
+	// TODO: need to sanity check scale and demands on the buffer
+	
+	// (screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(src_w,src_h,src_p);
+	// return;
+	
+	renderer.src_x = src_x;
+	renderer.src_y = src_y;
+	renderer.src_w = src_w;
+	renderer.src_h = src_h;
+	renderer.src_p = src_p;
+	renderer.dst_x = dst_x;
+	renderer.dst_y = dst_y;
+	renderer.dst_w = dst_w;
+	renderer.dst_h = dst_h;
+	renderer.dst_p = dst_p;
+	renderer.scale = scale;
+	renderer.blit = GFX_getScaler(&renderer);
+	
+	printf("coreAR:%0.3f screenAR:%0.3f name:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
+		core.aspect_ratio, ((double)FIXED_WIDTH) / FIXED_HEIGHT,
+		scaler_name,
+		fit,scale,
+		src_x,src_y,src_w,src_h,src_p,
+		dst_x,dst_y,dst_w,dst_h,dst_p,
+		aspect_w,aspect_h
+	); fflush(stdout);
+
+	if (fit) {
+		dst_w = FIXED_WIDTH;
+		dst_h = FIXED_HEIGHT;
+	}
+	
+	// if (screen->w!=dst_w || screen->h!=dst_w || screen->pitch!=dst_p) {
+		screen = GFX_resize(dst_w,dst_h,dst_p);
+	// }
+	
+	// DEBUG HUD
+	if (scaler_surface) SDL_FreeSurface(scaler_surface);
+	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
 }
 static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// static int tmp_frameskip = 0;
@@ -2439,16 +2604,15 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 
 	fps_ticks += 1;
 	
+	// if source has changed size (or forced by dst_p==0)
 	if (renderer.dst_p==0 || width!=renderer.src_w || height!=renderer.src_h) {
-		
-		// TODO: merge selectScaler_* into a single updateRenderer(width,height,pitch,resize_screen)
-		(screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(width,height,pitch);
+		selectScaler(width, height, pitch);
 		GFX_clearAll();
 	}
 	
+	// debug
 	static int top_width = 0;
 	static int bottom_width = 0;
-	
 	if (top_width) SDL_FillRect(screen, &(SDL_Rect){0,0,top_width,DIGIT_HEIGHT}, RGB_BLACK);
 	if (bottom_width) SDL_FillRect(screen, &(SDL_Rect){0,screen->h-DIGIT_HEIGHT,bottom_width,DIGIT_HEIGHT}, RGB_BLACK);
 	
@@ -3469,6 +3633,10 @@ static int Menu_options(MenuList* list) {
 }
 
 static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
+	
+	// TODO: aspect is wrong for native if src doesn't have the same resolution as renderer.src
+	
+	// LOG_info("Menu_scale()\n");
 	uint16_t* s = src->pixels;
 	uint16_t* d = dst->pixels;
 
@@ -3480,6 +3648,11 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	int dh = dst->h;
 	int dp = dst->pitch / FIXED_BPP;
 	
+	// printf("src_w:%i src_h:%i src_p:%i\ndst_w:%i dst_h:%i dst_p:%i\n",
+	// 	sw,sh,sp,
+	// 	dw,dh,dp
+	// ); fflush(stdout);
+	
 	int rx = 0;
 	int ry = 0;
 	int rw = dw;
@@ -3489,15 +3662,26 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 		// LOG_info("native\n");
 		rx = renderer.dst_x;
 		ry = renderer.dst_y;
-		rw = renderer.dst_w;
-		rh = renderer.dst_h;
+		rw = renderer.src_w;
+		rh = renderer.src_h;
+		if (renderer.scale) {
+			rw *= renderer.scale;
+			rh *= renderer.scale;
+		}
+		else {
+			// adjust for cropped
+			rw -= renderer.src_x * 2;
+			rh -= renderer.src_y * 2;
+			sw = rw;
+			sh = rh;
+		}
 		
 		if (dw==FIXED_WIDTH/2) {
 			// LOG_info("adjusted\n");
-			rx /=2;
-			ry /=2;
-			rw /=2;
-			rh /=2;
+			rx /= 2;
+			ry /= 2;
+			rw /= 2;
+			rh /= 2;
 		}
 	}
 	
@@ -3512,23 +3696,28 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 		rx = (dw - rw) / 2;
 		ry = (dh - rh) / 2;
 	}
-	// else {
-	// 	LOG_info("full\n");
-	// }
+	else {
+		// LOG_info("full\n");
+	}
 	
-	// LOG_info("Menu_scale: %i,%i %ix%i\n",rx,ry,rw,rh);
+	// LOG_info("Menu_scale (r): %i,%i %ix%i\n",rx,ry,rw,rh);
 
 	// dumb nearest neighbor scaling
 	int mx = (sw << 16) / rw;
 	int my = (sh << 16) / rh;
-	int sx = 0;
-	int sy = 0;
+	int ox = (renderer.src_x << 16);
+	int sx = ox;
+	int sy = (renderer.src_y << 16);
 	int lr = -1;
 	int sr = 0;
 	int dr = ry * dp;
 	int cp = dp * FIXED_BPP;
+
+	// LOG_info("Menu_scale (s): %i,%i %ix%i\n",sx,sy,sw,sh);
+	// LOG_info("mx:%i my:%i sx>>16:%i sy>>16:%i\n",mx,my,((sx+mx) >> 16),((sy+my) >> 16));
+
 	for (int dy=0; dy<rh; dy++) {
-		sx = 0;
+		sx = ox;
 		sr = (sy >> 16) * sp;
 		if (sr==lr) {
 			memcpy(d+dr,d+dr-dp,cp);
@@ -3772,10 +3961,8 @@ static void Menu_loop(void) {
 					int old_scaling = screen_scaling;
 					Menu_options(&options_menu);
 					if (screen_scaling!=old_scaling) {
-						// update renderer data
-						// TODO: src_w is set to 0 to trigger reselect so this will be invalid
-						// LOG_info("update scaling %ix%i (%i)\n", renderer.src_w,renderer.src_h,renderer.src_p);
-						(screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(renderer.src_w,renderer.src_h,renderer.src_p);
+						// (screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(renderer.src_w,renderer.src_h,renderer.src_p);
+						selectScaler(renderer.src_w,renderer.src_h,renderer.src_p);
 						
 						restore_w = screen->w;
 						restore_h = screen->h;

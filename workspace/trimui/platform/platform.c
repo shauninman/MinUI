@@ -91,8 +91,8 @@ void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
-scaler_t PLAT_getScaler(int scale) {
-	return scale==1 ? scale1x1_c16 : scale2x2_c16;
+scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
+	return renderer->scale==1 ? scale1x1_c16 : scale2x2_c16;
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {

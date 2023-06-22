@@ -271,8 +271,8 @@ void PLAT_vsync(int remaining) {
 	}
 }
 
-scaler_t PLAT_getScaler(int scale) {
-	switch (scale) {
+scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
+	switch (renderer->scale) {
 		case 6:  return scale6x6_n16;
 		case 5:  return scale5x5_n16;
 		case 4:  return scale4x4_n16;

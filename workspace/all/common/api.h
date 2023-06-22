@@ -96,7 +96,10 @@ typedef struct GFX_Renderer {
 	void* src;
 	void* dst;
 	void* blit;
+	int scale;
 
+	int src_x;
+	int src_y;
 	int src_w;
 	int src_h;
 	int src_p;
@@ -139,7 +142,7 @@ void GFX_setVsync(int vsync);
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 
-#define GFX_getScaler PLAT_getScaler		// scaler_t:(int scale)
+#define GFX_getScaler PLAT_getScaler		// scaler_t:(GFX_Renderer* renderer)
 #define GFX_blitRenderer PLAT_blitRenderer	// void:(GFX_Renderer* renderer)
 
 // NOTE: all dimensions should be pre-scaled
@@ -235,7 +238,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch);
 void PLAT_setVideoScaleClip(int x, int y, int width, int height);
 void PLAT_setNearestNeighbor(int enabled);
 void PLAT_vsync(int remaining);
-scaler_t PLAT_getScaler(int scale);
+scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
 
