@@ -39,7 +39,11 @@ src/$(1):
 src/$(1)/.patched: src/$(1)
 	(test ! -f patches/$(1).patch) || (test -f src/$(1)/.patched) || (cd src/$(1) && $(PATCH) -p1 < ../../patches/$(1).patch && touch .patched && true)
 
-output/$(1)_libretro.so: src/$(1)/.patched
+src/$(1)/.patched-all:
+	(test ! -d ../../all/cores/patches/$(1)) || (test -f src/$(1)/.patched-all) || (cd src/$(1) && $(foreach patch, $(sort $(wildcard ../../all/cores/patches/$(1)/*.patch)), $(PATCH) -p1 < ../../$(patch) &&) touch .patched-all && true)
+	
+
+output/$(1)_libretro.so: src/$(1)/.patched src/$(1)/.patched-all
 	mkdir -p output
 	cd src/$$($1_BUILD_PATH) && $$($1_MAKE) $(PROCS)
 	mv src/$$($1_BUILD_PATH)/$(if $($(1)_CORE),$($(1)_CORE),$(1)_libretro.so) ./output
