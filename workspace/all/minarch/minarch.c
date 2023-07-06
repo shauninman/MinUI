@@ -829,14 +829,30 @@ static void setOverclock(int i) {
 		case 2: POW_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
 	}
 }
-static void Config_syncFrontend(int i, int value) {
-	switch (i) {
-		case FE_OPT_SCALING:	screen_scaling 	= value; renderer.dst_p = 0; break;
-		case FE_OPT_TEARING:	prevent_tearing = value; break;
-		case FE_OPT_OVERCLOCK:	overclock		= value; break;
-		case FE_OPT_DEBUG:		show_debug 		= value; break;
-		case FE_OPT_MAXFF:		max_ff_speed 	= value; break;
+static void Config_syncFrontend(char* key, int value) {
+	int i = -1;
+	if (exactMatch(key,config.frontend.options[FE_OPT_SCALING].key)) {
+		screen_scaling 	= value;
+		renderer.dst_p = 0;
+		i = FE_OPT_SCALING;
 	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
+		prevent_tearing = value;
+		i = FE_OPT_TEARING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
+		overclock = value;
+		i = FE_OPT_OVERCLOCK;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_DEBUG].key)) {
+		show_debug = value;
+		i = FE_OPT_DEBUG;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_MAXFF].key)) {
+		max_ff_speed = value;
+		i = FE_OPT_MAXFF;
+	}
+	if (i==-1) return;
 	Option* option = &config.frontend.options[i];
 	option->value = value;
 }
@@ -931,7 +947,7 @@ static void Config_readOptionsString(char* cfg) {
 		Option* option = &config.frontend.options[i];
 		if (!Config_getValue(cfg, option->key, value, &option->lock)) continue;
 		OptionList_setOptionValue(&config.frontend, option->key, value);
-		Config_syncFrontend(i, option->value);
+		Config_syncFrontend(option->key, option->value);
 	}
 	
 	for (int i=0; config.core.options[i].key; i++) {
@@ -1085,7 +1101,7 @@ static void Config_restore(void) {
 	for (int i=0; config.frontend.options[i].key; i++) {
 		Option* option = &config.frontend.options[i];
 		option->value = option->default_value;
-		Config_syncFrontend(i, option->value);
+		Config_syncFrontend(option->key, option->value);
 	}
 	for (int i=0; config.core.options[i].key; i++) {
 		Option* option = &config.core.options[i];
@@ -1384,7 +1400,7 @@ static void input_poll_callback(void) {
 					case SHORTCUT_CYCLE_SCALE:
 						screen_scaling += 1;
 						if (screen_scaling>=3) screen_scaling -= 3;
-						Config_syncFrontend(FE_OPT_SCALING, screen_scaling);
+						Config_syncFrontend(config.frontend.options[FE_OPT_SCALING].key, screen_scaling);
 						break;
 					default: break;
 				}
@@ -2930,7 +2946,7 @@ static int MenuList_freeItems(MenuList* list, int i) {
 
 static int OptionFrontend_optionChanged(MenuList* list, int i) {
 	MenuItem* item = &list->items[i];
-	Config_syncFrontend(i, item->value);
+	Config_syncFrontend(item->key, item->value);
 	return MENU_CALLBACK_NOP;
 }
 static MenuList OptionFrontend_menu = {
@@ -2940,10 +2956,26 @@ static MenuList OptionFrontend_menu = {
 };
 static int OptionFrontend_openMenu(MenuList* list, int i) {
 	if (OptionFrontend_menu.items==NULL) {
-		// TODO: where do I free this?
-		OptionFrontend_menu.items = calloc(config.frontend.count+1, sizeof(MenuItem));
-		for (int j=0; j<config.frontend.count; j++) {
-			Option* option = &config.frontend.options[j];
+		// TODO: where do I free this? I guess I don't :sweat_smile:
+		if (!config.frontend.enabled_count) {
+			int enabled_count = 0;
+			for (int i=0; i<config.frontend.count; i++) {
+				if (!config.frontend.options[i].lock) enabled_count += 1;
+			}
+			config.frontend.enabled_count = enabled_count;
+			config.frontend.enabled_options = calloc(enabled_count+1, sizeof(Option*));
+			int j = 0;
+			for (int i=0; i<config.frontend.count; i++) {
+				Option* item = &config.frontend.options[i];
+				if (item->lock) continue;
+				config.frontend.enabled_options[j] = item;
+				j += 1;
+			}
+		}
+
+		OptionFrontend_menu.items = calloc(config.frontend.enabled_count+1, sizeof(MenuItem));
+		for (int j=0; j<config.frontend.enabled_count; j++) {
+			Option* option = config.frontend.enabled_options[j];
 			MenuItem* item = &OptionFrontend_menu.items[j];
 			item->key = option->key;
 			item->name = option->name;
@@ -2954,13 +2986,13 @@ static int OptionFrontend_openMenu(MenuList* list, int i) {
 	}
 	else {
 		// update values
-		for (int j=0; j<config.frontend.count; j++) {
-			Option* option = &config.frontend.options[j];
+		for (int j=0; j<config.frontend.enabled_count; j++) {
+			Option* option = config.frontend.enabled_options[j];
 			MenuItem* item = &OptionFrontend_menu.items[j];
 			item->value = option->value;
 		}
-		
 	}
+	
 	Menu_options(&OptionFrontend_menu);
 	return MENU_CALLBACK_NOP;
 }
@@ -2989,8 +3021,7 @@ static MenuList OptionEmulator_menu = {
 };
 static int OptionEmulator_openMenu(MenuList* list, int i) {
 	if (OptionEmulator_menu.items==NULL) {
-		// TODO: where do I free this?
-		
+		// TODO: where do I free this? I guess I don't :sweat_smile:
 		if (!config.core.enabled_count) {
 			int enabled_count = 0;
 			for (int i=0; i<config.core.count; i++) {
@@ -3027,9 +3058,7 @@ static int OptionEmulator_openMenu(MenuList* list, int i) {
 		}
 	}
 	
-	// try to handle no options
-	// TODO: show a message
-	if (OptionEmulator_menu.items[0].name) {
+	if (OptionEmulator_menu.items[0].name) { // TODO: why doesn't this just use (enabled_)count?
 		Menu_options(&OptionEmulator_menu);
 	}
 	else {
@@ -3164,7 +3193,7 @@ static char* getSaveDesc(void) {
 }
 static int OptionShortcuts_openMenu(MenuList* list, int i) {
 	if (OptionShortcuts_menu.items==NULL) {
-		// TODO: where do I free this?
+		// TODO: where do I free this? I guess I don't :sweat_smile:
 		OptionShortcuts_menu.items = calloc(SHORTCUT_COUNT+1, sizeof(MenuItem));
 		for (int j=0; config.shortcuts[j].name; j++) {
 			ButtonMapping* button = &config.shortcuts[j];
