@@ -119,6 +119,7 @@
 #define SDCARD_PATH "/mnt"
 #define MUTE_VOLUME_RAW 0
 #define HAS_NEON
+#define USES_SWSCALER
 
 ///////////////////////////////
 

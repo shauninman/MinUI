@@ -10,8 +10,13 @@ next
 	rg353: building with everything else
 	
 known issues
+	all: pokemini doesn't restore audio when resuming from minui (at least on nano and 35xx)
+		add all/cores/patches/core/* patches
+		this won't work because the number of defer frames varies by platform
+		actually the number doesn't vary? wth
+	all: not convinced fixed aspect scaling corrects for screen aspect correctly
+	
 	miyoomini: low battery overlay isn't implemented yet
-	miyoomini: audio popping between launches (fixed?)
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	
 	trimuismart: debug hud isn't available 
@@ -19,42 +24,44 @@ known issues
 	trimuismart: faux rtc isn't implemented yet
 	trimuismart: missing L2/R2
 	
-	rg353: scaling isn't implemented yet
-	rg353: clock will reset to gmt after returning to stock on wifi
-
-	trimui: scaling isn't implemented yet
+	trimui: hw scaling isn't implemented yet
 	trimui: low battery overlay isn't implemented yet
 	trimui: faux rtc isn't implemented yet
 	trimui: debug hud isn't available
 	trimui: missing L2/R2
 	
-	nano: scaling isn't implemented yet
-	nano: pokemini doesn't restore audio when resuming from minui
+	rg353: scaling isn't implemented yet
+	rg353: clock will reset to gmt after returning to stock on wifi
+	
+	nano: things kinda run poorly
+	nano: rtc fix didn't stick?
 
 nano
+	L+R and d-pad to offset cropped "scaling"?
+	keep an eye out for a 60fps fix
+		https://github.com/DrUm78/linux/tags
+		I think I got it (though I coudln't tell it wasn't running 60fps before so...)
+		this might be running worse after the fix...
 	test nano MinUI SD in all other (fully) supported devices
 		no joy :sob:
 		can the boot partition be hidden from other devices?
 		or can I change the boot order to prioritize nand over sd?
 	minarch
 		cores
+			sfc - not great, non-plus is better but still struggles with sfx chip games like SF or YI
+			psx - unusable
+				could be result of uploading roms though...that was it
 		patches
-	scaling
+	hardware scaling
+		no?
 	is overclocking possible?
 		no?
+	installer/updater
+		(build into /etc/rcS logic)
 
 all
 	clock
 		- 
-	abstract away scaler selection
-		there are multiple things at play here
-			currently it assumes that there are two stages
-				integer software upscaling
-				non-integer hardware downsampling
-		but also think about how this will be handled in SDL2 
-			which doesn't need scaling
-		what if the entire video_refresh_callback() was platform specific?
-	
 	simple progress animation for installing/updating
 		launch as a daemon with &
 		draws in a corner
@@ -66,17 +73,12 @@ all
 		I think it does now? double check
 
 	cores
-		-
+		add optional per core patch folder
+			currently looks for a global one in all/cores
 		
 	minarch
 		support adding or hiding frontend options (by platform? could just be hardcoded into default.cfg)
 			maybe even platform-based compile time exclusion (eg. overclocking doesn't work on trimui but it does need frameskip)
-		some aspect scaling isn't working correctly
-			fceumm is ending up not-quite-native but also not the full aspect ratio
-				something to do with PAGE_SIZE limitations?
-				same for snes9x
-			I think I should redo both scaler selectors
-
 		doesn't pickup on core setting ratio changes? eg. fceumm
 		support missing buttons with MENU+BUTTON? (smart,model s,nano)
 	api
@@ -177,6 +179,7 @@ rg35xx/install and miyoomini/install have png/bmp versions of the same files
 
 I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
 no, rename and archive the original union (union-prototype) and rename this to just union
+or just name it minui-minarch-et-al
 
 README
 

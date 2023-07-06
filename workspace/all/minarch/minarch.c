@@ -95,7 +95,7 @@ static struct Core {
 #define ZIP_LE_READ32(buf) ((uint32_t)(((uint8_t *)(buf))[3] << 24 | ((uint8_t *)(buf))[2] << 16 | ((uint8_t *)(buf))[1] << 8 | ((uint8_t *)(buf))[0]))
 typedef int (*Zip_extract_t)(FILE* zip, FILE* dst, size_t size);
 
-static int Zip_copy(FILE* zip, FILE* dst, size_t size) { // uncompressed 
+static int Zip_copy(FILE* zip, FILE* dst, size_t size) { // uncompressed?
 	uint8_t buffer[ZIP_CHUNK_SIZE];
 	while (size) {
 		size_t sz = MIN(size, ZIP_CHUNK_SIZE);
@@ -520,6 +520,7 @@ typedef struct OptionList {
 	int count;
 	int changed;
 	Option* options;
+	
 	int enabled_count;
 	Option** enabled_options;
 	// OptionList_callback_t on_set;
@@ -817,7 +818,7 @@ static int Config_getValue(char* cfg, const char* key, char* out_value, int* loc
 	if (!tmp) tmp = strchr(out_value, '\r');
 	if (tmp) *tmp = '\0';
 
-	// LOG_info("\t%s = %s\n", key, out_value);
+	// LOG_info("\t%s = %s (%s)\n", key, out_value, (lock && *lock) ? "hidden":"shown");
 	return 1;
 }
 
@@ -2435,6 +2436,13 @@ static void selectScaler_AR(int width, int height, int pitch) {
 		screen = GFX_resize(target_w,target_h, target_pitch);
 	}
 }
+
+#ifdef USES_SWSCALER
+	static int fit = 1;
+#else
+	static int fit = 0;
+#endif	
+
 static void selectScaler(int src_w, int src_h, int src_p) {
 	// (screen_scaling==SCALE_NATIVE ? selectScaler_PAR : selectScaler_AR)(src_w,src_h,src_p);
 	// return;
@@ -2444,8 +2452,13 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	int aspect_w = src_w;
 	int aspect_h = CEIL_DIV(aspect_w, core.aspect_ratio);
 	
-	int fit = 0; // TODO: this needs to come from somewhere, eg. platform.h
-	
+	// TODO: make sure this doesn't break fit==1 devices
+	if (aspect_h<src_h) {
+		aspect_h = src_h;
+		aspect_w = aspect_h * core.aspect_ratio;
+		aspect_w += aspect_w % 2;
+	}
+
 	char scaler_name[16];
 	
 	src_x = 0;
@@ -2492,7 +2505,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			scale = -1; // nearest neighbor
 		}
 		else {
-			double scale_f = MIN(((double)FIXED_WIDTH)/src_w, ((double)FIXED_HEIGHT)/src_h);
+			double scale_f = MIN(((double)FIXED_WIDTH)/aspect_w, ((double)FIXED_HEIGHT)/aspect_h);
 			LOG_info("scale_f:%f\n", scale_f);
 			
 			sprintf(scaler_name, "aspect fit");
@@ -2520,27 +2533,47 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			dst_p = dst_w * FIXED_BPP;
 		}
 		else {
-			double fixed_aspect_ratio = (double)(FIXED_WIDTH) / FIXED_HEIGHT;
+			double src_aspect_ratio = ((double)src_w) / src_h;
+			// double core_aspect_ratio
+			double fixed_aspect_ratio = ((double)FIXED_WIDTH) / FIXED_HEIGHT;
 			int core_aspect = core.aspect_ratio * 1000;
 			int fixed_aspect = fixed_aspect_ratio * 1000;
 			
-			// TODO: still has trouble with P8 1:1
+			// still having trouble with FC's 1.306 (13/10? wtf) on 4:3 devices
+			// specifically I think it has trouble when src, core, and fixed 
+			// ratios don't match
+			
+			// it handles src and core matching but fixed not, eg. GB and GBA 
+			// or core and fixed matching but not src, eg. odd PS resolutions
+			
+			// we need to transform the src size to core aspect
+			// then to fixed aspect
+						
 			if (core_aspect>fixed_aspect) {
 				sprintf(scaler_name, "aspect%iL", scale);
 				// letterbox
+				// dst_w = scaled_w;
+				// dst_h = scaled_w / fixed_aspect_ratio;
+				// dst_h += dst_h%2;
+				int aspect_h = FIXED_WIDTH / core.aspect_ratio;
+				double aspect_hr = ((double)aspect_h) / FIXED_HEIGHT;
 				dst_w = scaled_w;
-				dst_h = scaled_w / fixed_aspect_ratio;
-				dst_h += dst_h%2;
+				dst_h = scaled_h / aspect_hr;
 
 				dst_y = (dst_h - scaled_h) / 2;
 			}
 			else if (core_aspect<fixed_aspect) {
 				sprintf(scaler_name, "aspect%iP", scale);
 				// pillarbox
-				dst_w = scaled_h * fixed_aspect_ratio;
-				dst_w += dst_w%2;
+				// dst_w = scaled_h * fixed_aspect_ratio;
+				// dst_w += dst_w%2;
+				// dst_h = scaled_h;
+				int aspect_w = FIXED_HEIGHT * core.aspect_ratio;
+				double aspect_wr = ((double)aspect_w) / FIXED_WIDTH;
+				dst_w = scaled_w / aspect_wr;
 				dst_h = scaled_h;
-
+				
+				dst_w = (dst_w/8)*8;
 				dst_x = (dst_w - scaled_w) / 2;
 			}
 			else {
@@ -2549,7 +2582,6 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 				dst_w = scaled_w;
 				dst_h = scaled_h;
 			}
-			dst_w = (dst_w/8)*8; // probably necessary here since we're not scaling by an integer
 			dst_p = dst_w * FIXED_BPP;
 		}
 	}
@@ -2572,14 +2604,14 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	renderer.scale = scale;
 	renderer.blit = GFX_getScaler(&renderer);
 	
-	printf("coreAR:%0.3f screenAR:%0.3f name:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
-		core.aspect_ratio, ((double)FIXED_WIDTH) / FIXED_HEIGHT,
-		scaler_name,
-		fit,scale,
-		src_x,src_y,src_w,src_h,src_p,
-		dst_x,dst_y,dst_w,dst_h,dst_p,
-		aspect_w,aspect_h
-	); fflush(stdout);
+	// printf("coreAR:%0.3f fixedAR:%0.3f srcAR: %0.3f\nname:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
+	// 	core.aspect_ratio, ((double)FIXED_WIDTH) / FIXED_HEIGHT, ((double)src_w) / src_h,
+	// 	scaler_name,
+	// 	fit,scale,
+	// 	src_x,src_y,src_w,src_h,src_p,
+	// 	dst_x,dst_y,dst_w,dst_h,dst_p,
+	// 	aspect_w,aspect_h
+	// ); fflush(stdout);
 
 	if (fit) {
 		dst_w = FIXED_WIDTH;
@@ -3178,7 +3210,9 @@ static int OptionShortcuts_unbind(MenuList* list, int i) {
 }
 static MenuList OptionShortcuts_menu = {
 	.type = MENU_INPUT,
-	.desc = "Press A to set and X to clear.\nSupports single button and MENU+button.",
+	.desc = "Press A to set and X to clear." 
+		"\nSupports single button and MENU+button." // TODO: only supported by some (but most) platforms
+	,
 	.on_confirm = OptionShortcuts_bind,
 	.on_change = OptionShortcuts_unbind,
 	.items = NULL
@@ -3663,8 +3697,25 @@ static int Menu_options(MenuList* list) {
 
 static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	
-	// TODO: aspect is wrong for native if src doesn't have the same resolution as renderer.src
+
+
+
+
+
+
+
+
+	// TODO: aspect in save state previews if current renderer.src aspect doesn't match src aspect?
+	// TODO: revisit with less reliance on renderer.*
+
+
+
+
 	
+
+
+
+
 	// LOG_info("Menu_scale()\n");
 	uint16_t* s = src->pixels;
 	uint16_t* d = dst->pixels;
@@ -3715,18 +3766,31 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	}
 	
 	if (screen_scaling==SCALE_ASPECT || rw>dw || rh>dh) {
-		// LOG_info("aspect\n");
-		rw = dh * core.aspect_ratio;
-		if (rw>dw) {
-			// LOG_info("adjusted\n");
+		double fixed_aspect_ratio = ((double)FIXED_WIDTH) / FIXED_HEIGHT;
+		int core_aspect = core.aspect_ratio * 1000;
+		int fixed_aspect = fixed_aspect_ratio * 1000;
+		
+		if (core_aspect>fixed_aspect) {
+			// letterbox
 			rw = dw;
-			rh = dw / core.aspect_ratio;
+			rh = rw / core.aspect_ratio;
+			rh += rh%2;
 		}
+		else if (core_aspect<fixed_aspect) {
+			// pillarbox
+			rh = dh;
+			rw = rh * core.aspect_ratio;
+			rw += rw%2;
+			rw = (rw/8)*8; // probably necessary here since we're not scaling by an integer
+		}
+		else {
+			// perfect match
+			rw = dw;
+			rh = dh;
+		}
+		
 		rx = (dw - rw) / 2;
 		ry = (dh - rh) / 2;
-	}
-	else {
-		// LOG_info("full\n");
 	}
 	
 	// LOG_info("Menu_scale (r): %i,%i %ix%i\n",rx,ry,rw,rh);

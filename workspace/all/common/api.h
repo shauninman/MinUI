@@ -145,6 +145,9 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 #define GFX_getScaler PLAT_getScaler		// scaler_t:(GFX_Renderer* renderer)
 #define GFX_blitRenderer PLAT_blitRenderer	// void:(GFX_Renderer* renderer)
 
+scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
+void GFX_freeAAScaler(void);
+
 // NOTE: all dimensions should be pre-scaled
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);

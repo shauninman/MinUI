@@ -92,12 +92,22 @@ void PLAT_vsync(int remaining) {
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	return renderer->scale==1 ? scale1x1_c16 : scale2x2_c16;
+	GFX_freeAAScaler();
+	switch (renderer->scale) {
+		case  6: return scale6x6_c16;
+		case  5: return scale5x5_c16;
+		case  4: return scale4x4_c16;
+		case  3: return scale3x3_c16;
+		case  2: return scale2x2_c16;
+		case -1: return GFX_getAAScaler(renderer);
+		default: return scale1x1_c16; // this includes crop (0)
+	}
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
+	void* src = renderer->src + (renderer->src_y * renderer->src_p) + (renderer->src_x * FIXED_BPP);
 	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP);
-	((scaler_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+	((scaler_t)renderer->blit)(src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
