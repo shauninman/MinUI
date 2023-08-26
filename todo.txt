@@ -1,11 +1,25 @@
 next
+	trimui/trimuismart/miyoomini: implement faux rtc
+		issue: datetime.txt is stored in <platform>/.minui 
+			but that's been moved to shared/.minui...
+			not sure I want to move it into shared
+			because the auto advance (+6 hours each reboot) 
+			may interact badly with devices that properly 
+			implement rtc and games that depend on rtc to 
+			validate save data...
+		what if it didn't autoadvance time and every device wrote to datetime.txt?
+			rtc devices would only write to it
+			non-rtc devices could read write
+			the only reason we auto-advance is for pokemon day/night cycles
+			and that can be done manually with Clock.pak...
+			
+			
+			
+			
+			
+	minarch: support adding/hiding frontend options
+	
 	trimui: scaling (there's a DE test somewhere around here)
-		I think we'll be good to go once 
-		I dummy resolution switching
-		not quite there yet
-		I was really trying not to rewrite this to match logic of other platform.c
-			implementations but I think I need to in order to understand what it's
-			actually doing/how it works :\
 	rg353: scaling
 	rg353: building with everything else
 	
@@ -16,27 +30,27 @@ known issues
 		actually the number doesn't vary? wth
 	all: not convinced fixed aspect scaling corrects for screen aspect correctly
 	
-	miyoomini: low battery overlay isn't implemented yet
 	miyoomini: prevent tearing strict introduces tearing :sob:
+	miyoomini: low battery overlay isn't implemented yet
 	
-	trimuismart: debug hud isn't available 
-	trimuismart: low battery overlay isn't implemented yet
 	trimuismart: faux rtc isn't implemented yet
+	trimuismart: debug hud isn't available 
 	trimuismart: missing L2/R2
+	trimuismart: low battery overlay isn't implemented yet
 	
-	trimui: hw scaling isn't implemented yet
-	trimui: low battery overlay isn't implemented yet
 	trimui: faux rtc isn't implemented yet
+	trimui: hw scaling isn't implemented yet
 	trimui: debug hud isn't available
 	trimui: missing L2/R2
+	trimui: low battery overlay isn't implemented yet
 	
-	rg353: scaling isn't implemented yet
+	rg353: non-integer scaling isn't implemented yet
 	rg353: clock will reset to gmt after returning to stock on wifi
-	
-	nano: things kinda run poorly
-	nano: rtc fix didn't stick?
 
 nano
+	the lack of shared SD card support is a big downer
+		abandon this platform?
+		have I documented the boot process or how to create the modified firmware image?
 	L+R and d-pad to offset cropped "scaling"?
 	keep an eye out for a 60fps fix
 		https://github.com/DrUm78/linux/tags
@@ -49,8 +63,6 @@ nano
 	minarch
 		cores
 			sfc - not great, non-plus is better but still struggles with sfx chip games like SF or YI
-			psx - unusable
-				could be result of uploading roms though...that was it
 		patches
 	hardware scaling
 		no?
@@ -60,6 +72,13 @@ nano
 		(build into /etc/rcS logic)
 
 all
+	minarch
+		support adding or hiding frontend options 
+			(by platform? could just be hardcoded into default.cfg)
+			maybe even platform-based compile time exclusion 
+			(eg. overclocking doesn't work on trimui but it does need frameskip)
+		doesn't pickup on core setting ratio changes? eg. fceumm
+		support missing buttons with MENU+BUTTON? (smart,model s,nano)
 	clock
 		- 
 	simple progress animation for installing/updating
@@ -69,18 +88,9 @@ all
 		if it's circular we don't even need to worry about rotation :sweat_smile:
 	main makefile
 		targets have too many dependencies
-	.tmp_update doesn't get updated?
-		I think it does now? double check
-
 	cores
 		add optional per core patch folder
 			currently looks for a global one in all/cores
-		
-	minarch
-		support adding or hiding frontend options (by platform? could just be hardcoded into default.cfg)
-			maybe even platform-based compile time exclusion (eg. overclocking doesn't work on trimui but it does need frameskip)
-		doesn't pickup on core setting ratio changes? eg. fceumm
-		support missing buttons with MENU+BUTTON? (smart,model s,nano)
 	api
 		GFX_blitDebug(text,x,y)?
 			simple for everything but trimuismart with its -90° screen
@@ -90,7 +100,7 @@ all
 			eg. Super Nintendo (SFC,SFCALT)
 			where SFX.pak is only present on higher power systems and
 			SFCALT.pak is an older core meant for lower power systems
-			stats will not be compatible because of the different core but...
+			states will not be compatible because of the different core but...
 		shows games in alt collated folders even if the alt pak isn't present...
 			not sure how that's possible...
 	add a "res" (or "many"?) folder 
@@ -116,7 +126,7 @@ trimui
 			frameskip of 1 is probably necessary but 2005 doesn't have that option
 			will need to patch
 		gpsp
-			ffiv requires manual frameskip of 1 to not chug on mode7 bits
+			ffiv requires manual frameskip of 1 to not chug on mode7-like bits
 	
 rg353
 	toolchain: patch buildroot SDL for POWER/PLUS/MINUS (see rg35xx)
@@ -138,10 +148,6 @@ smart
 		what happens when two device you're swapping the sd card between disagree on datetime?
 			what does that do to games that expect an RTC?
 
-	what if led always flashed while sleeping (once the quicksave is created, then you know it's safe to poweroff)
-		we don't have a hook into POW_fauxSleep to do that...unless we thread it 
-			but that goes against the idea of an idle sleep state :sweat_smile:
-	
 	keymon
 		battery/usb monitoring
 			might be fine where it is
@@ -149,9 +155,6 @@ smart
 	battery overlay
 
 miyoomini
-	there's a long delay before installing, add a preparing install graphic?
-		fixed (display was only initialized when updating :facepalm:)
-	
 	separate settings file for mini and plus
 	
 	prevent tearing modes are in conflict
@@ -180,6 +183,7 @@ rg35xx/install and miyoomini/install have png/bmp versions of the same files
 I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
 no, rename and archive the original union (union-prototype) and rename this to just union
 or just name it minui-minarch-et-al
+	I kinda like this one...
 
 README
 
