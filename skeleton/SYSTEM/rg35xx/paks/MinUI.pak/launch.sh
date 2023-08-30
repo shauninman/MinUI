@@ -9,6 +9,7 @@ export CORES_PATH="$SYSTEM_PATH/cores"
 export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
 export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
+export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt"
 
 #######################################
 
@@ -54,6 +55,7 @@ touch "$EXEC_PATH" && sync
 while [ -f "$EXEC_PATH" ]; do
 	overclock.elf $CPU_SPEED_PERF
 	minui.elf &> $LOGS_PATH/minui.txt
+	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
@@ -61,6 +63,9 @@ while [ -f "$EXEC_PATH" ]; do
 		eval $CMD
 		rm -f $NEXT_PATH
 		overclock.elf $CPU_SPEED_PERF
+		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
 done
+
+shutdown # just in case

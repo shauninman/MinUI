@@ -40,7 +40,7 @@ export CORES_PATH="$SYSTEM_PATH/cores"
 export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
 export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
-export DATETIME_PATH=$USERDATA_PATH/.minui/datetime.txt # used by bin/shutdown
+export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt" # used by bin/shutdown
 
 mkdir -p "$USERDATA_PATH"
 mkdir -p "$LOGS_PATH"
@@ -104,7 +104,6 @@ if [ -f "$DATETIME_PATH" ]; then
 	DATETIME=`cat "$DATETIME_PATH"`
 	date +'%F %T' -s "$DATETIME"
 	DATETIME=`date +'%s'`
-	DATETIME=$((DATETIME + 6 * 60 * 60))
 	date -u -s "@$DATETIME"
 fi
 

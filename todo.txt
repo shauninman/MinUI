@@ -1,25 +1,11 @@
 next
-	trimui/trimuismart/miyoomini: implement faux rtc
-		issue: datetime.txt is stored in <platform>/.minui 
-			but that's been moved to shared/.minui...
-			not sure I want to move it into shared
-			because the auto advance (+6 hours each reboot) 
-			may interact badly with devices that properly 
-			implement rtc and games that depend on rtc to 
-			validate save data...
-		what if it didn't autoadvance time and every device wrote to datetime.txt?
-			rtc devices would only write to it
-			non-rtc devices could read write
-			the only reason we auto-advance is for pokemon day/night cycles
-			and that can be done manually with Clock.pak...
-			
-			
-			
-			
-			
+	all: standardize on using extension for shell scripts
+		primarily for quicklook in Finder :sweat_smile:
+	
 	minarch: support adding/hiding frontend options
 	
-	trimui: scaling (there's a DE test somewhere around here)
+	trimui: scaling (see DE test)
+	
 	rg353: scaling
 	rg353: building with everything else
 	
@@ -33,12 +19,10 @@ known issues
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoomini: low battery overlay isn't implemented yet
 	
-	trimuismart: faux rtc isn't implemented yet
 	trimuismart: debug hud isn't available 
 	trimuismart: missing L2/R2
 	trimuismart: low battery overlay isn't implemented yet
 	
-	trimui: faux rtc isn't implemented yet
 	trimui: hw scaling isn't implemented yet
 	trimui: debug hud isn't available
 	trimui: missing L2/R2
@@ -46,6 +30,9 @@ known issues
 	
 	rg353: non-integer scaling isn't implemented yet
 	rg353: clock will reset to gmt after returning to stock on wifi
+
+sf2000
+	hahahahahahaha no.
 
 nano
 	the lack of shared SD card support is a big downer
@@ -63,9 +50,10 @@ nano
 	minarch
 		cores
 			sfc - not great, non-plus is better but still struggles with sfx chip games like SF or YI
+			psx?
 		patches
 	hardware scaling
-		no?
+		no? but screen is so tiny, relative ppi so high, it might not matter
 	is overclocking possible?
 		no?
 	installer/updater
@@ -143,11 +131,6 @@ smart
 	cores
 		supa starfox perf bad
 		pcsx freeze opening menu tekken 3
-	sync rtc
-		also sync rtc when saving (game or state) in minarch?
-		what happens when two device you're swapping the sd card between disagree on datetime?
-			what does that do to games that expect an RTC?
-
 	keymon
 		battery/usb monitoring
 			might be fine where it is
@@ -155,7 +138,7 @@ smart
 	battery overlay
 
 miyoomini
-	separate settings file for mini and plus
+	separate settings file for mini and plus?
 	
 	prevent tearing modes are in conflict
 		lenient has no tearing, flickering settings overlay
@@ -184,10 +167,6 @@ I think I might want to checkout a fresh copy of union-minui create a union bran
 no, rename and archive the original union (union-prototype) and rename this to just union
 or just name it minui-minarch-et-al
 	I kinda like this one...
-
-README
-
-have a verbose version and a short list version
 
 ---
 

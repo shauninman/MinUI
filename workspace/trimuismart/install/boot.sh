@@ -16,7 +16,7 @@ if [ -f "$UPDATE_PATH" ]; then
 	export PATH=/usr/trimui/bin:$PATH
 	
 	cd $(dirname "$0")/$PLATFORM
-	./leds_off.sh
+	./leds_off
 	if [ -d "$SYSTEM_PATH" ]; then
 		./show.elf ./updating.png
 	else

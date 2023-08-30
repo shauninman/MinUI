@@ -24,13 +24,13 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 
 Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
-MIYOO MINI
-
-Copy the "miyoo" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
-
 MIYOO MINI PLUS
 
 Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+
+MIYOO MINI
+
+Copy the "miyoo" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
 TRIMUI SMART
 

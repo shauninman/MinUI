@@ -457,18 +457,18 @@ void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		// TODO: restore screen
 		SetBrightness(GetBrightness());
-		system("leds_off.sh");
+		system("leds_off");
 	}
 	else {
 		// TODO: copy screen
 		// TODO: clear screen
 		SetRawBrightness(0);
-		system("leds_on.sh");
+		system("leds_on");
 	}
 }
 
 void PLAT_powerOff(void) {
-	system("leds_on.sh");
+	system("leds_on");
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);

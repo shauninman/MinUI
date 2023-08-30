@@ -11,6 +11,6 @@ mkdir -p "$SAVES_PATH/$EMU_TAG"
 HOME="$USERDATA_PATH"
 cd "$HOME"
 
-needs-swap.sh
+needs-swap
 
 minarch.elf "$CORES_PATH/${EMU_EXE}_libretro.so" "$ROM" &> "$LOGS_PATH/$EMU_TAG.txt"

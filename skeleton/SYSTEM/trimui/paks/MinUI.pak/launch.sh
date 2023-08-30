@@ -24,7 +24,7 @@ export CORES_PATH="$SYSTEM_PATH/cores"
 export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
 export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
-export DATETIME_PATH=$USERDATA_PATH/.minui/datetime.txt # used by bin/shutdown
+export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt" # used by bin/shutdown
 
 mkdir -p "$USERDATA_PATH"
 mkdir -p "$LOGS_PATH"
@@ -55,6 +55,16 @@ keymon.elf & #&> /mnt/SDCARD/keymon.txt &
 
 #######################################
 
+# init datetime
+if [ -f "$DATETIME_PATH" ]; then
+	DATETIME=`cat "$DATETIME_PATH"`
+	date +'%F %T' -s "$DATETIME"
+	DATETIME=`date +'%s'`
+	date -u -s "@$DATETIME"
+fi
+
+#######################################
+
 AUTO_PATH=$USERDATA_PATH/auto.sh
 if [ -f "$AUTO_PATH" ]; then
 	"$AUTO_PATH"
@@ -70,6 +80,7 @@ touch "$EXEC_PATH"  && sync
 while [ -f $EXEC_PATH ]; do
 	minui.elf &> $LOGS_PATH/minui.txt
 	# echo $CPU_SPEED_PERF > $CPU_PATH
+	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
@@ -81,6 +92,7 @@ while [ -f $EXEC_PATH ]; do
 			rm -f "/tmp/using-swap"
 		fi
 		# echo $CPU_SPEED_PERF > $CPU_PATH
+		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
 	
@@ -88,21 +100,10 @@ while [ -f $EXEC_PATH ]; do
 	if [ -f "/tmp/poweroff" ]; then
 		rm -f "/tmp/poweroff"
 		killall keymon.elf
+		shutdown
 		while :; do
 			sleep 10
 		done;
-		# echo 60000 > $CPU_PATH
-		# LED_ON=true
-		# while :; do
-		# 	if $LED_ON; then
-		# 		LED_ON=false
-		# 		leds_off.sh
-		# 	else
-		# 		LED_ON=true
-		# 		leds_on.sh
-		# 	fi
-		# 	sleep 0.5
-		# done
 	fi
 done
 

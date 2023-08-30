@@ -508,10 +508,7 @@ void PLAT_enableBacklight(int enable) {
 }
 void PLAT_powerOff(void) {
 	sleep(2);
-	// TODO: should we sync() manually or move s before u?
-	system("echo u > /proc/sysrq-trigger");
-	system("echo s > /proc/sysrq-trigger");
-	system("echo o > /proc/sysrq-trigger");
+	system("shutdown");
 }
 
 ///////////////////////////////

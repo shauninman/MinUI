@@ -149,12 +149,7 @@ void PLAT_enableBacklight(int enable) {
 
 void PLAT_powerOff(void) {
 	sleep(2);
-#define HARDWARE_BPP 4
-	// TODO: should we sync() manually or move s before u?
-	system("cat /dev/zero > /dev/fb0");
-	system("echo s > /proc/sysrq-trigger");
-	system("echo u > /proc/sysrq-trigger");
-	system("echo o > /proc/sysrq-trigger");
+	system("shutdown");
 	while (1) pause(); // lolwat
 }
 

@@ -12,7 +12,7 @@ $(PLATFORM):
 	cp ./workspace/$@/install/*.png ./build/BOOT/$@/
 	cp ./workspace/$@/show/show.elf ./build/BOOT/$@/
 	cp ./workspace/$@/other/unzip60/unzip ./build/BOOT/$@/
-	cp ./build/SYSTEM/$@/bin/leds_off.sh ./build/BOOT/$@/
+	cp ./build/SYSTEM/$@/bin/leds_off ./build/BOOT/$@/
 	# extras
 	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
