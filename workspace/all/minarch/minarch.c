@@ -3211,7 +3211,7 @@ static int OptionShortcuts_unbind(MenuList* list, int i) {
 static MenuList OptionShortcuts_menu = {
 	.type = MENU_INPUT,
 	.desc = "Press A to set and X to clear." 
-		"\nSupports single button and MENU+button." // TODO: only supported by some (but most) platforms
+		"\nSupports single button and MENU+button." // TODO: not supported on nano because POWER doubles as MENU
 	,
 	.on_confirm = OptionShortcuts_bind,
 	.on_change = OptionShortcuts_unbind,

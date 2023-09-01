@@ -79,18 +79,16 @@ Known Issues
 
 TRIMUI SMART
 
-- faux rtc isn't implemented yet
 - battery overlay isn't implemented yet
 - debug hud isn't available yet
 
 TRIMUI MODEL S
 
-- faux rtc isn't implemented yet
 - battery overlay isn't implemented yet
-- missing cores
 - Nintendo Entertainment System runs poorly
+- missing cores
 
 MIYOO MINI / MIYOO MINI PLUS
 
-- prevent tearing strict may produce tearing
 - battery overlay isn't implemented yet
+- prevent tearing strict may produce tearing :sob:

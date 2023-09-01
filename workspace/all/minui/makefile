@@ -19,14 +19,13 @@ include ../../$(PLATFORM)/platform/makefile.env
 ###########################################################
 
 TARGET = minui
-INCDIR = -I. -I../common -I../../$(PLATFORM)/platform/
-SOURCE = $(TARGET).c ../common/utils.c ../common/api.c ../common/scaler.c ../../$(PLATFORM)/platform/platform.c
+INCDIR = -I. -I../common/ -I../../$(PLATFORM)/platform/
+SOURCE = $(TARGET).c ../common/scaler.c ../common/utils.c ../common/api.c ../../$(PLATFORM)/platform/platform.c
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS   = $(ARCH) -fomit-frame-pointer
 CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -Ofast -std=gnu99
-LDFLAGS	 = -ldl $(LIBS) -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
-LDFLAGS +=  -lmsettings
+LDFLAGS	 = -ldl -lmsettings $(LIBS) -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
 # CFLAGS  += -Wall -Wno-unused-variable -Wno-unused-function -Wno-format-overflow
 # CFLAGS  += -fsanitize=address -fno-common
 # LDFLAGS += -lasan

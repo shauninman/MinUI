@@ -6,7 +6,8 @@ next
 	
 	trimui: scaling (see DE test)
 	
-	rg353: scaling
+	rg353: core patch files have whitespace issues
+	rg353: scaling (hw?)
 	rg353: building with everything else
 	
 known issues
@@ -117,6 +118,7 @@ trimui
 			ffiv requires manual frameskip of 1 to not chug on mode7-like bits
 	
 rg353
+	had to add -flto to build flags to get minui+clock to build (possibly because of long ago scaler changes?)
 	toolchain: patch buildroot SDL for POWER/PLUS/MINUS (see rg35xx)
 	would love to get adbd working...
 	overclocking
@@ -163,10 +165,11 @@ rg35xx
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
 
-I think I might want to checkout a fresh copy of union-minui create a union branch delete everything in it and copy this into it (try as a single commit first and see how smart it is about moving things versus a delete and an add commit)
-no, rename and archive the original union (union-prototype) and rename this to just union
-or just name it minui-minarch-et-al
-	I kinda like this one...
+---
+
+FIXME: main makefile is a brittle mess
+	each platform has its own default cores and extras
+	so it's a tangle
 
 ---
 
