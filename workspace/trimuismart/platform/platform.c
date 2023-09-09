@@ -442,8 +442,8 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	char value[16]; memset(value, 0, 16);
 	getFile(USB_SPEED, value, 16);
 	*is_charging = !exactMatch(value, "UNKNOWN\n");
-		
-	int i = ADC_read() * 100 / 63;
+	
+	int i = ADC_read() * 100 / 47; // was 63 but I've never seen it go higher than 47
 	// worry less about battery and more about the game you're playing
 	     if (i>80) *charge = 100;
 	else if (i>60) *charge =  80;

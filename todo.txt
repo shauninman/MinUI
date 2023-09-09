@@ -1,11 +1,21 @@
 next
+	rg552/rg353/rgb30: sdl2 support??? :cold_sweat:
+	
 	all: standardize on using extension for shell scripts
 		primarily for quicklook in Finder :sweat_smile:
+	all: updater should use Performance mode where available
 	
 	minarch: support adding/hiding frontend options
+		already done per pak
+		bump from pak-level to system-level
+		since these are for features the target system doesn't support
+	minarch: add Crop Overscan
+	minarch: add halign and valign
 	
 	trimui: scaling (see DE test)
 	
+	rg353: switch to JELOS root?
+		lots of issues (see JELOS-docker/ideas.txt)
 	rg353: core patch files have whitespace issues
 	rg353: scaling (hw?)
 	rg353: building with everything else
@@ -29,6 +39,7 @@ known issues
 	trimui: missing L2/R2
 	trimui: low battery overlay isn't implemented yet
 	
+	rg353: double-buffered drawing isn't implemented yet (tearing)
 	rg353: non-integer scaling isn't implemented yet
 	rg353: clock will reset to gmt after returning to stock on wifi
 
@@ -68,6 +79,7 @@ all
 			(eg. overclocking doesn't work on trimui but it does need frameskip)
 		doesn't pickup on core setting ratio changes? eg. fceumm
 		support missing buttons with MENU+BUTTON? (smart,model s,nano)
+		add vertical and horizontal screen alignment to frontend options?
 	clock
 		- 
 	simple progress animation for installing/updating
