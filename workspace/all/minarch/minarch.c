@@ -720,6 +720,7 @@ enum {
 };
 
 static struct Config {
+	char* system_cfg; // system.cfg based on system limitations
 	char* default_cfg; // pak.cfg based on platform limitations
 	char* user_cfg; // minarch.cfg or game.cfg based on user preference
 	OptionList frontend;
@@ -1015,6 +1016,10 @@ static void Config_readControlsString(char* cfg) {
 static void Config_load(void) {
 	LOG_info("Config_load\n");
 	
+	char* system_path = SYSTEM_PATH "/system.cfg";
+	if (exists(system_path)) config.system_cfg = allocFile(system_path);
+	else config.system_cfg = NULL;
+	
 	char default_path[MAX_PATH];
 	getEmuPath((char *)core.tag, default_path);
 	char* tmp = strrchr(default_path, '/');
@@ -1040,6 +1045,7 @@ static void Config_free(void) {
 	if (config.user_cfg) free(config.user_cfg);
 }
 static void Config_readOptions(void) {
+	Config_readOptionsString(config.system_cfg);
 	Config_readOptionsString(config.default_cfg);
 	Config_readOptionsString(config.user_cfg);
 
