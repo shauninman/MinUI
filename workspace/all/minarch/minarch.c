@@ -3521,6 +3521,7 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	}
 	
 	// LOG_info("Menu_scale (r): %i,%i %ix%i\n",rx,ry,rw,rh);
+	// LOG_info("offset: %i,%i\n", renderer.src_x, renderer.src_y);
 
 	// dumb nearest neighbor scaling
 	int mx = (sw << 16) / rw;
@@ -3532,6 +3533,9 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	int sr = 0;
 	int dr = ry * dp;
 	int cp = dp * FIXED_BPP;
+	
+	
+	s += renderer.src_y * sw + renderer.src_x; // need to account for cropped overscan
 
 	// LOG_info("Menu_scale (s): %i,%i %ix%i\n",sx,sy,sw,sh);
 	// LOG_info("mx:%i my:%i sx>>16:%i sy>>16:%i\n",mx,my,((sx+mx) >> 16),((sy+my) >> 16));
