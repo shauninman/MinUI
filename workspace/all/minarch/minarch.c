@@ -30,11 +30,24 @@ static int show_menu;
 enum {
 	SCALE_NATIVE,
 	SCALE_ASPECT,
+	// SCALE_CROPPED,
 	SCALE_FULLSCREEN,
 };
 
+// enum {
+// 	ALIGN_LEFT,
+// 	ALIGN_CENTER,
+// 	ALIGN_RIGHT,
+//
+// 	ALIGN_TOP,
+// 	ALIGN_MIDDLE,
+// 	ALIGH_BOTTOM,
+// };
+
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
+// static int screen_halign = ALIGN_CENTER;
+// static int screen_valign = ALIGN_MIDDLE;
 static int prevent_tearing = 1; // lenient
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
