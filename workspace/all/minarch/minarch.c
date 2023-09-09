@@ -2331,14 +2331,14 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	renderer.scale = scale;
 	renderer.blit = GFX_getScaler(&renderer);
 	
-	// printf("coreAR:%0.3f fixedAR:%0.3f srcAR: %0.3f\nname:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
+	// LOG_info("coreAR:%0.3f fixedAR:%0.3f srcAR: %0.3f\nname:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
 	// 	core.aspect_ratio, ((double)FIXED_WIDTH) / FIXED_HEIGHT, ((double)src_w) / src_h,
 	// 	scaler_name,
 	// 	fit,scale,
 	// 	src_x,src_y,src_w,src_h,src_p,
 	// 	dst_x,dst_y,dst_w,dst_h,dst_p,
 	// 	aspect_w,aspect_h
-	// ); fflush(stdout);
+	// );
 
 	if (fit) {
 		dst_w = FIXED_WIDTH;
@@ -3538,9 +3538,6 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	int dr = ry * dp;
 	int cp = dp * FIXED_BPP;
 	
-	
-	s += renderer.src_y * sw + renderer.src_x; // need to account for cropped overscan
-
 	// LOG_info("Menu_scale (s): %i,%i %ix%i\n",sx,sy,sw,sh);
 	// LOG_info("mx:%i my:%i sx>>16:%i sy>>16:%i\n",mx,my,((sx+mx) >> 16),((sy+my) >> 16));
 
