@@ -1041,6 +1041,7 @@ static void Config_load(void) {
 	config.loaded = override ? CONFIG_GAME : CONFIG_CONSOLE;
 }
 static void Config_free(void) {
+	if (config.system_cfg) free(config.system_cfg);
 	if (config.default_cfg) free(config.default_cfg);
 	if (config.user_cfg) free(config.user_cfg);
 }
