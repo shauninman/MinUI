@@ -1,16 +1,14 @@
 next
-	rg552/rg353/rgb30: sdl2 support??? :cold_sweat:
+	rgb30: ELLOS + MinUI
 	
 	all: standardize on using extension for shell scripts
 		primarily for quicklook in Finder :sweat_smile:
 	all: updater should use Performance mode where available
 	
-	minarch: support adding/hiding frontend options
-		already done per pak
-		bump from pak-level to system-level
-		since these are for features the target system doesn't support
-	minarch: add Crop Overscan
-	minarch: add halign and valign
+	minarch: add Crop Overscan 
+		Native already does this now but only if native is larger than screen
+	minarch: add halign and valign 
+		specifically for rgb30
 	
 	trimui: scaling (see DE test)
 	
@@ -30,9 +28,9 @@ known issues
 	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoomini: low battery overlay isn't implemented yet
 	
-	trimuismart: debug hud isn't available 
+	trimuismart: debug hud isn't available/implemented yet
+	trimuismart: low battery overlay isn't available/implemented yet
 	trimuismart: missing L2/R2
-	trimuismart: low battery overlay isn't implemented yet
 	
 	trimui: hw scaling isn't implemented yet
 	trimui: debug hud isn't available
@@ -41,7 +39,10 @@ known issues
 	
 	rg353: double-buffered drawing isn't implemented yet (tearing)
 	rg353: non-integer scaling isn't implemented yet
-	rg353: clock will reset to gmt after returning to stock on wifi
+	rg353: clock always resets to gmt with wifi enabled
+	
+
+	nano: binding MENU+button in menu sleeps device (also doesn't bind MENU+button only button)
 
 sf2000
 	hahahahahahaha no.

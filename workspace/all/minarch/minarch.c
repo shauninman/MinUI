@@ -3063,8 +3063,10 @@ static int Menu_options(MenuList* list) {
 	
 	OptionSaveChanges_updateDesc();
 	
+	int defer_menu = false;
 	while (show_options) {
 		if (await_input) {
+			defer_menu = true;
 			list->on_confirm(list, selected);
 			
 			selected += 1;
@@ -3193,7 +3195,9 @@ static int Menu_options(MenuList* list) {
 			}
 		}
 		
-		POW_update(&dirty, &show_settings, Menu_beforeSleep, Menu_afterSleep);
+		if (!defer_menu) POW_update(&dirty, &show_settings, Menu_beforeSleep, Menu_afterSleep);
+		
+		if (defer_menu && PAD_justReleased(BTN_MENU)) defer_menu = false;
 		
 		if (dirty) {
 			GFX_clear(screen);
