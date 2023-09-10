@@ -7,7 +7,7 @@ index 1f8b3c2b46a79372860c928a47a840b18cc60710..9e849f174c05e78c7808a63ad151db64
  ///////////////////////////////////////////////////////////
  
 +static int frames = 0;
-+static int defer_frames = 36;
++static int defer_frames = 40;
 +static void* deferred_data = NULL;
 +static size_t deferred_size = 0;
 +
