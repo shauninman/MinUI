@@ -6,7 +6,7 @@ next
 	all: updater should use Performance mode where available
 	
 	minarch: add Crop Overscan 
-		Native already does this now but only if native is larger than screen
+		Native already does this now but only if native is larger than screen...
 	minarch: add halign and valign 
 		specifically for rgb30
 	
@@ -30,18 +30,15 @@ known issues
 	
 	trimuismart: debug hud isn't available/implemented yet
 	trimuismart: low battery overlay isn't available/implemented yet
-	trimuismart: missing L2/R2
 	
 	trimui: hw scaling isn't implemented yet
 	trimui: debug hud isn't available
-	trimui: missing L2/R2
 	trimui: low battery overlay isn't implemented yet
 	
 	rg353: double-buffered drawing isn't implemented yet (tearing)
 	rg353: non-integer scaling isn't implemented yet
 	rg353: clock always resets to gmt with wifi enabled
 	
-
 	nano: binding MENU+button in menu sleeps device (also doesn't bind MENU+button only button)
 
 sf2000
@@ -74,13 +71,12 @@ nano
 
 all
 	minarch
-		support adding or hiding frontend options 
-			(by platform? could just be hardcoded into default.cfg)
-			maybe even platform-based compile time exclusion 
-			(eg. overclocking doesn't work on trimui but it does need frameskip)
 		doesn't pickup on core setting ratio changes? eg. fceumm
-		support missing buttons with MENU+BUTTON? (smart,model s,nano)
 		add vertical and horizontal screen alignment to frontend options?
+		prevent MENU+button from triggering button
+		prevent binding same MENU+button to control and shortcut at same time
+			reset the newer input to None and show a message, ideal something like:
+				MENU+<button> is already bound to (<name> shortcut|<name> control)
 	clock
 		- 
 	simple progress animation for installing/updating

@@ -1428,6 +1428,7 @@ static void input_poll_callback(void) {
 	// TODO: when found mark button the array
 	// TODO: then check for button
 	// TODO: only modify if absent from array
+	// TODO: the shortcuts loop above should also contribute to the array
 	
 	buttons = 0;
 	for (int i=0; config.controls[i].name; i++) {
