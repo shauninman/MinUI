@@ -663,6 +663,8 @@ static const char* device_button_names[LOCAL_BUTTON_COUNT] = {
 
 
 // NOTE: these must be in BTN_ID_ order also off by 1 because of NONE (which is -1 in BTN_ID_ land)
+// TODO: now that controls can also use MENU+button button_labels is no longer used
+// TODO: remove button_labels and rename shortcut_labels button_labels
 static char* button_labels[] = {
 	"NONE", // displayed by default
 	"UP",
@@ -988,16 +990,22 @@ static void Config_readControlsString(char* cfg) {
 		if ((tmp = strrchr(value, ':'))) *tmp = '\0'; // this is a binding artifact in default.cfg, ignore
 		
 		int id = -1;
-		for (int j=0; button_labels[j]; j++) {
-			if (!strcmp(button_labels[j],value)) {
+		for (int j=0; shortcut_labels[j]; j++) {
+			if (!strcmp(shortcut_labels[j],value)) {
 				id = j - 1;
 				break;
 			}
 		}
 		// LOG_info("\t%s (%i)\n", value, id);
 		
+		int mod = 0;
+		if (id>=LOCAL_BUTTON_COUNT) {
+			id -= LOCAL_BUTTON_COUNT;
+			mod = 1;
+		}
+		
 		mapping->local = id;
-		mapping->mod = 0;
+		mapping->mod = mod;
 	}
 	
 	for (int i=0; config.shortcuts[i].name; i++) {
@@ -1437,9 +1445,13 @@ static void input_poll_callback(void) {
 	
 	buttons = 0;
 	for (int i=0; config.controls[i].name; i++) {
-		int btn = 1 << config.controls[i].local;
+		ButtonMapping* mapping = &config.controls[i];
+		int btn = 1 << mapping->local;
 		if (btn==BTN_NONE) continue; // present buttons can still be unbound
-		if (PAD_isPressed(btn)) buttons |= 1 << config.controls[i].retro;
+		if (PAD_isPressed(btn) && (!mapping->mod || PAD_isPressed(BTN_MENU))) {
+			buttons |= 1 << mapping->retro;
+			if (mapping->mod) ignore_menu = 1;
+		}
 		//  && !POW_ignoreSettingInput(btn, show_setting)
 	}
 	
@@ -2854,6 +2866,13 @@ int OptionControls_bind(MenuList* list, int i) {
 			if (PAD_justPressed(1 << (id-1))) {
 				item->value = id;
 				button->local = id - 1;
+				if (PAD_isPressed(BTN_MENU)) {
+					item->value += LOCAL_BUTTON_COUNT;
+					button->mod = 1;
+				}
+				else {
+					button->mod = 0;
+				}
 				bound = 1;
 				break;
 			}
@@ -2871,7 +2890,9 @@ static int OptionControls_unbind(MenuList* list, int i) {
 }
 static MenuList OptionControls_menu = {
 	.type = MENU_INPUT,
-	.desc = "Press A to set and X to clear.",
+	.desc = "Press A to set and X to clear."
+		"\nSupports single button and MENU+button." // TODO: not supported on nano because POWER doubles as MENU
+	,
 	.on_confirm = OptionControls_bind,
 	.on_change = OptionControls_unbind,
 	.items = NULL
@@ -2893,7 +2914,8 @@ static int OptionControls_openMenu(MenuList* list, int i) {
 			item->name = button->name;
 			item->desc = NULL;
 			item->value = button->local + 1;
-			item->values = button_labels;
+			if (button->mod) item->value += LOCAL_BUTTON_COUNT;
+			item->values = shortcut_labels;
 		}
 	}
 	else {
@@ -2905,6 +2927,7 @@ static int OptionControls_openMenu(MenuList* list, int i) {
 			
 			MenuItem* item = &OptionControls_menu.items[k++];
 			item->value = button->local + 1;
+			if (button->mod) item->value += LOCAL_BUTTON_COUNT;
 		}
 	}
 	Menu_options(&OptionControls_menu);
@@ -2922,7 +2945,6 @@ static int OptionShortcuts_bind(MenuList* list, int i) {
 		// NOTE: off by one because of the initial NONE value
 		for (int id=0; id<=LOCAL_BUTTON_COUNT; id++) {
 			if (PAD_justPressed(1 << (id-1))) {
-				fflush(stdout);
 				item->value = id;
 				button->local = id - 1;
 				if (PAD_isPressed(BTN_MENU)) {
@@ -2938,7 +2960,6 @@ static int OptionShortcuts_bind(MenuList* list, int i) {
 		}
 		GFX_sync();
 	}
-	fflush(stdout);
 	return MENU_CALLBACK_NEXT_ITEM;
 }
 static int OptionShortcuts_unbind(MenuList* list, int i) {
