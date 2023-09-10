@@ -663,29 +663,7 @@ static const char* device_button_names[LOCAL_BUTTON_COUNT] = {
 
 
 // NOTE: these must be in BTN_ID_ order also off by 1 because of NONE (which is -1 in BTN_ID_ land)
-// TODO: now that controls can also use MENU+button button_labels is no longer used
-// TODO: remove button_labels and rename shortcut_labels button_labels
 static char* button_labels[] = {
-	"NONE", // displayed by default
-	"UP",
-	"DOWN",
-	"LEFT",
-	"RIGHT",
-	"A",
-	"B",
-	"X",
-	"Y",
-	"START",
-	"SELECT",
-	"L1",
-	"R1",
-	"L2",
-	"R2",
-	"L3",
-	"R3",
-	NULL,
-};
-static char* shortcut_labels[] = {
 	"NONE", // displayed by default
 	"UP",
 	"DOWN",
@@ -990,8 +968,8 @@ static void Config_readControlsString(char* cfg) {
 		if ((tmp = strrchr(value, ':'))) *tmp = '\0'; // this is a binding artifact in default.cfg, ignore
 		
 		int id = -1;
-		for (int j=0; shortcut_labels[j]; j++) {
-			if (!strcmp(shortcut_labels[j],value)) {
+		for (int j=0; button_labels[j]; j++) {
+			if (!strcmp(button_labels[j],value)) {
 				id = j - 1;
 				break;
 			}
@@ -1016,8 +994,8 @@ static void Config_readControlsString(char* cfg) {
 		if (!Config_getValue(cfg, key, value, NULL)) continue;
 		
 		int id = -1;
-		for (int j=0; shortcut_labels[j]; j++) {
-			if (!strcmp(shortcut_labels[j],value)) {
+		for (int j=0; button_labels[j]; j++) {
+			if (!strcmp(button_labels[j],value)) {
 				id = j - 1;
 				break;
 			}
@@ -1103,13 +1081,13 @@ static void Config_write(int override) {
 		ButtonMapping* mapping = &config.controls[i];
 		int j = mapping->local + 1;
 		if (mapping->mod) j += LOCAL_BUTTON_COUNT;
-		fprintf(file, "bind %s = %s\n", mapping->name, shortcut_labels[j]);
+		fprintf(file, "bind %s = %s\n", mapping->name, button_labels[j]);
 	}
 	for (int i=0; config.shortcuts[i].name; i++) {
 		ButtonMapping* mapping = &config.shortcuts[i];
 		int j = mapping->local + 1;
 		if (mapping->mod) j += LOCAL_BUTTON_COUNT;
-		fprintf(file, "bind %s = %s\n", mapping->name, shortcut_labels[j]);
+		fprintf(file, "bind %s = %s\n", mapping->name, button_labels[j]);
 	}
 	
 	fclose(file);
@@ -1442,6 +1420,14 @@ static void input_poll_callback(void) {
 	if (!ignore_menu && PAD_justReleased(BTN_MENU)) {
 		show_menu = 1;
 	}
+	
+	// TODO: figure out how to ignore button when MENU+button is handled first
+	// TODO: array size of LOCAL_ whatever that macro is
+	// TODO: then split it into two loops
+	// TODO: first check for MENU+button
+	// TODO: when found mark button the array
+	// TODO: then check for button
+	// TODO: only modify if absent from array
 	
 	buttons = 0;
 	for (int i=0; config.controls[i].name; i++) {
@@ -2915,7 +2901,7 @@ static int OptionControls_openMenu(MenuList* list, int i) {
 			item->desc = NULL;
 			item->value = button->local + 1;
 			if (button->mod) item->value += LOCAL_BUTTON_COUNT;
-			item->values = shortcut_labels;
+			item->values = button_labels;
 		}
 	}
 	else {
@@ -2998,7 +2984,7 @@ static int OptionShortcuts_openMenu(MenuList* list, int i) {
 			item->desc = NULL;
 			item->value = button->local + 1;
 			if (button->mod) item->value += LOCAL_BUTTON_COUNT;
-			item->values = shortcut_labels;
+			item->values = button_labels;
 		}
 	}
 	else {
