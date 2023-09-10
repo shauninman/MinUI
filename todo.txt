@@ -1,9 +1,18 @@
 next
+	figure out what needs to be done for an initial release
+		readmes?
+		trimui smart
+			good enough to go
+		miyoo mini
+			good enough to go
+		rg35xx
+			good to go
+	
 	rgb30: ELLOS + MinUI
+		figure out how to handle resolution switch of hdmi out
 	
 	all: standardize on using extension for shell scripts
 		primarily for quicklook in Finder :sweat_smile:
-	all: updater should use Performance mode where available
 	
 	minarch: add Crop Overscan 
 		Native already does this now but only if native is larger than screen...
@@ -23,17 +32,16 @@ known issues
 		add all/cores/patches/core/* patches
 		this won't work because the number of defer frames varies by platform
 		actually the number doesn't vary? wth
+		bumped defer from 36 to 40 for trimui
 	all: not convinced fixed aspect scaling corrects for screen aspect correctly
 	
 	miyoomini: prevent tearing strict introduces tearing :sob:
-	miyoomini: low battery overlay isn't implemented yet
+	miyoomini: debug/battery overlay isn't implemented yet
 	
-	trimuismart: debug hud isn't available/implemented yet
-	trimuismart: low battery overlay isn't available/implemented yet
+	trimuismart: debug/battery overlay isn't available/implemented yet
 	
 	trimui: hw scaling isn't implemented yet
-	trimui: debug hud isn't available
-	trimui: low battery overlay isn't implemented yet
+	trimui: debug/battery overlay isn't implemented yet
 	
 	rg353: double-buffered drawing isn't implemented yet (tearing)
 	rg353: non-integer scaling isn't implemented yet
@@ -78,7 +86,7 @@ all
 			reset the newer input to None and show a message, ideal something like:
 				MENU+<button> is already bound to (<name> shortcut|<name> control)
 	clock
-		- 
+		factor in timezone offset?
 	simple progress animation for installing/updating
 		launch as a daemon with &
 		draws in a corner
@@ -101,6 +109,7 @@ all
 			states will not be compatible because of the different core but...
 		shows games in alt collated folders even if the alt pak isn't present...
 			not sure how that's possible...
+		alt tag is getting truncated, should be added after truncation
 	add a "res" (or "many"?) folder 
 		for install/update and charging gfx?
 	show
@@ -142,11 +151,7 @@ smart
 	cores
 		supa starfox perf bad
 		pcsx freeze opening menu tekken 3
-	keymon
-		battery/usb monitoring
-			might be fine where it is
-	update default.cfg that include bindings for L2/R2?
-	battery overlay
+	battery/debug overlay
 
 miyoomini
 	separate settings file for mini and plus?

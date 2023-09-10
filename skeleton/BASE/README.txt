@@ -1,7 +1,7 @@
 MinUI is a minimal launcher for the Miyoo Mini (and Plus), Trimui Smart, and RG35XX
 
 Source:
-https://github.com/shauninman/union-minui
+https://github.com/shauninman/minui-minarch-et-al
 
 ----------------------------------------
 Installing
@@ -16,7 +16,7 @@ The primary card should be a reputable brand and freshly formatted as FAT32.
 
 CAVEATS
 
-While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 and therefore need to be installed from the specific device before using. For example, installing MinUI on the RG35XX or Trimui Smart allows it to work on the Miyoo Mini family. But installing on a Miyoo Mini device would require installing again directly on the RG35XX and/or Trimui Smart.
+While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 and therefore need to be installed from the specific device before using. For example, installing MinUI on the RG35XX or Trimui Smart allows it to work on the Miyoo Mini family. But installing on a Miyoo Mini device would require installing again directly on the RG35XX and/or Trimui Smart. When in doubt follow the installation instructions; if all the necessary bits are already installed, the installer will act as an updater instead.
 
 RG35XX
 
@@ -36,10 +36,6 @@ TRIMUI SMART
 
 Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
-TRIMUI MODEL S
-
-Copy "trimui.zip" and "MinUI.zip" (without unzipping) to the root of the SD card. Unzip "trimui.zip" in place on the SD card.
-
 ----------------------------------------
 Updating
 
@@ -47,7 +43,7 @@ RG35XX
 
 Copy "MinUI.zip" (without unzipping) to the root of your primary card.
 
-MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART / TRIMUI MODEL S
+MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card.
 
@@ -69,7 +65,7 @@ RG35XX / MIYOO MINI / MIYOO MINI PLUS
   Sleep: POWER
   Wake: POWER
   
-TRIMUI SMART / TRIMUI MODEL S
+TRIMUI SMART
   
   Sleep: MENU (twice)
   Wake: MENU
@@ -79,16 +75,8 @@ Known Issues
 
 TRIMUI SMART
 
-- battery overlay isn't implemented yet
-- debug hud isn't available yet
-
-TRIMUI MODEL S
-
-- battery overlay isn't implemented yet
-- Nintendo Entertainment System runs poorly
-- missing cores
+- debug/battery overlay isn't implemented yet
 
 MIYOO MINI / MIYOO MINI PLUS
 
 - battery overlay isn't implemented yet
-- prevent tearing strict may produce tearing :sob:
