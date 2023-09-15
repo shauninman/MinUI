@@ -1,7 +1,7 @@
 MinUI is a minimal launcher for the Miyoo Mini (and Plus), Trimui Smart, and RG35XX
 
 Source:
-https://github.com/shauninman/minui-minarch-et-al
+https://github.com/shauninman/minui
 
 ----------------------------------------
 Installing

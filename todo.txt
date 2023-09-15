@@ -1,18 +1,22 @@
 next
+	rgb30 will need an assets@3x.png
+		which reminds me I need to consolidate the art assets
+		I think they all live in Projects/Personal/UI/art?
+			3x looks horsey
+			but 2x is too dense if we just increase size of canvas
+			maybe 2x in a 640x640 safe area centered in 720x720 (8 rows)
+				or even whatever visually looks centered within the device bezel?
+	rename repos to reclain minui name
 	figure out what needs to be done for an initial release
-		readmes?
-		trimui smart
-			good enough to go
-		miyoo mini
-			good enough to go
-		rg35xx
-			good to go
-	
-	rgb30: ELLOS + MinUI
+		Extras README
+			this is complicated by multiple system support
+		
+	rgb30: ELLOS + MinUI?
 		figure out how to handle resolution switch of hdmi out
 	
 	all: standardize on using extension for shell scripts
 		primarily for quicklook in Finder :sweat_smile:
+		all this affects is needs-swap and shutdown...
 	
 	minarch: add Crop Overscan 
 		Native already does this now but only if native is larger than screen...
@@ -28,14 +32,8 @@ next
 	rg353: building with everything else
 	
 known issues
-	all: pokemini doesn't restore audio when resuming from minui (at least on nano and 35xx)
-		add all/cores/patches/core/* patches
-		this won't work because the number of defer frames varies by platform
-		actually the number doesn't vary? wth
-		bumped defer from 36 to 40 for trimui
 	all: not convinced fixed aspect scaling corrects for screen aspect correctly
 	
-	miyoomini: prevent tearing strict introduces tearing :sob:
 	miyoomini: debug/battery overlay isn't implemented yet
 	
 	trimuismart: debug/battery overlay isn't available/implemented yet
@@ -43,39 +41,8 @@ known issues
 	trimui: hw scaling isn't implemented yet
 	trimui: debug/battery overlay isn't implemented yet
 	
-	rg353: double-buffered drawing isn't implemented yet (tearing)
-	rg353: non-integer scaling isn't implemented yet
-	rg353: clock always resets to gmt with wifi enabled
-	
-	nano: binding MENU+button in menu sleeps device (also doesn't bind MENU+button only button)
-
-sf2000
-	hahahahahahaha no.
-
-nano
-	the lack of shared SD card support is a big downer
-		abandon this platform?
-		have I documented the boot process or how to create the modified firmware image?
-	L+R and d-pad to offset cropped "scaling"?
-	keep an eye out for a 60fps fix
-		https://github.com/DrUm78/linux/tags
-		I think I got it (though I coudln't tell it wasn't running 60fps before so...)
-		this might be running worse after the fix...
-	test nano MinUI SD in all other (fully) supported devices
-		no joy :sob:
-		can the boot partition be hidden from other devices?
-		or can I change the boot order to prioritize nand over sd?
-	minarch
-		cores
-			sfc - not great, non-plus is better but still struggles with sfx chip games like SF or YI
-			psx?
-		patches
-	hardware scaling
-		no? but screen is so tiny, relative ppi so high, it might not matter
-	is overclocking possible?
-		no?
-	installer/updater
-		(build into /etc/rcS logic)
+	nano: binding MENU+button in menu sleeps device
+	nano: says it can bind MENU+button for shortcuts, it can't
 
 all
 	minarch
@@ -116,6 +83,52 @@ all
 	say
 	confirm
 
+smart
+	cores
+		supa starfox perf bad
+		pcsx freeze opening menu tekken 3
+	battery/debug overlay
+
+miyoomini
+	separate settings file for mini and plus?
+	battery overlay
+
+miniplus
+	-
+	
+rg35xx
+	how to handle updating on mini and missing TF1 updates as a result?
+		could I write the version to the .minstalled file
+		if it doesn't match the current one run the installer
+		trimui smart has a similar issue now
+			the bootstrap folder updates /etc/main
+
+
+nano
+	the lack of shared SD card support is a big downer
+		abandon this platform?
+		have I documented the boot process or how to create the modified firmware image?
+	L+R and d-pad to offset cropped "scaling"?
+	keep an eye out for a 60fps fix
+		https://github.com/DrUm78/linux/tags
+		I think I got it (though I coudln't tell it wasn't running 60fps before so...)
+		this might be running worse after the fix...
+	test nano MinUI SD in all other (fully) supported devices
+		no joy :sob:
+		can the boot partition be hidden from other devices?
+		or can I change the boot order to prioritize nand over sd?
+	minarch
+		cores
+			sfc - not great, non-plus is better but still struggles with sfx chip games like SF or YI
+			psx?
+		patches
+	hardware scaling
+		no? but screen is so tiny, relative ppi so high, it might not matter
+	is overclocking possible?
+		no?
+	installer/updater
+		(build into /etc/rcS logic)
+
 trimui
 	overclock
 		crashy
@@ -147,37 +160,11 @@ rg353
 		lets setup our own double buffer so we can use it
 	get latest MinUI/launch.sh from SD card
 
-smart
-	cores
-		supa starfox perf bad
-		pcsx freeze opening menu tekken 3
-	battery/debug overlay
-
-miyoomini
-	separate settings file for mini and plus?
-	
-	prevent tearing modes are in conflict
-		lenient has no tearing, flickering settings overlay
-		strict has tearing, flicker-free settings overlay
-	battery overlay
-	update tearing defaults to strict for
-		gba
-		md
-		???
-
-miniplus
-	-
-	
-rg35xx
-	how to handle updating on mini and missing TF1 updates as a result?
-		could I write the version to the .minstalled file
-		if it doesn't match the current one run the installer
-		trimui smart has a similar issue now
-			the bootstrap folder updates /etc/main
-
-
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
+
+sf2000
+	hahahahahahaha no.
 
 ---
 
