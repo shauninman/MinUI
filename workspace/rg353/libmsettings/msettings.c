@@ -146,10 +146,10 @@ void SetRawBrightness(int val) { // 0 - 1024
 	}
 }
 void SetRawVolume(int val) { // 0 - 100
-	char cmd[256];
-	sprintf(cmd, "amixer sset -M 'Master' %i%%", val);
-	puts(cmd); fflush(stdout);
-	system(cmd);
+	// char cmd[256];
+	// sprintf(cmd, "amixer sset -M 'Master' %i%%", val);
+	// puts(cmd); fflush(stdout);
+	// system(cmd);
 }
 
 // monitored and set by thread in keymon
@@ -159,9 +159,9 @@ int GetJack(void) {
 void SetJack(int value) {
 	// printf("SetJack(%i)\n", value); fflush(stdout);
 	
-	char cmd[256];
-	sprintf(cmd, "amixer cset name='Playback Path' '%s'", value?"HP":"SPK");
-	system(cmd);
+	// char cmd[256];
+	// sprintf(cmd, "amixer cset name='Playback Path' '%s'", value?"HP":"SPK");
+	// system(cmd);
 	
 	settings->jack = value;
 	SetVolume(GetVolume());

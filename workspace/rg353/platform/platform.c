@@ -34,7 +34,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	// TODO: we'll want to ignore this, resize fb with ioctls (for panned double buffering)
 	// TODO: then mmap the fb and create a 32 surface (vid.video)
 	// then create a 16 surface (vid.screen)
-	vid.screen = SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, SDL_HWSURFACE);
+	vid.screen = SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, SDL_HWSURFACE | SDL_DOUBLEBUF); // dbuf does nothing
 	vid.joystick = SDL_JoystickOpen(0);
 	vid.fd_fb = open("/dev/fb0", O_RDWR);
 	
