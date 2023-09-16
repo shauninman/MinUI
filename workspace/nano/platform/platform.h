@@ -121,6 +121,9 @@
 #define HAS_NEON
 #define USES_SWSCALER
 
+#define MAIN_ROW_COUNT 7
+#define PADDING 0
+
 ///////////////////////////////
 
 #endif

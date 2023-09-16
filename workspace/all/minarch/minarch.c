@@ -2330,6 +2330,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	
 	// TODO: need to sanity check scale and demands on the buffer
 	
+	// if (dst_y>dst_x) dst_y = dst_x; // TODO: tmp, top align
+	
 	renderer.src_x = src_x;
 	renderer.src_y = src_y;
 	renderer.src_w = src_w;
@@ -3869,7 +3871,7 @@ static void Menu_loop(void) {
 			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
 			
 			// list
-			oy = (PILL_SIZE * 1.5) - PADDING;
+			oy = ((BASE_HEIGHT - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
 			for (int i=0; i<MENU_ITEM_COUNT; i++) {
 				char* item = menu.items[i];
 				SDL_Color text_color = COLOR_WHITE;
@@ -3961,7 +3963,7 @@ static void Menu_loop(void) {
 				
 				// pagination
 				ox += (pw-SCALE1(15*MENU_SLOT_COUNT))/2;
-				oy += SCALE1(124);
+				oy += hh+SCALE1(WINDOW_RADIUS);
 				for (int i=0; i<MENU_SLOT_COUNT; i++) {
 					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15),oy});
 					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});

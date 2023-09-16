@@ -772,7 +772,7 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 	
 	for (int i=0; i<2; i++) {
 		if (!pairs[i*2]) break;
-		if (HAS_SKINNY_SCREEN && i!=primary) continue;
+		if (HAS_SKINNY_SCREEN && i!=primary) continue; // space saving
 		
 		button = pairs[i * 2];
 		hint = pairs[i * 2 + 1];

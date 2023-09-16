@@ -56,8 +56,13 @@
 #define SETTINGS_SIZE 4
 #define SETTINGS_WIDTH 80
 
-#define MAIN_ROW_COUNT (HAS_SKINNY_SCREEN?7:6) // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
-#define PADDING (HAS_SKINNY_SCREEN?0:10) // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
+#ifndef PADDING
+#define MAIN_ROW_COUNT 6 // FIXED_HEIGHT / (PILL_SIZE * FIXED_SCALE) - 2 (floor and subtract 1 if not an integer)
+#endif
+
+#ifndef PADDING
+#define PADDING 10 // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
+#endif
 
 #define FONT_LARGE 16 	// menu
 #define FONT_MEDIUM 14 	// single char button label

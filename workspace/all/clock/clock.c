@@ -254,8 +254,8 @@ int main(int argc , char* argv[]) {
 			
 			// datetime
 			int x = ox;
-			int y = SCALE1(92);
-		
+			int y = SCALE1(((BASE_HEIGHT-PILL_SIZE-DIGIT_HEIGHT)/2)); // TODO: fix alignment on 720x720
+			
 			x = blitNumber(year_selected, x,y);
 			x = blit(CHAR_SLASH, x,y);
 			x = blitNumber(month_selected, x,y);
@@ -292,7 +292,7 @@ int main(int argc , char* argv[]) {
 		
 			// cursor
 			x = ox;
-			y = SCALE1(111);
+			y += SCALE1(19);
 			if (select_cursor!=CURSOR_YEAR) {
 				x += SCALE1(50); // YYYY/
 				x += (select_cursor - 1) * SCALE1(30);
