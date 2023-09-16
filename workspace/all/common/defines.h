@@ -109,6 +109,9 @@
 #ifndef CODE_MENU_ALT
 #define CODE_MENU_ALT CODE_NA
 #endif
+#ifndef JOY_MENU_ALT
+#define JOY_MENU_ALT JOY_NA
+#endif
 
 #ifndef BTN_A // prevent collisions with input.h in keymon
 // TODO: doesn't this belong in api.h? it's meaningless without PAD_*
