@@ -103,6 +103,13 @@
 #define CODE_POWEROFF CODE_NA
 #endif
 
+#ifndef BUTTON_MENU_ALT
+#define BUTTON_MENU_ALT BUTTON_NA
+#endif
+#ifndef CODE_MENU_ALT
+#define CODE_MENU_ALT CODE_NA
+#endif
+
 #ifndef BTN_A // prevent collisions with input.h in keymon
 // TODO: doesn't this belong in api.h? it's meaningless without PAD_*
 enum {

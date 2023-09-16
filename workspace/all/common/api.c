@@ -1094,6 +1094,7 @@ void PAD_poll(void) {
 			else if (code==CODE_START)		{ btn = BTN_START; 		id = BTN_ID_START; }
 			else if (code==CODE_SELECT)		{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
 			else if (code==CODE_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+			else if (code==CODE_MENU_ALT)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
 			else if (code==CODE_L1)			{ btn = BTN_L1; 		id = BTN_ID_L1; }
 			else if (code==CODE_L2)			{ btn = BTN_L2; 		id = BTN_ID_L2; }
 			else if (code==CODE_R1)			{ btn = BTN_R1; 		id = BTN_ID_R1; }
@@ -1116,6 +1117,7 @@ void PAD_poll(void) {
 			else if (joy==JOY_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
 			else if (joy==JOY_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
 			else if (joy==JOY_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+			else if (joy==JOY_MENU_ALT) { btn = BTN_MENU; 		id = BTN_ID_MENU; }
 			else if (joy==JOY_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
 			else if (joy==JOY_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
 			else if (joy==JOY_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
