@@ -1,7 +1,7 @@
 # MinUI
 
 # NOTE: this runs on the host system (eg. macOS) not in a docker image
-# it has too, otherwise we'd be running a docker in a docker and oof
+# it has to, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
 PLATFORMS = miyoomini rg35xx trimuismart
@@ -46,7 +46,7 @@ system:
 
 # TODO: this is a brittle mess...can't build rg353 as a result
 
-cores: # TODO: can't assume every platform will have the same stock cores (platform shgould be )
+cores: # TODO: can't assume every platform will have the same stock cores (platform should be responsible for copy too)
 	# stock cores
 	cp ./workspace/$(PLATFORM)/cores/output/fceumm_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	cp ./workspace/$(PLATFORM)/cores/output/gambatte_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
