@@ -1,7 +1,7 @@
 MinUI is a minimal launcher for the Trimui Smart, Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
 
 Source:
-https://github.com/shauninman/minui (eventually)
+https://github.com/shauninman/minui
 
 ----------------------------------------
 Installing
