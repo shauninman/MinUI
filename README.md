@@ -30,7 +30,7 @@ See [more screenshots](github/).
 - Streamlined emulator frontend 
   (minarch + libretro cores)
 
-You can [grab the latest version here](https://github.com/shauninman/union-minui/releases).
+You can [grab the latest version here](https://github.com/shauninman/MinUI/releases).
 
 > Devices with a physical power switch
 > use MENU to sleep and wake instead of
