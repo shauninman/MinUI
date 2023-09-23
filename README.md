@@ -37,14 +37,6 @@ You can [grab the latest version here](https://github.com/shauninman/MinUI/relea
 > POWER. Once asleep the device can safely
 > be powered off manually with the switch.
 
-## Developers
-
-I am not soliciting source contributions. 
-Please feel free to fork or learn from any
-of my repos but I don't have time to manage
-a community or be managed by one. Thanks
-for understanding.
-
 ## Legacy versions
 
 The original Trimui Model S version of MinUI has been archived [here](https://github.com/shauninman/MinUI-Legacy-Trimui-Model-S).
