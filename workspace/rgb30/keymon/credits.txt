@@ -1,0 +1,3 @@
+based on eggs custom keymon for Trimui: 
+	https://www.dropbox.com/sh/5e9xwvp672vt8cr/AABUIdw1vLYp9h0waoCUqHPOa/source?dl=0&subfolder_nav_tracking=1
+modified to use libmsettings
