@@ -32,10 +32,10 @@ See [more screenshots](github/).
 
 You can [grab the latest version here](https://github.com/shauninman/union-minui/releases).
 
-> Devices with physical power switches 
-> use MENU to sleep and wake instead. Once 
-> asleep the device can safely be powered 
-> off with the switch.
+> Devices with a physical power switch
+> use MENU to sleep and wake instead of
+> POWER. Once asleep the device can safely
+> be powered off manually with the switch.
 
 ## Developers
 
