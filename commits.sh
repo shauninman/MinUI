@@ -57,22 +57,27 @@ bump() {
 	list ./workspace/trimuismart/cores/src
 	bump
 	
-	tell TRIMUI
-	show ./workspace/trimui/other/DinguxCommander
-	show ./workspace/trimui/other/sdl
-	echo CORES
-	list ./workspace/trimui/cores/src
-	bump
-	
-	tell RG353
-	show ./workspace/rg353/other/DinguxCommander
-	echo CORES
-	list ./workspace/rg353/cores/src
-	bump
-
-	tell RGNANO
-	echo CORES
-	list ./workspace/nano/cores/src
-	bump
+	# tell TRIMUI
+	# show ./workspace/trimui/other/DinguxCommander
+	# show ./workspace/trimui/other/sdl
+	# echo CORES
+	# list ./workspace/trimui/cores/src
+	# bump
+	#
+	# tell RG353
+	# show ./workspace/rg353/other/DinguxCommander
+	# echo CORES
+	# list ./workspace/rg353/cores/src
+	# bump
+	#
+	# tell RGNANO
+	# echo CORES
+	# list ./workspace/nano/cores/src
+	# bump
+	#
+	# tell RGB30
+	# echo CORES
+	# list ./workspace/rgb30/cores/src
+	# bump
 
 } | sed 's/\n/ /g'

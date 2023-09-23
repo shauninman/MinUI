@@ -113,8 +113,10 @@ package:
 	# TODO: tmp
 	rm -rf ./build/SYSTEM/rg353
 	rm -rf ./build/SYSTEM/trimui
+	rm -rf ./build/SYSTEM/rgb30
 	rm -rf ./build/EXTRAS/Tools/rg353
 	rm -rf ./build/EXTRAS/Tools/trimui
+	rm -rf ./build/EXTRAS/Tools/rgb30
 	
 	# move formatted readmes from workspace to build
 	cp ./workspace/readmes/BASE-out.txt ./build/BASE/README.txt
