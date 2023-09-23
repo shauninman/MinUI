@@ -4054,7 +4054,7 @@ static void limitFF(void) {
 	static int last_max_speed = -1;
 	if (last_max_speed!=max_ff_speed) {
 		last_max_speed = max_ff_speed;
-		ff_frame_time = 1000000 / (core.fps * (max_ff_speed + 1));
+		ff_frame_time = 1000000 / ((int)core.fps * (max_ff_speed + 1));
 	}
 	
 	uint64_t now = getMicroseconds();
