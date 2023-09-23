@@ -10,9 +10,9 @@ See [more screenshots](github/).
 - Simple launcher, simple SD card
 - No settings or configuration
 - No boxart, themes, or distractions
-- Automatically hides extension 
-  and region/version cruft in 
-  display names
+- Automatically hides hidden files
+  and extension and region/version 
+  cruft in display names
 - Consistent in-emulator menu with
   quick access to save states, disc
   changing, and emulator options
