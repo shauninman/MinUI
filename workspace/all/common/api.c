@@ -1018,7 +1018,7 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	spec_in.samples = 512;
 	spec_in.callback = SND_audioCallback;
 	
-	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio = %s\n", SDL_GetError());
+	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
 	
 	snd.buffer_seconds = 5;
 	snd.sample_rate_in  = sample_rate;
@@ -1031,6 +1031,9 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 
 	LOG_info("sample rate: %i (req) %i (rec)\n", snd.sample_rate_in, snd.sample_rate_out);
 	snd.initialized = 1;
+	
+	char driver[256];
+	LOG_info("SDL_AudioDriverName: %s\n", SDL_AudioDriverName(driver,256));
 }
 void SND_quit(void) { // plat_sound_finish
 	if (!snd.initialized) return;
@@ -1083,6 +1086,7 @@ void PAD_poll(void) {
 		int id = -1;
 		if (event.type==SDL_KEYDOWN || event.type==SDL_KEYUP) {
 			uint8_t code = event.key.keysym.scancode;
+			// LOG_info("key event: %i\n", code);
 				 if (code==CODE_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
  			else if (code==CODE_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
 			else if (code==CODE_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
@@ -1106,6 +1110,7 @@ void PAD_poll(void) {
 		}
 		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
+			// LOG_info("joy event: %i\n", joy);
 				 if (joy==JOY_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
  			else if (joy==JOY_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
 			else if (joy==JOY_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }

@@ -1,23 +1,20 @@
 next
-	rgb30 will need an assets@3x.png
-		which reminds me I need to consolidate the art assets
-		I think they all live in Projects/Personal/UI/art?
-			3x looks horsey
-			but 2x is too dense if we just increase size of canvas
-			maybe 2x in a 640x640 safe area centered in 720x720 (8 rows)
-				or even whatever visually looks centered within the device bezel?
-	rename repos to reclain minui name
-	figure out what needs to be done for an initial release
-		Extras README
-			this is complicated by multiple system support
+	rgb30
+		audio is fucked (caused by sdl12-compat?)
+			see if I can pass the user's callback straight through to sdl2
+			passing straight through but its not helping
+		lto1: warning: switch '-mcpu=cortex-a55' conflicts with '-march=armv8-a' switch
+		fork, add module, or save a patch for sdl12-compat
+		cores
+		crop overscan
+		hardware scaling
+		hdmi out?
+			working
+			just need to watch state
+			hdmi boot logo :sweat_smile:
+				
+	rename repos to reclaim minui name
 		
-	rgb30: ELLOS + MinUI?
-		figure out how to handle resolution switch of hdmi out
-	
-	all: standardize on using extension for shell scripts
-		primarily for quicklook in Finder :sweat_smile:
-		all this affects is needs-swap and shutdown...
-	
 	minarch: add Crop Overscan 
 		Native already does this now but only if native is larger than screen...
 	minarch: add halign and valign 
@@ -159,6 +156,7 @@ rg353
 		appears to work
 		lets setup our own double buffer so we can use it
 	get latest MinUI/launch.sh from SD card
+		oops, might have nuked that
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/

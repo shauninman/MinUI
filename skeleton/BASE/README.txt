@@ -1,7 +1,7 @@
-MinUI is a minimal launcher for the Miyoo Mini (and Plus), Trimui Smart, and RG35XX
+MinUI is a minimal launcher for the Trimui Smart, Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
 
 Source:
-https://github.com/shauninman/minui
+https://github.com/shauninman/minui (eventually)
 
 ----------------------------------------
 Installing
@@ -17,6 +17,10 @@ The primary card should be a reputable brand and freshly formatted as FAT32.
 CAVEATS
 
 While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 and therefore need to be installed from the specific device before using. For example, installing MinUI on the RG35XX or Trimui Smart allows it to work on the Miyoo Mini family. But installing on a Miyoo Mini device would require installing again directly on the RG35XX and/or Trimui Smart. When in doubt follow the installation instructions; if all the necessary bits are already installed, the installer will act as an updater instead.
+
+ALL
+
+Populate the "Bios" and "Roms" folders then copy both to the root of your primary card.
 
 RG35XX
 
