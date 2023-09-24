@@ -1,8 +1,12 @@
 next
+	double-check all per-device cfg files
+		Trimui Smart had defaults left over from a 640x480 device :facepalm:
 	rgb30
 		audio is fucked (caused by sdl12-compat?)
 			see if I can pass the user's callback straight through to sdl2
 			passing straight through but its not helping
+			not caused by sdl12-compat, it's caused by forced vsync
+			occurs in vanilla sdl1 when drm fbdev emulation is double buffered
 		lto1: warning: switch '-mcpu=cortex-a55' conflicts with '-march=armv8-a' switch
 		fork, add module, or save a patch for sdl12-compat
 		cores
