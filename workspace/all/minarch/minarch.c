@@ -448,8 +448,10 @@ static void State_read(void) { // from picoarch
 		}
 		goto error;
 	}
-
-	if (state_size != fread(state, 1, state_size, state_file)) {
+	
+	// some cores report the wrong serialize size initially for some games, eg. mgba: Wario Land 4
+	// so we allow a size mismatch as long as the actual size fits in the buffer we've allocated
+	if (state_size < fread(state, 1, state_size, state_file)) {
 		LOG_error("Error reading state data from file: %s (%s)\n", filename, strerror(errno));
 		goto error;
 	}
