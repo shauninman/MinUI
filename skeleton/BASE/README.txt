@@ -132,7 +132,7 @@ A collection is just a text file containing an ordered list of full paths to rom
 ----------------------------------------
 Advanced
 
-MinUI can automatically run a user-authored shell script on boot. Just place a file named "auto.sh" in "/.userdata/".
+MinUI can automatically run a user-authored shell script on boot. Just place a file named "auto.sh" in "/.userdata/<DEVICE>/".
 
 ----------------------------------------
 Thanks
