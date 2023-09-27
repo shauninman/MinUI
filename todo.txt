@@ -1,4 +1,43 @@
 next
+	minarch: shortcut save/load state doesn't create metadata required for resume
+		some of these can be front loaded 
+			minui_dir
+			disc_paths
+			total_discs
+			base_path
+			slot_path
+			disc
+
+		some need to be created right before use
+			bmp_path
+			txt_path
+			bitmap
+			save_exists
+
+			SAVE
+				total_discs
+				disc_paths
+				base_path
+				minui_dir
+
+				bmp_path
+				txt_path
+				disc
+				bitmap
+				slot_path
+
+
+			LOAD
+				save_exists
+				total_discs
+				txt_path
+				base_path
+				disc_paths
+				disc
+				slot_path
+		
+		maybe these should be added to 
+
 	double-check all per-device cfg files
 		Trimui Smart had defaults left over from a 640x480 device :facepalm:
 	rgb30
@@ -13,15 +52,13 @@ next
 		crop overscan
 		hardware scaling
 		hdmi out?
-			working
-			just need to watch state
-			hdmi boot logo :sweat_smile:
+			working (only on a fresh boot)
+			maybe poweroff/quicksave, connect hdmi, poweron/resume is good enough?
+			https://github.com/shauninman/MinUI-Legacy-RG35XX/commit/1ea75a50e07b5add4d38f62bc7b099a3b053fd4e
 				
-	rename repos to reclaim minui name
-		
-	minarch: add Crop Overscan 
+	minarch: add Crop Overscan? Cropped? Overscan?
 		Native already does this now but only if native is larger than screen...
-	minarch: add halign and valign 
+	minarch: add halign and valign?
 		specifically for rgb30
 	
 	trimui: scaling (see DE test)

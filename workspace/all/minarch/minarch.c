@@ -1360,6 +1360,9 @@ static void OptionList_setOptionValue(OptionList* list, const char* key, const c
 static void Menu_beforeSleep(void);
 static void Menu_afterSleep(void);
 
+static void Menu_saveState(void);
+static void Menu_loadState(void);
+
 static uint32_t buttons = 0; // RETRO_DEVICE_ID_JOYPAD_* buttons
 static int ignore_menu = 0;
 static void input_poll_callback(void) {
@@ -1403,8 +1406,8 @@ static void input_poll_callback(void) {
 			}
 			else if (PAD_justPressed(btn)) {
 				switch (i) {
-					case SHORTCUT_SAVE_STATE: State_write(); break;
-					case SHORTCUT_LOAD_STATE: State_read(); break;
+					case SHORTCUT_SAVE_STATE: Menu_saveState(); break;
+					case SHORTCUT_LOAD_STATE: Menu_loadState(); break;
 					case SHORTCUT_RESET_GAME: core.reset(); break;
 					case SHORTCUT_CYCLE_SCALE:
 						screen_scaling += 1;
@@ -2617,7 +2620,6 @@ enum {
 };
 
 static struct {
-	int initialized;
 	SDL_Surface* overlay;
 	char* items[MENU_ITEM_COUNT];
 	int slot;
@@ -3586,6 +3588,14 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	// LOG_info("successful\n");
 }
 
+// TODO: refactor so shorctus and menu savestates generate the same metadata
+static void Menu_saveState(void) {
+	State_write();
+}
+static void Menu_loadState(void) {
+	State_read();
+}
+
 static void Menu_loop(void) {
 	SDL_Surface* bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
 	
@@ -3776,15 +3786,15 @@ static void Menu_loop(void) {
 				case ITEM_SAVE: {
 					state_slot = menu.slot;
 					State_write();
-					status = STATUS_SAVE;
 					SDL_RWops* out = SDL_RWFromFile(bmp_path, "wb");
 					if (total_discs) {
 						char* disc_path = disc_paths[disc];
 						putFile(txt_path, disc_path + strlen(base_path));
-						sprintf(bmp_path, "%s/%s.%d.bmp", minui_dir, game.name, menu.slot);
 					}
 					SDL_SaveBMP_RW(bitmap, out, 1);
 					putInt(slot_path, menu.slot);
+
+					status = STATUS_SAVE;
 					show_menu = 0;
 				}
 				break;
@@ -3802,8 +3812,9 @@ static void Menu_loop(void) {
 					}
 					state_slot = menu.slot;
 					State_read();
-					status = STATUS_LOAD;
 					putInt(slot_path, menu.slot);
+
+					status = STATUS_LOAD;
 					show_menu = 0;
 				}
 				break;
@@ -4143,6 +4154,17 @@ int main(int argc , char* argv[]) {
 		if (show_menu) Menu_loop();
 		
 		trackFPS();
+		
+		// TODO: this is working as expected 
+		// but I for some reason kmsdrm isn't ready 
+		// by the time we relaunch minarch
+		
+		// if (GFX_hdmiChanged()) {
+		// 	LOG_info("hdmi changed\n");
+		// 	Menu_beforeSleep();
+		// 	sleep(5);
+		// 	quit = 1;
+		// }
 	}
 	
 	Menu_quit();
