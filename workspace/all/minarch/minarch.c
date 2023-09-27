@@ -2619,11 +2619,29 @@ enum {
 	STATUS_QUIT = 30
 };
 
+// TODO: I don't love how overloaded this has become
 static struct {
+	SDL_Surface* bitmap;
 	SDL_Surface* overlay;
 	char* items[MENU_ITEM_COUNT];
+	char* disc_paths[9]; // up to 9 paths, Arc the Lad Collection is 7 discs
+	char minui_dir[256];
+	char slot_path[256];
+	char base_path[256];
+	char bmp_path[256];
+	char txt_path[256];
+	int disc;
+	int total_discs;
 	int slot;
+	int save_exists;
+	int preview_exists;
 } menu = {
+	.bitmap = NULL,
+	.disc = -1,
+	.total_discs = 0,
+	.save_exists = 0,
+	.preview_exists = 0,
+	
 	.items = {
 		[ITEM_CONT] = "Continue",
 		[ITEM_SAVE] = "Save",
@@ -2637,6 +2655,47 @@ void Menu_init(void) {
 	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
 	SDL_SetAlpha(menu.overlay, SDL_SRCALPHA, 0x80);
 	SDL_FillRect(menu.overlay, NULL, 0);
+	
+	char emu_name[256];
+	getEmuName(game.path, emu_name);
+	sprintf(menu.minui_dir, SHARED_USERDATA_PATH "/.minui/%s", emu_name);
+	mkdir(menu.minui_dir, 0755);
+
+	sprintf(menu.slot_path, "%s/%s.txt", menu.minui_dir, game.name);
+	
+	if (game.m3u_path[0]) {
+		char* tmp;
+		strcpy(menu.base_path, game.m3u_path);
+		tmp = strrchr(menu.base_path, '/') + 1;
+		tmp[0] = '\0';
+		
+		//read m3u file
+		FILE* file = fopen(game.m3u_path, "r");
+		if (file) {
+			char line[256];
+			while (fgets(line,256,file)!=NULL) {
+				normalizeNewline(line);
+				trimTrailingNewlines(line);
+				if (strlen(line)==0) continue; // skip empty lines
+		
+				char disc_path[256];
+				strcpy(disc_path, menu.base_path);
+				tmp = disc_path + strlen(disc_path);
+				strcpy(tmp, line);
+				
+				// found a valid disc path
+				if (exists(disc_path)) {
+					menu.disc_paths[menu.total_discs] = strdup(disc_path);
+					// matched our current disc
+					if (exactMatch(disc_path, game.path)) {
+						menu.disc = menu.total_discs;
+					}
+					menu.total_discs += 1;
+				}
+			}
+			fclose(file);
+		}
+	}
 }
 void Menu_quit(void) {
 	SDL_FreeSurface(menu.overlay);
@@ -3588,22 +3647,76 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	// LOG_info("successful\n");
 }
 
-// TODO: refactor so shorctus and menu savestates generate the same metadata
+static void Menu_initState(void) {
+	if (exists(menu.slot_path)) menu.slot = getInt(menu.slot_path);
+	if (menu.slot==8) menu.slot = 0;
+	
+	menu.save_exists = 0;
+	menu.preview_exists = 0;
+}
+static void Menu_updateState(void) {
+	int last_slot = state_slot;
+	state_slot = menu.slot;
+
+	char save_path[256];
+	State_getPath(save_path);
+
+	state_slot = last_slot;
+
+	sprintf(menu.bmp_path, "%s/%s.%d.bmp", menu.minui_dir, game.name, menu.slot);
+	sprintf(menu.txt_path, "%s/%s.%d.txt", menu.minui_dir, game.name, menu.slot);
+	
+	menu.save_exists = exists(save_path);
+	menu.preview_exists = menu.save_exists && exists(menu.bmp_path);
+
+	// LOG_info("save_path: %s (%i)\n", save_path, menu.save_exists);
+	// LOG_info("bmp_path: %s txt_path: %s (%i)\n", menu.bmp_path, menu.txt_path, menu.preview_exists);
+}
 static void Menu_saveState(void) {
+	Menu_updateState();
+	
+	if (menu.total_discs) {
+		char* disc_path = menu.disc_paths[menu.disc];
+		putFile(menu.txt_path, disc_path + strlen(menu.base_path));
+	}
+	
+	SDL_Surface* bitmap = menu.bitmap;
+	if (!bitmap) bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
+	SDL_RWops* out = SDL_RWFromFile(menu.bmp_path, "wb");
+	SDL_SaveBMP_RW(bitmap, out, 1);
+	if (bitmap!=menu.bitmap) SDL_FreeSurface(bitmap);
+	
+	state_slot = menu.slot;
+	putInt(menu.slot_path, menu.slot);
 	State_write();
 }
 static void Menu_loadState(void) {
+	Menu_updateState();
+	
+	if (menu.save_exists && menu.total_discs) {
+		char slot_disc_name[256];
+		getFile(menu.txt_path, slot_disc_name, 256);
+		
+		char slot_disc_path[256];
+		if (slot_disc_name[0]=='/') strcpy(slot_disc_path, slot_disc_name);
+		else sprintf(slot_disc_path, "%s%s", menu.base_path, slot_disc_name);
+		
+		char* disc_path = menu.disc_paths[menu.disc];
+		if (!exactMatch(slot_disc_path, disc_path)) {
+			Game_changeDisc(slot_disc_path);
+		}
+	}
+	
+	state_slot = menu.slot;
+	putInt(menu.slot_path, menu.slot);
 	State_read();
 }
 
 static void Menu_loop(void) {
-	SDL_Surface* bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
+	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
 	
-	// TODO: update backing if screen_scaling changes while in options menu
-	// TODO: create this from a persistent FIXED_WIDTH,FIXED_HEIGHT buffer	
 	SDL_Surface* backing = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_565); 
-	// LOG_info("intial backing\n");
-	Menu_scale(bitmap, backing);
+	Menu_scale(menu.bitmap, backing);
 	
 	int restore_w = screen->w;
 	int restore_h = screen->h;
@@ -3635,71 +3748,19 @@ static void Menu_loop(void) {
 	// path and string things
 	char* tmp;
 	char rom_name[256]; // without extension or cruft
-	char slot_path[256];
-	char emu_name[256];
-	char minui_dir[256];
-		
-	getEmuName(game.path, emu_name);
-	sprintf(minui_dir, SHARED_USERDATA_PATH "/.minui/%s", emu_name);
-	mkdir(minui_dir, 0755);
-	
-	int rom_disc = -1;
-	int disc = rom_disc;
-	int total_discs = 0;
-	char disc_name[16];
-	char* disc_paths[9]; // up to 9 paths, Arc the Lad Collection is 7 discs
-	char base_path[256]; // used below too when status==kItemSave
-	
-	if (game.m3u_path[0]) {
-		strcpy(base_path, game.m3u_path);
-		tmp = strrchr(base_path, '/') + 1;
-		tmp[0] = '\0';
-		
-		//read m3u file
-		FILE* file = fopen(game.m3u_path, "r");
-		if (file) {
-			char line[256];
-			while (fgets(line,256,file)!=NULL) {
-				normalizeNewline(line);
-				trimTrailingNewlines(line);
-				if (strlen(line)==0) continue; // skip empty lines
-		
-				char disc_path[256];
-				strcpy(disc_path, base_path);
-				tmp = disc_path + strlen(disc_path);
-				strcpy(tmp, line);
-				
-				// found a valid disc path
-				if (exists(disc_path)) {
-					disc_paths[total_discs] = strdup(disc_path);
-					// matched our current disc
-					if (exactMatch(disc_path, game.path)) {
-						rom_disc = total_discs;
-						disc = rom_disc;
-						sprintf(disc_name, "Disc %i", disc+1);
-					}
-					total_discs += 1;
-				}
-			}
-			fclose(file);
-		}
-	}
-	
-	// shares saves across multi-disc games too
-	sprintf(slot_path, "%s/%s.txt", minui_dir, game.name);
 	getDisplayName(game.name, rom_name);
 	
+	int rom_disc = -1;
+	char disc_name[16];
+	if (menu.total_discs) {
+		rom_disc = menu.disc;
+		sprintf(disc_name, "Disc %i", menu.disc+1);
+	}
+		
 	int selected = 0; // resets every launch
-	if (exists(slot_path)) menu.slot = getInt(slot_path);
-	if (menu.slot==8) menu.slot = 0;
+	Menu_initState();
 	
-	char save_path[256];
-	char bmp_path[256];
-	char txt_path[256];
-	int save_exists = 0;
-	int preview_exists = 0;
-	
-	int status = STATUS_CONT; // TODO: tmp?
+	int status = STATUS_CONT; // TODO: no longer used?
 	int show_setting = 0;
 	int dirty = 1;
 	int ignore_menu = 0;
@@ -3724,11 +3785,11 @@ static void Menu_loop(void) {
 			dirty = 1;
 		}
 		else if (PAD_justPressed(BTN_LEFT)) {
-			if (total_discs>1 && selected==ITEM_CONT) {
-				disc -= 1;
-				if (disc<0) disc += total_discs;
+			if (menu.total_discs>1 && selected==ITEM_CONT) {
+				menu.disc -= 1;
+				if (menu.disc<0) menu.disc += menu.total_discs;
 				dirty = 1;
-				sprintf(disc_name, "Disc %i", disc+1);
+				sprintf(disc_name, "Disc %i", menu.disc+1);
 			}
 			else if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
 				menu.slot -= 1;
@@ -3737,11 +3798,11 @@ static void Menu_loop(void) {
 			}
 		}
 		else if (PAD_justPressed(BTN_RIGHT)) {
-			if (total_discs>1 && selected==ITEM_CONT) {
-				disc += 1;
-				if (disc==total_discs) disc -= total_discs;
+			if (menu.total_discs>1 && selected==ITEM_CONT) {
+				menu.disc += 1;
+				if (menu.disc==menu.total_discs) menu.disc -= menu.total_discs;
 				dirty = 1;
-				sprintf(disc_name, "Disc %i", disc+1);
+				sprintf(disc_name, "Disc %i", menu.disc+1);
 			}
 			else if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
 				menu.slot += 1;
@@ -3751,19 +3812,8 @@ static void Menu_loop(void) {
 		}
 		
 		if (dirty && (selected==ITEM_SAVE || selected==ITEM_LOAD)) {
-			int last_slot = state_slot;
-			state_slot = menu.slot;
-			State_getPath(save_path);
-			state_slot = last_slot;
-			sprintf(bmp_path, "%s/%s.%d.bmp", minui_dir, game.name, menu.slot);
-			sprintf(txt_path, "%s/%s.%d.txt", minui_dir, game.name, menu.slot);
-		
-			save_exists = exists(save_path);
-			preview_exists = save_exists && exists(bmp_path);
-			// printf("save_path: %s (%i)\n", save_path, save_exists);
-			// printf("bmp_path: %s (%i)\n", bmp_path, preview_exists);
+			Menu_updateState();
 		}
-		
 		
 		if (PAD_justPressed(BTN_B) || (BTN_WAKE!=BTN_MENU && PAD_tappedMenu(now))) {
 			status = STATUS_CONT;
@@ -3772,9 +3822,9 @@ static void Menu_loop(void) {
 		else if (PAD_justPressed(BTN_A)) {
 			switch(selected) {
 				case ITEM_CONT:
-				if (total_discs && rom_disc!=disc) {
+				if (menu.total_discs && rom_disc!=menu.disc) {
 						status = STATUS_DISC;
-						char* disc_path = disc_paths[disc];
+						char* disc_path = menu.disc_paths[menu.disc];
 						Game_changeDisc(disc_path);
 					}
 					else {
@@ -3784,36 +3834,13 @@ static void Menu_loop(void) {
 				break;
 				
 				case ITEM_SAVE: {
-					state_slot = menu.slot;
-					State_write();
-					SDL_RWops* out = SDL_RWFromFile(bmp_path, "wb");
-					if (total_discs) {
-						char* disc_path = disc_paths[disc];
-						putFile(txt_path, disc_path + strlen(base_path));
-					}
-					SDL_SaveBMP_RW(bitmap, out, 1);
-					putInt(slot_path, menu.slot);
-
+					Menu_saveState();
 					status = STATUS_SAVE;
 					show_menu = 0;
 				}
 				break;
 				case ITEM_LOAD: {
-					if (save_exists && total_discs) {
-						char slot_disc_name[256];
-						getFile(txt_path, slot_disc_name, 256);
-						char slot_disc_path[256];
-						if (slot_disc_name[0]=='/') strcpy(slot_disc_path, slot_disc_name);
-						else sprintf(slot_disc_path, "%s%s", base_path, slot_disc_name);
-						char* disc_path = disc_paths[disc];
-						if (!exactMatch(slot_disc_path, disc_path)) {
-							Game_changeDisc(slot_disc_path);
-						}
-					}
-					state_slot = menu.slot;
-					State_read();
-					putInt(slot_path, menu.slot);
-
+					Menu_loadState();
 					status = STATUS_LOAD;
 					show_menu = 0;
 				}
@@ -3830,7 +3857,7 @@ static void Menu_loop(void) {
 						screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
 						
 						SDL_FillRect(backing, NULL, 0);
-						Menu_scale(bitmap, backing);
+						Menu_scale(menu.bitmap, backing);
 					}
 					dirty = 1;
 				}
@@ -3891,7 +3918,7 @@ static void Menu_loop(void) {
 				
 				if (i==selected) {
 					// disc change
-					if (total_discs>1 && i==ITEM_CONT) {				
+					if (menu.total_discs>1 && i==ITEM_CONT) {				
 						GFX_blitPill(ASSET_DARK_GRAY_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING),
 							SCALE1(oy + PADDING),
@@ -3954,9 +3981,9 @@ static void Menu_loop(void) {
 				ox += SCALE1(WINDOW_RADIUS);
 				oy += SCALE1(WINDOW_RADIUS);
 				
-				if (preview_exists) { // has save, has preview
+				if (menu.preview_exists) { // has save, has preview
 					// lotta memory churn here
-					SDL_Surface* bmp = IMG_Load(bmp_path);
+					SDL_Surface* bmp = IMG_Load(menu.bmp_path);
 					SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
 					
 					// LOG_info("preview\n");
@@ -3970,7 +3997,7 @@ static void Menu_loop(void) {
 				else {
 					SDL_Rect preview_rect = {ox,oy,hw,hh};
 					SDL_FillRect(screen, &preview_rect, 0);
-					if (save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
+					if (menu.save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
 					else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
 				}
 				
@@ -4010,7 +4037,8 @@ static void Menu_loop(void) {
 		if (!HAS_POWER_BUTTON) POW_disableSleep();
 	}
 	
-	SDL_FreeSurface(bitmap);
+	SDL_FreeSurface(menu.bitmap);
+	menu.bitmap = NULL;
 	SDL_FreeSurface(backing);
 	POW_disableAutosleep();
 }
@@ -4141,6 +4169,7 @@ int main(int argc , char* argv[]) {
 	InitSettings(); // after we initialize audio
 	Menu_init();
 	State_resume();
+	Menu_initState(); // make ready for state shortcuts
 	
 	POW_warn(1);
 	POW_disableAutosleep();
