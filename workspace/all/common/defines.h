@@ -113,6 +113,13 @@
 #define JOY_MENU_ALT JOY_NA
 #endif
 
+#ifndef HAS_HDMI
+#define HDMI_WIDTH	FIXED_WIDTH
+#define HDMI_HEIGHT	FIXED_HEIGHT
+#define HDMI_PITCH	FIXED_PITCH
+#define HDMI_SIZE	FIXED_SIZE
+#endif
+
 #ifndef BTN_A // prevent collisions with input.h in keymon
 // TODO: doesn't this belong in api.h? it's meaningless without PAD_*
 enum {

@@ -112,6 +112,12 @@
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
 #define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
 
+#define HAS_HDMI	1
+#define HDMI_WIDTH 	1280
+#define HDMI_HEIGHT 720
+#define HDMI_PITCH 	(HDMI_WIDTH * FIXED_BPP)
+#define HDMI_SIZE	(HDMI_PITCH * HDMI_HEIGHT)
+
 ///////////////////////////////
 
 #define MAIN_ROW_COUNT 8

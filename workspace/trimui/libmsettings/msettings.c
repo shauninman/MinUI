@@ -199,3 +199,10 @@ void SetJack(int value) {
 	settings->jack = value;
 	SetVolume(GetVolume());
 }
+
+int GetHDMI(void) {
+	return 0;
+}
+void SetHDMI(int value) {
+	// buh
+}

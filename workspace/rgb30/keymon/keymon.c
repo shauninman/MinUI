@@ -31,8 +31,9 @@
 static int inputs[INPUT_COUNT];
 static struct input_event ev;
 
-static pthread_t jack_pt;
+static pthread_t ports_pt;
 #define JACK_STATE_PATH "/sys/bus/platform/devices/singleadc-joypad/hp"
+#define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
 
 int getInt(char* path) {
 	int i = 0;
@@ -44,11 +45,14 @@ int getInt(char* path) {
 	return i;
 }
 
-static void* watchJack(void *arg) {
+static void* watchPorts(void *arg) {
 	int has_headphones,had_headphones;
+	int has_hdmi,had_hdmi;
 	
 	has_headphones = had_headphones = getInt(JACK_STATE_PATH);
+	has_hdmi = had_hdmi = getInt(HDMI_STATE_PATH);
 	SetJack(has_headphones);
+	SetHDMI(has_hdmi);
 	
 	while(1) {
 		sleep(1);
@@ -58,6 +62,12 @@ static void* watchJack(void *arg) {
 			had_headphones = has_headphones;
 			SetJack(has_headphones);
 		}
+		
+		has_hdmi = getInt(HDMI_STATE_PATH);
+		if (had_hdmi!=has_hdmi) {
+			had_hdmi = has_hdmi;
+			SetHDMI(has_hdmi);
+		}
 	}
 	
 	return 0;
@@ -66,7 +76,7 @@ static void* watchJack(void *arg) {
 
 int main (int argc, char *argv[]) {
 	InitSettings();
-	pthread_create(&jack_pt, NULL, &watchJack, NULL);
+	pthread_create(&ports_pt, NULL, &watchPorts, NULL);
 	
 	char path[32];
 	for (int i=0; i<INPUT_COUNT-1; i++) {

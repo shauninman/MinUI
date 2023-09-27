@@ -216,3 +216,10 @@ int GetJack(void) {
 void SetJack(int value) {
 	// buh
 }
+
+int GetHDMI(void) {
+	return 0;
+}
+void SetHDMI(int value) {
+	// buh
+}

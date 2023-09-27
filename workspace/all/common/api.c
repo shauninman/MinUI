@@ -180,6 +180,15 @@ void GFX_setVsync(int vsync) {
 	gfx.vsync = vsync;
 }
 
+int GFX_hdmiChanged(void) {
+	static int had_hdmi = -1;
+	int has_hdmi = GetHDMI();
+	if (had_hdmi==-1) had_hdmi = has_hdmi;
+	if (had_hdmi==has_hdmi) return 0;
+	had_hdmi = has_hdmi;
+	return 1;
+}
+
 #define FRAME_BUDGET 17 // 60fps
 static uint32_t frame_start = 0;
 void GFX_startFrame(void) {

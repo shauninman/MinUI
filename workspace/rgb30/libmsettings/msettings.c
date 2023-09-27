@@ -22,6 +22,7 @@ typedef struct Settings {
 	int unused[2]; // for future use
 	// NOTE: doesn't really need to be persisted but still needs to be shared
 	int jack; 
+	int hdmi; 
 } Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
@@ -29,6 +30,7 @@ static Settings DefaultSettings = {
 	.headphones = 4,
 	.speaker = 8,
 	.jack = 0,
+	.hdmi = 0,
 };
 static Settings* settings;
 
@@ -82,6 +84,7 @@ void InitSettings(void) {
 		
 		// these shouldn't be persisted
 		// settings->jack = 0;
+		// settings->hdmi = 0;
 	}
 	printf("brightness: %i\nspeaker: %i \n", settings->brightness, settings->speaker);
 	
@@ -106,6 +109,8 @@ int GetBrightness(void) { // 0-10
 	return settings->brightness;
 }
 void SetBrightness(int value) {
+	if (settings->hdmi) return;
+	
 	int raw;
 	switch (value) {
 		// TODO: redo, range is 0-255
@@ -130,6 +135,8 @@ int GetVolume(void) { // 0-20
 	return settings->jack ? settings->headphones : settings->speaker;
 }
 void SetVolume(int value) {
+	if (settings->hdmi) return;
+	
 	if (settings->jack) settings->headphones = value;
 	else settings->speaker = value;
 	
@@ -139,7 +146,9 @@ void SetVolume(int value) {
 }
 
 void SetRawBrightness(int val) { // 0 - 255
-	printf("SetRawBrightness(%i)\n", val); fflush(stdout);
+	if (settings->hdmi) return;
+	
+	// printf("SetRawBrightness(%i)\n", val); fflush(stdout);
 	int fd = open(BRIGHTNESS_PATH, O_WRONLY);
 	if (fd>=0) {
 		dprintf(fd,"%d",val);
@@ -147,10 +156,10 @@ void SetRawBrightness(int val) { // 0 - 255
 	}
 }
 void SetRawVolume(int val) { // 0 - 100
-	printf("SetRawVolume(%i)\n", val); fflush(stdout);
+	// printf("SetRawVolume(%i)\n", val); fflush(stdout);
 	char cmd[256];
-	sprintf(cmd, "amixer sset -M 'Master' %i%%", val);
-	puts(cmd); fflush(stdout);
+	sprintf(cmd, "amixer sset -M 'Master' %i%% &> /dev/null", val);
+	// puts(cmd); fflush(stdout);
 	system(cmd);
 }
 
@@ -162,9 +171,23 @@ void SetJack(int value) {
 	printf("SetJack(%i)\n", value); fflush(stdout);
 	
 	char cmd[256];
-	sprintf(cmd, "amixer cset name='Playback Path' '%s'", value?"HP":"SPK");
+	sprintf(cmd, "amixer cset name='Playback Path' '%s' &> /dev/null", value?"HP":"SPK");
 	system(cmd);
 	
 	settings->jack = value;
 	SetVolume(GetVolume());
+}
+
+int GetHDMI(void) {	
+	// printf("GetHDMI() %i\n", settings->hdmi); fflush(stdout);
+	return settings->hdmi;
+}
+void SetHDMI(int value) {
+	// printf("SetHDMI(%i)\n", value); fflush(stdout);
+	
+	// if (settings->hdmi!=value) system("/usr/lib/autostart/common/055-hdmi-check");
+	
+	settings->hdmi = value;
+	if (value) SetRawVolume(100); // max
+	else SetVolume(GetVolume()); // restore
 }
