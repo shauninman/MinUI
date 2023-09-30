@@ -30,8 +30,9 @@ static int show_menu;
 enum {
 	SCALE_NATIVE,
 	SCALE_ASPECT,
-	// SCALE_CROPPED,
 	SCALE_FULLSCREEN,
+	// SCALE_CROPPED,
+	SCALE_COUNT,
 };
 
 // enum {
@@ -550,6 +551,7 @@ static char* scaling_labels[] = {
 	"Native",
 	"Aspect",
 	"Fullscreen",
+	// "Cropped",
 	NULL
 };
 static char* tearing_labels[] = {
@@ -731,10 +733,10 @@ static struct Config {
 			[FE_OPT_SCALING] = {
 				.key	= "minarch_screen_scaling", 
 				.name	= "Screen Scaling",
-				.desc	= "Native uses integer scaling. Aspect uses\nthe core reported aspect ratio. Fullscreen\nproduces non-square pixels.",
+				.desc	= "Native uses integer scaling. Aspect uses\nthe core reported aspect ratio. Fullscreen\nproduces non-square pixels.", // TODO: add Cropped to desc
 				.default_value = 1,
 				.value = 1,
-				.count = 3,
+				.count = SCALE_COUNT,
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
@@ -956,7 +958,7 @@ static void Config_readOptionsString(char* cfg) {
 static void Config_readControlsString(char* cfg) {
 	if (!cfg) return;
 
-	LOG_info("Config_readControls\n");
+	LOG_info("Config_readControlsString\n");
 	
 	char key[256];
 	char value[256];
@@ -1411,7 +1413,7 @@ static void input_poll_callback(void) {
 					case SHORTCUT_RESET_GAME: core.reset(); break;
 					case SHORTCUT_CYCLE_SCALE:
 						screen_scaling += 1;
-						if (screen_scaling>=3) screen_scaling -= 3;
+						if (screen_scaling>=SCALE_COUNT) screen_scaling -= SCALE_COUNT;
 						Config_syncFrontend(config.frontend.options[FE_OPT_SCALING].key, screen_scaling);
 						break;
 					default: break;
@@ -1893,11 +1895,11 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	dst_x = 0;
 	dst_y = 0;
 	
-	if (screen_scaling==SCALE_NATIVE) {
+	if (screen_scaling==SCALE_NATIVE) { //  || screen_scaling==SCALE_CROPPED
 		// this is the same whether fit or oversized
 		scale = MIN(FIXED_WIDTH/src_w, FIXED_HEIGHT/src_h);
 		if (!scale) {
-			sprintf(scaler_name, "cropped");
+			sprintf(scaler_name, "forced crop");
 			dst_w = FIXED_WIDTH;
 			dst_h = FIXED_HEIGHT;
 			dst_p = FIXED_PITCH;
@@ -1911,6 +1913,44 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			if (oy<0) src_y = -oy;
 			else dst_y = oy;
 		}
+		// TODO: this is all kinds of messed up
+		// TODO: is this blowing up because the smart has to rotate before scaling?
+		// TODO: or is it just that I'm trying to cram 4 logical rects into 2 rect arguments
+		// TODO: eg. src.size + src.clip + dst.size + dst.clip
+		// else if (screen_scaling==SCALE_CROPPED) {
+		// 	int scale_x = CEIL_DIV(FIXED_WIDTH, src_w);
+		// 	int scale_y = CEIL_DIV(FIXED_HEIGHT, src_h);
+		// 	scale = MIN(scale_x, scale_y);
+		//
+		// 	sprintf(scaler_name, "cropped");
+		// 	dst_w = FIXED_WIDTH;
+		// 	dst_h = FIXED_HEIGHT;
+		// 	dst_p = FIXED_PITCH;
+		//
+		// 	int scaled_w = src_w * scale;
+		// 	int scaled_h = src_h * scale;
+		//
+		// 	int ox = (FIXED_WIDTH  - scaled_w) / 2; // may be negative
+		// 	int oy = (FIXED_HEIGHT - scaled_h) / 2; // may be negative
+		//
+		// 	if (ox<0) {
+		// 		src_x = -ox / scale;
+		// 		src_w -= src_x * 2;
+		// 	}
+		// 	else {
+		// 		dst_x = ox;
+		// 		dst_w -= ox * 2;
+		// 	}
+		//
+		// 	if (oy<0) {
+		// 		src_y = -oy / scale;
+		// 		src_h -= src_y * 2;
+		// 	}
+		// 	else {
+		// 		dst_y = oy;
+		// 		dst_h -= oy * 2;
+		// 	}
+		// }
 		else {
 			sprintf(scaler_name, "integer");
 			int scaled_w = src_w * scale;
@@ -1945,7 +1985,14 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		}
 	}
 	else {
-		scale = MAX(CEIL_DIV(FIXED_WIDTH, src_w), CEIL_DIV(FIXED_HEIGHT,src_h));
+		int scale_x = CEIL_DIV(FIXED_WIDTH, src_w);
+		int scale_y = CEIL_DIV(FIXED_HEIGHT,src_h);
+		
+		// odd resolutions (eg. PS1 Rayman: 320x239) is throwing this off, need to snap to eights
+		int r = (FIXED_HEIGHT-src_h)%8;
+		if (r && r<8) scale_y -= 1;
+		
+		scale = MAX(scale_x, scale_y);
 		// if (scale>4) scale = 4;
 		// if (scale>2) scale = 4; // TODO: restore, requires sanity checking
 		
@@ -3232,7 +3279,8 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	int rw = dw;
 	int rh = dh;
 	
-	if (screen_scaling==SCALE_NATIVE) {
+	// TODO: these probably need separation
+	if (screen_scaling==SCALE_NATIVE) { // || screen_scaling==SCALE_CROPPED
 		// LOG_info("native\n");
 		rx = renderer.dst_x;
 		ry = renderer.dst_y;
