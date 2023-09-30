@@ -736,7 +736,7 @@ static struct Config {
 			[FE_OPT_SCALING] = {
 				.key	= "minarch_screen_scaling", 
 				.name	= "Screen Scaling",
-				.desc	= "Native uses integer scaling. Aspect uses\nthe core reported aspect ratio. Fullscreen\nproduces non-square pixels.", // TODO: add Cropped to desc
+				.desc	= "Native uses integer scaling. Aspect uses core\nreported aspect ratio. Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.",
 				.default_value = 1,
 				.value = 1,
 				.count = SCALE_COUNT,

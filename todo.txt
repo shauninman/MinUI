@@ -1,6 +1,8 @@
 unreleased changes:
 
-- 
+- rgb30: added initial support
+- rgb30: added hdmi detection at boot
+- all: added Screen Scaling: Cropped
 
 ---
 
