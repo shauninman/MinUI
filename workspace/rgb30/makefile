@@ -10,13 +10,18 @@ endif
 
 ###########################################################
 
+REQUIRES_COMMANDER=other/DinguxCommander
+
 all: 
 	# all
 	
-early:
-	# early
+early: $(REQUIRES_COMMANDER)
+	cd other/DinguxCommander && make -j
 
 clean:
-	#clean
+	cd other/DinguxCommander && make clean
 
 ###########################################################
+
+$(REQUIRES_COMMANDER):
+	git clone --depth 1 --branch minui-rgb30 https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)
