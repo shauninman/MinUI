@@ -254,7 +254,7 @@ int main(int argc , char* argv[]) {
 			
 			// datetime
 			int x = ox;
-			int y = SCALE1(((BASE_HEIGHT-PILL_SIZE-DIGIT_HEIGHT)/2)); // TODO: fix alignment on 720x720
+			int y = SCALE1((((FIXED_HEIGHT / FIXED_SCALE)-PILL_SIZE-DIGIT_HEIGHT)/2));
 			
 			x = blitNumber(year_selected, x,y);
 			x = blit(CHAR_SLASH, x,y);

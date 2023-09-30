@@ -45,9 +45,6 @@
 #define COLOR_DARK_TEXT		(SDL_Color){TRIAD_DARK_TEXT}
 #define COLOR_BUTTON_TEXT	(SDL_Color){TRIAD_GRAY}
 
-#define BASE_WIDTH (FIXED_WIDTH / FIXED_SCALE)
-#define BASE_HEIGHT (FIXED_HEIGHT / FIXED_SCALE)
-
 // all before scale
 #define PILL_SIZE 30
 #define BUTTON_SIZE 20

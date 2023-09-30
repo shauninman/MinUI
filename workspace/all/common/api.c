@@ -1404,7 +1404,16 @@ void POW_disablePowerOff(void) {
 }
 void POW_powerOff(void) {
 	if (pow.can_poweroff) {
-		GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
+		
+		int w = FIXED_WIDTH;
+		int h = FIXED_HEIGHT;
+		int p = FIXED_PITCH;
+		if (GetHDMI()) {
+			w = HDMI_WIDTH;
+			h = HDMI_HEIGHT;
+			p = HDMI_PITCH;
+		}
+		GFX_resize(w,h,p);
 		
 		char* msg;
 		if (HAS_POWER_BUTTON || HAS_POWEROFF_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";

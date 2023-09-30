@@ -1,4 +1,4 @@
-// template
+// rg353
 
 #ifndef PLATFORM_H
 #define PLATFORM_H

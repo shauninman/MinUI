@@ -54,6 +54,9 @@ static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
 static int overclock = 1; // normal
+static int DEVICE_WIDTH = FIXED_WIDTH;
+static int DEVICE_HEIGHT = FIXED_HEIGHT;
+static int DEVICE_PITCH = FIXED_PITCH;
 
 GFX_Renderer renderer;
 
@@ -1897,15 +1900,15 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	
 	if (screen_scaling==SCALE_NATIVE) { //  || screen_scaling==SCALE_CROPPED
 		// this is the same whether fit or oversized
-		scale = MIN(FIXED_WIDTH/src_w, FIXED_HEIGHT/src_h);
+		scale = MIN(DEVICE_WIDTH/src_w, DEVICE_HEIGHT/src_h);
 		if (!scale) {
 			sprintf(scaler_name, "forced crop");
-			dst_w = FIXED_WIDTH;
-			dst_h = FIXED_HEIGHT;
-			dst_p = FIXED_PITCH;
+			dst_w = DEVICE_WIDTH;
+			dst_h = DEVICE_HEIGHT;
+			dst_p = DEVICE_PITCH;
 			
-			int ox = (FIXED_WIDTH  - src_w) / 2; // may be negative
-			int oy = (FIXED_HEIGHT - src_h) / 2; // may be negative
+			int ox = (DEVICE_WIDTH  - src_w) / 2; // may be negative
+			int oy = (DEVICE_HEIGHT - src_h) / 2; // may be negative
 			
 			if (ox<0) src_x = -ox;
 			else dst_x = ox;
@@ -1918,20 +1921,20 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		// TODO: or is it just that I'm trying to cram 4 logical rects into 2 rect arguments
 		// TODO: eg. src.size + src.clip + dst.size + dst.clip
 		// else if (screen_scaling==SCALE_CROPPED) {
-		// 	int scale_x = CEIL_DIV(FIXED_WIDTH, src_w);
-		// 	int scale_y = CEIL_DIV(FIXED_HEIGHT, src_h);
+		// 	int scale_x = CEIL_DIV(DEVICE_WIDTH, src_w);
+		// 	int scale_y = CEIL_DIV(DEVICE_HEIGHT, src_h);
 		// 	scale = MIN(scale_x, scale_y);
 		//
 		// 	sprintf(scaler_name, "cropped");
-		// 	dst_w = FIXED_WIDTH;
-		// 	dst_h = FIXED_HEIGHT;
-		// 	dst_p = FIXED_PITCH;
+		// 	dst_w = DEVICE_WIDTH;
+		// 	dst_h = DEVICE_HEIGHT;
+		// 	dst_p = DEVICE_PITCH;
 		//
 		// 	int scaled_w = src_w * scale;
 		// 	int scaled_h = src_h * scale;
 		//
-		// 	int ox = (FIXED_WIDTH  - scaled_w) / 2; // may be negative
-		// 	int oy = (FIXED_HEIGHT - scaled_h) / 2; // may be negative
+		// 	int ox = (DEVICE_WIDTH  - scaled_w) / 2; // may be negative
+		// 	int oy = (DEVICE_HEIGHT - scaled_h) / 2; // may be negative
 		//
 		// 	if (ox<0) {
 		// 		src_x = -ox / scale;
@@ -1955,41 +1958,41 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			sprintf(scaler_name, "integer");
 			int scaled_w = src_w * scale;
 			int scaled_h = src_h * scale;
-			dst_w = FIXED_WIDTH;
-			dst_h = FIXED_HEIGHT;
-			dst_p = FIXED_PITCH;
-			dst_x = (FIXED_WIDTH  - scaled_w) / 2; // should always be positive
-			dst_y = (FIXED_HEIGHT - scaled_h) / 2; // should always be positive
+			dst_w = DEVICE_WIDTH;
+			dst_h = DEVICE_HEIGHT;
+			dst_p = DEVICE_PITCH;
+			dst_x = (DEVICE_WIDTH  - scaled_w) / 2; // should always be positive
+			dst_y = (DEVICE_HEIGHT - scaled_h) / 2; // should always be positive
 		}
 	}
 	else if (fit) {
 		// these both will use a generic nn scaler
 		if (screen_scaling==SCALE_FULLSCREEN) {
 			sprintf(scaler_name, "full fit");
-			dst_w = FIXED_WIDTH;
-			dst_h = FIXED_HEIGHT;
-			dst_p = FIXED_PITCH;
+			dst_w = DEVICE_WIDTH;
+			dst_h = DEVICE_HEIGHT;
+			dst_p = DEVICE_PITCH;
 			scale = -1; // nearest neighbor
 		}
 		else {
-			double scale_f = MIN(((double)FIXED_WIDTH)/aspect_w, ((double)FIXED_HEIGHT)/aspect_h);
+			double scale_f = MIN(((double)DEVICE_WIDTH)/aspect_w, ((double)DEVICE_HEIGHT)/aspect_h);
 			LOG_info("scale_f:%f\n", scale_f);
 			
 			sprintf(scaler_name, "aspect fit");
 			dst_w = aspect_w * scale_f;
 			dst_h = aspect_h * scale_f;
-			dst_p = FIXED_PITCH;
-			dst_x = (FIXED_WIDTH  - dst_w) / 2;
-			dst_y = (FIXED_HEIGHT - dst_h) / 2;
+			dst_p = DEVICE_PITCH;
+			dst_x = (DEVICE_WIDTH  - dst_w) / 2;
+			dst_y = (DEVICE_HEIGHT - dst_h) / 2;
 			scale = scale_f==1.0 ? 1 : -1;
 		}
 	}
 	else {
-		int scale_x = CEIL_DIV(FIXED_WIDTH, src_w);
-		int scale_y = CEIL_DIV(FIXED_HEIGHT,src_h);
+		int scale_x = CEIL_DIV(DEVICE_WIDTH, src_w);
+		int scale_y = CEIL_DIV(DEVICE_HEIGHT,src_h);
 		
 		// odd resolutions (eg. PS1 Rayman: 320x239) is throwing this off, need to snap to eights
-		int r = (FIXED_HEIGHT-src_h)%8;
+		int r = (DEVICE_HEIGHT-src_h)%8;
 		if (r && r<8) scale_y -= 1;
 		
 		scale = MAX(scale_x, scale_y);
@@ -2009,7 +2012,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		else {
 			double src_aspect_ratio = ((double)src_w) / src_h;
 			// double core_aspect_ratio
-			double fixed_aspect_ratio = ((double)FIXED_WIDTH) / FIXED_HEIGHT;
+			double fixed_aspect_ratio = ((double)DEVICE_WIDTH) / DEVICE_HEIGHT;
 			int core_aspect = core.aspect_ratio * 1000;
 			int fixed_aspect = fixed_aspect_ratio * 1000;
 			
@@ -2029,8 +2032,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 				// dst_w = scaled_w;
 				// dst_h = scaled_w / fixed_aspect_ratio;
 				// dst_h += dst_h%2;
-				int aspect_h = FIXED_WIDTH / core.aspect_ratio;
-				double aspect_hr = ((double)aspect_h) / FIXED_HEIGHT;
+				int aspect_h = DEVICE_WIDTH / core.aspect_ratio;
+				double aspect_hr = ((double)aspect_h) / DEVICE_HEIGHT;
 				dst_w = scaled_w;
 				dst_h = scaled_h / aspect_hr;
 
@@ -2042,8 +2045,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 				// dst_w = scaled_h * fixed_aspect_ratio;
 				// dst_w += dst_w%2;
 				// dst_h = scaled_h;
-				int aspect_w = FIXED_HEIGHT * core.aspect_ratio;
-				double aspect_wr = ((double)aspect_w) / FIXED_WIDTH;
+				int aspect_w = DEVICE_HEIGHT * core.aspect_ratio;
+				double aspect_wr = ((double)aspect_w) / DEVICE_WIDTH;
 				dst_w = scaled_w / aspect_wr;
 				dst_h = scaled_h;
 				
@@ -2078,7 +2081,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	renderer.blit = GFX_getScaler(&renderer);
 	
 	// LOG_info("coreAR:%0.3f fixedAR:%0.3f srcAR: %0.3f\nname:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
-	// 	core.aspect_ratio, ((double)FIXED_WIDTH) / FIXED_HEIGHT, ((double)src_w) / src_h,
+	// 	core.aspect_ratio, ((double)DEVICE_WIDTH) / DEVICE_HEIGHT, ((double)src_w) / src_h,
 	// 	scaler_name,
 	// 	fit,scale,
 	// 	src_x,src_y,src_w,src_h,src_p,
@@ -2087,8 +2090,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	// );
 
 	if (fit) {
-		dst_w = FIXED_WIDTH;
-		dst_h = FIXED_HEIGHT;
+		dst_w = DEVICE_WIDTH;
+		dst_h = DEVICE_HEIGHT;
 	}
 	
 	// if (screen->w!=dst_w || screen->h!=dst_w || screen->pitch!=dst_p) {
@@ -2376,7 +2379,7 @@ static struct {
 };
 
 void Menu_init(void) {
-	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
+	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
 	SDL_SetAlpha(menu.overlay, SDL_SRCALPHA, 0x80);
 	SDL_FillRect(menu.overlay, NULL, 0);
 	
@@ -3298,7 +3301,7 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 			sh = rh;
 		}
 		
-		if (dw==FIXED_WIDTH/2) {
+		if (dw==DEVICE_WIDTH/2) {
 			// LOG_info("adjusted\n");
 			rx /= 2;
 			ry /= 2;
@@ -3308,7 +3311,7 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	}
 	
 	if (screen_scaling==SCALE_ASPECT || rw>dw || rh>dh) {
-		double fixed_aspect_ratio = ((double)FIXED_WIDTH) / FIXED_HEIGHT;
+		double fixed_aspect_ratio = ((double)DEVICE_WIDTH) / DEVICE_HEIGHT;
 		int core_aspect = core.aspect_ratio * 1000;
 		int fixed_aspect = fixed_aspect_ratio * 1000;
 		
@@ -3440,14 +3443,14 @@ static void Menu_loadState(void) {
 static void Menu_loop(void) {
 	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
 	
-	SDL_Surface* backing = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,FIXED_DEPTH,RGBA_MASK_565); 
+	SDL_Surface* backing = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,FIXED_DEPTH,RGBA_MASK_565); 
 	Menu_scale(menu.bitmap, backing);
 	
 	int restore_w = screen->w;
 	int restore_h = screen->h;
 	int restore_p = screen->pitch;
-	if (restore_w!=FIXED_WIDTH || restore_h!=FIXED_HEIGHT) {
-		screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
+	if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
+		screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	}
 	
 	SRAM_write();
@@ -3491,7 +3494,7 @@ static void Menu_loop(void) {
 	int ignore_menu = 0;
 	int menu_start = 0;
 	
-	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH/2,FIXED_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
+	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
 	
 	while (show_menu) {
 		GFX_startFrame();
@@ -3579,7 +3582,7 @@ static void Menu_loop(void) {
 						restore_w = screen->w;
 						restore_h = screen->h;
 						restore_p = screen->pitch;
-						screen = GFX_resize(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH);
+						screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 						
 						SDL_FillRect(backing, NULL, 0);
 						Menu_scale(menu.bitmap, backing);
@@ -3636,7 +3639,7 @@ static void Menu_loop(void) {
 			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
 			
 			// list
-			oy = ((BASE_HEIGHT - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
+			oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
 			for (int i=0; i<MENU_ITEM_COUNT; i++) {
 				char* item = menu.items[i];
 				SDL_Color text_color = COLOR_WHITE;
@@ -3694,12 +3697,12 @@ static void Menu_loop(void) {
 				#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
 				#define PAGINATION_HEIGHT 6
 				// unscaled
-				int hw = FIXED_WIDTH / 2;
-				int hh = FIXED_HEIGHT / 2;
+				int hw = DEVICE_WIDTH / 2;
+				int hh = DEVICE_HEIGHT / 2;
 				int pw = hw + SCALE1(WINDOW_RADIUS*2);
 				int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
-				ox = FIXED_WIDTH - pw - SCALE1(PADDING);
-				oy = (FIXED_HEIGHT - ph) / 2;
+				ox = DEVICE_WIDTH - pw - SCALE1(PADDING);
+				oy = (DEVICE_HEIGHT - ph) / 2;
 				
 				// window
 				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
@@ -3749,7 +3752,7 @@ static void Menu_loop(void) {
 	POW_warn(1);
 	
 	if (!quit) {
-		if (restore_w!=FIXED_WIDTH || restore_h!=FIXED_HEIGHT) {
+		if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
 		GFX_clear(screen);
@@ -3858,6 +3861,11 @@ int main(int argc , char* argv[]) {
 	getEmuName(rom_path, tag_name);
 	
 	screen = GFX_init(MODE_MENU);
+	DEVICE_WIDTH = screen->w; // yea or nay?
+	DEVICE_HEIGHT = screen->h; // yea or nay?
+	DEVICE_PITCH = screen->pitch; // yea or nay?
+	LOG_info("%ix%i", DEVICE_WIDTH,DEVICE_HEIGHT);
+	
 	VIB_init();
 	POW_init();
 	if (!HAS_POWER_BUTTON) POW_disableSleep();

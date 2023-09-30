@@ -43,6 +43,7 @@ static int shm_size = sizeof(Settings);
 #define BACKLIGHT_PATH "/sys/class/backlight/backlight/bl_power"
 #define BRIGHTNESS_PATH "/sys/class/backlight/backlight/brightness"
 #define JACK_STATE_PATH "/sys/bus/platform/devices/singleadc-joypad/hp"
+#define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
 
 int getInt(char* path) {
 	int i = 0;
@@ -89,7 +90,7 @@ void InitSettings(void) {
 	printf("brightness: %i\nspeaker: %i \n", settings->brightness, settings->speaker);
 	
 	SetJack(getInt(JACK_STATE_PATH));
-	// SetVolume(GetVolume());
+	SetHDMI(getInt(HDMI_STATE_PATH));
 	SetBrightness(GetBrightness());
 }
 void QuitSettings(void) {

@@ -1,18 +1,21 @@
+unreleased changes:
+
+- 
+
+---
+
 next
-	PS1: Rayman, pitch issue in hardware scaler path
-	
 	minarch: crop overscan
 		busted on smart because of screen rotation
 		
-	double-check all per-device cfg files
-		Trimui Smart had defaults left over from a 640x480 device :facepalm:
 	rgb30
 		will threaded rendering fix audio clicking?
-		audio is fucked (caused by sdl12-compat?)
+		audio is still bad (caused by sdl12-compat? no, forced vsync is the culprit)
 			see if I can pass the user's callback straight through to sdl2
 			passing straight through but its not helping
 			not caused by sdl12-compat, it's caused by forced vsync
 			occurs in vanilla sdl1 when drm fbdev emulation is double buffered
+			maybe threaded video will help
 		lto1: warning: switch '-mcpu=cortex-a55' conflicts with '-march=armv8-a' switch
 		fork, add module, or save a patch for sdl12-compat
 		cores
@@ -22,19 +25,11 @@ next
 			maybe poweroff/quicksave, connect hdmi, poweron/resume is good enough?
 			https://github.com/shauninman/MinUI-Legacy-RG35XX/commit/1ea75a50e07b5add4d38f62bc7b099a3b053fd4e
 				
-	minarch: add Crop Overscan? Cropped? Overscan?
-		Native already does this now but only if native is larger than screen...
 	minarch: add halign and valign?
 		specifically for rgb30
 	
 	trimui: scaling (see DE test)
-	
-	rg353: switch to JELOS root?
-		lots of issues (see JELOS-docker/ideas.txt)
-	rg353: core patch files have whitespace issues
-	rg353: scaling (hw?)
-	rg353: building with everything else
-	
+		
 known issues
 	all: not convinced fixed aspect scaling corrects for screen aspect correctly
 	

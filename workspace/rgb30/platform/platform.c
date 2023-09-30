@@ -1,4 +1,4 @@
-// trimuismart
+// rgb30
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -18,6 +18,8 @@
 
 #include "scaler.h"
 
+#define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
+
 static struct VID_Context {
 	SDL_Surface* screen;
 	SDL_Joystick *joystick;
@@ -36,11 +38,13 @@ SDL_Surface* PLAT_initVideo(void) {
 	char driver[256];
 	LOG_info("SDL_VideoDriverName: %s\n", SDL_VideoDriverName(driver, 256));
 
-	// TODO: if this is 16 then it's probably a SW shadow buffer
-	// TODO: we'll want to ignore this, resize fb with ioctls (for panned double buffering)
-	// TODO: then mmap the fb and create a 32 surface (vid.video)
-	// then create a 16 surface (vid.screen)
-	vid.screen = SDL_SetVideoMode(FIXED_WIDTH, FIXED_HEIGHT, FIXED_DEPTH, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	int w = FIXED_WIDTH;
+	int h = FIXED_HEIGHT;
+	if (getInt(HDMI_STATE_PATH)) {
+		w = HDMI_WIDTH;
+		h = HDMI_HEIGHT;
+	}
+	vid.screen = SDL_SetVideoMode(w,h, FIXED_DEPTH, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	LOG_info("\n"); // mali debug log doesn't have a line return
 	
 	LOG_info("SDL_SetVideoMode error: %s\n", SDL_GetError());
@@ -85,6 +89,18 @@ void PLAT_vsync(int remaining) {
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
+	LOG_info("PLAT_getScaler() >>> src:%ix%i (%i) dst:%i,%i %ix%i (%i)\n",
+		renderer->src_w,
+		renderer->src_h,
+		renderer->src_p, // unused
+
+		renderer->dst_x,
+		renderer->dst_y,
+		renderer->dst_w, // unused
+		renderer->dst_h, // unused?
+		renderer->dst_p // unused
+	);
+	
 	switch (renderer->scale) {
 		case 6:  return scale6x6_c16;
 		case 5:  return scale5x5_c16;
@@ -96,8 +112,10 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
-	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP); // TODO: cache this offset
-	((scaler_t)renderer->blit)(renderer->src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+	// TODO: cache these offsets? (all platforms)
+	void* src = renderer->src + (renderer->src_y * renderer->src_p) + (renderer->src_x * FIXED_BPP);
+	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP);
+	((scaler_t)renderer->blit)(src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
