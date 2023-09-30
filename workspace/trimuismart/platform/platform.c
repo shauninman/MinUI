@@ -89,20 +89,18 @@ void ion_free(int ion_fd, ion_alloc_info_t* info) {
 	if (ioctl(ion_fd, ION_IOC_FREE, &ihd)<0) fprintf(stderr, "ION_FREE failed %s\n",strerror(errno));
 }
 
-void rotate_16bpp(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp) {
-	// uint64_t start = getMicroseconds();
-	
+void rotate_16bpp(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dp) {
 	uint16_t* s = (uint16_t*)src;
 	uint16_t* d = (uint16_t*)dst;
-	int p = sp/2;
+	int spx = sp/FIXED_BPP;
+	int dpx = dp/FIXED_BPP;
 	
+		
 	for (int y=0; y<sh; y++) {
 		for (int x=0; x<sw; x++) {
-			*(d + x * sh + (sh - y - 1)) = *(s + (sh-1-y) * p + (sw-1-x));
+			*(d + x * dpx + (dpx - y - 1)) = *(s + (sh-1-y) * spx + (sw-1-x));
 		}
 	}
-	
-	// printf("rotate: %ius\n", (int)(getMicroseconds()-start));
 }
 
 ///////////////////////////////
@@ -312,11 +310,15 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.renderer = renderer;
-	if (!vid.special || vid.special->w!=renderer->src_h || vid.special->h!=renderer->src_w || vid.special->pitch!=renderer->src_h*FIXED_BPP || !vid.rotated_pitch) {
+	int p = ((renderer->src_h+7)/8)*8 * FIXED_BPP;
+	if (!vid.special || vid.special->w!=renderer->src_h || vid.special->h!=renderer->src_w || vid.special->pitch!=p || !vid.rotated_pitch) {
+		// LOG_info("!special:%i sp_w!=src_h:%i sp_h!=src_w:%i sp_p!=src_h*FIXED_BPP:%i !rot_p: %i\n",
+		// !vid.special, vid.special && vid.special->w!=renderer->src_h, vid.special && vid.special->h!=renderer->src_w, vid.special && vid.special->pitch!=p, !vid.rotated_pitch);
+		
 		if (vid.special) SDL_FreeSurface(vid.special);
 		
 		vid.special = SDL_CreateRGBSurface(SDL_SWSURFACE, renderer->src_h,renderer->src_w, FIXED_DEPTH,RGBA_MASK_565);
-		vid.rotated_pitch = vid.height * FIXED_BPP;
+		vid.rotated_pitch = vid.height * FIXED_BPP; // ((vid.height+7)/8)*8 * FIXED_BPP; // TODO: this should be the fix but it's not :sob:
 		vid.rotated_offset = (renderer->dst_x * vid.rotated_pitch) + (renderer->dst_y * FIXED_BPP);
 		vid.source_offset = (renderer->src_x * vid.special->pitch) + (renderer->src_y * FIXED_BPP);
 		
@@ -324,33 +326,31 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 			vid.renderer->src,
 			vid.renderer->dst, // unused
 			vid.renderer->blit,
-			
+
 			vid.renderer->src_w,
 			vid.renderer->src_h,
 			vid.renderer->src_p, // unused
-			
+
 			vid.renderer->dst_x,
 			vid.renderer->dst_y,
 			vid.renderer->dst_w, // unused
 			vid.renderer->dst_h, // unused?
 			vid.renderer->dst_p, // unused
-			
+
 			vid.width,
 			vid.height,
 			vid.pitch,
 			vid.rotated_pitch
-			);
+		);
 	}
-	// TODO: do a normal blit if we're doing nearest neighbor to FIXED_WIDTH x FIXED_HEIGHT?
-	// otherwise optimize text doesn't work
-	rotate_16bpp(renderer->src, vid.special->pixels, renderer->src_w,renderer->src_h,renderer->src_p);
+	rotate_16bpp(renderer->src, vid.special->pixels, renderer->src_w,renderer->src_h,renderer->src_p,vid.special->pitch);
 	((scaler_t)renderer->blit)(vid.special->pixels + vid.source_offset, vid.buffer->pixels+vid.rotated_offset, vid.special->w,vid.special->h, vid.special->pitch, vid.renderer->dst_h, vid.renderer->dst_w,vid.rotated_pitch);
 	
 	// LOG_info("blit(%p,%p, %i,%i,%i, %i,%i,%i)\n", vid.special->pixels, vid.buffer->pixels+vid.rotated_offset, vid.special->w,vid.special->h, vid.special->pitch, vid.renderer->dst_h, vid.renderer->dst_w,vid.rotated_pitch);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
-	if (!vid.renderer) rotate_16bpp(vid.screen->pixels, vid.buffer->pixels, vid.width, vid.height,vid.pitch);
+	if (!vid.renderer) rotate_16bpp(vid.screen->pixels, vid.buffer->pixels, vid.width, vid.height,vid.pitch,vid.height*FIXED_BPP);
 	
 	vid.buffer_config.info.fb.addr[0] = (uintptr_t)vid.buffer_info.padd + vid.page * PAGE_SIZE;
 	vid.mem_map[OVL_V_TOP_LADD0/4] = (uintptr_t)vid.buffer_info.padd + vid.page * PAGE_SIZE;
