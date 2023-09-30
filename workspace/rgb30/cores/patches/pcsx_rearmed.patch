@@ -12,7 +12,7 @@ index 831964f57dfd82c691e4a6707fbf8dea9a8989dc..32c2f38f419b7a3df5508304299d3b2b
 +   CC = $(CROSS_COMPILE)gcc
 +   CXX = $(CROSS_COMPILE)g++
 +   AR = $(CROSS_COMPILE)ar
-+   CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8-a+crc+simd
++   CFLAGS += -mtune=cortex-a55 -march=armv8-a+crc+simd
 +   CFLAGS += -fomit-frame-pointer -ffast-math -fdata-sections -ffunction-sections -fsingle-precision-constant -flto -fPIC -ftree-vectorize
 +   LDFLAGS += -flto -fPIC
 +   OPTIMIZE += -Ofast -DNDEBUG=1

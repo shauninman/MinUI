@@ -15,7 +15,7 @@ index af8cc75cf1a998791a071e8cff915fb8c97ffcc9..e2a4e8cdd951f71f9ebfdb2cf53a21d1
 +	SHARED := -shared -Wl,--version-script=libretro/link.T
 +	fpic := -fPIC
 +	CFLAGS += $(PTHREAD_FLAGS)
-+	CFLAGS += -fomit-frame-pointer -ffast-math -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++	CFLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a 
 +	CFLAGS += -DDINGUX
 +
  # GCW0

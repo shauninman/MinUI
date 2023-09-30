@@ -15,7 +15,7 @@ index ffaba21e7a88f90786d818ab550b68acd05738bf..87309c332f50bb39abba853322f7637d
 +   fpic := -fPIC
 +   SHARED := -shared -Wl,-version-script=$(version_script)
 +   PLATFORM_DEFINES := -DDINGUX
-+   CFLAGS += -fomit-frame-pointer -ffast-math -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++   CFLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a 
 +   CXXFLAGS += $(CFLAGS)
 +
  # MIYOO

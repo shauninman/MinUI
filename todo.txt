@@ -2,34 +2,17 @@ unreleased changes:
 
 - rgb30: added initial support
 - rgb30: added hdmi detection at boot
-- all: added Screen Scaling: Cropped
+- all: added Screen Scaling: Cropped (primarily for NES/SNES on RGB30)
 
 ---
 
 next
-	minarch: crop overscan
-		busted on smart because of screen rotation
-		
 	rgb30
-		will threaded rendering fix audio clicking?
-		audio is still bad (caused by sdl12-compat? no, forced vsync is the culprit)
-			see if I can pass the user's callback straight through to sdl2
-			passing straight through but its not helping
-			not caused by sdl12-compat, it's caused by forced vsync
-			occurs in vanilla sdl1 when drm fbdev emulation is double buffered
-			maybe threaded video will help
-		lto1: warning: switch '-mcpu=cortex-a55' conflicts with '-march=armv8-a' switch
-		fork, add module, or save a patch for sdl12-compat
+		hardware scaling with librga
+		threaded rendering (for FC/MD)
+		lto1: warning: switch '-mcpu=cortex-a55' conflicts with '-march=armv8-a' switch?
 		cores
-		hardware scaling
-		hdmi out?
-			working (only on a fresh boot)
-			maybe poweroff/quicksave, connect hdmi, poweron/resume is good enough?
-			https://github.com/shauninman/MinUI-Legacy-RG35XX/commit/1ea75a50e07b5add4d38f62bc7b099a3b053fd4e
 				
-	minarch: add halign and valign?
-		specifically for rgb30
-	
 	trimui: scaling (see DE test)
 		
 known issues
@@ -42,7 +25,6 @@ known issues
 	trimui: hw scaling isn't implemented yet
 	trimui: debug/battery overlay isn't implemented yet
 	
-	nano: binding MENU+button in menu sleeps device
 	nano: says it can bind MENU+button for shortcuts, it can't
 
 all
@@ -69,7 +51,6 @@ all
 		GFX_blitDebug(text,x,y)?
 			simple for everything but trimuismart with its -90° screen
 	minui
-		info window vertical centering is off on 1x devices
 		support multiple tags in folder name?
 			eg. Super Nintendo (SFC,SFCALT)
 			where SFX.pak is only present on higher power systems and
@@ -87,8 +68,6 @@ all
 smart
 	cores
 		supa starfox perf bad
-		pcsx freeze opening menu tekken 3
-	battery/debug overlay
 
 miyoomini
 	separate settings file for mini and plus?

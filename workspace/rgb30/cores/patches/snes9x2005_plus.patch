@@ -15,7 +15,7 @@ index 07d5368a8e78a020813732239ec369d83e931ede..a1f7fefd144c9d0ead913fad350e660c
 +	fpic := -fPIC -nostdlib
 +	SHARED := -shared -Wl,--version-script=link.T
 +	LIBM :=
-+	FLAGS += -fomit-frame-pointer -ffast-math -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++	FLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a 
 +	FLAGS += -DFAST_ALIGNED_LSB_WORD_ACCESS -fno-unroll-loops
 +
  # (armv7 a7, hard point, neon based) ### 

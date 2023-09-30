@@ -14,7 +14,7 @@ index a57a24c73b12bfe25a526c1fbc223b054b3a02fc..1a8a9054bd2577b481168824cf6cde93
 +	SHARED := -shared -nostdlib
 +	fpic := -fPIC
 +	LIBM :=
-+	CFLAGS += -fomit-frame-pointer -ffast-math -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a -D__GCW0__
++	CFLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a -D__GCW0__
 +	CFLAGS += -DFAMEC_NO_GOTOS
 +
  # Windows MSVC 2017 all architectures
