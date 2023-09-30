@@ -10,7 +10,6 @@ next
 	rgb30
 		hardware scaling with librga
 		threaded rendering (for FC/MD)
-		lto1: warning: switch '-mcpu=cortex-a55' conflicts with '-march=armv8-a' switch?
 		cores
 				
 	trimui: scaling (see DE test)
@@ -138,8 +137,6 @@ rg353
 	vsync
 		appears to work
 		lets setup our own double buffer so we can use it
-	get latest MinUI/launch.sh from SD card
-		oops, might have nuked that
 
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
