@@ -31,7 +31,7 @@ enum {
 	SCALE_NATIVE,
 	SCALE_ASPECT,
 	SCALE_FULLSCREEN,
-	// SCALE_CROPPED,
+	SCALE_CROPPED,
 	SCALE_COUNT,
 };
 
@@ -554,7 +554,7 @@ static char* scaling_labels[] = {
 	"Native",
 	"Aspect",
 	"Fullscreen",
-	// "Cropped",
+	"Cropped",
 	NULL
 };
 static char* tearing_labels[] = {
@@ -1898,7 +1898,12 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	dst_x = 0;
 	dst_y = 0;
 	
-	if (screen_scaling==SCALE_NATIVE) { //  || screen_scaling==SCALE_CROPPED
+	int scaling = screen_scaling;
+	if (scaling==SCALE_CROPPED && DEVICE_WIDTH==HDMI_WIDTH) {
+		scaling = SCALE_NATIVE;
+	}
+	
+	if (scaling==SCALE_NATIVE || scaling==SCALE_CROPPED) {
 		// this is the same whether fit or oversized
 		scale = MIN(DEVICE_WIDTH/src_w, DEVICE_HEIGHT/src_h);
 		if (!scale) {
@@ -1920,40 +1925,40 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		// TODO: is this blowing up because the smart has to rotate before scaling?
 		// TODO: or is it just that I'm trying to cram 4 logical rects into 2 rect arguments
 		// TODO: eg. src.size + src.clip + dst.size + dst.clip
-		// else if (screen_scaling==SCALE_CROPPED) {
-		// 	int scale_x = CEIL_DIV(DEVICE_WIDTH, src_w);
-		// 	int scale_y = CEIL_DIV(DEVICE_HEIGHT, src_h);
-		// 	scale = MIN(scale_x, scale_y);
-		//
-		// 	sprintf(scaler_name, "cropped");
-		// 	dst_w = DEVICE_WIDTH;
-		// 	dst_h = DEVICE_HEIGHT;
-		// 	dst_p = DEVICE_PITCH;
-		//
-		// 	int scaled_w = src_w * scale;
-		// 	int scaled_h = src_h * scale;
-		//
-		// 	int ox = (DEVICE_WIDTH  - scaled_w) / 2; // may be negative
-		// 	int oy = (DEVICE_HEIGHT - scaled_h) / 2; // may be negative
-		//
-		// 	if (ox<0) {
-		// 		src_x = -ox / scale;
-		// 		src_w -= src_x * 2;
-		// 	}
-		// 	else {
-		// 		dst_x = ox;
-		// 		dst_w -= ox * 2;
-		// 	}
-		//
-		// 	if (oy<0) {
-		// 		src_y = -oy / scale;
-		// 		src_h -= src_y * 2;
-		// 	}
-		// 	else {
-		// 		dst_y = oy;
-		// 		dst_h -= oy * 2;
-		// 	}
-		// }
+		else if (scaling==SCALE_CROPPED) {
+			int scale_x = CEIL_DIV(DEVICE_WIDTH, src_w);
+			int scale_y = CEIL_DIV(DEVICE_HEIGHT, src_h);
+			scale = MIN(scale_x, scale_y);
+
+			sprintf(scaler_name, "cropped");
+			dst_w = DEVICE_WIDTH;
+			dst_h = DEVICE_HEIGHT;
+			dst_p = DEVICE_PITCH;
+
+			int scaled_w = src_w * scale;
+			int scaled_h = src_h * scale;
+
+			int ox = (DEVICE_WIDTH  - scaled_w) / 2; // may be negative
+			int oy = (DEVICE_HEIGHT - scaled_h) / 2; // may be negative
+
+			if (ox<0) {
+				src_x = -ox / scale;
+				src_w -= src_x * 2;
+			}
+			else {
+				dst_x = ox;
+				dst_w -= ox * 2;
+			}
+
+			if (oy<0) {
+				src_y = -oy / scale;
+				src_h -= src_y * 2;
+			}
+			else {
+				dst_y = oy;
+				dst_h -= oy * 2;
+			}
+		}
 		else {
 			sprintf(scaler_name, "integer");
 			int scaled_w = src_w * scale;
@@ -1967,7 +1972,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	}
 	else if (fit) {
 		// these both will use a generic nn scaler
-		if (screen_scaling==SCALE_FULLSCREEN) {
+		if (scaling==SCALE_FULLSCREEN) {
 			sprintf(scaler_name, "full fit");
 			dst_w = DEVICE_WIDTH;
 			dst_h = DEVICE_HEIGHT;
@@ -2002,7 +2007,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		int scaled_w = src_w * scale;
 		int scaled_h = src_h * scale;
 		
-		if (screen_scaling==SCALE_FULLSCREEN) {
+		if (scaling==SCALE_FULLSCREEN) {
 			sprintf(scaler_name, "full%i", scale);
 			// type = 'full (oversized)';
 			dst_w = scaled_w;
@@ -3283,7 +3288,7 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	int rh = dh;
 	
 	// TODO: these probably need separation
-	if (screen_scaling==SCALE_NATIVE) { // || screen_scaling==SCALE_CROPPED
+	if (screen_scaling==SCALE_NATIVE || screen_scaling==SCALE_CROPPED) {
 		// LOG_info("native\n");
 		rx = renderer.dst_x;
 		ry = renderer.dst_y;
