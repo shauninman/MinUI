@@ -2,15 +2,17 @@ unreleased changes:
 
 - rgb30: added initial support
 - rgb30: added hdmi detection at boot
+- trimuismart: updated battery curve
 - all: added Screen Scaling: Cropped (primarily for NES/SNES on RGB30)
 
 ---
 
 next
 	rgb30
+		integrate into build process
 		hardware scaling with librga
 		threaded rendering (for FC/MD)
-		cores
+		flesh out cores
 				
 	trimui: scaling (see DE test)
 		

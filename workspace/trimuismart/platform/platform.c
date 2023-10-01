@@ -445,13 +445,13 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	getFile(USB_SPEED, value, 16);
 	*is_charging = !exactMatch(value, "UNKNOWN\n");
 	
-	int i = ADC_read() * 100 / 47; // was 63 but I've never seen it go higher than 47
+	int i = ADC_read();
 	// worry less about battery and more about the game you're playing
-	     if (i>80) *charge = 100;
-	else if (i>60) *charge =  80;
+	     if (i>43) *charge = 100;
+	else if (i>41) *charge =  80;
 	else if (i>40) *charge =  60;
-	else if (i>20) *charge =  40;
-	else if (i>10) *charge =  20;
+	else if (i>39) *charge =  40;
+	else if (i>38) *charge =  20;
 	else           *charge =  10;
 }
 
