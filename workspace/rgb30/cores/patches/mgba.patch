@@ -1,0 +1,27 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index 9cab7e4bd79fe03fde4aa7448c1d29c84f7b8eba..ec039524e9d14037640c9a5cb569c61a4bfca38e 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -419,6 +419,22 @@ else ifeq ($(platform), miyoo)
+    CFLAGS += -fno-common -ftree-vectorize -funswitch-loops
+    DEFINES += -std=c99
+ 
++# RGB30
++else ifeq ($(platform), rgb30)
++   TARGET := $(TARGET_NAME)_libretro.so
++   fpic := -fPIC
++   SHARED := -shared -Wl,-version-script=link.T
++   CC = $(CROSS_COMPILE)gcc
++   AR = $(CROSS_COMPILE)ar
++   PLATFORM_DEFINES += -D_GNU_SOURCE
++   CPUFLAGS := -mtune=cortex-a55 -march=armv8-a+crc+simd
++   CFLAGS += -Ofast -flto -DUSE_RENDER_THREAD -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize -DNDEBUG -fno-ident
++   CFLAGS  += -fpic -fomit-frame-pointer -fno-exceptions -fno-non-call-exceptions -Wno-psabi -Wno-format
++   LDFLAGS += $(CPUFLAGS) -lpthread -Wl,--gc-sections -shared
++   LDFLAGS += -Ofast -fno-ident
++   DEFINES += -std=c99 -D_GNU_SOURCE -DHAVE_LOCALE
++   HAVE_VFS_FD = 0
++   
+ # Windows
+ else
+    TARGET := $(TARGET_NAME)_libretro.dll

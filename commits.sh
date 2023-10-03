@@ -74,10 +74,11 @@ bump() {
 	# echo CORES
 	# list ./workspace/nano/cores/src
 	# bump
-	#
-	# tell RGB30
-	# echo CORES
-	# list ./workspace/rgb30/cores/src
-	# bump
+
+	tell RGB30
+	show ./workspace/trimui/other/DinguxCommander
+	echo CORES
+	list ./workspace/rgb30/cores/src
+	bump
 
 } | sed 's/\n/ /g'
