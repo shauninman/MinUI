@@ -1430,16 +1430,27 @@ void POW_powerOff(void) {
 
 static void POW_enterSleep(void) {
 	SDL_PauseAudio(1);
-	SetRawVolume(MUTE_VOLUME_RAW);
-	PLAT_enableBacklight(0);
+	if (GetHDMI()) {
+		PLAT_clearVideo(gfx.screen);
+		PLAT_flip(gfx.screen, 0);
+	}
+	else {
+		SetRawVolume(MUTE_VOLUME_RAW);
+		PLAT_enableBacklight(0);
+	}
 	system("killall -STOP keymon.elf");
 	
 	sync();
 }
 static void POW_exitSleep(void) {
 	system("killall -CONT keymon.elf");
-	PLAT_enableBacklight(1);
-	SetVolume(GetVolume());
+	if (GetHDMI()) {
+		// buh
+	}
+	else {
+		PLAT_enableBacklight(1);
+		SetVolume(GetVolume());
+	}
 	SDL_PauseAudio(0);
 	
 	sync();

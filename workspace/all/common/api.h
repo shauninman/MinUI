@@ -31,11 +31,11 @@ void LOG_note(int level, const char* fmt, ...);
 
 ///////////////////////////////
 
+// TODO: these only seem to be used by a tmp.pak in trimui (model s)
 // used by minarch, optionally defined in platform.h
 #ifndef PLAT_PAGE_BPP
 #define PLAT_PAGE_BPP 	FIXED_BPP
 #endif
-
 #define PLAT_PAGE_DEPTH (PLAT_PAGE_BPP * 8)
 #define PLAT_PAGE_PITCH (PAGE_WIDTH * PLAT_PAGE_BPP)
 #define PLAT_PAGE_SIZE	(PLAT_PAGE_PITCH * PAGE_HEIGHT)
