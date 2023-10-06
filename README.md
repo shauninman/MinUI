@@ -1,6 +1,6 @@
 # MinUI
 
-MinUI is a focused, custom launcher for the Trimui Smart, Miyoo Mini(s), and Anbernic RG35XX.
+MinUI is a focused, custom launcher and libretro frontend for the Trimui Smart, Miyoo Mini(s), and Anbernic RG35XX.
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 />  
 See [more screenshots](github/).
@@ -29,6 +29,9 @@ See [more screenshots](github/).
   the launcher instead of A
 - Streamlined emulator frontend 
   (minarch + libretro cores)
+- Single SD card compatible with
+  multiple devices from different
+  manufacturers
 
 You can [grab the latest version here](https://github.com/shauninman/MinUI/releases).
 
