@@ -7,10 +7,8 @@ unreleased changes:
 ---
 
 next
-	check other devices for scaling weirdness after adding cropped support
-		seems okay
-		
 	do some benchmarking to see where the slowdown is coming from
+		the software scaler?
 		the core?
 		minarch?
 		sdl12-compat?
@@ -21,26 +19,7 @@ next
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
 	rgb30
-		requires sdl12-compat for perf with aspect/fullscreen (I'm nothing without eggs :lolsob:)
-	
-		threaded rendering (for FC/MD + some of the extras it seems, maybe even PS?)
-			sdl2 rendering doesn't support running in threads
-			could I move retro_run to a thread instead?
 		integrate into update process
-		hardware scaling with librga
-			yeesh, lots of subtle issues
-			probably related to changes made for cropped
-			so tired
-				seems like resizeVideo and getScaler are being called too frequently
-				cropped stretched too much
-				aspect has garbage below VB
-				I have a feeling changes made for cropped will have broken scaling on other platforms too
-				is aspect ratio wrong? (SFC?)
-			I think the (some of) issue(s) might be
-				falae negatives for direct drawing
-				the dst offset added in blitRenderer (to account for cropped?)
-					are offsets being applied twice
-				the issue was conflating true and src dimensions and full and dst dimensions
 		performance issues (both frame rate and audio clipping)
 			fceuum 
 			picodrive
@@ -48,6 +27,10 @@ next
 			pcsx
 		finish integration
 		prepare a ELLOS TF1 image
+		debug overlay drawing funny 
+		hdmi tearing
+			see TLoZ:LA, top of screen
+			may not be vysnc/perf related
 				
 	trimui: scaling (see DE test)
 		
@@ -62,6 +45,7 @@ known issues
 	trimui: debug/battery overlay isn't implemented yet
 	
 	nano: says it can bind MENU+button for shortcuts, it can't
+	rgb30: hdmi tearing near the top of the screen
 
 all
 	minarch

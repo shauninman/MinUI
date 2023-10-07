@@ -17,13 +17,13 @@ export PATH=$SYSTEM_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 
 # required for sdl12-compat
-# export SDL_VIDEODRIVER=kmsdrm
-# export SDL_AUDIODRIVER=alsa
+export SDL_VIDEODRIVER=kmsdrm
+export SDL_AUDIODRIVER=alsa
 
 # required for sdl1 fbcon
-export SDL_VIDEODRIVER=fbcon
-export SDL_AUDIODRIVER=alsa
-export SDL_NOMOUSE=1 
+# export SDL_VIDEODRIVER=fbcon
+# export SDL_AUDIODRIVER=alsa
+# export SDL_NOMOUSE=1
 
 #######################################
 
