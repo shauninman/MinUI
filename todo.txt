@@ -1,6 +1,5 @@
 unreleased changes:
 
-- rgb30: added initial support
 - rgb30: added hdmi detection at boot
 - trimuismart: updated battery curve
 - all: added Screen Scaling: Cropped (primarily for NES/SNES on RGB30)
@@ -8,11 +7,47 @@ unreleased changes:
 ---
 
 next
+	check other devices for scaling weirdness after adding cropped support
+		seems okay
+		
+	do some benchmarking to see where the slowdown is coming from
+		the core?
+		minarch?
+		sdl12-compat?
+
+	all
+		pull latest gpsp (fixes for long standing problem games I guess?)
+	toolchains
+		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
+		or not? if it ain't broke
 	rgb30
-		integrate into build process
+		requires sdl12-compat for perf with aspect/fullscreen (I'm nothing without eggs :lolsob:)
+	
+		threaded rendering (for FC/MD + some of the extras it seems, maybe even PS?)
+			sdl2 rendering doesn't support running in threads
+			could I move retro_run to a thread instead?
+		integrate into update process
 		hardware scaling with librga
-		threaded rendering (for FC/MD)
-		flesh out cores
+			yeesh, lots of subtle issues
+			probably related to changes made for cropped
+			so tired
+				seems like resizeVideo and getScaler are being called too frequently
+				cropped stretched too much
+				aspect has garbage below VB
+				I have a feeling changes made for cropped will have broken scaling on other platforms too
+				is aspect ratio wrong? (SFC?)
+			I think the (some of) issue(s) might be
+				falae negatives for direct drawing
+				the dst offset added in blitRenderer (to account for cropped?)
+					are offsets being applied twice
+				the issue was conflating true and src dimensions and full and dst dimensions
+		performance issues (both frame rate and audio clipping)
+			fceuum 
+			picodrive
+			vb
+			pcsx
+		finish integration
+		prepare a ELLOS TF1 image
 				
 	trimui: scaling (see DE test)
 		
