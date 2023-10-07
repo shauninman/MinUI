@@ -194,11 +194,7 @@ static uint32_t frame_start = 0;
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
-// TODO: why isn't this just a #define?
-SDL_Surface* GFX_resize(int w, int h, int pitch) {
-	gfx.screen = PLAT_resizeVideo(w,h,pitch);
-	return gfx.screen;
-}
+
 void GFX_flip(SDL_Surface* screen) {
 	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
 	PLAT_flip(screen, should_vsync);
