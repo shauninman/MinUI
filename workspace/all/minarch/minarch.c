@@ -1878,6 +1878,7 @@ static SDL_Surface* scaler_surface;
 #endif	
 
 static void selectScaler(int src_w, int src_h, int src_p) {
+	LOG_info("selectScaler\n");
 	
 	int src_x,src_y,dst_x,dst_y,dst_w,dst_h,dst_p,scale;
 	
@@ -1897,6 +1898,10 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	src_y = 0;
 	dst_x = 0;
 	dst_y = 0;
+
+	// unmodified by crop
+	renderer.true_w = src_w;
+	renderer.true_h = src_h;
 	
 	int scaling = screen_scaling;
 	if (scaling==SCALE_CROPPED && DEVICE_WIDTH==HDMI_WIDTH) {
@@ -1947,7 +1952,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			}
 			else {
 				dst_x = ox;
-				dst_w -= ox * 2;
+				// dst_w -= ox * 2;
 			}
 
 			if (oy<0) {
@@ -1956,7 +1961,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			}
 			else {
 				dst_y = oy;
-				dst_h -= oy * 2;
+				// dst_h -= oy * 2;
 			}
 		}
 		else {
@@ -2134,7 +2139,10 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	fps_ticks += 1;
 	
 	// if source has changed size (or forced by dst_p==0)
-	if (renderer.dst_p==0 || width!=renderer.src_w || height!=renderer.src_h) {
+	// TODO: this is broken when cropped because renderer.src_w|h != w|h
+	// TODO: again, we're trying to store 4 logical rects in just 2 variables
+	// eg. true src + cropped src + fixed dst + cropped dst
+	if (renderer.dst_p==0 || width!=renderer.true_w || height!=renderer.true_h) {
 		selectScaler(width, height, pitch);
 		GFX_clearAll();
 	}
@@ -3582,7 +3590,7 @@ static void Menu_loop(void) {
 					int old_scaling = screen_scaling;
 					Menu_options(&options_menu);
 					if (screen_scaling!=old_scaling) {
-						selectScaler(renderer.src_w,renderer.src_h,renderer.src_p);
+						selectScaler(renderer.true_w,renderer.true_h,renderer.src_p);
 						
 						restore_w = screen->w;
 						restore_h = screen->h;
@@ -3761,7 +3769,7 @@ static void Menu_loop(void) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
 		GFX_clear(screen);
-		video_refresh_callback(renderer.src, renderer.src_w, renderer.src_h, renderer.src_p);
+		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
 
 		setOverclock(overclock); // restore overclock value
 		if (rumble_strength) VIB_setStrength(rumble_strength);

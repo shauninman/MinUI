@@ -97,6 +97,9 @@ typedef struct GFX_Renderer {
 	void* dst;
 	void* blit;
 	int scale;
+	
+	int true_w;
+	int true_h;
 
 	int src_x;
 	int src_y;

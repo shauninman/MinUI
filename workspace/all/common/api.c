@@ -194,6 +194,7 @@ static uint32_t frame_start = 0;
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
+// TODO: why isn't this just a #define?
 SDL_Surface* GFX_resize(int w, int h, int pitch) {
 	gfx.screen = PLAT_resizeVideo(w,h,pitch);
 	return gfx.screen;
