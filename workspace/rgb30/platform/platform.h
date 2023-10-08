@@ -127,7 +127,7 @@
 
 #define SDCARD_PATH "/storage/roms"
 #define MUTE_VOLUME_RAW 0
-// #define HAS_NEON
+#define CROP_OVERSCAN
 
 ///////////////////////////////
 

@@ -31,9 +31,15 @@ enum {
 	SCALE_NATIVE,
 	SCALE_ASPECT,
 	SCALE_FULLSCREEN,
+#ifdef CROP_OVERSCAN
 	SCALE_CROPPED,
+#endif
 	SCALE_COUNT,
 };
+
+#ifndef CROP_OVERSCAN
+	int SCALE_CROPPED = -1;
+#endif
 
 
 // default frontend options
@@ -543,7 +549,9 @@ static char* scaling_labels[] = {
 	"Native",
 	"Aspect",
 	"Fullscreen",
+#ifdef CROP_OVERSCAN
 	"Cropped",
+#endif
 	NULL
 };
 static char* tearing_labels[] = {
@@ -725,7 +733,11 @@ static struct Config {
 			[FE_OPT_SCALING] = {
 				.key	= "minarch_screen_scaling", 
 				.name	= "Screen Scaling",
+#ifdef CROP_OVERSCAN
 				.desc	= "Native uses integer scaling. Aspect uses core\nreported aspect ratio. Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.",
+#else
+				.desc	= "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nFullscreen has non-squarepixels.",
+#endif
 				.default_value = 1,
 				.value = 1,
 				.count = SCALE_COUNT,
@@ -1892,6 +1904,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	renderer.true_w = src_w;
 	renderer.true_h = src_h;
 	
+	// TODO: this is saving non-rgb30 devices from themselves...or rather, me
 	int scaling = screen_scaling;
 	if (scaling==SCALE_CROPPED && DEVICE_WIDTH==HDMI_WIDTH) {
 		scaling = SCALE_NATIVE;
@@ -2063,8 +2076,6 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	}
 	
 	// TODO: need to sanity check scale and demands on the buffer
-	
-	// if (dst_y>dst_x) dst_y = dst_x; // TODO: tmp, top align
 	
 	renderer.src_x = src_x;
 	renderer.src_y = src_y;
@@ -3242,8 +3253,7 @@ static int Menu_options(MenuList* list) {
 }
 
 static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
-	
-
+	// LOG_info("Menu_scale\n");
 
 
 
@@ -3284,8 +3294,12 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	int rw = dw;
 	int rh = dh;
 	
+	int scaling = screen_scaling;
+	if (scaling==SCALE_CROPPED && DEVICE_WIDTH==HDMI_WIDTH) {
+		scaling = SCALE_NATIVE;
+	}
 	// TODO: these probably need separation
-	if (screen_scaling==SCALE_NATIVE || screen_scaling==SCALE_CROPPED) {
+	if (scaling==SCALE_NATIVE || scaling==SCALE_CROPPED) {
 		// LOG_info("native\n");
 		rx = renderer.dst_x;
 		ry = renderer.dst_y;
@@ -3312,26 +3326,26 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 		}
 	}
 	
-	if (screen_scaling==SCALE_ASPECT || rw>dw || rh>dh) {
+	if (scaling==SCALE_ASPECT || rw>dw || rh>dh) {
 		double fixed_aspect_ratio = ((double)DEVICE_WIDTH) / DEVICE_HEIGHT;
 		int core_aspect = core.aspect_ratio * 1000;
 		int fixed_aspect = fixed_aspect_ratio * 1000;
 		
 		if (core_aspect>fixed_aspect) {
-			// letterbox
+			// LOG_info("letterbox\n");
 			rw = dw;
 			rh = rw / core.aspect_ratio;
 			rh += rh%2;
 		}
 		else if (core_aspect<fixed_aspect) {
-			// pillarbox
+			// LOG_info("pillarbox\n");
 			rh = dh;
 			rw = rh * core.aspect_ratio;
 			rw += rw%2;
 			rw = (rw/8)*8; // probably necessary here since we're not scaling by an integer
 		}
 		else {
-			// perfect match
+			// LOG_info("perfect match\n");
 			rw = dw;
 			rh = dh;
 		}
