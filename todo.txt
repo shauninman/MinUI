@@ -7,18 +7,28 @@ unreleased changes:
 ---
 
 next
-	do some benchmarking to see where the slowdown is coming from
-		the software scaler?
-		the core?
-		minarch?
-		sdl12-compat?
-
+	snes9x: it seems saves states aren't working either across devices or across versions/commits
+		 or it's something about Mega Man X? or the special chip it has
+		 doesn't affect FFVI or SMW, haven't tested others
+	pcsx: make sure dither pattern is enabled everywhere
+	
 	all
 		pull latest gpsp (fixes for long standing problem games I guess?)
 	toolchains
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
 	rgb30
+		make sure scaling option isn't affecting save state bmp
+			see some weird stuff when changing scaling
+			oh maybe I need to update sizes when aspect changes now that things are generated earlier?
+			no I think it's because Menu_scale doesn't really handle native and cropped separately
+		do some benchmarking to see where the slowdown is coming from
+			the software scaler?
+			the core?
+			minarch?
+			sdl12-compat?
+			
+		aspect scaling has garbage at bottom in VB
 		integrate into update process
 		performance issues (both frame rate and audio clipping)
 			fceuum 
@@ -27,7 +37,7 @@ next
 			pcsx
 		finish integration
 		prepare a ELLOS TF1 image
-		debug overlay drawing funny 
+		debug overlay drawing funny
 		hdmi tearing
 			see TLoZ:LA, top of screen
 			may not be vysnc/perf related

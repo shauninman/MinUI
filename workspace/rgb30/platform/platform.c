@@ -73,8 +73,8 @@ SDL_Surface* PLAT_initVideo(void) {
 
 	vid.buffer.size = (vid.pitch*2) * (h*2);
 	vid.buffer.vadd = malloc(vid.buffer.size);
+	memset(vid.buffer.vadd, 0, vid.buffer.size);
 	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
 
 	vid.dst = wrapbuffer_virtualaddr((void*)vid.video->pixels, vid.video->w, vid.video->h, RK_FORMAT_RGB_565); // never changes
 	
