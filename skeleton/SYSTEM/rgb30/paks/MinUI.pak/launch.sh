@@ -25,6 +25,11 @@ export SDL_AUDIODRIVER=alsa
 # export SDL_AUDIODRIVER=alsa
 # export SDL_NOMOUSE=1
 
+echo userspace > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
+CPU_PATH=/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed
+CPU_SPEED_PERF=1992000
+echo $CPU_SPEED_PERF > $CPU_PATH
+
 #######################################
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
@@ -46,7 +51,7 @@ EXEC_PATH=/tmp/minui_exec
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH" && sync
 while [ -f "$EXEC_PATH" ]; do
-	# overclock.elf $CPU_SPEED_PERF
+	echo $CPU_SPEED_PERF > $CPU_PATH
 	minui.elf &> $LOGS_PATH/minui.txt
 	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
@@ -55,7 +60,7 @@ while [ -f "$EXEC_PATH" ]; do
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
 		rm -f $NEXT_PATH
-		# overclock.elf $CPU_SPEED_PERF
+		echo $CPU_SPEED_PERF > $CPU_PATH
 		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
