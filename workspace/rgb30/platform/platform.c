@@ -143,8 +143,8 @@ void PLAT_vsync(int remaining) {
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 	LOG_info("PLAT_getScaler() >>> src:%ix%i (%i) dst:%i,%i %ix%i (%i)\n",
-		renderer->src_w,
-		renderer->src_h,
+		renderer->true_w,
+		renderer->true_h,
 		renderer->src_p, // unused
 
 		renderer->dst_x,

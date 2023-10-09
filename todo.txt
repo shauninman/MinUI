@@ -18,10 +18,6 @@ next
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
 	rgb30
-		make sure scaling option isn't affecting save state bmp
-			see some weird stuff when changing scaling
-			oh maybe I need to update sizes when aspect changes now that things are generated earlier?
-			no I think it's because Menu_scale doesn't really handle native and cropped separately
 		do some benchmarking to see where the slowdown is coming from
 			the software scaler?
 			the core?
@@ -43,6 +39,7 @@ next
 		hdmi tearing
 			see TLoZ:LA, top of screen
 			may not be vysnc/perf related
+			not present on our projector, only on our tv
 				
 	trimui: scaling (see DE test)
 		

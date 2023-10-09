@@ -258,7 +258,7 @@ static void Game_open(char* path) {
 				char tmp_template[MAX_PATH];
 				strcpy(tmp_template, "/tmp/minarch-XXXXXX");
 				char* tmp_dirname = mkdtemp(tmp_template);
-				LOG_info("tmp_dirname: %s\n", tmp_dirname);
+				// LOG_info("tmp_dirname: %s\n", tmp_dirname);
 				sprintf(game.tmp_path, "%s/%s", tmp_dirname, basename(filename));
 				
 				// TODO: we need to clear game.tmp_path if anything below this point fails!
@@ -3253,41 +3253,18 @@ static int Menu_options(MenuList* list) {
 }
 
 static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
-	// LOG_info("Menu_scale\n");
-
-
-
-
-
-
-
-	// TODO: aspect in save state previews if current renderer.src aspect doesn't match src aspect?
-	// TODO: revisit with less reliance on renderer.*
-
-
-
-
+	// LOG_info("Menu_scale src: %ix%i dst: %ix%i\n", src->w,src->h,dst->w,dst->h);
 	
-
-
-
-
-	// LOG_info("Menu_scale()\n");
 	uint16_t* s = src->pixels;
 	uint16_t* d = dst->pixels;
-
+	
 	int sw = src->w;
 	int sh = src->h;
 	int sp = src->pitch / FIXED_BPP;
-
+	
 	int dw = dst->w;
 	int dh = dst->h;
 	int dp = dst->pitch / FIXED_BPP;
-	
-	// printf("src_w:%i src_h:%i src_p:%i\ndst_w:%i dst_h:%i dst_p:%i\n",
-	// 	sw,sh,sp,
-	// 	dw,dh,dp
-	// ); fflush(stdout);
 	
 	int rx = 0;
 	int ry = 0;
@@ -3298,19 +3275,20 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	if (scaling==SCALE_CROPPED && DEVICE_WIDTH==HDMI_WIDTH) {
 		scaling = SCALE_NATIVE;
 	}
-	// TODO: these probably need separation
-	if (scaling==SCALE_NATIVE || scaling==SCALE_CROPPED) {
+	if (scaling==SCALE_NATIVE) {
 		// LOG_info("native\n");
+		
 		rx = renderer.dst_x;
 		ry = renderer.dst_y;
 		rw = renderer.src_w;
 		rh = renderer.src_h;
 		if (renderer.scale) {
+			// LOG_info("scale: %i\n", renderer.scale);
 			rw *= renderer.scale;
 			rh *= renderer.scale;
 		}
 		else {
-			// adjust for cropped
+			// LOG_info("forced crop\n"); // eg. fc on nano, vb on smart
 			rw -= renderer.src_x * 2;
 			rh -= renderer.src_y * 2;
 			sw = rw;
@@ -3318,7 +3296,25 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 		}
 		
 		if (dw==DEVICE_WIDTH/2) {
-			// LOG_info("adjusted\n");
+			// LOG_info("halve\n");
+			rx /= 2;
+			ry /= 2;
+			rw /= 2;
+			rh /= 2;
+		}
+	}
+	else if (scaling==SCALE_CROPPED) {
+		// LOG_info("cropped\n");
+		sw -= renderer.src_x * 2;
+		sh -= renderer.src_y * 2;
+
+		rx = renderer.dst_x;
+		ry = renderer.dst_y;
+		rw = sw * renderer.scale;
+		rh = sh * renderer.scale;
+		
+		if (dw==DEVICE_WIDTH/2) {
+			// LOG_info("halve\n");
 			rx /= 2;
 			ry /= 2;
 			rw /= 2;
@@ -3327,6 +3323,7 @@ static void Menu_scale(SDL_Surface* src, SDL_Surface* dst) {
 	}
 	
 	if (scaling==SCALE_ASPECT || rw>dw || rh>dh) {
+		// LOG_info("aspect\n");
 		double fixed_aspect_ratio = ((double)DEVICE_WIDTH) / DEVICE_HEIGHT;
 		int core_aspect = core.aspect_ratio * 1000;
 		int fixed_aspect = fixed_aspect_ratio * 1000;
@@ -3399,6 +3396,8 @@ static void Menu_initState(void) {
 	menu.preview_exists = 0;
 }
 static void Menu_updateState(void) {
+	// LOG_info("Menu_updateState\n");
+
 	int last_slot = state_slot;
 	state_slot = menu.slot;
 
@@ -3417,6 +3416,8 @@ static void Menu_updateState(void) {
 	// LOG_info("bmp_path: %s txt_path: %s (%i)\n", menu.bmp_path, menu.txt_path, menu.preview_exists);
 }
 static void Menu_saveState(void) {
+	// LOG_info("Menu_saveState\n");
+
 	Menu_updateState();
 	
 	if (menu.total_discs) {
@@ -3425,9 +3426,12 @@ static void Menu_saveState(void) {
 	}
 	
 	SDL_Surface* bitmap = menu.bitmap;
-	if (!bitmap) bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
+	if (!bitmap) bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.true_w, renderer.true_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
 	SDL_RWops* out = SDL_RWFromFile(menu.bmp_path, "wb");
 	SDL_SaveBMP_RW(bitmap, out, 1);
+	
+	// LOG_info("%s %ix%i\n", menu.bmp_path, bitmap->w,bitmap->h);
+	
 	if (bitmap!=menu.bitmap) SDL_FreeSurface(bitmap);
 	
 	state_slot = menu.slot;
@@ -3435,6 +3439,8 @@ static void Menu_saveState(void) {
 	State_write();
 }
 static void Menu_loadState(void) {
+	// LOG_info("Menu_loadState\n");
+
 	Menu_updateState();
 	
 	if (menu.save_exists && menu.total_discs) {
@@ -3457,7 +3463,8 @@ static void Menu_loadState(void) {
 }
 
 static void Menu_loop(void) {
-	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.src_w, renderer.src_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
+	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.true_w, renderer.true_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
+	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
 	
 	SDL_Surface* backing = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,FIXED_DEPTH,RGBA_MASK_565); 
 	Menu_scale(menu.bitmap, backing);
@@ -3730,7 +3737,7 @@ static void Menu_loop(void) {
 					SDL_Surface* bmp = IMG_Load(menu.bmp_path);
 					SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
 					
-					// LOG_info("preview\n");
+					// LOG_info("raw_preview %ix%i\n", raw_preview->w,raw_preview->h);
 					
 					SDL_FillRect(preview, NULL, 0);
 					Menu_scale(raw_preview, preview);
@@ -3880,7 +3887,7 @@ int main(int argc , char* argv[]) {
 	DEVICE_WIDTH = screen->w; // yea or nay?
 	DEVICE_HEIGHT = screen->h; // yea or nay?
 	DEVICE_PITCH = screen->pitch; // yea or nay?
-	LOG_info("DEVICE_SIZE: %ix%i (%i)\n", DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
+	// LOG_info("DEVICE_SIZE: %ix%i (%i)\n", DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	
 	VIB_init();
 	POW_init();
