@@ -5,18 +5,23 @@ PLATFORM="rgb30"
 SDCARD_PATH="/storage/roms"
 UPDATE_PATH="$SDCARD_PATH/MinUI.zip"
 SYSTEM_PATH="$SDCARD_PATH/.system"
+SYSTEM_DIR="$(dirname "$0")/$PLATFORM"
 
-rm $SDCARD_PATH/FSCK*
+echo performance > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
+
+# copy firmware update from TF2 to TF1 and reboot
+FW_PATH=$(ls -1 $SDCARD_PATH/JELOS*.tar 2>/dev/null | head -n 1)
+if [[ ! -z "$FW_PATH" && -f "$FW_PATH" ]]; then
+	ply-image $SYSTEM_DIR/firmware.png
+	mv $FW_PATH /storage/.update && sync && cat /dev/zero > /dev/fb0 && reboot
+fi
 
 # install/update
 if [ -f "$UPDATE_PATH" ]; then 
-	echo performance > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
-	
-	DIR="$(dirname "$0")/$PLATFORM"
 	if [ -d "$SYSTEM_PATH" ]; then
-		ply-image $DIR/updating.png
+		ply-image $SYSTEM_DIR/updating.png
 	else
-		ply-image $DIR/installing.png
+		ply-image $SYSTEM_DIR/installing.png
 	fi
 	
 	unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH" # &> $SDCARD_PATH/unzip.txt
@@ -25,7 +30,6 @@ if [ -f "$UPDATE_PATH" ]; then
 	cat /dev/zero > /dev/fb0
 fi
 
-# TODO: will this loop break shutdown?
 LAUNCH_PATH="$SYSTEM_PATH/$PLATFORM/paks/MinUI.pak/launch.sh"
 while [ -f "$LAUNCH_PATH" ] ; do
 	"$LAUNCH_PATH"

@@ -16,13 +16,15 @@ next
 	toolchains
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
+		
 	rgb30
-		after update it displays "Updating..." on every screen transition
-			need to clear the framebuffer
-		integrate into update process
-			point start_minui.sh in JELOS minui.service to .tmp_update/rgb30.sh instead of MinUI.pak/launch.sh
+		prepare rgb30-toolchain for release
+			not even a repo yet
+			
 		prepare a ELLOS TF1 image
+			figure out what to do about ssh root pass & wifi
 			publish changes
+				create a detached fork github.com/shauninman/ellos
 
 		do some benchmarking to see where the slowdown is coming from
 			the software scaler?
