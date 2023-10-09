@@ -3880,7 +3880,7 @@ int main(int argc , char* argv[]) {
 	DEVICE_WIDTH = screen->w; // yea or nay?
 	DEVICE_HEIGHT = screen->h; // yea or nay?
 	DEVICE_PITCH = screen->pitch; // yea or nay?
-	LOG_info("%ix%i", DEVICE_WIDTH,DEVICE_HEIGHT);
+	LOG_info("DEVICE_SIZE: %ix%i (%i)\n", DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	
 	VIB_init();
 	POW_init();

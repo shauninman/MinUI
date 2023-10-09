@@ -30,6 +30,8 @@ next
 			
 		aspect scaling has garbage at bottom in VB
 		integrate into update process
+			point start_minui.sh in JELOS minui.service to .tmp_update/rgb30.sh instead of MinUI.pak/launch.sh
+			
 		performance issues (both frame rate and audio clipping)
 			fceuum 
 			picodrive
