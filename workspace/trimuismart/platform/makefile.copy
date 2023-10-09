@@ -1,7 +1,7 @@
 $(PLATFORM):
 	# $@
 	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
-	# installer (new)
+	# installer
 	mkdir -p ./build/BASE/trimui/app
 	cp ./workspace/$@/install/nop.sh ./build/BASE/trimui/app/keymon
 	cp ./workspace/$@/install/install.sh ./build/BASE/trimui/app/MainUI

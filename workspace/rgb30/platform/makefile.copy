@@ -1,7 +1,10 @@
 $(PLATFORM):
 	# $@
+	# installer
+	cp ./workspace/$@/install/boot.sh ./build/BOOT/$@.sh
+	mkdir -p ./build/BOOT/$@/
+	cp ./workspace/$@/install/*.png ./build/BOOT/$@/
 	# extras
 	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
 	cp ./workspace/$@/other/sdl12-compat/build/libSDL-1.2.so.1.2.69 ./build/SYSTEM/$@/lib/libSDL-1.2.so.0
-	

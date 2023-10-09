@@ -1,8 +1,8 @@
 unreleased changes:
 
-- rgb30: added hdmi detection at boot
 - trimuismart: updated battery curve
-- all: added Screen Scaling: Cropped (primarily for NES/SNES on RGB30)
+- rgb30: initial support
+- miyoo + rg35xx: disabled batmon logging
 
 ---
 
@@ -10,14 +10,20 @@ next
 	snes9x: it seems saves states aren't working either across devices or across versions/commits
 		 or it's something about Mega Man X? or the special chip it has
 		 doesn't affect FFVI or SMW, haven't tested others
-	pcsx: make sure dither pattern is enabled everywhere
-	
+		 	
 	all
 		pull latest gpsp (fixes for long standing problem games I guess?)
 	toolchains
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
 	rgb30
+		after update it displays "Updating..." on every screen transition
+			need to clear the framebuffer
+		integrate into update process
+			point start_minui.sh in JELOS minui.service to .tmp_update/rgb30.sh instead of MinUI.pak/launch.sh
+		prepare a ELLOS TF1 image
+			publish changes
+
 		do some benchmarking to see where the slowdown is coming from
 			the software scaler?
 			the core?
@@ -25,16 +31,12 @@ next
 			sdl12-compat?
 			
 		aspect scaling has garbage at bottom in VB
-		integrate into update process
-			point start_minui.sh in JELOS minui.service to .tmp_update/rgb30.sh instead of MinUI.pak/launch.sh
 			
 		performance issues (both frame rate and audio clipping)
 			fceuum 
 			picodrive
 			vb
 			pcsx
-		finish integration
-		prepare a ELLOS TF1 image
 		debug overlay drawing funny
 		hdmi tearing
 			see TLoZ:LA, top of screen

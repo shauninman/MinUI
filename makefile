@@ -4,7 +4,7 @@
 # it has to, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = miyoomini rg35xx trimuismart rgb30
+PLATFORMS = miyoomini trimuismart rg35xx rgb30
 endif
 
 ###########################################################
@@ -106,16 +106,20 @@ special:
 	cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 
-package:
+tidy:
 	# ----------------------------------------------------
-	# zip up build
+	# remove systems we're not ready to support yet
 	
-	# TODO: tmp
+	# TODO: tmp, figure out a cleaner way to do this
 	rm -rf ./build/SYSTEM/rg353
 	rm -rf ./build/SYSTEM/trimui
 	rm -rf ./build/EXTRAS/Tools/rg353
 	rm -rf ./build/EXTRAS/Tools/trimui
-	
+
+package: tidy
+	# ----------------------------------------------------
+	# zip up build
+		
 	# move formatted readmes from workspace to build
 	cp ./workspace/readmes/BASE-out.txt ./build/BASE/README.txt
 	cp ./workspace/readmes/EXTRAS-out.txt ./build/EXTRAS/README.txt
@@ -167,6 +171,11 @@ trimui:
 	# ----------------------------------------------------
 
 rgb30:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+nano:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------
