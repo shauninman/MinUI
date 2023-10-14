@@ -1,9 +1,5 @@
 $(PLATFORM):
 	# $@
-	# installer
-	cp ./workspace/$@/install/boot.sh ./build/BOOT/$@.sh
-	mkdir -p ./build/BOOT/$@/
-	cp ./workspace/$@/install/*.png ./build/BOOT/$@/
 	# extras
 	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/

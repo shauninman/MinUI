@@ -1455,7 +1455,8 @@ int main (int argc, char *argv[]) {
 					}
 				}
 				else {
-					GFX_blitMessage(font.large, "Empty folder", screen, NULL);
+					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
+					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
 			
 				// buttons

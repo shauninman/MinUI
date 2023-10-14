@@ -13,7 +13,7 @@ On devices that support two SD cards (eg. RG35XX) I will use the name "TF1" to r
 Copy all the folders from this zip file to your primary card.
 
 ----------------------------------------
-Update
+Updating
 
 This extras zip file is included with every release, regardless of whether its contents has changed or not. Refer to the release notes to see what if anything was added or changed and copy just the desired updated pak(s) to the corresponding system folder in either the Emus or Tools folder.
 

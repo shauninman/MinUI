@@ -1,8 +1,8 @@
 unreleased changes:
 
 - trimuismart: updated battery curve
+- miyoo + rg35xx: disabled some unnecessary logging
 - rgb30: initial support
-- miyoo + rg35xx: disabled batmon logging
 
 ---
 
@@ -10,7 +10,10 @@ next
 	snes9x: it seems saves states aren't working either across devices or across versions/commits
 		 or it's something about Mega Man X? or the special chip it has
 		 doesn't affect FFVI or SMW, haven't tested others
-		 	
+	snes9x: menu becomes unresponsive when selecting save/load with a zipped rom?
+		yoshi's island
+		rock 'n roll racing
+		
 	all
 		pull latest gpsp (fixes for long standing problem games I guess?)
 	toolchains
@@ -18,13 +21,19 @@ next
 		or not? if it ain't broke
 		
 	rgb30
-		prepare rgb30-toolchain for release
-			not even a repo yet
-			
+		need graceful hook for when TF2 isn't inserted or .tmp_update can't be found
+			actually this will need to handle installing/updating MinUI.zip...
+			which means that logic and images need to be moved to ELLOS
+				looks like images could go in ${INSTALL}/usr/share/minui/
+				and the script in ${INSTALL}/usr/bin/
 		prepare a ELLOS TF1 image
-			figure out what to do about ssh root pass & wifi
+			unset wifi and rebuild
 			publish changes
 				create a detached fork github.com/shauninman/ellos
+
+		prepare rgb30-toolchain for release
+			not even a repo yet
+			unset the wifi stuff first?
 
 		do some benchmarking to see where the slowdown is coming from
 			the software scaler?
@@ -62,6 +71,7 @@ known issues
 
 all
 	minarch
+		GFX_blitMessage() screen w/h is 0,0 for some reason
 		doesn't pickup on core setting ratio changes? eg. fceumm
 		add vertical and horizontal screen alignment to frontend options?
 		prevent MENU+button from triggering button
@@ -110,6 +120,7 @@ miniplus
 	-
 	
 rg35xx
+	charging screen isn't working for someone on RH discord
 	how to handle updating on mini and missing TF1 updates as a result?
 		could I write the version to the .minstalled file
 		if it doesn't match the current one run the installer
