@@ -28,6 +28,14 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 
 Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
+RGB30
+
+MinUI is mean to be used with Moss installed on the SD card that goes into the left slot (labeled TF-OS) of the RGB30. Download and flash the latest version:
+
+	https://github.com/shauninman/Moss/releases/
+
+Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TFGAME) of the RGB30.
+
 MIYOO MINI PLUS
 
 Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
@@ -43,18 +51,19 @@ Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the 
 ----------------------------------------
 Updating
 
-RG35XX
+RG35XX / RGB30 / MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART
 
-Copy "MinUI.zip" (without unzipping) to the root of your primary card.
-
-MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART
-
-Copy "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy "MinUI.zip" (without unzipping) to the root of the SD card containing your Roms.
 
 ----------------------------------------
 Shortcuts
 
-RG35XX / MIYOO MINI PLUS
+RGB30
+
+	Menu: L3 or R3
+
+
+RG35XX / MIYOO MINI PLUS / RGB30
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
@@ -64,7 +73,7 @@ MIYOO MINI / TRIMUI SMART
   Volume: SELECT + L or R
   Brightness: START + L or R1
 
-RG35XX / MIYOO MINI / MIYOO MINI PLUS
+RG35XX / MIYOO MINI (PLUS) / RGB30
   
   Sleep: POWER
   Wake: POWER
@@ -162,6 +171,12 @@ Check out Jim's music:
 
 ----------------------------------------
 Known Issues
+
+RGB30
+
+- garbage may be drawn below aspect scaled systems
+- some systems have (usually subtle) audio clipping
+- some systems need additional performance tuning
 
 TRIMUI SMART
 
