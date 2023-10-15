@@ -7,9 +7,6 @@ unreleased changes:
 ---
 
 next
-	snes9x: it seems saves states aren't working either across devices or across versions/commits
-		 or it's something about Mega Man X? or the special chip it has
-		 doesn't affect FFVI or SMW, haven't tested others
 	snes9x: menu becomes unresponsive when selecting save/load with a zipped rom?
 		yoshi's island
 		rock 'n roll racing
@@ -21,19 +18,14 @@ next
 		or not? if it ain't broke
 		
 	rgb30
-		need graceful hook for when TF2 isn't inserted or .tmp_update can't be found
-			actually this will need to handle installing/updating MinUI.zip...
-			which means that logic and images need to be moved to ELLOS
-				looks like images could go in ${INSTALL}/usr/share/minui/
-				and the script in ${INSTALL}/usr/bin/
-		prepare a ELLOS TF1 image
-			unset wifi and rebuild
-			publish changes
-				create a detached fork github.com/shauninman/ellos
+		default most cores to powersave?
 
-		prepare rgb30-toolchain for release
-			not even a repo yet
-			unset the wifi stuff first?
+		figure out why power suspends the device after MOSS install
+			it appears to reboot but it only stops suspending after a manual reboot
+			fewt reports having a fix in the pipeline
+				add readme
+		
+		commander needs MENU button support
 
 		do some benchmarking to see where the slowdown is coming from
 			the software scaler?
@@ -42,6 +34,7 @@ next
 			sdl12-compat?
 			
 		aspect scaling has garbage at bottom in VB
+			is this an librga thing?
 			
 		performance issues (both frame rate and audio clipping)
 			fceuum 
@@ -49,10 +42,6 @@ next
 			vb
 			pcsx
 		debug overlay drawing funny
-		hdmi tearing
-			see TLoZ:LA, top of screen
-			may not be vysnc/perf related
-			not present on our projector, only on our tv
 				
 	trimui: scaling (see DE test)
 		
