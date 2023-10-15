@@ -1,8 +1,6 @@
 unreleased changes:
 
-- trimuismart: updated battery curve
-- miyoo + rg35xx: disabled some unnecessary logging
-- rgb30: initial support
+-
 
 ---
 
@@ -17,7 +15,13 @@ next
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
 		
+	build datetime disconnect
+		build products on macos use local time
+		build products in dockers use gmt
+
 	rgb30
+		publish MOSS-docker
+			build intell rgb30-toolchain.tar.xz
 		default most cores to powersave?
 
 		figure out why power suspends the device after MOSS install

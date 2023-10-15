@@ -1,6 +1,6 @@
 # MinUI
 
-MinUI is a focused, custom launcher and libretro frontend for the Trimui Smart, Miyoo Mini(s), and Anbernic RG35XX.
+MinUI is a focused, custom launcher and libretro frontend for the RGB30, Trimui Smart, Miyoo Mini(s), and Anbernic RG35XX.
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 />  
 See [more screenshots](github/).
@@ -39,6 +39,29 @@ You can [grab the latest version here](https://github.com/shauninman/MinUI/relea
 > use MENU to sleep and wake instead of
 > POWER. Once asleep the device can safely
 > be powered off manually with the switch.
+
+## Supported consoles
+
+Base:
+
+- Game Boy
+- Game Boy Color
+- Game Boy Advance
+- Nintendo Entertainment System
+- Super Nintendo Entertainment System
+- Sega Genesis
+- PlayStation
+
+Extras:
+
+- Sega Game Gear
+- Sega Master System
+- TurboGrafx-16
+- Pokémon mini
+- Super Game Boy
+- Virtual Boy
+- Pico-8
+
 
 ## Legacy versions
 
