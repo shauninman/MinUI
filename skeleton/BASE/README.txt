@@ -30,7 +30,7 @@ Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.
 
 RGB30
 
-MinUI is mean to be used with Moss installed on the SD card that goes into the left slot (labeled TF-OS) of the RGB30. Download and flash the latest version:
+MinUI is meant to be used with Moss installed on the SD card that goes into the left slot (labeled TF-OS) of the RGB30. Download and flash the latest version:
 
 	https://github.com/shauninman/Moss/releases/
 
