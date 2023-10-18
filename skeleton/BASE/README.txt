@@ -16,7 +16,7 @@ The primary card should be a reputable brand and freshly formatted as FAT32.
 
 CAVEATS
 
-While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 and therefore need to be installed from the specific device before using. For example, installing MinUI on the RG35XX or Trimui Smart allows it to work on the Miyoo Mini family. But installing on a Miyoo Mini device would require installing again directly on the RG35XX and/or Trimui Smart. When in doubt follow the installation instructions; if all the necessary bits are already installed, the installer will act as an updater instead.
+While MinUI can be updated from any device once installed, some devices require (minor) changes to NAND or TF1 (via the aforementioned bootstrap file or folder) and therefore need to be installed from the specific device before using. The same is true when trying to use an existing card in a new device of the same type. When in doubt, follow the installation instructions; if all the necessary bits are already installed, the installer will act as an updater instead.
 
 ALL
 

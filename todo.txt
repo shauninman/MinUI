@@ -1,6 +1,12 @@
 unreleased changes:
 
+BASE
+
 -
+
+EXTRAS
+
+- rgb30: L3/R3 added as alternate MENU button to match other platforms
 
 ---
 
@@ -14,22 +20,25 @@ next
 	toolchains
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
-		
+	
+	minarch:
+		crop save state pillar/letter-boxing?
+	
 	build datetime disconnect
 		build products on macos use local time
 		build products in dockers use gmt
-
+		
+	smartpro
+		wonky framebuffer in sdl1.2
+		no standard input api
+		no brightness sysfs
+		haven't even attempted sound
+	
 	rgb30
-		publish MOSS-docker
-			build intell rgb30-toolchain.tar.xz
-		default most cores to powersave?
-
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
-			fewt reports having a fix in the pipeline
-				add readme
-		
-		commander needs MENU button support
+			fewt has a fix
+				https://github.com/JustEnoughLinuxOS/distribution/pull/2195/files#diff-719d790f2d3c1d5a0884ae9eb69fb77956fcaaae235282acb6e6817339f35105
 
 		do some benchmarking to see where the slowdown is coming from
 			the software scaler?
@@ -46,7 +55,7 @@ next
 			vb
 			pcsx
 		debug overlay drawing funny
-				
+	
 	trimui: scaling (see DE test)
 		
 known issues
@@ -113,6 +122,20 @@ miniplus
 	-
 	
 rg35xx
+	overclock.elf with userspace versus performance
+		performance should be slower because it will max out to the max defined scaling frequency
+		userspace should accept the specific scaling frequency
+		re: NDS.pak
+		
+		XQuader figured out that CPUs are unlocked with performance but not userspace
+			the following will unlock them:
+				echo 0xf > /sys/devices/system/cpu/autoplug/plug_mask
+				echo 1 > /sys/devices/system/cpu/cpu1/online
+				echo 1 > /sys/devices/system/cpu/cpu2/online
+				echo 1 > /sys/devices/system/cpu/cpu3/online
+			but using performance instead of userspace has the same result so maybe just use that
+				as long as it doesn't kill battery life?
+		
 	charging screen isn't working for someone on RH discord
 	how to handle updating on mini and missing TF1 updates as a result?
 		could I write the version to the .minstalled file
