@@ -7,13 +7,16 @@ BASE
 EXTRAS
 
 - rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
+- rgb30: fixed file browser background in Files.pak
 
 ---
 
 next
 	moss: build lib32 to try to fix snes9x save state compatibility
+		first attempt did not go well :sweat_smile:
 		
 	bug: does Files.pak have the wrong background for rgb30?
+		yes
 
 	snes9x: menu becomes unresponsive when selecting save/load with a zipped rom?
 		I can't reproduce...
@@ -22,7 +25,11 @@ next
 		
 	all
 		fake-08 it looks like save states might have been fixed
-			14243c0e18425acbe557a81eb9c230dd44e85982
+			14243c0
+			save states in general are wonky, eg.
+				load a Celeste state in later levels with pink sky
+				then load a state from earlier levels, the sky should
+				be black but instead it's pink like a later level
 		pull latest gpsp (fixes for long standing problem games I guess?)
 			nope, breaks save state compatibility
 			oddly it appears to be fixed on a branch? https://github.com/libretro/gpsp/commit/8745bf3d8fbb708db13bb726e5d89a6832f74d73
@@ -50,6 +57,7 @@ next
 		no standard input api
 		no brightness sysfs
 		haven't even attempted sound
+		I think MinUI will need to be made SDL2-compatible before tackling this
 	
 	rgb30
 		figure out why power suspends the device after MOSS install
@@ -71,6 +79,7 @@ next
 			picodrive
 			vb
 			pcsx
+			could this have anything to do with the performance versus userspace governor?
 		debug overlay drawing funny
 	
 	trimui: scaling (see DE test)
@@ -87,6 +96,7 @@ known issues
 	
 	nano: says it can bind MENU+button for shortcuts, it can't
 	rgb30: hdmi tearing near the top of the screen
+		this seems to be limited to gambatte? confirm?
 
 all
 	minarch
