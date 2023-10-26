@@ -12,7 +12,9 @@ endif
 
 # overrides shared by all cores
 
-fake-08_HASH = 6279216964e351409201e987653e3d708fd4ad78 # last known working save states
+# commits after these break save states (gpsp as of 20231025)
+fake-08_HASH = 6279216
+gpsp_HASH = 1d1c719
 
 ###############################
 
@@ -52,7 +54,7 @@ clone-$(1): src/$(1)
 
 status-$(1): src/$(1)
 	cd src/$(1) && git show --oneline -s
-	
+
 patch-$(1): src/$(1)/.patched
 
 clean-$(1):

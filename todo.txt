@@ -6,17 +6,34 @@ BASE
 
 EXTRAS
 
-- rgb30: L3/R3 added as alternate MENU button to match other platforms
+- rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
 
 ---
 
 next
+	moss: build lib32 to try to fix snes9x save state compatibility
+		
+	bug: does Files.pak have the wrong background for rgb30?
+
 	snes9x: menu becomes unresponsive when selecting save/load with a zipped rom?
+		I can't reproduce...
 		yoshi's island
 		rock 'n roll racing
 		
 	all
+		fake-08 it looks like save states might have been fixed
+			14243c0e18425acbe557a81eb9c230dd44e85982
 		pull latest gpsp (fixes for long standing problem games I guess?)
+			nope, breaks save state compatibility
+			oddly it appears to be fixed on a branch? https://github.com/libretro/gpsp/commit/8745bf3d8fbb708db13bb726e5d89a6832f74d73
+			but it looks like the save state format has been updated 2 more times since then so using that commit as a patch probably won't work
+			f4e65d15 is known safe
+			broken
+				f0bacff
+				bcd062e
+			works!
+				1d1c719
+				
 	toolchains
 		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
 		or not? if it ain't broke
