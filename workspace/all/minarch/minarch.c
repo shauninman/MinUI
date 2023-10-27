@@ -824,9 +824,9 @@ static int Config_getValue(char* cfg, const char* key, char* out_value, int* loc
 static void setOverclock(int i) {
 	overclock = i;
 	switch (i) {
-		case 0: POW_setCPUSpeed(CPU_SPEED_POWERSAVE); break;
-		case 1: POW_setCPUSpeed(CPU_SPEED_NORMAL); break;
-		case 2: POW_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
+		case 0: PWR_setCPUSpeed(CPU_SPEED_POWERSAVE); break;
+		case 1: PWR_setCPUSpeed(CPU_SPEED_NORMAL); break;
+		case 2: PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
 	}
 }
 static void Config_syncFrontend(char* key, int value) {
@@ -1372,7 +1372,7 @@ static void input_poll_callback(void) {
 	PAD_poll();
 
 	int show_setting = 0;
-	POW_update(NULL, &show_setting, Menu_beforeSleep, Menu_afterSleep);
+	PWR_update(NULL, &show_setting, Menu_beforeSleep, Menu_afterSleep);
 
 	// I _think_ this can stay as is...
 	if (PAD_justPressed(BTN_MENU)) {
@@ -1447,7 +1447,7 @@ static void input_poll_callback(void) {
 			buttons |= 1 << mapping->retro;
 			if (mapping->mod) ignore_menu = 1;
 		}
-		//  && !POW_ignoreSettingInput(btn, show_setting)
+		//  && !PWR_ignoreSettingInput(btn, show_setting)
 	}
 	
 	// if (buttons) LOG_info("buttons: %i\n", buttons);
@@ -2441,7 +2441,7 @@ void Menu_beforeSleep(void) {
 	SRAM_write();
 	State_autosave();
 	putFile(AUTO_RESUME_PATH, game.path + strlen(SDCARD_PATH));
-	POW_setCPUSpeed(CPU_SPEED_MENU);
+	PWR_setCPUSpeed(CPU_SPEED_MENU);
 }
 void Menu_afterSleep(void) {
 	unlink(AUTO_RESUME_PATH);
@@ -2492,7 +2492,7 @@ static int Menu_message(char* message, char** pairs) {
 
 		if (PAD_justPressed(BTN_A) || PAD_justPressed(BTN_B)) break;
 		
-		POW_update(&dirty, NULL, Menu_beforeSleep, Menu_afterSleep);
+		PWR_update(&dirty, NULL, Menu_beforeSleep, Menu_afterSleep);
 		
 		if (dirty) {
 			GFX_clear(screen);
@@ -2847,7 +2847,7 @@ static int OptionSaveChanges_openMenu(MenuList* list, int i) {
 
 static int OptionQuicksave_onConfirm(MenuList* list, int i) {
 	Menu_beforeSleep();
-	POW_powerOff();
+	PWR_powerOff();
 }
 
 static MenuList options_menu = {
@@ -3018,7 +3018,7 @@ static int Menu_options(MenuList* list) {
 			}
 		}
 		
-		if (!defer_menu) POW_update(&dirty, &show_settings, Menu_beforeSleep, Menu_afterSleep);
+		if (!defer_menu) PWR_update(&dirty, &show_settings, Menu_beforeSleep, Menu_afterSleep);
 		
 		if (defer_menu && PAD_justReleased(BTN_MENU)) defer_menu = false;
 		
@@ -3474,16 +3474,16 @@ static void Menu_loop(void) {
 	}
 	
 	SRAM_write();
-	POW_warn(0);
-	if (!HAS_POWER_BUTTON) POW_enableSleep();
-	POW_setCPUSpeed(CPU_SPEED_MENU); // set Hz directly
+	PWR_warn(0);
+	if (!HAS_POWER_BUTTON) PWR_enableSleep();
+	PWR_setCPUSpeed(CPU_SPEED_MENU); // set Hz directly
 	GFX_setVsync(VSYNC_STRICT);
 	
 	int rumble_strength = VIB_getStrength();
 	VIB_setStrength(0);
 	
 	fast_forward = 0; // TODO: I can't remember why I do this but I find it kinda annoying...
-	POW_enableAutosleep();
+	PWR_enableAutosleep();
 	PAD_reset();
 	
 	if (!HAS_POWER_BUTTON && !HAS_POWEROFF_BUTTON) {
@@ -3619,7 +3619,7 @@ static void Menu_loop(void) {
 			if (!show_menu) break;
 		}
 
-		POW_update(&dirty, &show_setting, Menu_beforeSleep, Menu_afterSleep);
+		PWR_update(&dirty, &show_setting, Menu_beforeSleep, Menu_afterSleep);
 		
 		if (dirty) {
 			GFX_clear(screen);
@@ -3769,7 +3769,7 @@ static void Menu_loop(void) {
 	PAD_reset();
 
 	GFX_clearAll();
-	POW_warn(1);
+	PWR_warn(1);
 	
 	if (!quit) {
 		if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
@@ -3782,16 +3782,16 @@ static void Menu_loop(void) {
 		if (rumble_strength) VIB_setStrength(rumble_strength);
 		
 		GFX_setVsync(prevent_tearing);
-		if (!HAS_POWER_BUTTON) POW_disableSleep();
+		if (!HAS_POWER_BUTTON) PWR_disableSleep();
 	}
 	
 	SDL_FreeSurface(menu.bitmap);
 	menu.bitmap = NULL;
 	SDL_FreeSurface(backing);
-	POW_disableAutosleep();
+	PWR_disableAutosleep();
 }
 
-// TODO: move to POW_*?
+// TODO: move to PWR_*?
 static unsigned getUsage(void) { // from picoarch
 	long unsigned ticks = 0;
 	long ticksps = 0;
@@ -3887,8 +3887,8 @@ int main(int argc , char* argv[]) {
 	// LOG_info("DEVICE_SIZE: %ix%i (%i)\n", DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	
 	VIB_init();
-	POW_init();
-	if (!HAS_POWER_BUTTON) POW_disableSleep();
+	PWR_init();
+	if (!HAS_POWER_BUTTON) PWR_disableSleep();
 	MSG_init();
 	
 	// Overrides_init();
@@ -3924,8 +3924,8 @@ int main(int argc , char* argv[]) {
 	State_resume();
 	Menu_initState(); // make ready for state shortcuts
 	
-	POW_warn(1);
-	POW_disableAutosleep();
+	PWR_warn(1);
+	PWR_disableAutosleep();
 	sec_start = SDL_GetTicks();
 	while (!quit) {
 		GFX_startFrame();
@@ -3963,7 +3963,7 @@ finish:
 	Config_quit();
 	
 	MSG_quit();
-	POW_quit();
+	PWR_quit();
 	VIB_quit();
 	SND_quit();
 	GFX_quit();

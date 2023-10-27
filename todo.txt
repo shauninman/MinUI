@@ -15,14 +15,6 @@ next
 	moss: build lib32 to try to fix snes9x save state compatibility
 		first attempt did not go well :sweat_smile:
 		
-	bug: does Files.pak have the wrong background for rgb30?
-		yes
-
-	snes9x: menu becomes unresponsive when selecting save/load with a zipped rom?
-		I can't reproduce...
-		yoshi's island
-		rock 'n roll racing
-		
 	all
 		fake-08 it looks like save states might have been fixed
 			14243c0
@@ -40,10 +32,7 @@ next
 				bcd062e
 			works!
 				1d1c719
-				
-	toolchains
-		move exports from setup-env.sh to ENV in Dockerfile (see rgb30)
-		or not? if it ain't broke
+
 	
 	minarch:
 		crop save state pillar/letter-boxing?
@@ -80,6 +69,7 @@ next
 			vb
 			pcsx
 			could this have anything to do with the performance versus userspace governor?
+				no
 		debug overlay drawing funny
 	
 	trimui: scaling (see DE test)
@@ -102,7 +92,6 @@ all
 	minarch
 		GFX_blitMessage() screen w/h is 0,0 for some reason
 		doesn't pickup on core setting ratio changes? eg. fceumm
-		add vertical and horizontal screen alignment to frontend options?
 		prevent MENU+button from triggering button
 		prevent binding same MENU+button to control and shortcut at same time
 			reset the newer input to None and show a message, ideal something like:
@@ -169,7 +158,6 @@ rg35xx
 		if it doesn't match the current one run the installer
 		trimui smart has a similar issue now
 			the bootstrap folder updates /etc/main
-
 
 nano
 	the lack of shared SD card support is a big downer

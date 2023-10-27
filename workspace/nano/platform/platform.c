@@ -182,7 +182,7 @@ void PLAT_powerOff(void) {
 	PLAT_enableBacklight(0);
 	SND_quit();
 	VIB_quit();
-	POW_quit();
+	PWR_quit();
 	GFX_quit();
 
 	touch("/tmp/poweroff");

@@ -1163,15 +1163,15 @@ int main (int argc, char *argv[]) {
 	InitSettings();
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
-	POW_init();
-	if (!HAS_POWER_BUTTON) POW_disableSleep();
+	PWR_init();
+	if (!HAS_POWER_BUTTON) PWR_disableSleep();
 	
 	SDL_Surface* version = NULL;
 	
 	Menu_init();
 	
 	// now that (most of) the heavy lifting is done, take a load off
-	POW_setCPUSpeed(CPU_SPEED_MENU);
+	PWR_setCPUSpeed(CPU_SPEED_MENU);
 	GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
@@ -1187,20 +1187,20 @@ int main (int argc, char *argv[]) {
 		int selected = top->selected;
 		int total = top->entries->count;
 		
-		POW_update(&dirty, &show_setting, NULL, NULL);
+		PWR_update(&dirty, &show_setting, NULL, NULL);
 		
 		if (show_version) {
 			if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
 				show_version = 0;
 				dirty = 1;
-				if (!HAS_POWER_BUTTON) POW_disableSleep();
+				if (!HAS_POWER_BUTTON) PWR_disableSleep();
 			}
 		}
 		else {
 			if (PAD_tappedMenu(now)) {
 				show_version = 1;
 				dirty = 1;
-				if (!HAS_POWER_BUTTON) POW_enableSleep();
+				if (!HAS_POWER_BUTTON) PWR_enableSleep();
 			}
 			else if (total>0) {
 				if (PAD_justRepeated(BTN_UP)) {
@@ -1267,7 +1267,7 @@ int main (int argc, char *argv[]) {
 				}
 			}
 		
-			if (PAD_justRepeated(BTN_L1) && !PAD_isPressed(BTN_R1) && !POW_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
+			if (PAD_justRepeated(BTN_L1) && !PAD_isPressed(BTN_R1) && !PWR_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha-1;
 				if (i>=0) {
@@ -1280,7 +1280,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-			else if (PAD_justRepeated(BTN_R1) && !PAD_isPressed(BTN_L1) && !POW_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
+			else if (PAD_justRepeated(BTN_R1) && !PAD_isPressed(BTN_L1) && !PWR_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha+1;
 				if (i<top->alphas->count) {
@@ -1485,7 +1485,7 @@ int main (int argc, char *argv[]) {
 	if (version) SDL_FreeSurface(version);
 
 	Menu_quit();
-	POW_quit();
+	PWR_quit();
 	GFX_quit();
 	QuitSettings();
 }

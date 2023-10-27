@@ -20,10 +20,10 @@ enum {
 };
 
 int main(int argc , char* argv[]) {
-	POW_setCPUSpeed(CPU_SPEED_MENU);
+	PWR_setCPUSpeed(CPU_SPEED_MENU);
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
-	POW_init();
+	PWR_init();
 	InitSettings();
 	
 	// TODO: make use of SCALE1()
@@ -232,7 +232,7 @@ int main(int argc , char* argv[]) {
 			}
 		}
 		
-		POW_update(&dirty, NULL, NULL,NULL);
+		PWR_update(&dirty, NULL, NULL,NULL);
 		
 		if (dirty) {
 			validate();
@@ -306,7 +306,7 @@ int main(int argc , char* argv[]) {
 	SDL_FreeSurface(digits);
 	
 	QuitSettings();
-	POW_quit();
+	PWR_quit();
 	GFX_quit();
 	
 	

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -95,7 +96,7 @@ GFX_Fonts font;
 
 ///////////////////////////////
 
-static struct POW_Context {
+static struct PWR_Context {
 	int initialized;
 	
 	int can_sleep;
@@ -108,7 +109,7 @@ static struct POW_Context {
 	int should_warn;
 
 	SDL_Surface* overlay;
-} pow = {0};
+} pwr = {0};
 
 ///////////////////////////////
 
@@ -355,7 +356,6 @@ static inline uint32_t average32(uint32_t c1, uint32_t c2) {
 static inline int gcd(int a, int b) {
 	return b ? gcd(b, a % b) : a;
 }
-static inline double round(double n) { return (int)(n<0 ? n-0.5 : n+0.5); } // this is buggy somehow, change POW_*/pow.* to PWR_*/pwr.* and just #include <math.h>
 
 static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h, uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_p) {
 	int dy = 0;
@@ -552,12 +552,12 @@ void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	x += (SCALE1(PILL_SIZE) - (rect.w + FIXED_SCALE)) / 2;
 	y += (SCALE1(PILL_SIZE) - rect.h) / 2;
 	
-	if (pow.is_charging) {
+	if (pwr.is_charging) {
 		GFX_blitAsset(ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y});
 		GFX_blitAsset(ASSET_BATTERY_BOLT, NULL, dst, &(SDL_Rect){x+SCALE1(3),y+SCALE1(2)});
 	}
 	else {
-		int percent = pow.charge;
+		int percent = pwr.charge;
 		GFX_blitAsset(percent<=10?ASSET_BATTERY_LOW:ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y});
 		
 		rect = asset_rects[ASSET_BATTERY_FILL];
@@ -1158,7 +1158,7 @@ int PAD_justReleased(int btn)	{ return pad.just_released & btn; }
 int PAD_justRepeated(int btn)	{ return pad.just_repeated & btn; }
 
 int PAD_tappedMenu(uint32_t now) {
-	#define MENU_DELAY 250 // also in POW_update()
+	#define MENU_DELAY 250 // also in PWR_update()
 	static uint32_t menu_start = 0;
 	static int ignore_menu = 0; 
 	if (PAD_justPressed(BTN_MENU)) {
@@ -1238,64 +1238,64 @@ int VIB_getStrength(void) {
 
 ///////////////////////////////
 
-static void POW_initOverlay(void) {
+static void PWR_initOverlay(void) {
 	// setup surface
-	pow.overlay = PLAT_initOverlay();
+	pwr.overlay = PLAT_initOverlay();
 
 	// draw battery
 	SDL_SetAlpha(gfx.assets, 0,0);
-	GFX_blitAsset(ASSET_BLACK_PILL, NULL, pow.overlay, NULL);
+	GFX_blitAsset(ASSET_BLACK_PILL, NULL, pwr.overlay, NULL);
 	SDL_SetAlpha(gfx.assets, SDL_SRCALPHA,0);
-	GFX_blitBattery(pow.overlay, NULL);
+	GFX_blitBattery(pwr.overlay, NULL);
 }
 
-static void POW_updateBatteryStatus(void) {
-	PLAT_getBatteryStatus(&pow.is_charging, &pow.charge);
-	PLAT_enableOverlay(pow.should_warn && pow.charge<=POW_LOW_CHARGE);
+static void PWR_updateBatteryStatus(void) {
+	PLAT_getBatteryStatus(&pwr.is_charging, &pwr.charge);
+	PLAT_enableOverlay(pwr.should_warn && pwr.charge<=PWR_LOW_CHARGE);
 }
 
-static void* POW_monitorBattery(void *arg) {
+static void* PWR_monitorBattery(void *arg) {
 	while(1) {
 		// TODO: the frequency of checking could depend on whether 
 		// we're in game (less frequent) or menu (more frequent)
 		sleep(1);
-		POW_updateBatteryStatus();
+		PWR_updateBatteryStatus();
 	}
 	return NULL;
 }
 
-void POW_init(void) {
-	pow.can_sleep = 1;
-	pow.can_poweroff = 1;
-	pow.can_autosleep = 1;
-	pow.should_warn = 0;
-	pow.charge = POW_LOW_CHARGE;
+void PWR_init(void) {
+	pwr.can_sleep = 1;
+	pwr.can_poweroff = 1;
+	pwr.can_autosleep = 1;
+	pwr.should_warn = 0;
+	pwr.charge = PWR_LOW_CHARGE;
 	
-	POW_initOverlay();
+	PWR_initOverlay();
 
-	POW_updateBatteryStatus();
-	pthread_create(&pow.battery_pt, NULL, &POW_monitorBattery, NULL);
-	pow.initialized = 1;
+	PWR_updateBatteryStatus();
+	pthread_create(&pwr.battery_pt, NULL, &PWR_monitorBattery, NULL);
+	pwr.initialized = 1;
 }
-void POW_quit(void) {
-	if (!pow.initialized) return;
+void PWR_quit(void) {
+	if (!pwr.initialized) return;
 	
 	PLAT_quitOverlay();
 	
 	// cancel battery thread
-	pthread_cancel(pow.battery_pt);
-	pthread_join(pow.battery_pt, NULL);
+	pthread_cancel(pwr.battery_pt);
+	pthread_join(pwr.battery_pt, NULL);
 }
-void POW_warn(int enable) {
-	pow.should_warn = enable;
-	PLAT_enableOverlay(pow.should_warn && pow.charge<=POW_LOW_CHARGE);
+void PWR_warn(int enable) {
+	pwr.should_warn = enable;
+	PLAT_enableOverlay(pwr.should_warn && pwr.charge<=PWR_LOW_CHARGE);
 }
 
-int POW_ignoreSettingInput(int btn, int show_setting) {
+int PWR_ignoreSettingInput(int btn, int show_setting) {
 	return show_setting && (btn==BTN_MOD_PLUS || btn==BTN_MOD_MINUS);
 }
 
-void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, POW_callback_t after_sleep) {
+void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PWR_callback_t after_sleep) {
 	int dirty = _dirty ? *_dirty : 0;
 	int show_setting = _show_setting ? *_show_setting : 0;
 	
@@ -1306,14 +1306,14 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	static uint32_t mod_unpressed_at = 0; // timestamp of last time settings modifier key was NOT down
 	
 	static int was_charging = -1;
-	if (was_charging==-1) was_charging = pow.is_charging;
+	if (was_charging==-1) was_charging = pwr.is_charging;
 
 	uint32_t now = SDL_GetTicks();
 	if (was_charging || PAD_anyPressed() || last_input_at==0) last_input_at = now;
 	
 	#define CHARGE_DELAY 1000
 	if (dirty || now-checked_charge_at>=CHARGE_DELAY) {
-		int is_charging = pow.is_charging;
+		int is_charging = pwr.is_charging;
 		if (was_charging!=is_charging) {
 			was_charging = is_charging;
 			dirty = 1;
@@ -1325,7 +1325,7 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 		if (before_sleep) {
 			before_sleep();
 		}
-		POW_powerOff();
+		PWR_powerOff();
 	}
 	
 	if (PAD_justPressed(BTN_POWER)) {
@@ -1333,14 +1333,14 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 	}
 	
 	#define SLEEP_DELAY 30000 // 30 seconds
-	if (now-last_input_at>=SLEEP_DELAY && POW_preventAutosleep()) last_input_at = now;
+	if (now-last_input_at>=SLEEP_DELAY && PWR_preventAutosleep()) last_input_at = now;
 	
 	if (
 		now-last_input_at>=SLEEP_DELAY || // autosleep
-		(pow.can_sleep && PAD_justReleased(BTN_SLEEP)) // manual sleep
+		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP)) // manual sleep
 	) {
 		if (before_sleep) before_sleep();
-		POW_fauxSleep();
+		PWR_fauxSleep();
 		if (after_sleep) after_sleep();
 		
 		last_input_at = now = SDL_GetTicks();
@@ -1386,18 +1386,18 @@ void POW_update(int* _dirty, int* _show_setting, POW_callback_t before_sleep, PO
 }
 
 // TODO: this isn't whether it can sleep but more if it should sleep in response to the sleep button
-void POW_disableSleep(void) {
-	pow.can_sleep = 0;
+void PWR_disableSleep(void) {
+	pwr.can_sleep = 0;
 }
-void POW_enableSleep(void) {
-	pow.can_sleep = 1;
+void PWR_enableSleep(void) {
+	pwr.can_sleep = 1;
 }
 
-void POW_disablePowerOff(void) {
-	pow.can_poweroff = 0;
+void PWR_disablePowerOff(void) {
+	pwr.can_poweroff = 0;
 }
-void POW_powerOff(void) {
-	if (pow.can_poweroff) {
+void PWR_powerOff(void) {
+	if (pwr.can_poweroff) {
 		
 		int w = FIXED_WIDTH;
 		int h = FIXED_HEIGHT;
@@ -1413,7 +1413,7 @@ void POW_powerOff(void) {
 		if (HAS_POWER_BUTTON || HAS_POWEROFF_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
 		else msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npower off now" : "Power off now";
 		
-		// LOG_info("POW_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);
+		// LOG_info("PWR_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);
 		
 		// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
 		GFX_blitMessage(font.large, msg, gfx.screen,&(SDL_Rect){0,0,gfx.screen->w,gfx.screen->h}); //, NULL);
@@ -1422,7 +1422,7 @@ void POW_powerOff(void) {
 	}
 }
 
-static void POW_enterSleep(void) {
+static void PWR_enterSleep(void) {
 	SDL_PauseAudio(1);
 	if (GetHDMI()) {
 		PLAT_clearVideo(gfx.screen);
@@ -1436,7 +1436,7 @@ static void POW_enterSleep(void) {
 	
 	sync();
 }
-static void POW_exitSleep(void) {
+static void PWR_exitSleep(void) {
 	system("killall -CONT keymon.elf");
 	if (GetHDMI()) {
 		// buh
@@ -1450,7 +1450,7 @@ static void POW_exitSleep(void) {
 	sync();
 }
 
-static void POW_waitForWake(void) {
+static void PWR_waitForWake(void) {
 	SDL_Event event;
 	int wake = 0;
 	uint32_t sleep_ticks = SDL_GetTicks();
@@ -1478,35 +1478,35 @@ static void POW_waitForWake(void) {
 			} 
 		}
 		SDL_Delay(200);
-		if (pow.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
-			if (pow.is_charging) sleep_ticks += 60000; // check again in a minute
-			else POW_powerOff();
+		if (pwr.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
+			if (pwr.is_charging) sleep_ticks += 60000; // check again in a minute
+			else PWR_powerOff();
 		}
 	}
 	return;
 }
-void POW_fauxSleep(void) {
+void PWR_fauxSleep(void) {
 	GFX_clear(gfx.screen);
 	PAD_reset();
-	POW_enterSleep();
-	POW_waitForWake();
-	POW_exitSleep();
+	PWR_enterSleep();
+	PWR_waitForWake();
+	PWR_exitSleep();
 }
 
-void POW_disableAutosleep(void) {
-	pow.can_autosleep = 0;
+void PWR_disableAutosleep(void) {
+	pwr.can_autosleep = 0;
 }
-void POW_enableAutosleep(void) {
-	pow.can_autosleep = 1;
+void PWR_enableAutosleep(void) {
+	pwr.can_autosleep = 1;
 }
-int POW_preventAutosleep(void) {
-	return pow.is_charging || !pow.can_autosleep;
+int PWR_preventAutosleep(void) {
+	return pwr.is_charging || !pwr.can_autosleep;
 }
 
-// updated by POW_updateBatteryStatus()
-int POW_isCharging(void) {
-	return pow.is_charging;
+// updated by PWR_updateBatteryStatus()
+int PWR_isCharging(void) {
+	return pwr.is_charging;
 }
-int POW_getBattery(void) { // 10-100 in 10-20% fragments
-	return pow.charge;
+int PWR_getBattery(void) { // 10-100 in 10-20% fragments
+	return pwr.charge;
 }

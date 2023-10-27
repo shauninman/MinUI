@@ -128,7 +128,7 @@ void PLAT_enableOverlay(int enable) {
 
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
-	// *charge = POW_LOW_CHARGE;
+	// *charge = PWR_LOW_CHARGE;
 	// return;
 	
 	*is_charging = getInt("/sys/class/power_supply/ac/online");

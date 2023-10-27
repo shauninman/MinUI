@@ -201,29 +201,29 @@ void VIB_setStrength(int strength);
 
 #define BRIGHTNESS_BUTTON_LABEL "+ -" // ew
 
-typedef void (*POW_callback_t)(void);
-void POW_init(void);
-void POW_quit(void);
-void POW_warn(int enable);
+typedef void (*PWR_callback_t)(void);
+void PWR_init(void);
+void PWR_quit(void);
+void PWR_warn(int enable);
 
-int POW_ignoreSettingInput(int btn, int show_setting);
-void POW_update(int* dirty, int* show_setting, POW_callback_t before_sleep, POW_callback_t after_sleep);
+int PWR_ignoreSettingInput(int btn, int show_setting);
+void PWR_update(int* dirty, int* show_setting, PWR_callback_t before_sleep, PWR_callback_t after_sleep);
 
-void POW_disablePowerOff(void);
-void POW_powerOff(void);
-int POW_isPoweringOff(void);
+void PWR_disablePowerOff(void);
+void PWR_powerOff(void);
+int PWR_isPoweringOff(void);
 
-void POW_fauxSleep(void);
+void PWR_fauxSleep(void);
 
-void POW_disableSleep(void);
-void POW_enableSleep(void);
+void PWR_disableSleep(void);
+void PWR_enableSleep(void);
 
-void POW_disableAutosleep(void);
-void POW_enableAutosleep(void);
-int POW_preventAutosleep(void);
+void PWR_disableAutosleep(void);
+void PWR_enableAutosleep(void);
+int PWR_preventAutosleep(void);
 
-int POW_isCharging(void);
-int POW_getBattery(void);
+int PWR_isCharging(void);
+int PWR_getBattery(void);
 
 enum {
 	CPU_SPEED_MENU,
@@ -231,7 +231,7 @@ enum {
 	CPU_SPEED_NORMAL,
 	CPU_SPEED_PERFORMANCE,
 };
-#define POW_setCPUSpeed PLAT_setCPUSpeed
+#define PWR_setCPUSpeed PLAT_setCPUSpeed
 
 ///////////////////////////////
 
@@ -252,7 +252,7 @@ SDL_Surface* PLAT_initOverlay(void);
 void PLAT_quitOverlay(void);
 void PLAT_enableOverlay(int enable);
 	
-#define POW_LOW_CHARGE 10
+#define PWR_LOW_CHARGE 10
 void PLAT_getBatteryStatus(int* is_charging, int* charge); // 0,1 and 0,10,20,40,60,80,100
 void PLAT_enableBacklight(int enable);
 void PLAT_powerOff(void);

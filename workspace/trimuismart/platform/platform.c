@@ -438,7 +438,7 @@ void ADC_quit(void) {
 #define USB_SPEED "/sys/devices/platform/sunxi_usb_udc/udc/sunxi_usb_udc/current_speed"
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
-	// *charge = POW_LOW_CHARGE;
+	// *charge = PWR_LOW_CHARGE;
 	// return;
 	
 	char value[16]; memset(value, 0, 16);
@@ -477,7 +477,7 @@ void PLAT_powerOff(void) {
 	PLAT_enableBacklight(0);
 	SND_quit();
 	VIB_quit();
-	POW_quit();
+	PWR_quit();
 	GFX_quit();
 	
 	touch("/tmp/poweroff");

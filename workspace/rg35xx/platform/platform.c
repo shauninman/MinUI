@@ -500,7 +500,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 
 	// TODO: tmp
 	// *is_charging = 0;
-	// *charge = POW_LOW_CHARGE;
+	// *charge = PWR_LOW_CHARGE;
 }
 
 void PLAT_enableBacklight(int enable) {

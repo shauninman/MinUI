@@ -6,7 +6,7 @@ while :; do
 	C=`cat /sys/class/power_supply/battery/capacity`
 	V=`cat /sys/class/power_supply/battery/voltage_now`
 	
-	# should match POW_updateBatteryStatus() in api.c
+	# should match PWR_updateBatteryStatus() in api.c
 	M=$(($V/10000))
 	M=$(($M-310))
 	
