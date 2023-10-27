@@ -15,6 +15,7 @@ endif
 ###########################################################
 
 include ../../$(PLATFORM)/platform/makefile.env
+SDL?=SDL
 
 ###########################################################
 
@@ -24,8 +25,8 @@ SOURCE = $(TARGET).c ../common/utils.c ../common/api.c ../common/scaler.c ../../
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS   = $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\"  -Ofast 
-LDFLAGS	 = -ldl $(LIBS) -lSDL -lSDL_image -lSDL_ttf -lpthread -lz
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -DUSE_$(SDL)  -Ofast 
+LDFLAGS	 = -ldl $(LIBS) -l$(SDL) -l$(SDL)_image -l$(SDL)_ttf -lpthread -lz
 LDFLAGS +=  -lmsettings
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf

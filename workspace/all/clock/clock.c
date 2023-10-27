@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
 #include <msettings.h>
 
 #include "defines.h"

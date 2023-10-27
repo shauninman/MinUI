@@ -1,7 +1,6 @@
 #ifndef __API_H__
 #define __API_H__
-#include <SDL/SDL.h>
-#include <SDL/SDL_ttf.h>
+#include "sdl.h"
 #include "platform.h"
 #include "scaler.h"
 
