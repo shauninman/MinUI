@@ -1,5 +1,6 @@
 $(PLATFORM):
 	# $@
+	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
 	# extras
 	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
