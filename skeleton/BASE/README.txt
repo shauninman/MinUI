@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the Trimui Smart, Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
+MinUI is a minimal launcher for the RGB30, Trimui Smart, Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -22,12 +22,6 @@ ALL
 
 Preload the "Bios" and "Roms" folders then copy both to the root of your primary card.
 
-RG35XX
-
-MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
-
-Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
-
 RGB30
 
 MinUI is meant to be used with Moss installed on the SD card that goes into the left slot (labeled TF-OS) of the RGB30. Download and flash the latest version:
@@ -36,22 +30,28 @@ MinUI is meant to be used with Moss installed on the SD card that goes into the 
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TFGAME) of the RGB30.
 
-MIYOO MINI PLUS
+TRIMUI SMART
 
-Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
 MIYOO MINI
 
 Copy the "miyoo" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
-TRIMUI SMART
+MIYOO MINI PLUS
 
-Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+
+RG35XX
+
+MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
+
+Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
 ----------------------------------------
 Updating
 
-RG35XX / RGB30 / MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART
+RGB30 / MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART / RG35XX
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card containing your Roms.
 
@@ -63,7 +63,7 @@ RGB30
 	Menu: L3 or R3
 
 
-RG35XX / MIYOO MINI PLUS / RGB30
+RGB30 / MIYOO MINI PLUS / RG35XX
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
@@ -73,7 +73,7 @@ MIYOO MINI / TRIMUI SMART
   Volume: SELECT + L or R
   Brightness: START + L or R1
 
-RG35XX / MIYOO MINI (PLUS) / RGB30
+RGB30 / MIYOO MINI (PLUS) / RG35XX
   
   Sleep: POWER
   Wake: POWER
