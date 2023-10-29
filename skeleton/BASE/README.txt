@@ -160,6 +160,12 @@ Check out neonloop's repos:
 
   https://git.crowdedwood.com
 
+To fewt and the entire JELOS community, for JELOS (without which MinUI would not exist on the RGB30) and for sharing their knowledge with this perpetual Linux kernel novice.
+
+Check out JELOS:
+
+  https://github.com/JustEnoughLinuxOS/distribution
+
 To BlackSeraph, for introducing me to chroot.
 
 And to Jim Gray, for commiserating during development, for early alpha testing, and for providing the soundtrack for much of MinUI's development.
