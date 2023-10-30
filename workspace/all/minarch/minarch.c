@@ -2390,7 +2390,7 @@ static struct {
 
 void Menu_init(void) {
 	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
-	SDL_SetAlpha(menu.overlay, SDL_SRCALPHA, 0x80);
+	SDLX_SetAlpha(menu.overlay, SDL_SRCALPHA, 0x80);
 	SDL_FillRect(menu.overlay, NULL, 0);
 	
 	char emu_name[256];

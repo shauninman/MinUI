@@ -1053,8 +1053,8 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("sample rate: %i (req) %i (rec)\n", snd.sample_rate_in, snd.sample_rate_out);
 	snd.initialized = 1;
 	
-	char driver[256];
-	LOG_info("SDL_AudioDriverName: %s\n", SDL_AudioDriverName(driver,256));
+	// char driver[256];
+	// LOG_info("SDL_AudioDriverName: %s\n", SDLX_AudioDriverName(driver,256));
 }
 void SND_quit(void) { // plat_sound_finish
 	if (!snd.initialized) return;
@@ -1261,9 +1261,9 @@ static void PWR_initOverlay(void) {
 	pwr.overlay = PLAT_initOverlay();
 
 	// draw battery
-	SDL_SetAlpha(gfx.assets, 0,0);
+	SDLX_SetAlpha(gfx.assets, 0,0);
 	GFX_blitAsset(ASSET_BLACK_PILL, NULL, pwr.overlay, NULL);
-	SDL_SetAlpha(gfx.assets, SDL_SRCALPHA,0);
+	SDLX_SetAlpha(gfx.assets, SDL_SRCALPHA,0);
 	GFX_blitBattery(pwr.overlay, NULL);
 }
 
