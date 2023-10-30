@@ -46,16 +46,7 @@ static struct VID_Context {
 
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
-	LOG_info("SDL_Init error: %s\n", SDL_GetError());
 	SDL_ShowCursor(0);
-	
-	const SDL_version* version = SDL_Linked_Version();
-	LOG_info("SDL_Linked_Version: %i.%i.%i\n", version->major, version->minor, version->patch);
-	LOG_info("SDL_COMPILEDVERSION: %i\n", SDL_COMPILEDVERSION);
-	LOG_info("SDL_VIDEODRIVER=%s\n", SDL_getenv("SDL_VIDEODRIVER"));
-	
-	char driver[256];
-	LOG_info("SDL_VideoDriverName: %s\n", SDL_VideoDriverName(driver, 256));
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;

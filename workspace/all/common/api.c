@@ -1052,9 +1052,6 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 
 	LOG_info("sample rate: %i (req) %i (rec)\n", snd.sample_rate_in, snd.sample_rate_out);
 	snd.initialized = 1;
-	
-	// char driver[256];
-	// LOG_info("SDL_AudioDriverName: %s\n", SDLX_AudioDriverName(driver,256));
 }
 void SND_quit(void) { // plat_sound_finish
 	if (!snd.initialized) return;
