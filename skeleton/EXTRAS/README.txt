@@ -26,3 +26,22 @@ MGBA: gba_bios.bin
  PCE: syscard3.pce
  PKM: bios.min
  SGB: sgb.bios
+
+----------------------------------------
+Splore.pak (RGB30-only)
+
+Download the official PICO-8 fantasy console for the Raspberry Pi from https://lexaloffle.itch.io/pico-8 (If you've bought a bundle on itch.io any time in the last few years you might already have a copy in your library https://itch.io/my-collections) At the time of writing, the file is named "pico-8_0.2.5g_raspi.zip". Copy that zip file into "Splore.pak" before copying the pak to "/Tools/rgb30/" on your SD card. You will also need the Wi-Fi.pak to download PICO-8 games.
+
+To exit Splore.pak, press start. In-game select "EXIT TO SPLORE". With a cart selected in splore press start, select "OPTIONS", and then "SHUTDOWN PICO-8".
+
+Because Splore.pak doesn't/can't implement MinUI's uniform features like the in-game menu, faux sleep, and quicksave/auto-resume, it is currently (and will likely remain) classified as a Tool.
+
+----------------------------------------
+Wi-Fi.pak (RGB30-only)
+
+Open "wifi.txt" in a plain text editor and enter your network name and password on two separate lines and save, eg.
+
+  minui
+  lessismore
+
+Copy "Wi-Fi.pak" to "/Tools/rgb30/" on your SD card. The first time you open the pak (or any time you change the contents of "wifi.txt") it will update the network name and password then connect. Subsequent launches will toggle wi-fi on and off. Wi-fi will drain the battery so it's best to only enable it when you plan to use it and disable it when you're done. Your Wi-fi state persists across reboots.
