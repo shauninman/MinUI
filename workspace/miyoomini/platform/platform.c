@@ -492,3 +492,7 @@ int PLAT_pickSampleRate(int requested, int max) {
 char* PLAT_getModel(void) {
 	return is_plus ? "Miyoo Mini Plus" : "Miyoo Mini";
 }
+
+int PLAT_isOnline(void) {
+	return 0;
+}

@@ -140,6 +140,7 @@ int main(int argc , char* argv[]) {
 
 	int dirty = 1;
 	int show_setting = 0;
+	int was_online = PLAT_isOnline();
 	while(!quit) {
 		uint32_t frame_start = SDL_GetTicks();
 		
@@ -233,6 +234,10 @@ int main(int argc , char* argv[]) {
 		}
 		
 		PWR_update(&dirty, NULL, NULL,NULL);
+		
+		int is_online = PLAT_isOnline();
+		if (was_online!=is_online) dirty = 1;
+		was_online = is_online;
 		
 		if (dirty) {
 			validate();

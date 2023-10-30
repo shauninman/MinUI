@@ -206,3 +206,7 @@ int PLAT_pickSampleRate(int requested, int max) {
 char* PLAT_getModel(void) {
 	return "RG Nano"; // TODO: I don't think there's a way to differentiate the devices since the fw is on the sd
 }
+
+int PLAT_isOnline(void) {
+	return 0;
+}

@@ -188,3 +188,7 @@ char* PLAT_getModel(void) {
 	
 	return model;
 }
+
+int PLAT_isOnline(void) {
+	return 0;
+}

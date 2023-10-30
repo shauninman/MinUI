@@ -90,6 +90,8 @@ static SDL_Rect asset_rects[] = {
 	
 	[ASSET_SCROLL_UP]		= (SDL_Rect){SCALE4(97,23,24, 6)},
 	[ASSET_SCROLL_DOWN]		= (SDL_Rect){SCALE4(97,31,24, 6)},
+
+	[ASSET_WIFI]			= (SDL_Rect){SCALE4(95,39,14,10)},
 };
 static uint32_t asset_rgbs[ASSET_COLORS];
 GFX_Fonts font;
@@ -729,7 +731,13 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		}
 	}
 	else {
+		// TODO: handle wifi
+		int show_wifi = PLAT_isOnline(); // NOOOOO! not every frame!
+
+		int ww = SCALE1(PILL_SIZE-3);
 		ow = SCALE1(PILL_SIZE);
+		if (show_wifi) ow += ww;
+
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
 		GFX_blitPill(gfx.mode==MODE_MAIN ? ASSET_DARK_GRAY_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
@@ -738,6 +746,16 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			ow,
 			SCALE1(PILL_SIZE)
 		});
+		if (show_wifi) {
+			SDL_Rect rect = asset_rects[ASSET_WIFI];
+			int x = ox;
+			int y = oy;
+			x += (SCALE1(PILL_SIZE) - rect.w) / 2;
+			y += (SCALE1(PILL_SIZE) - rect.h) / 2;
+			
+			GFX_blitAsset(ASSET_WIFI, NULL, dst, &(SDL_Rect){x,y});
+			ox += ww;
+		}
 		GFX_blitBattery(dst, &(SDL_Rect){ox,oy});
 	}
 	
@@ -1258,7 +1276,7 @@ static void* PWR_monitorBattery(void *arg) {
 	while(1) {
 		// TODO: the frequency of checking could depend on whether 
 		// we're in game (less frequent) or menu (more frequent)
-		sleep(1);
+		sleep(5);
 		PWR_updateBatteryStatus();
 	}
 	return NULL;

@@ -81,6 +81,8 @@ enum {
 	
 	ASSET_SCROLL_UP,
 	ASSET_SCROLL_DOWN,
+	
+	ASSET_WIFI,
 };
 
 typedef struct GFX_Fonts {
@@ -262,5 +264,6 @@ void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 
 char* PLAT_getModel(void);
+int PLAT_isOnline(void);
 
 #endif

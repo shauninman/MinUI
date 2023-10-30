@@ -544,3 +544,7 @@ int PLAT_pickSampleRate(int requested, int max) {
 char* PLAT_getModel(void) {
 	return "Anbernic RG35XX";
 }
+
+int PLAT_isOnline(void) {
+	return 0;
+}

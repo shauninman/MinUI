@@ -203,6 +203,7 @@ void PLAT_enableOverlay(int enable) {
 
 ///////////////////////////////
 
+static int online = 0;
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
@@ -218,6 +219,11 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	else if (i>20) *charge =  40;
 	else if (i>10) *charge =  20;
 	else           *charge =  10;
+	
+	// wifi status, just hooking into the regular PWR polling
+	char status[16];
+	getFile("/sys/class/net/wlan0/operstate", status,16);
+	online = prefixMatch("up", status);
 }
 
 void PLAT_enableBacklight(int enable) {
@@ -266,4 +272,8 @@ char* PLAT_getModel(void) {
 	else strcpy(model, "RG353");
 	
 	return model;
+}
+
+int PLAT_isOnline(void) {
+	return online;
 }

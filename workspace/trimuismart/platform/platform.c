@@ -512,3 +512,7 @@ int PLAT_pickSampleRate(int requested, int max) {
 char* PLAT_getModel(void) {
 	return "Trimui Smart";
 }
+
+int PLAT_isOnline(void) {
+	return 0;
+}
