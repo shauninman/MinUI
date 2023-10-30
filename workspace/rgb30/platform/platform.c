@@ -101,7 +101,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 	
 	vid.direct = w==vid.video->w && h==vid.video->h && pitch==vid.video->pitch;
 
-	LOG_info("PLAT_resizeVideo: %i==%i && %i==%i && %i==%i (%i)\n",w,vid.video->w,h,vid.video->h,pitch,vid.video->pitch,vid.direct);
+	// LOG_info("PLAT_resizeVideo: %i==%i && %i==%i && %i==%i (%i)\n",w,vid.video->w,h,vid.video->h,pitch,vid.video->pitch,vid.direct);
 
 	vid.width = w;
 	vid.height = h;
@@ -133,17 +133,17 @@ void PLAT_vsync(int remaining) {
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	LOG_info("PLAT_getScaler() >>> src:%ix%i (%i) dst:%i,%i %ix%i (%i)\n",
-		renderer->true_w,
-		renderer->true_h,
-		renderer->src_p, // unused
-
-		renderer->dst_x,
-		renderer->dst_y,
-		renderer->dst_w, // unused
-		renderer->dst_h, // unused?
-		renderer->dst_p // unused
-	);
+	// LOG_info("PLAT_getScaler() >>> src:%ix%i (%i) dst:%i,%i %ix%i (%i)\n",
+	// 	renderer->true_w,
+	// 	renderer->true_h,
+	// 	renderer->src_p, // unused
+	//
+	// 	renderer->dst_x,
+	// 	renderer->dst_y,
+	// 	renderer->dst_w, // unused
+	// 	renderer->dst_h, // unused?
+	// 	renderer->dst_p // unused
+	// );
 	
 	switch (renderer->scale) {
 		case 0:  // buh

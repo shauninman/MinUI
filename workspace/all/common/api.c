@@ -463,7 +463,7 @@ scaler_t GFX_getAAScaler(GFX_Renderer* renderer) {
 	
 	double blend_denominator = (renderer->src_w>renderer->dst_w) ? 5 : 2.5; // TODO: these values are really only good for the nano...
 	// blend_denominator = 5.0; // better for trimui
-	LOG_info("blend_denominator: %f (%i && %i)\n", blend_denominator, HAS_SKINNY_SCREEN, renderer->dst_w>renderer->src_w);
+	// LOG_info("blend_denominator: %f (%i && %i)\n", blend_denominator, HAS_SKINNY_SCREEN, renderer->dst_w>renderer->src_w);
 	
 	div_w = round(blend_args.w_ratio_out / blend_denominator);
 	blend_args.w_bp[0] = div_w;
@@ -1125,6 +1125,7 @@ void PAD_poll(void) {
 			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
 			else if (code==CODE_POWER)		{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
 			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;	id = BTN_ID_POWEROFF; }
+			// else LOG_info("\tunknown\n");
 		}
 		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
@@ -1148,6 +1149,7 @@ void PAD_poll(void) {
 			else if (joy==JOY_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
 			else if (joy==JOY_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
 			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+			// else LOG_info("\tunknown\n");
 		}
 		
 		if (btn==BTN_NONE) continue;
