@@ -6,12 +6,21 @@ BASE
 
 EXTRAS
 
+- rgb30: added Neo Geo Pocket Color pak (race core)
+- rgb30: added Splore.pak (and supporting Wi-Fi.pak) for native PICO-8 splore
 - rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
 - rgb30: fixed file browser background in Files.pak
 
 ---
 
 next
+	add race
+		having issues with button bindings being inverted by default
+		and can't override with default.cfg for some reason
+		seeing very odd behavior, eg.
+			map A and B to X and Y and B just disappears :thinking:
+
+	move PLAT_isOnline() into PWR_* formally
 	moss: build lib32 to try to fix snes9x save state compatibility
 		first attempt did not go well :sweat_smile:
 		
@@ -70,7 +79,8 @@ next
 			pcsx
 			could this have anything to do with the performance versus userspace governor?
 				no
-		debug overlay drawing funny
+			I think it's caused by the forced vsync in sdl2
+		debug overlay drawing glitches
 	
 	trimui: scaling (see DE test)
 		
@@ -85,6 +95,7 @@ known issues
 	trimui: debug/battery overlay isn't implemented yet
 	
 	nano: says it can bind MENU+button for shortcuts, it can't
+	rgb30: light crackling in some cores (eg. fceumm and snes9x2005_plus)
 	rgb30: hdmi tearing near the top of the screen
 		this seems to be limited to gambatte? confirm?
 
@@ -151,6 +162,12 @@ rg35xx
 				echo 1 > /sys/devices/system/cpu/cpu3/online
 			but using performance instead of userspace has the same result so maybe just use that
 				as long as it doesn't kill battery life?
+			turns oout this was discovered back in may by another user:
+				https://www.reddit.com/r/RG35XX/comments/13rtrqb/minuis_snes_performance/
+				https://github.com/shauninman/MinUI-Legacy-RG35XX/compare/main...zoli0726:union-minui:main
+				seems like this is sufficient to unlock the improved performance
+					echo 0xF > /sys/devices/system/cpu/autoplug/plug_mask
+					though I'm not sure I'm observing a difference...(at least when applying over adb)
 		
 	charging screen isn't working for someone on RH discord
 	how to handle updating on mini and missing TF1 updates as a result?
