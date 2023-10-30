@@ -31,6 +31,7 @@ typedef struct PageBuffer {
 static struct VID_Context {
 	SDL_Joystick *joystick;
 
+	SDL_Window* window;
 	SDL_Surface* video;
 	SDL_Surface* screen;
 	PageBuffer buffer;
@@ -54,9 +55,10 @@ SDL_Surface* PLAT_initVideo(void) {
 		w = HDMI_WIDTH;
 		h = HDMI_HEIGHT;
 	}
-	vid.video = SDL_SetVideoMode(w,h, FIXED_DEPTH, SDL_SWSURFACE | SDL_DOUBLEBUF);
+	vid.window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	puts(""); fflush(stdout); // mali debug log doesn't have a line return
-	LOG_info("SDL_SetVideoMode error: %s\n", SDL_GetError());
+	
+	vid.video = SDL_GetWindowSurface(vid.window); 
 	
 	vid.direct = 1;
 	vid.width = w;
@@ -66,22 +68,25 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.buffer.size = (vid.pitch*2) * (h*2);
 	vid.buffer.vadd = malloc(vid.buffer.size);
 	memset(vid.buffer.vadd, 0, vid.buffer.size);
+	
 	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-	LOG_info("SDL_CreateRGBSurfaceFrom error: %s\n", SDL_GetError());
+	vid.src = wrapbuffer_virtualaddr(vid.screen->pixels, vid.screen->w, vid.screen->h, RK_FORMAT_RGB_565);
+	vid.dst = wrapbuffer_virtualaddr(vid.video->pixels, vid.video->w, vid.video->h, RK_FORMAT_RGBA_8888); // never changes
 
-	vid.dst = wrapbuffer_virtualaddr((void*)vid.video->pixels, vid.video->w, vid.video->h, RK_FORMAT_RGB_565); // never changes
 	vid.joystick = SDL_JoystickOpen(0);
 	
 	LOG_info("PLAT_initVideo: %p (%ix%i)\n", vid.video, vid.video->w, vid.video->h);
 	
-	return vid.direct ? vid.video : vid.screen;
+	return vid.screen;
 }
 
 void PLAT_quitVideo(void) {
 	LOG_info("PLAT_quitVideo\n");
+	
 	SDL_FreeSurface(vid.screen);
 	free(vid.buffer.vadd);
 	SDL_JoystickClose(vid.joystick);
+	SDL_DestroyWindow(vid.window);
 	SDL_Quit();
 }
 
@@ -89,8 +94,7 @@ void PLAT_clearVideo(SDL_Surface* screen) {
 	SDL_FillRect(screen, NULL, 0);
 }
 void PLAT_clearAll(void) {
-	if (vid.direct) PLAT_clearVideo(vid.video);
-	else PLAT_clearVideo(vid.screen);
+	memset(vid.buffer.vadd, 0, vid.buffer.size);
 }
 
 void PLAT_setVsync(int vsync) {
@@ -107,19 +111,15 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
 	vid.height = h;
 	vid.pitch = pitch;
 	
-	if (vid.direct) memset(vid.video->pixels, 0, vid.pitch * vid.height);
-	else {
-		SDL_FillRect(vid.screen, NULL, 0);
-		vid.screen->pixels = NULL;
-		SDL_FreeSurface(vid.screen);
-		
-		vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-		memset(vid.screen->pixels, 0, vid.pitch * vid.height);
-
-		vid.src = wrapbuffer_virtualaddr((void*)vid.screen->pixels, vid.screen->w, vid.screen->h, RK_FORMAT_RGB_565);
-	}
+	vid.screen->pixels = NULL;
+	SDL_FreeSurface(vid.screen);
 	
-	return vid.direct ? vid.video : vid.screen;
+	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
+	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
+
+	vid.src = wrapbuffer_virtualaddr((void*)vid.screen->pixels, vid.screen->w, vid.screen->h, RK_FORMAT_RGB_565);
+	
+	return vid.screen;
 }
 
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
@@ -164,8 +164,9 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int sync) {
-	if (!vid.direct) imresize(vid.src, vid.dst);
-	SDL_Flip(vid.video);
+	if (vid.direct) imcopy(vid.src, vid.dst);
+	else imresize(vid.src, vid.dst);
+	SDL_UpdateWindowSurface(vid.window);
 }
 
 ///////////////////////////////

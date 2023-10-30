@@ -59,10 +59,11 @@
 
 #define CODE_MENU		CODE_NA
 #define CODE_MENU_ALT	CODE_NA
-#define CODE_POWER		116
+#define CODE_POWER		102 // 116 in SDL1?
 
-#define CODE_PLUS		115
-#define CODE_MINUS		114
+// TODO: these were swapped from keymon?
+#define CODE_PLUS		129 // 114 in SDL1?
+#define CODE_MINUS		128 // 115 in SDL1?
 
 ///////////////////////////////
 

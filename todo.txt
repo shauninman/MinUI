@@ -2,7 +2,7 @@ unreleased changes:
 
 BASE
 
--
+- rgb30: switched from sdl12-compat to using sdl2 directly
 
 EXTRAS
 
