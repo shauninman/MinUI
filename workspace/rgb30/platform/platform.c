@@ -261,7 +261,7 @@ char* PLAT_getModel(void) {
 	
 	char* tmp = strrchr(buffer, ' ');
 	if (tmp) strcpy(model, tmp+1);
-	else strcpy(model, "RG353");
+	else strcpy(model, "RGB30");
 	
 	return model;
 }

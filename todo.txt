@@ -6,7 +6,8 @@ BASE
 
 EXTRAS
 
-- rgb30: added Neo Geo Pocket Color pak (race core)
+- rgb30: added missing Game Gear pak (picodrive core)
+- rgb30: added Neo Geo Pocket and Neo Geo Pocket Color paks (race core)
 - rgb30: added Splore.pak (and supporting Wi-Fi.pak) for native PICO-8 splore
 - rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
 - rgb30: fixed file browser background in Files.pak
@@ -14,15 +15,22 @@ EXTRAS
 ---
 
 next
+	user reported
+		install on rg35xx, install on smart doesn't work
+			but smart to rg35xx does
+		rgb30 doesn't restore brightness
+			it libmsettings does but the os isn't listening?
+			only affected max brightness as far as I can tell
 	add race
-		having issues with button bindings being inverted by default
-		and can't override with default.cfg for some reason
-		seeing very odd behavior, eg.
-			map A and B to X and Y and B just disappears :thinking:
+		+ rgb30
+		- others
 
 	move PLAT_isOnline() into PWR_* formally
 	moss: build lib32 to try to fix snes9x save state compatibility
 		first attempt did not go well :sweat_smile:
+	
+	sdl2
+		switch to accelerated renderer
 		
 	all
 		fake-08 it looks like save states might have been fixed
@@ -31,6 +39,7 @@ next
 				load a Celeste state in later levels with pink sky
 				then load a state from earlier levels, the sky should
 				be black but instead it's pink like a later level
+		
 		pull latest gpsp (fixes for long standing problem games I guess?)
 			nope, breaks save state compatibility
 			oddly it appears to be fixed on a branch? https://github.com/libretro/gpsp/commit/8745bf3d8fbb708db13bb726e5d89a6832f74d73
@@ -80,12 +89,14 @@ next
 			could this have anything to do with the performance versus userspace governor?
 				no
 			I think it's caused by the forced vsync in sdl2
+				or fullscreen blitting?
 		debug overlay drawing glitches
 	
 	trimui: scaling (see DE test)
 		
 known issues
 	all: not convinced fixed aspect scaling corrects for screen aspect correctly
+	all: race core (NGP/C.pak) doesn't restore audio state correctly
 	
 	miyoomini: debug/battery overlay isn't implemented yet
 	
