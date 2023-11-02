@@ -1101,10 +1101,12 @@ void PAD_poll(void) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		int btn = BTN_NONE;
+		int pressed = 0; // 0=up,1=down
 		int id = -1;
 		if (event.type==SDL_KEYDOWN || event.type==SDL_KEYUP) {
 			uint8_t code = event.key.keysym.scancode;
-			// LOG_info("key event: %i\n", code);
+			pressed = event.type==SDL_KEYDOWN;
+			// LOG_info("key event: %i (%i)\n", code,pressed);
 				 if (code==CODE_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
  			else if (code==CODE_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
 			else if (code==CODE_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
@@ -1125,11 +1127,11 @@ void PAD_poll(void) {
 			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
 			else if (code==CODE_POWER)		{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
 			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;	id = BTN_ID_POWEROFF; }
-			// else LOG_info("\tunknown\n");
 		}
 		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
-			// LOG_info("joy event: %i\n", joy);
+			pressed = event.type==SDL_JOYBUTTONDOWN;
+			// LOG_info("joy event: %i (%i)\n", joy,pressed);
 				 if (joy==JOY_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
  			else if (joy==JOY_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
 			else if (joy==JOY_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
@@ -1149,12 +1151,70 @@ void PAD_poll(void) {
 			else if (joy==JOY_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
 			else if (joy==JOY_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
 			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
-			// else LOG_info("\tunknown\n");
+		}
+		else if (event.type==SDL_JOYHATMOTION) {
+			int hats[4] = {-1,-1,-1,-1}; // -1=no change,0=up,1=down
+			int hat = event.jhat.value;
+			// LOG_info("hat event: %i\n", hat);
+			// TODO: safe to assume hats will always be the primary dpad?
+			switch (hat) {
+				case SDL_HAT_UP:			hats[BTN_ID_UP]		= 1;								break;
+				case SDL_HAT_DOWN:			hats[BTN_ID_DOWN]	= 1;								break;
+				case SDL_HAT_LEFT:			hats[BTN_ID_LEFT]	= 1;								break;
+				case SDL_HAT_RIGHT:			hats[BTN_ID_RIGHT]	= 1;								break;
+				case SDL_HAT_LEFTUP:		hats[BTN_ID_LEFT]	= 1;	hats[BTN_ID_UP]		= 1;	break;
+				case SDL_HAT_LEFTDOWN:		hats[BTN_ID_LEFT]	= 1;	hats[BTN_ID_DOWN]	= 1;	break;
+				case SDL_HAT_RIGHTUP:		hats[BTN_ID_RIGHT]	= 1;	hats[BTN_ID_UP]		= 1;	break;
+				case SDL_HAT_RIGHTDOWN:		hats[BTN_ID_RIGHT]	= 1;	hats[BTN_ID_DOWN]	= 1;	break;
+				case SDL_HAT_CENTERED:		hats[0]=0;	  hats[1]=0;	hats[2]=0;	  hats[3]=0;	break;
+				default: break;
+			}
+			
+			for (id=0; id<4; id++) {
+				int state = hats[id];
+				btn = 1 << id;
+				if (state==0) {
+					pad.is_pressed		&= ~btn; // unset
+					pad.just_repeated	&= ~btn; // unset
+					pad.just_released	|= btn; // set
+				}
+				else if (state==1 && (pad.is_pressed & btn)==BTN_NONE) {
+					pad.just_pressed	|= btn; // set
+					pad.just_repeated	|= btn; // set
+					pad.is_pressed		|= btn; // set
+					pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
+				}
+			}
+			btn = BTN_NONE; // already handled, force continue
+		}
+		else if (event.type==SDL_JOYAXISMOTION) {
+			int axis = event.jaxis.axis;
+			int val = event.jaxis.value;
+			// LOG_info("axis: %i (%i)\n", axis,val>0);
+			
+			if (axis==AXIS_L2) {
+				btn = BTN_L2;
+				id = BTN_ID_L2;
+				pressed = val>0;
+			}
+			else if (axis==AXIS_R2) {
+				btn = BTN_R2;
+				id = BTN_ID_R2;
+				pressed = val>0;
+			}
+			
+			// axis will fire off what looks like a release
+			// before the first press but you can't release
+			// a button that wasn't pressed
+			if (!pressed && btn!=BTN_NONE && !(pad.is_pressed & btn)) {
+				// LOG_info("cancel: %i\n", axis);
+				btn = BTN_NONE;
+			}
 		}
 		
 		if (btn==BTN_NONE) continue;
 		
-		if (event.type==SDL_KEYUP || event.type==SDL_JOYBUTTONUP) {
+		if (!pressed) {
 			pad.is_pressed		&= ~btn; // unset
 			pad.just_repeated	&= ~btn; // unset
 			pad.just_released	|= btn; // set

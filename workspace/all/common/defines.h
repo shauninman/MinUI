@@ -92,6 +92,7 @@
 #define BUTTON_NA	-1
 #define CODE_NA		-1
 #define JOY_NA		-1
+#define AXIS_NA		-1
 
 #ifndef BUTTON_POWEROFF
 #define BUTTON_POWEROFF BUTTON_NA
@@ -109,6 +110,11 @@
 #ifndef JOY_MENU_ALT
 #define JOY_MENU_ALT JOY_NA
 #endif
+
+#ifndef AXIS_L2
+#define AXIS_L2	AXIS_NA
+#define AXIS_R2	AXIS_NA
+#endif 
 
 #ifndef HAS_HDMI
 #define HDMI_WIDTH	FIXED_WIDTH
