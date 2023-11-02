@@ -61,12 +61,12 @@ void InitSettings(void) {
 	
 	shm_fd = shm_open(SHM_KEY, O_RDWR | O_CREAT | O_EXCL, 0644); // see if it exists
 	if (shm_fd==-1 && errno==EEXIST) { // already exists
-		// puts("Settings client");
+		puts("Settings client");
 		shm_fd = shm_open(SHM_KEY, O_RDWR, 0644);
 		settings = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	}
 	else { // host
-		// puts("Settings host"); // keymon
+		puts("Settings host"); // should always be keymon
 		is_host = 1;
 		// we created it so set initial size and populate
 		ftruncate(shm_fd, shm_size);
@@ -87,11 +87,17 @@ void InitSettings(void) {
 		// settings->jack = 0;
 		// settings->hdmi = 0;
 	}
-	// printf("brightness: %i\nspeaker: %i \n", settings->brightness, settings->speaker);
 	
-	SetJack(getInt(JACK_STATE_PATH));
-	SetHDMI(getInt(HDMI_STATE_PATH));
+	int jack = getInt(JACK_STATE_PATH);
+	int hdmi = getInt(HDMI_STATE_PATH);
+	printf("brightness: %i (hdmi: %i)\nspeaker: %i (jack: %i)\n", settings->brightness, hdmi, settings->speaker, jack); fflush(stdout);
+	
+	// both of these set volume
+	SetJack(jack);
+	SetHDMI(hdmi);
+	
 	SetBrightness(GetBrightness());
+	// system("echo $(< " BRIGHTNESS_PATH ")");
 }
 void QuitSettings(void) {
 	munmap(settings, shm_size);
@@ -125,7 +131,7 @@ void SetBrightness(int value) {
 		case 7: raw=96; break;		// 32
 		case 8: raw=128; break;		// 32
 		case 9: raw=192; break;		// 64
-		case 10: raw=256; break;	// 64
+		case 10: raw=255; break;	// 64
 	}
 	SetRawBrightness(raw);
 	settings->brightness = value;

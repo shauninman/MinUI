@@ -75,6 +75,7 @@ static void* watchPorts(void *arg) {
 
 
 int main (int argc, char *argv[]) {
+	printf("keymon\n"); fflush(stdout);
 	InitSettings();
 	pthread_create(&ports_pt, NULL, &watchPorts, NULL);
 	
