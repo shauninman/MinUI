@@ -6,6 +6,7 @@ if [ -n "$DATETIME_PATH" ]; then
 fi
 
 cat /dev/zero > /dev/fb0
-echo s > /proc/sysrq-trigger
-echo u > /proc/sysrq-trigger
-echo o > /proc/sysrq-trigger
+poweroff
+# echo s > /proc/sysrq-trigger
+# echo u > /proc/sysrq-trigger
+# echo o > /proc/sysrq-trigger

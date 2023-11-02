@@ -13,6 +13,9 @@ export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt"
 
 #######################################
 
+# JELOS aggressively repairs disks and leaves litter on the SD card
+rm $SDCARD_PATH/FSCK*.REC
+
 export PATH=$SYSTEM_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 
