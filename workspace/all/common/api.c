@@ -1475,7 +1475,7 @@ static void PWR_waitForWake(void) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type==SDL_KEYUP) {
 				uint8_t code = event.key.keysym.scancode;
-				if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && code==CODE_MENU)) {
+				if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && (code==CODE_MENU || code==CODE_MENU_ALT))) {
 					wake = 1;
 					break;
 				}
@@ -1488,7 +1488,7 @@ static void PWR_waitForWake(void) {
 			}
 			else if (event.type==SDL_JOYBUTTONUP) {
 				uint8_t joy = event.jbutton.button;
-				if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && joy==JOY_MENU)) {
+				if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && (joy==JOY_MENU || joy==JOY_MENU_ALT))) {
 					wake = 1;
 					break;
 				}
