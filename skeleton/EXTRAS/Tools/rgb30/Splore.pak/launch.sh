@@ -1,5 +1,24 @@
 #!/bin/sh
 
+HOME=$USERDATA_PATH/splore
+mkdir -p $HOME
+
+# cleanup beta puke
+if [ -d $USERDATA_PATH/carts ]; then
+	cd $USERDATA_PATH
+	mv activity_log.txt $HOME
+	mv backup $HOME
+	mv bbs $HOME
+	mv carts $HOME
+	mv cdata $HOME
+	mv config.txt $HOME
+	mv cstore $HOME
+	mv log.txt $HOME
+	mv plates $HOME
+	mv plates $HOME
+	mv sdl_controllers.txt $HOME
+fi
+
 DIR="$(dirname "$0")"
 cd "$DIR"
 
