@@ -1153,19 +1153,19 @@ void PAD_poll(void) {
 			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
 		}
 		else if (event.type==SDL_JOYHATMOTION) {
-			int hats[4] = {-1,-1,-1,-1}; // -1=no change,0=up,1=down
+			int hats[4] = {-1,-1,-1,-1}; // -1=no change,0=up,1=down,2=left,3=right btn_ids
 			int hat = event.jhat.value;
 			// LOG_info("hat event: %i\n", hat);
 			// TODO: safe to assume hats will always be the primary dpad?
 			switch (hat) {
-				case SDL_HAT_UP:			hats[BTN_ID_UP]		= 1;								break;
-				case SDL_HAT_DOWN:			hats[BTN_ID_DOWN]	= 1;								break;
-				case SDL_HAT_LEFT:			hats[BTN_ID_LEFT]	= 1;								break;
-				case SDL_HAT_RIGHT:			hats[BTN_ID_RIGHT]	= 1;								break;
-				case SDL_HAT_LEFTUP:		hats[BTN_ID_LEFT]	= 1;	hats[BTN_ID_UP]		= 1;	break;
-				case SDL_HAT_LEFTDOWN:		hats[BTN_ID_LEFT]	= 1;	hats[BTN_ID_DOWN]	= 1;	break;
-				case SDL_HAT_RIGHTUP:		hats[BTN_ID_RIGHT]	= 1;	hats[BTN_ID_UP]		= 1;	break;
-				case SDL_HAT_RIGHTDOWN:		hats[BTN_ID_RIGHT]	= 1;	hats[BTN_ID_DOWN]	= 1;	break;
+				case SDL_HAT_UP:			hats[0]=1;	  hats[1]=0;	hats[2]=0;	  hats[3]=0;	break;
+				case SDL_HAT_DOWN:			hats[0]=0;	  hats[1]=1;	hats[2]=0;	  hats[3]=0;	break;
+				case SDL_HAT_LEFT:			hats[0]=0;	  hats[1]=0;	hats[2]=1;	  hats[3]=0;	break;
+				case SDL_HAT_RIGHT:			hats[0]=0;	  hats[1]=0;	hats[2]=0;	  hats[3]=1;	break;
+				case SDL_HAT_LEFTUP:		hats[0]=1;	  hats[1]=0;	hats[2]=1;	  hats[3]=0;	break;
+				case SDL_HAT_LEFTDOWN:		hats[0]=0;	  hats[1]=1;	hats[2]=1;	  hats[3]=0;	break;
+				case SDL_HAT_RIGHTUP:		hats[0]=1;	  hats[1]=0;	hats[2]=0;	  hats[3]=1;	break;
+				case SDL_HAT_RIGHTDOWN:		hats[0]=0;	  hats[1]=1;	hats[2]=0;	  hats[3]=1;	break;
 				case SDL_HAT_CENTERED:		hats[0]=0;	  hats[1]=0;	hats[2]=0;	  hats[3]=0;	break;
 				default: break;
 			}
