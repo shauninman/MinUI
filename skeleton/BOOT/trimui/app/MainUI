@@ -1,11 +1,16 @@
 #!/bin/sh
 
-# NOTE: becomes trimui/app/MainUI
+# installer for trimuismart and tg5040
 
 SDCARD_PATH=/mnt/SDCARD
 cd "$SDCARD_PATH/trimui/app"
 
-if [ ! -f /etc/main.original ]; then
+# smart pro
+if [ -f /usr/trimui/bin/runtrimui.sh ] && [ ! -f /usr/trimui/bin/runtrimui-original.sh ]; then
+	mv /usr/trimui/bin/runtrimui.sh /usr/trimui/bin/runtrimui-original.sh
+	cp ./runtrimui.sh /usr/trimui/bin/
+# smart
+elif [ ! -f /etc/main.original ]; then
 	cp /etc/main /etc/main.original
 	cp ./main.sh /etc/main
 fi

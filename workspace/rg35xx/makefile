@@ -14,13 +14,9 @@ endif
 
 REQUIRES_COMMANDER=other/DinguxCommander
 
-all: readmes
+all:
 	cd ./overclock && make
 	cd ./boot && ./build.sh
-
-readmes:
-	cd ../readmes && fmt -w 40 -s ./BASE-in.txt > ./BASE-out.txt
-	cd ../readmes && fmt -w 40 -s ./EXTRAS-in.txt > ./EXTRAS-out.txt
 
 early: $(REQUIRES_COMMANDER)
 	cd other/DinguxCommander && make -j

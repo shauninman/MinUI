@@ -13,6 +13,9 @@ case $INFO in
 *"SStar"*)
 	PLATFORM="miyoomini"
 	;;
+*"TG5040"*)
+	PLATFORM="tg5040"
+	;;
 esac
 
 /mnt/SDCARD/.tmp_update/$PLATFORM.sh # &> /mnt/SDCARD/boot.txt

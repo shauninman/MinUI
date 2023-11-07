@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# NOTE: becomes miyoo/app/MainUI
-
 IS_PLUS=false
 if [ -f "/customer/app/axp_test" ]; then
 	IS_PLUS=true

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# TODO: add LD_LIBRARY_PATH and PATH?
+# becomes /etc/main on trimuismart
 
 #wait for SDCARD mounted
 mounted=`cat /proc/mounts | grep SDCARD`

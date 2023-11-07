@@ -9,14 +9,11 @@ $(PLATFORM):
 	cp ./workspace/$@/other/latency_reduction/as_preload.so ./build/SYSTEM/$@/lib/
 	cp ./workspace/$@/other/latency_reduction/audioserver.mod ./build/SYSTEM/$@/bin/
 	# installer
-	mkdir -p ./build/BASE/miyoo/app
-	cp ./workspace/$@/install/nop.sh ./build/BASE/miyoo/app/keymon
-	cp ./workspace/$@/install/install.sh ./build/BASE/miyoo/app/MainUI
 	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
-	mkdir -p ./build/BOOT/$@/
-	cp ./workspace/$@/install/boot.sh ./build/BOOT/$@.sh
-	cp ./workspace/$@/install/*.png ./build/BOOT/$@/
-	cp ./workspace/$@/show/show.elf ./build/BOOT/$@/
+	mkdir -p ./build/BOOT/common/$@/
+	cp ./workspace/$@/install/boot.sh ./build/BOOT/common/$@.sh
+	cp ./workspace/$@/install/*.png ./build/BOOT/common/$@/
+	cp ./workspace/$@/show/show.elf ./build/BOOT/common/$@/
 	# extras
 	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/

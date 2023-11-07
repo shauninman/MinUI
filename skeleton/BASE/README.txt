@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the RGB30, Trimui Smart, Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
+MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -30,7 +30,7 @@ MinUI is meant to be used with Moss installed on the SD card that goes into the 
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TFGAME) of the RGB30.
 
-TRIMUI SMART
+TRIMUI SMART / TRIMUI SMART PRO
 
 Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
@@ -51,7 +51,7 @@ Copy "dmenu.bin" to the root of the MISC partition of the TF1 card. Copy "MinUI.
 ----------------------------------------
 Updating
 
-RGB30 / MIYOO MINI / MIYOO MINI PLUS / TRIMUI SMART / RG35XX
+ALL
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card containing your Roms.
 
@@ -63,7 +63,7 @@ RGB30
 	Menu: L3 or R3
 
 
-RGB30 / MIYOO MINI PLUS / RG35XX
+RGB30 / MIYOO MINI PLUS / RG35XX / TRIMUI SMART PRO
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
@@ -73,7 +73,7 @@ MIYOO MINI / TRIMUI SMART
   Volume: SELECT + L or R
   Brightness: START + L or R1
 
-RGB30 / MIYOO MINI (PLUS) / RG35XX
+RGB30 / MIYOO MINI (PLUS) / RG35XX / TRIMUI SMART PRO
   
   Sleep: POWER
   Wake: POWER
@@ -184,7 +184,7 @@ RGB30
 - some systems have (usually subtle) audio clipping
 - some systems need additional performance tuning
 
-TRIMUI SMART
+TRIMUI SMART / TRIMUI SMART PRO
 
 - debug/battery overlay isn't implemented yet
 
