@@ -1,5 +1,5 @@
 # CORES = snes9x2005_plus
-# CORES+= beetle-pce-fast beetle-vb fake-08 mednafen_supafaust mgba
+# CORES+= beetle-pce-fast beetle-vb fake-08 mednafen_supafaust mgba race
 
 CORES = gambatte gpsp picodrive pokemini fceumm pcsx_rearmed snes9x2005
 

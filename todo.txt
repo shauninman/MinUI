@@ -7,12 +7,9 @@ BASE
 
 EXTRAS
 
-- rgb30: added missing Game Gear pak (picodrive core)
-- rgb30: added Neo Geo Pocket and Neo Geo Pocket Color paks (race core)
+- all: added Neo Geo Pocket and Neo Geo Pocket Color paks (race core)
+- rgb30: added missing Game Gear and Master System paks (picodrive core)
 - rgb30: added Splore.pak (and supporting Wi-Fi.pak) for native PICO-8 splore
-
-
-
 - rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
 - rgb30: fixed file browser background in Files.pak
 

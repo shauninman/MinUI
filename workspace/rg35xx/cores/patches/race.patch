@@ -1,0 +1,23 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index 792a6d82915c32edd3df6ceec541499f6ca25ac5..dc02b361d7db47e011b6d3addf89cfb31503575a 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -373,6 +373,18 @@ else ifeq ($(platform), miyoo)
+    CFLAGS += -fomit-frame-pointer -ffast-math -march=armv5te -mtune=arm926ej-s
+    CXXFLAGS += $(CFLAGS)
+    
++# RG35XX
++else ifeq ($(platform), rg35xx)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   fpic := -fPIC
++   SHARED := -shared -Wl,-version-script=$(LIBRETRO_DIR)/link.T
++   PLATFORM_DEFINES := -DCC_RESAMPLER -DCC_RESAMPLER_NO_HIGHPASS
++   CFLAGS += -fomit-frame-pointer -ffast-math -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a
++   CXXFLAGS += $(CFLAGS)
++   
+ # Windows MSVC 2010 x64
+ else ifeq ($(platform), windows_msvc2010_x64)
+ 	CC  = cl.exe
