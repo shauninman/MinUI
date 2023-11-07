@@ -97,8 +97,10 @@ typedef struct GFX_Renderer {
 	void* src;
 	void* dst;
 	void* blit;
+	double aspect; // 0 for integer, -1 for fullscreen, otherwise aspect ratio, used for SDL2 accelerated scaling
 	int scale;
 	
+	// TODO: document this better
 	int true_w;
 	int true_h;
 
@@ -108,6 +110,7 @@ typedef struct GFX_Renderer {
 	int src_h;
 	int src_p;
 	
+	// TODO: I think this is overscaled
 	int dst_x;
 	int dst_y;
 	int dst_w;

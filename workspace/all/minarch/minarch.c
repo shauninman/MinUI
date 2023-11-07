@@ -1879,6 +1879,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	LOG_info("selectScaler\n");
 	
 	int src_x,src_y,dst_x,dst_y,dst_w,dst_h,dst_p,scale;
+	double aspect;
 	
 	int aspect_w = src_w;
 	int aspect_h = CEIL_DIV(aspect_w, core.aspect_ratio);
@@ -2054,7 +2055,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 				// dst_w = scaled_h * fixed_aspect_ratio;
 				// dst_w += dst_w%2;
 				// dst_h = scaled_h;
-				int aspect_w = DEVICE_HEIGHT * core.aspect_ratio;
+				aspect_w = DEVICE_HEIGHT * core.aspect_ratio;
 				double aspect_wr = ((double)aspect_w) / DEVICE_WIDTH;
 				dst_w = scaled_w / aspect_wr;
 				dst_h = scaled_h;
@@ -2074,6 +2075,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	
 	// TODO: need to sanity check scale and demands on the buffer
 	
+	// LOG_info("aspect: %ix%i (%f)\n", aspect_w,aspect_h,core.aspect_ratio);
+	
 	renderer.src_x = src_x;
 	renderer.src_y = src_y;
 	renderer.src_w = src_w;
@@ -2085,8 +2088,10 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	renderer.dst_h = dst_h;
 	renderer.dst_p = dst_p;
 	renderer.scale = scale;
+	renderer.aspect = (scaling==SCALE_NATIVE||scaling==SCALE_CROPPED)?0:(scaling==SCALE_FULLSCREEN?-1:core.aspect_ratio);
+	LOG_info("aspect: %f\n", renderer.aspect);
 	renderer.blit = GFX_getScaler(&renderer);
-	
+		
 	// LOG_info("coreAR:%0.3f fixedAR:%0.3f srcAR: %0.3f\nname:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
 	// 	core.aspect_ratio, ((double)DEVICE_WIDTH) / DEVICE_HEIGHT, ((double)src_w) / src_h,
 	// 	scaler_name,
