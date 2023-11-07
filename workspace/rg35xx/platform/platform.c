@@ -308,7 +308,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.de_mem[DE_OVL_STR(0)/4] = vid.de_mem[DE_OVL_STR(2)/4] = vid.pitch / 8;
 	vid.de_mem[DE_OVL_BA0(0)/4] = (uintptr_t)(vid.fb_info.padd + PAGE_SIZE);
 	
-	GFX_setNearestNeighbor(0);
+	GFX_setNearestNeighbor(0); // false?  
 	
 	return vid.screen;
 }
