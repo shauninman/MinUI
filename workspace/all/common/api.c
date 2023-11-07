@@ -1157,6 +1157,7 @@ void PAD_poll(void) {
 			int hat = event.jhat.value;
 			// LOG_info("hat event: %i\n", hat);
 			// TODO: safe to assume hats will always be the primary dpad?
+			// TODO: this is literally a bitmask, make it one (oh, except there's 3 states...)
 			switch (hat) {
 				case SDL_HAT_UP:			hats[0]=1;	  hats[1]=0;	hats[2]=0;	  hats[3]=0;	break;
 				case SDL_HAT_DOWN:			hats[0]=0;	  hats[1]=1;	hats[2]=0;	  hats[3]=0;	break;
@@ -1484,7 +1485,7 @@ void PWR_powerOff(void) {
 			h = HDMI_HEIGHT;
 			p = HDMI_PITCH;
 		}
-		GFX_resize(w,h,p);
+		gfx.screen = GFX_resize(w,h,p);
 		
 		char* msg;
 		if (HAS_POWER_BUTTON || HAS_POWEROFF_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
@@ -1493,6 +1494,7 @@ void PWR_powerOff(void) {
 		// LOG_info("PWR_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);
 		
 		// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
+		PLAT_clearVideo(gfx.screen);
 		GFX_blitMessage(font.large, msg, gfx.screen,&(SDL_Rect){0,0,gfx.screen->w,gfx.screen->h}); //, NULL);
 		GFX_flip(gfx.screen);
 		PLAT_powerOff();
