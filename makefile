@@ -4,7 +4,7 @@
 # it has to, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = miyoomini trimuismart rg35xx rgb30
+PLATFORMS = tg5040 rgb30 trimuismart miyoomini rg35xx
 endif
 
 ###########################################################
@@ -22,7 +22,7 @@ RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 export MAKEFLAGS=--no-print-directory
 
 all: setup $(PLATFORMS) special package done
-
+	
 shell:
 	make -f makefile.toolchain PLATFORM=$(PLATFORM)
 
@@ -101,9 +101,11 @@ done:
 special:
 	# ----------------------------------------------------
 	# setup miyoomini/trimui family .tmp_update in BOOT
-	mv ./build/BOOT/updater.sh ./build/BOOT/updater
-	cp -R ./build/BOOT ./build/BASE/miyoo/app/.tmp_update
-	cp -R ./build/BOOT ./build/BASE/trimui/app/.tmp_update
+	mv ./build/BOOT/common ./build/BOOT/.tmp_update
+	mv ./build/BOOT/miyoo ./build/BASE/
+	mv ./build/BOOT/trimui ./build/BASE/
+	cp -R ./build/BOOT/.tmp_update ./build/BASE/miyoo/app/
+	cp -R ./build/BOOT/.tmp_update ./build/BASE/trimui/app/
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 
 tidy:
@@ -130,7 +132,7 @@ package: tidy
 	cd ./build && find . -type f -name '.DS_Store' -delete
 	mkdir -p ./build/PAYLOAD
 	mv ./build/SYSTEM ./build/PAYLOAD/.system
-	cp -R ./build/BOOT ./build/PAYLOAD/.tmp_update
+	cp -R ./build/BOOT/.tmp_update ./build/PAYLOAD/
 	cd ./build/PAYLOAD && zip -r ../BASE/trimui.zip .tmp_update
 	
 	cd ./build/PAYLOAD && zip -r MinUI.zip .system .tmp_update
@@ -176,6 +178,11 @@ rgb30:
 	# ----------------------------------------------------
 
 nano:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+tg5040:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------

@@ -3,19 +3,37 @@ unreleased changes:
 BASE
 
 - rgb30: switched from sdl12-compat to using sdl2 directly
+- tg5040: initial Trimui Smart Pro support (_very_ alpha)
 
 EXTRAS
 
 - rgb30: added missing Game Gear pak (picodrive core)
 - rgb30: added Neo Geo Pocket and Neo Geo Pocket Color paks (race core)
 - rgb30: added Splore.pak (and supporting Wi-Fi.pak) for native PICO-8 splore
+
+
+
 - rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
 - rgb30: fixed file browser background in Files.pak
 
 ---
 
 next
+	test new MOSS image
+	full tests
+		install on each device
+		update on each device
+
+	smartpro
+		can't detect headphone state at boot?
+		make leds throb when sleeping?
+
 	user reported
+		random reports of minui not booting reliably 
+			first smart
+			then rgb30
+			can't reproduce
+		
 		install on rg35xx, install on smart doesn't work
 			but smart to rg35xx does
 		rgb30 doesn't restore brightness
@@ -28,10 +46,7 @@ next
 	move PLAT_isOnline() into PWR_* formally
 	moss: build lib32 to try to fix snes9x save state compatibility
 		first attempt did not go well :sweat_smile:
-	
-	sdl2
-		switch to accelerated renderer
-		
+			
 	all
 		fake-08 it looks like save states might have been fixed
 			14243c0
@@ -50,7 +65,6 @@ next
 				bcd062e
 			works!
 				1d1c719
-
 	
 	minarch:
 		crop save state pillar/letter-boxing?
@@ -58,18 +72,17 @@ next
 	build datetime disconnect
 		build products on macos use local time
 		build products in dockers use gmt
-		
-	smartpro
-		wonky framebuffer in sdl1.2
-		no standard input api
-		no brightness sysfs
-		haven't even attempted sound
-		I think MinUI will need to be made SDL2-compatible before tackling this
+			
+	m17
+		SDL2 accelerated rendering fixes frame issues
+		but scaling is awful
 	
 	rgb30
+		copy over SDL2 changes from tg5040
+			didn't work
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
-			fewt has a fix
+			fewt has a fix?
 				https://github.com/JustEnoughLinuxOS/distribution/pull/2195/files#diff-719d790f2d3c1d5a0884ae9eb69fb77956fcaaae235282acb6e6817339f35105
 
 		do some benchmarking to see where the slowdown is coming from
@@ -88,8 +101,8 @@ next
 			pcsx
 			could this have anything to do with the performance versus userspace governor?
 				no
-			I think it's caused by the forced vsync in sdl2
-				or fullscreen blitting?
+			I think it's caused by the forced vsync in sdl2 (still most likely)
+				or fullscreen blitting? possibly
 		debug overlay drawing glitches
 	
 	trimui: scaling (see DE test)
