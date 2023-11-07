@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the RGB30, Miyoo Mini (and Plus), Trimui Smart, and RG35XX
+MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -15,7 +15,7 @@ Copy all the folders from this zip file to the root of your primary card.
 ----------------------------------------
 Updating
 
-This extras zip file is included with every release, regardless of whether its contents has changed or not. Refer to the release notes to see what, if anything, was added or changed and copy just the desired updated pak(s) to the corresponding device folder in the Emus or Tools folders (eg. /Emus/trimuismart or /Tools/rgb30)
+This extras zip file is included with every release, regardless of whether its contents has changed or not. Refer to the release notes to see what, if anything, was added or changed and copy just the desired updated pak(s) to the corresponding device folder in the Emus or Tools folders (eg. /Emus/tg5040 or /Tools/rgb30)
 
 ----------------------------------------
 Bios files
