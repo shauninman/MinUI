@@ -74,7 +74,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
 	
-	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565); // TODO: this doesn't make sense
+	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
 	vid.screen	= SDL_CreateRGBSurface(SDL_SWSURFACE, w,h, FIXED_DEPTH, RGBA_MASK_565);
 	vid.width	= w;
 	vid.height	= h;
@@ -160,12 +160,11 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
-	
 	SDL_RenderClear(vid.renderer);
-	resizeVideo(vid.blit->src_w,vid.blit->src_h,vid.blit->src_p);
+	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 	scale1x1_c16(
 		renderer->src,renderer->dst,
-		renderer->src_w,renderer->src_h,renderer->src_p,
+		renderer->true_w,renderer->true_h,renderer->src_p,
 		vid.screen->w,vid.screen->h,vid.screen->pitch // fixed in this implementation
 		// renderer->dst_w,renderer->dst_h,renderer->dst_p
 	);
@@ -180,17 +179,28 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	
 	SDL_Rect* src_rect = NULL;
 	SDL_Rect* dst_rect = NULL;
+	SDL_Rect src_r = {0};
+	SDL_Rect dst_r = {0};
 	if (vid.blit) {
-		src_rect = &(SDL_Rect){0,0,vid.blit->src_w,vid.blit->src_h};
-		if (vid.blit->aspect==0) {
+		src_r.x = vid.blit->src_x;
+		src_r.y = vid.blit->src_y;
+		src_r.w = vid.blit->src_w;
+		src_r.h = vid.blit->src_h;
+		src_rect = &src_r;
+		
+		if (vid.blit->aspect==0) { // native (or cropped?)
 			int w = vid.blit->src_w * vid.blit->scale;
 			int h = vid.blit->src_h * vid.blit->scale;
 			int x = (FIXED_WIDTH - w) / 2;
 			int y = (FIXED_HEIGHT - h) / 2;
-			dst_rect = &(SDL_Rect){x,y,w,h};
+						
+			dst_r.x = x;
+			dst_r.y = y;
+			dst_r.w = w;
+			dst_r.h = h;
+			dst_rect = &dst_r;
 		}
-		else if (vid.blit->aspect>0) {
-			// TODO: cache this
+		else if (vid.blit->aspect>0) { // aspect
 			int h = FIXED_HEIGHT;
 			int w = h * vid.blit->aspect;
 			if (w>FIXED_WIDTH) {
@@ -200,7 +210,12 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 			}
 			int x = (FIXED_WIDTH - w) / 2;
 			int y = (FIXED_HEIGHT - h) / 2;
-			dst_rect = &(SDL_Rect){x,y,w,h};
+
+			dst_r.x = x;
+			dst_r.y = y;
+			dst_r.w = w;
+			dst_r.h = h;
+			dst_rect = &dst_r;
 		}
 	}
 	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
