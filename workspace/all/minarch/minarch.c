@@ -2163,6 +2163,9 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	if (show_debug) {
 		int x = 0;
 		int y = screen->h - SCALE1(DIGIT_HEIGHT);
+#if defined(USE_SDL2)
+		y = height - SCALE1(DIGIT_HEIGHT); // TODO: tmp?
+#endif
 		
 		if (fps_double) x = MSG_blitDouble(fps_double, x,y);
 		
