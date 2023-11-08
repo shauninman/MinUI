@@ -11,9 +11,6 @@
 
 #include <msettings.h>
 
-#include <rga/rga.h>
-#include <rga/im2d.h>
-
 #include "defines.h"
 #include "platform.h"
 #include "api.h"
@@ -23,102 +20,165 @@
 
 #define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
 
-typedef struct PageBuffer {
-	void* vadd;
-	int size;
-} PageBuffer;
-
 static struct VID_Context {
 	SDL_Joystick *joystick;
-
 	SDL_Window* window;
-	SDL_Surface* video;
+	SDL_Renderer* renderer;
+	SDL_Texture* texture;
+	SDL_Surface* buffer;
 	SDL_Surface* screen;
-	PageBuffer buffer;
+	
+	GFX_Renderer* blit; // yeesh
 	
 	int width;
 	int height;
 	int pitch;
-	int direct;
-	
-	rga_buffer_t src;
-	rga_buffer_t dst;
 } vid;
 
+
+static int device_width;
+static int device_height;
+static int device_pitch;
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
 	SDL_ShowCursor(0);
+	
+	LOG_info("Available video drivers:\n");
+	for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
+		LOG_info("- %s\n", SDL_GetVideoDriver(i));
+	}
+	LOG_info("Current video driver: %s\n", SDL_GetCurrentVideoDriver());
+
+	LOG_info("Available render drivers:\n");
+	for (int i=0; i<SDL_GetNumRenderDrivers(); i++) {
+		SDL_RendererInfo info;
+		SDL_GetRenderDriverInfo(i,&info);
+		LOG_info("- %s\n", info.name);
+	}
+
+	LOG_info("Available display modes:\n");
+	SDL_DisplayMode mode;
+	for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
+		SDL_GetDisplayMode(0, i, &mode);
+		LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	}
+	SDL_GetCurrentDisplayMode(0, &mode);
+	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
+	int p = FIXED_PITCH;
 	if (getInt(HDMI_STATE_PATH)) {
 		w = HDMI_WIDTH;
 		h = HDMI_HEIGHT;
+		p = HDMI_PITCH;
 	}
-	vid.window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
-	puts(""); fflush(stdout); // mali debug log doesn't have a line return
+	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	
-	vid.video = SDL_GetWindowSurface(vid.window); 
+	SDL_GetCurrentDisplayMode(0, &mode);
+	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
-	vid.direct = 1;
-	vid.width = w;
-	vid.height = h;
-	vid.pitch = w * FIXED_BPP;
+	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+	puts("");
+	
+	int renderer_width,renderer_height;
+	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
+	LOG_info("output size: %ix%i\n", renderer_width, renderer_height);
+	if (renderer_width!=w) {
+		float x_scale = (float)renderer_width / w;
+		float y_scale = (float)renderer_height / h;
+		SDL_SetWindowSize(vid.window, w / x_scale, h / y_scale);
 
-	vid.buffer.size = (vid.pitch*2) * (h*2);
-	vid.buffer.vadd = malloc(vid.buffer.size);
-	memset(vid.buffer.vadd, 0, vid.buffer.size);
+		SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
+		x_scale = (float)renderer_width / w;
+		y_scale = (float)renderer_height / h;
+		SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
+	}
 	
-	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-	vid.src = wrapbuffer_virtualaddr(vid.screen->pixels, vid.screen->w, vid.screen->h, RK_FORMAT_RGB_565);
-	vid.dst = wrapbuffer_virtualaddr(vid.video->pixels, vid.video->w, vid.video->h, RK_FORMAT_RGBA_8888); // never changes
-
+	SDL_RendererInfo info;
+	SDL_GetRendererInfo(vid.renderer, &info);
+	LOG_info("Current render driver: %s\n", info.name);
+	
+	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
+	SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeLinear); // we always start at device size so use linear for better upscaling over hdmi
+	
+	int format;
+	int access_;
+	SDL_QueryTexture(vid.texture, &format, &access_, NULL,NULL);
+	LOG_info("texture format: %s (streaming: %i)\n", SDL_GetPixelFormatName(format), access_==SDL_TEXTUREACCESS_STREAMING);
+	
+	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
+	vid.screen	= SDL_CreateRGBSurface(SDL_SWSURFACE, w,h, FIXED_DEPTH, RGBA_MASK_565);
+	vid.width	= w;
+	vid.height	= h;
+	vid.pitch	= p;
+	
+	device_width	= w;
+	device_height	= h;
+	device_pitch	= p;
+	
 	vid.joystick = SDL_JoystickOpen(0);
-	
-	LOG_info("PLAT_initVideo: %p (%ix%i)\n", vid.video, vid.video->w, vid.video->h);
 	
 	return vid.screen;
 }
 
+static void clearVideo(void) {
+	for (int i=0; i<3; i++) {
+		SDL_RenderClear(vid.renderer);
+		SDL_FillRect(vid.screen, NULL, 0);
+		SDL_RenderPresent(vid.renderer);
+	}
+}
+
 void PLAT_quitVideo(void) {
-	LOG_info("PLAT_quitVideo\n");
+	// clearVideo();
 	
-	SDL_FreeSurface(vid.screen);
-	free(vid.buffer.vadd);
 	SDL_JoystickClose(vid.joystick);
+
+	SDL_FreeSurface(vid.screen);
+	SDL_FreeSurface(vid.buffer);
+	SDL_DestroyTexture(vid.texture);
+	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
+
+	// system("cat /dev/zero > /dev/fb0");
 	SDL_Quit();
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
-	SDL_FillRect(screen, NULL, 0);
+	SDL_FillRect(screen, NULL, 0); // TODO: revisit
 }
 void PLAT_clearAll(void) {
-	memset(vid.buffer.vadd, 0, vid.buffer.size);
+	PLAT_clearVideo(vid.screen); // TODO: revist
+	SDL_RenderClear(vid.renderer);
 }
 
 void PLAT_setVsync(int vsync) {
 	
 }
 
-SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch) {
+static void resizeVideo(int w, int h, int p) {
+	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
-	vid.direct = w==vid.video->w && h==vid.video->h && pitch==vid.video->pitch;
+	LOG_info("resizeVideo(%i,%i,%i)\n",w,h,p);
 
-	// LOG_info("PLAT_resizeVideo: %i==%i && %i==%i && %i==%i (%i)\n",w,vid.video->w,h,vid.video->h,pitch,vid.video->pitch,vid.direct);
+	SDL_FreeSurface(vid.buffer);
+	SDL_DestroyTexture(vid.texture);
+	// PLAT_clearVideo(vid.screen);
+	
+	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
+	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
+	SDL_SetTextureScaleMode(vid.texture, w==device_width&&h==device_height?SDL_ScaleModeLinear:SDL_ScaleModeNearest);
+	
+	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
 
-	vid.width = w;
-	vid.height = h;
-	vid.pitch = pitch;
-	
-	vid.screen->pixels = NULL;
-	SDL_FreeSurface(vid.screen);
-	
-	vid.screen = SDL_CreateRGBSurfaceFrom(vid.buffer.vadd,vid.width,vid.height,FIXED_DEPTH,vid.pitch,RGBA_MASK_AUTO);
-	memset(vid.screen->pixels, 0, vid.pitch * vid.height);
+	vid.width	= w;
+	vid.height	= h;
+	vid.pitch	= p;
+}
 
-	vid.src = wrapbuffer_virtualaddr((void*)vid.screen->pixels, vid.screen->w, vid.screen->h, RK_FORMAT_RGB_565);
-	
+SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
+	resizeVideo(w,h,p);
 	return vid.screen;
 }
 
@@ -133,40 +193,72 @@ void PLAT_vsync(int remaining) {
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	// LOG_info("PLAT_getScaler() >>> src:%ix%i (%i) dst:%i,%i %ix%i (%i)\n",
-	// 	renderer->true_w,
-	// 	renderer->true_h,
-	// 	renderer->src_p, // unused
-	//
-	// 	renderer->dst_x,
-	// 	renderer->dst_y,
-	// 	renderer->dst_w, // unused
-	// 	renderer->dst_h, // unused?
-	// 	renderer->dst_p // unused
-	// );
-	
-	switch (renderer->scale) {
-		case 0:  // buh
-		case 1:  return scale1x1_c16;
-		case 2:  return scale2x2_c16;
-		case 3:  return scale3x3_c16;
-		case 4:  return scale4x4_c16;
-		case 5:  return scale5x5_c16;
-		default: return scale6x6_c16;
-	}
+	return scale1x1_c16;
 }
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
-	// TODO: cache these offsets? (all platforms)
-	void* src = renderer->src + (renderer->src_y * renderer->src_p) + (renderer->src_x * FIXED_BPP);
-	void* dst = renderer->dst + (renderer->dst_y * renderer->dst_p) + (renderer->dst_x * FIXED_BPP);
-	((scaler_t)renderer->blit)(src,dst,renderer->src_w,renderer->src_h,renderer->src_p,renderer->dst_w,renderer->dst_h,renderer->dst_p);
+	vid.blit = renderer;
+	SDL_RenderClear(vid.renderer);
+	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
+	scale1x1_c16(
+		renderer->src,renderer->dst,
+		renderer->true_w,renderer->true_h,renderer->src_p,
+		vid.screen->w,vid.screen->h,vid.screen->pitch // fixed in this implementation
+		// renderer->dst_w,renderer->dst_h,renderer->dst_p
+	);
 }
 
-void PLAT_flip(SDL_Surface* IGNORED, int sync) {
-	if (vid.direct) imcopy(vid.src, vid.dst);
-	else imresize(vid.src, vid.dst);
-	SDL_UpdateWindowSurface(vid.window);
+void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
+	if (!vid.blit) resizeVideo(device_width,device_height,device_pitch); // !!!???
+	
+	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
+	SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
+	SDL_UnlockTexture(vid.texture);
+	
+	SDL_Rect* src_rect = NULL;
+	SDL_Rect* dst_rect = NULL;
+	SDL_Rect src_r = {0};
+	SDL_Rect dst_r = {0};
+	if (vid.blit) {
+		src_r.x = vid.blit->src_x;
+		src_r.y = vid.blit->src_y;
+		src_r.w = vid.blit->src_w;
+		src_r.h = vid.blit->src_h;
+		src_rect = &src_r;
+		
+		if (vid.blit->aspect==0) { // native (or cropped?)
+			int w = vid.blit->src_w * vid.blit->scale;
+			int h = vid.blit->src_h * vid.blit->scale;
+			int x = (device_width - w) / 2;
+			int y = (device_height - h) / 2;
+						
+			dst_r.x = x;
+			dst_r.y = y;
+			dst_r.w = w;
+			dst_r.h = h;
+			dst_rect = &dst_r;
+		}
+		else if (vid.blit->aspect>0) { // aspect
+			int h = device_height;
+			int w = h * vid.blit->aspect;
+			if (w>device_width) {
+				double ratio = 1 / vid.blit->aspect;
+				w = device_width;
+				h = w * ratio;
+			}
+			int x = (device_width - w) / 2;
+			int y = (device_height - h) / 2;
+
+			dst_r.x = x;
+			dst_r.y = y;
+			dst_r.w = w;
+			dst_r.h = h;
+			dst_rect = &dst_r;
+		}
+	}
+	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
+	SDL_RenderPresent(vid.renderer);
+	vid.blit = NULL;
 }
 
 ///////////////////////////////
