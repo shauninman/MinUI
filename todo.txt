@@ -2,6 +2,7 @@ unreleased changes:
 
 BASE
 
+- all: added RETRO_MEMORY_RTC support to minarch (submitted by @giovannygb)
 - rgb30: moved (almost) all scaling from the cpu to the gpu
 - rgb30: fixed inability to restore max brightness
 - tg5040: initial Trimui Smart Pro support (_very_ alpha)
@@ -31,6 +32,7 @@ next
 	smartpro
 		can't detect headphone state at boot?
 		make leds throb when sleeping?
+			leds aren't even turning on when sleeping anymore...
 
 	user reported
 		random reports of minui not booting reliably 
