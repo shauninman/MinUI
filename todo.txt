@@ -2,7 +2,8 @@ unreleased changes:
 
 BASE
 
-- rgb30: switched from sdl12-compat to using sdl2 directly
+- rgb30: moved (almost) all scaling from the cpu to the gpu
+- rgb30: fixed inability to restore max brightness
 - tg5040: initial Trimui Smart Pro support (_very_ alpha)
 
 EXTRAS
@@ -16,6 +17,12 @@ EXTRAS
 ---
 
 next
+	merge giovannygb's RTC patch, add to release notes, credit
+		https://github.com/shauninman/MinUI/pull/3/commits/1e14dd33ed9511a5fe2bb6216ed710cc96a6669e
+		
+	ooh, &(SDL_Rect){x,y,w,h} idiom is problematic because if it's defined inside a block it may go out of scope before being used outside the block
+		this is probably the cause of that gfx blit message issue I was having
+
 	test new MOSS image
 	full tests
 		install on each device
@@ -33,18 +40,13 @@ next
 		
 		install on rg35xx, install on smart doesn't work
 			but smart to rg35xx does
-		rgb30 doesn't restore brightness
-			it libmsettings does but the os isn't listening?
-			only affected max brightness as far as I can tell
-	add race
-		+ rgb30
-		- others
 
 	move PLAT_isOnline() into PWR_* formally
 	moss: build lib32 to try to fix snes9x save state compatibility
 		first attempt did not go well :sweat_smile:
 			
 	all
+		revisit localization?
 		fake-08 it looks like save states might have been fixed
 			14243c0
 			save states in general are wonky, eg.
@@ -65,18 +67,21 @@ next
 	
 	minarch:
 		crop save state pillar/letter-boxing?
+		before I can even look at ppsspp I need to support XRGB8888
 	
 	build datetime disconnect
 		build products on macos use local time
 		build products in dockers use gmt
 			
 	m17
-		SDL2 accelerated rendering fixes frame issues
-		but scaling is awful
+		SDL2 accelerated rendering fixes framerate issues
+		but default/nearest scaling is awful
+			linear is still pretty bad
+			try cpu upscaling once then let gpu downsample linear?
 	
 	rgb30
-		copy over SDL2 changes from tg5040
-			didn't work
+		could wifi support more than one access point?
+			
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
 			fewt has a fix?

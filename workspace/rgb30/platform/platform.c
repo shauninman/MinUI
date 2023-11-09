@@ -84,7 +84,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	int renderer_width,renderer_height;
 	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
 	LOG_info("output size: %ix%i\n", renderer_width, renderer_height);
-	if (renderer_width!=w) {
+	if (renderer_width!=w) { // I think this can only be hdmi
 		float x_scale = (float)renderer_width / w;
 		float y_scale = (float)renderer_height / h;
 		SDL_SetWindowSize(vid.window, w / x_scale, h / y_scale);
