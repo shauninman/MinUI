@@ -115,9 +115,7 @@ tidy:
 	# remove systems we're not ready to support yet
 	
 	# TODO: tmp, figure out a cleaner way to do this
-	rm -rf ./build/SYSTEM/rg353
 	rm -rf ./build/SYSTEM/trimui
-	rm -rf ./build/EXTRAS/Tools/rg353
 	rm -rf ./build/EXTRAS/Tools/trimui
 
 package: tidy
@@ -160,11 +158,6 @@ miyoomini:
 	# ----------------------------------------------------
 
 trimuismart:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-rg353:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------
