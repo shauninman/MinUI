@@ -1,37 +1,24 @@
-diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
-index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..5125c3b2f6a08f321a4cb42ff875c10ff15d76aa 100644
---- forkSrcPrefix/platform/libretro/Makefile
-+++ forkDstPrefix/platform/libretro/Makefile
-@@ -115,7 +115,7 @@ else ifeq ($(platform), vita)
-    CXXFLAGS += -Wl,-q -Wall -O3
- 	STATIC_LINKING = 1
- else ifeq ($(platform), miyoomini)
--   TARGET := $(TARGET_NAME)_libretro_miyoomini.so
-+   TARGET := $(TARGET_NAME)_libretro.so
-    CC = arm-linux-gnueabihf-gcc
-    CXX = arm-linux-gnueabihf-g++
-    AR = arm-linux-gnueabihf-ar
 diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
-index 2b289ee827b641adc1ecb6002efe00f120d9b40c..968e4998ab4a1bc84df297e063bca9f5a6f83639 100644
+index d95ccb6cab52abfe7620ff84dd5cbb450bafe750..24687335ad410096aa48f29e13dcb479171a06fc 100644
 --- forkSrcPrefix/platform/libretro/libretro.cpp
 +++ forkDstPrefix/platform/libretro/libretro.cpp
-@@ -475,6 +475,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
-         printf("using file path for rom %s\n", info->path);
+@@ -636,6 +636,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+     else {
          _vm->QueueCartChange(info->path);
      }
 +	_vm->UpdateAndDraw();
  
      return true;
  }
-
 diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
-index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..0010a8116f6249a44a3e13a6c1a40898d2865716 100644
+index be0f1b46bb3ab10be4a9f896f5e8841dd630b35b..f6b4d892627ec2a81b01ddb4da7f0c7a8022221f 100644
 --- forkSrcPrefix/platform/libretro/Makefile
 +++ forkDstPrefix/platform/libretro/Makefile
-@@ -123,6 +123,16 @@ else ifeq ($(platform), miyoomini)
-    CXXFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7ve
+@@ -123,7 +123,16 @@ else ifeq ($(platform), miyoomini)
+    CXXFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7ve -D_NEED_FULL_PATH_
     fpic := -fPIC
     SHARED := -shared -Wl,--version-script=link.T
+-
 +# TRIMUI SMART PRO
 +else ifeq ($(platform), tg5040)
 +   TARGET := $(TARGET_NAME)_libretro.so
@@ -42,6 +29,6 @@ index 420f9b7ae42d95b0dee150bd02a5ab5a854a7f77..0010a8116f6249a44a3e13a6c1a40898
 +   CXXFLAGS += -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a
 +   fpic := -fPIC
 +   SHARED := -shared -Wl,--version-script=link.T
- 
  else ifeq ($(platform), gcw0)
     TARGET := $(TARGET_NAME)_libretro_gcw0.so
+    CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc

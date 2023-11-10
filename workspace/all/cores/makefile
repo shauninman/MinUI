@@ -12,8 +12,7 @@ endif
 
 # overrides shared by all cores
 
-# commits after these break save states (gpsp as of 20231025)
-fake-08_HASH = 6279216
+# commits after this one break save states (as of 20231025)
 gpsp_HASH = 1d1c719
 
 ###############################
