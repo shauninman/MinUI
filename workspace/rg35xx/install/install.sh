@@ -26,6 +26,11 @@ if [ ! -f $FLAG_PATH ]; then
 fi
 
 was_updated() {
+	# intiial releases didn't install this properly :sob:
+	if [ ! -f /misc/charging.png ]; then
+		return 0
+	fi
+	
 	for FILE in /misc/* /misc/*/*; do
 		A_PATH=$FILE
 		A_NAME=$(busybox basename "$A_PATH")
@@ -66,8 +71,8 @@ if [ ! -f $FLAG_PATH ] || was_updated; then
 	if [ ! -f $FLAG_PATH ]; then
 		cp $SYSTEM_PATH/dat/boot_logo.bmp.gz /misc
 	fi
-	# charging graphic, same
-	if [ ! -f $SYSTEM_PATH/dat/charging.png ]; then
+	# charging graphic, only installed, never updated
+	if [ ! -f /misc/charging.png ]; then
 		cp $SYSTEM_PATH/dat/charging.png /misc
 	fi
 
