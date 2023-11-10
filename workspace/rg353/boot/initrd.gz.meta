@@ -1,3 +1,0 @@
-stock blob
-
-we extract initial ram disk file system and modify init to replace /etc/init.d/rcS in the soon to be root anbernic squashfs with our own to take over boot process
