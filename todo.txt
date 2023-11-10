@@ -3,13 +3,15 @@ unreleased changes:
 BASE
 
 - all: added RETRO_MEMORY_RTC support to minarch (submitted by @giovannygb)
-- rgb30: moved (almost) all scaling from the cpu to the gpu
+- rgb30: moved all in-game scaling from the cpu to the gpu
 - rgb30: fixed inability to restore max brightness
+- rg35xx: fixed missing custom MinUI charging graphic
 - tg5040: initial Trimui Smart Pro support (_very_ alpha)
 
 EXTRAS
 
 - all: added Neo Geo Pocket and Neo Geo Pocket Color paks (race core)
+- all: updated PICO-8 pak (fake-08 core)
 - rgb30: added missing Game Gear and Master System paks (picodrive core)
 - rgb30: added Splore.pak (and supporting Wi-Fi.pak) for native PICO-8 splore
 - rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
@@ -18,11 +20,14 @@ EXTRAS
 ---
 
 next
-	figure out a way to build readmes from any toolchain (but only once)
-	ooh, &(SDL_Rect){x,y,w,h} idiom is problematic because if it's defined inside a block it may go out of scope before being used outside the block
-		this is probably the cause of that gfx blit message issue I was having
-
-	test new MOSS image
+	MOSS
+		disable SDL2 vsync patch
+		test new MOSS image
+		having trouble building MOSS atm
+			just a different seemingly random step failing each build
+		build lib32 to try to fix snes9x save state compatibility
+				first attempt did not go well :sweat_smile:
+	
 	full tests
 		install on each device
 		update on each device
@@ -35,15 +40,16 @@ next
 	user reported
 		random reports of minui not booting reliably 
 			first smart
+				can't reproduce
+				already waits 3 seconds
 			then rgb30
-			can't reproduce
+				I can reproduce with the card that came with the M17
+				adding up to 3 second wait for SD card to mount
 		
 		install on rg35xx, install on smart doesn't work
 			but smart to rg35xx does
 
 	move PLAT_isOnline() into PWR_* formally
-	moss: build lib32 to try to fix snes9x save state compatibility
-		first attempt did not go well :sweat_smile:
 			
 	all
 		revisit localization?
@@ -67,13 +73,15 @@ next
 	
 	minarch:
 		crop save state pillar/letter-boxing?
-		before I can even look at ppsspp I need to support XRGB8888
+		before I can even look at psp or n64 I need to support XRGB8888
+		force aspect over hdmi?
 	
 	build datetime disconnect
 		build products on macos use local time
 		build products in dockers use gmt
 			
 	m17
+		get into build
 		SDL2 accelerated rendering fixes framerate issues
 		but default/nearest scaling is awful
 			linear is still pretty bad
@@ -83,6 +91,8 @@ next
 	
 	rgb30
 		could wifi support more than one access point?
+			an additional two lines for each AP?
+			then try them in order?
 			
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
@@ -95,9 +105,6 @@ next
 			minarch?
 			sdl12-compat?
 			
-		aspect scaling has garbage at bottom in VB
-			is this an librga thing?
-			
 		performance issues (both frame rate and audio clipping)
 			fceuum 
 			picodrive
@@ -106,26 +113,23 @@ next
 			could this have anything to do with the performance versus userspace governor?
 				no
 			I think it's caused by the forced vsync in sdl2 (still most likely)
-				or fullscreen blitting? possibly
+				or fullscreen blitting? possibly--nope
 		debug overlay drawing glitches
+			not an issue any more (not compatible with my SDL2 render path :sob:)
 	
 	trimui: scaling (see DE test)
 		
 known issues
-	all: not convinced fixed aspect scaling corrects for screen aspect correctly
 	all: race core (NGP/C.pak) doesn't restore audio state correctly
-	
-	miyoomini: debug/battery overlay isn't implemented yet
-	
-	trimuismart: debug/battery overlay isn't available/implemented yet
-	
+	miyoomini: debug/battery overlay isn't implemented
+	trimuismart: debug/battery overlay isn't available/implemented
+	rgb30: light crackling in some cores (eg. fceumm and snes9x2005_plus)
+	rgb30: debug/battery overlay isn't available/implemented
+	tg5040: debug/battery overlay isn't available/implemented
+
 	trimui: hw scaling isn't implemented yet
 	trimui: debug/battery overlay isn't implemented yet
-	
 	nano: says it can bind MENU+button for shortcuts, it can't
-	rgb30: light crackling in some cores (eg. fceumm and snes9x2005_plus)
-	rgb30: hdmi tearing near the top of the screen
-		this seems to be limited to gambatte? confirm?
 
 all
 	minarch
@@ -144,9 +148,13 @@ all
 		if it's circular we don't even need to worry about rotation :sweat_smile:
 	main makefile
 		targets have too many dependencies
+		getting a little better
 	cores
 		add optional per core patch folder
 			currently looks for a global one in all/cores
+		move all the CORE_* vars up to all/cores (since they ended up all being the same)
+		there has got to be a better way to main these patches
+			updating fake-08 was so much copy/pasting
 	api
 		GFX_blitDebug(text,x,y)?
 			simple for everything but trimuismart with its -90° screen
@@ -198,6 +206,7 @@ rg35xx
 					though I'm not sure I'm observing a difference...(at least when applying over adb)
 		
 	charging screen isn't working for someone on RH discord
+		charging.png isn't being copied to MISC during install (it should only be omitted during update)
 	how to handle updating on mini and missing TF1 updates as a result?
 		could I write the version to the .minstalled file
 		if it doesn't match the current one run the installer
@@ -247,18 +256,8 @@ trimui
 			will need to patch
 		gpsp
 			ffiv requires manual frameskip of 1 to not chug on mode7-like bits
-	
-rg353
-	had to add -flto to build flags to get minui+clock to build (possibly because of long ago scaler changes?)
-	toolchain: patch buildroot SDL for POWER/PLUS/MINUS (see rg35xx)
-	would love to get adbd working...
-	overclocking
-	additional cores
-	rumble
-	vsync
-		appears to work
-		lets setup our own double buffer so we can use it
 
+	
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
 
