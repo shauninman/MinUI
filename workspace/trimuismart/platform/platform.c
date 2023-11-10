@@ -293,6 +293,9 @@ void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
+void PLAT_setSharpness(int sharpness) {
+	// buh
+}
 void PLAT_vsync(int remaining) {
 	ioctl(vid.fb_fd, FBIO_WAITFORVSYNC, &_);
 }

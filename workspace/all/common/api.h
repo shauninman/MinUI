@@ -93,6 +93,12 @@ typedef struct GFX_Fonts {
 } GFX_Fonts;
 extern GFX_Fonts font;
 
+enum {
+	SHARPNESS_SHARP,
+	SHARPNESS_CRISP,
+	SHARPNESS_SOFT,
+};
+
 typedef struct GFX_Renderer {
 	void* src;
 	void* dst;
@@ -127,6 +133,7 @@ SDL_Surface* GFX_init(int mode);
 #define GFX_resize PLAT_resizeVideo // (int w, int h, int pitch);
 #define GFX_setScaleClip PLAT_setVideoScaleClip // (int x, int y, int width, int height)
 #define GFX_setNearestNeighbor PLAT_setNearestNeighbor // (int enabled)
+#define GFX_setSharpness PLAT_setSharpness // (int sharpness)
 void GFX_setMode(int mode);
 int GFX_hdmiChanged(void);
 
@@ -248,6 +255,7 @@ void PLAT_setVsync(int vsync);
 SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch);
 void PLAT_setVideoScaleClip(int x, int y, int width, int height);
 void PLAT_setNearestNeighbor(int enabled);
+void PLAT_setSharpness(int sharpness);
 void PLAT_vsync(int remaining);
 scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);

@@ -368,6 +368,10 @@ void PLAT_setNearestNeighbor(int enabled) {
 	DE_setScaleCoef(vid.de_mem, 3, scale_coef);
 }
 
+void PLAT_setSharpness(int sharpness) {
+	// buh
+}
+
 void PLAT_vsync(int remaining) {
 	if (ioctl(vid.fd_fb, OWLFB_WAITFORVSYNC, &_)) LOG_info("OWLFB_WAITFORVSYNC failed %s\n", strerror(errno));
 }

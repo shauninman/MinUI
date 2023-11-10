@@ -41,6 +41,7 @@ enum {
 
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
+static int screen_sharpness = SHARPNESS_SOFT;
 static int prevent_tearing = 1; // lenient
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
@@ -600,6 +601,12 @@ static char* scaling_labels[] = {
 #endif
 	NULL
 };
+static char* sharpness_labels[] = {
+	"Sharp",
+	"Crisp",
+	"Soft",
+	NULL
+};
 static char* tearing_labels[] = {
 	"Off",
 	"Lenient",
@@ -622,6 +629,7 @@ static char* max_ff_labels[] = {
 
 enum {
 	FE_OPT_SCALING,
+	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_OVERCLOCK,
 	FE_OPT_DEBUG,
@@ -790,6 +798,16 @@ static struct Config {
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
+			[FE_OPT_SHARPNESS] = {
+				.key	= "minarch_screen_sharpness",
+				.name	= "Screen Sharpness",
+				.desc	= "Sharp uses nearest neighbor sampling.\nCrisp integer upscales before linear sampling.\nSoft uses linear sampling.",
+				.default_value = 2,
+				.value = 2,
+				.count = 3,
+				.values = sharpness_labels,
+				.labels = sharpness_labels,
+			},
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
 				.name	= "Prevent Tearing",
@@ -884,6 +902,12 @@ static void Config_syncFrontend(char* key, int value) {
 		screen_scaling 	= value;
 		renderer.dst_p = 0;
 		i = FE_OPT_SCALING;
+	}
+	if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
+		screen_sharpness = value;
+		GFX_setSharpness(value);
+		renderer.dst_p = 0;
+		i = FE_OPT_SHARPNESS;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
 		prevent_tearing = value;

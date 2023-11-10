@@ -190,10 +190,13 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 }
 
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
-	
+	// buh
 }
 void PLAT_setNearestNeighbor(int enabled) {
-	
+	// buh
+}
+void PLAT_setSharpness(int sharpness) {
+	// buh
 }
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);

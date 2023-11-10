@@ -150,6 +150,9 @@ void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 void PLAT_setNearestNeighbor(int enabled) {
 	// always enabled?
 }
+void PLAT_setSharpness(int sharpness) {
+	// buh
+}
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
