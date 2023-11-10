@@ -3547,12 +3547,12 @@ static void Menu_loop(void) {
 	PWR_enableAutosleep();
 	PAD_reset();
 	
-	if (!HAS_POWER_BUTTON && !HAS_POWEROFF_BUTTON) {
-		MenuItem* item = &options_menu.items[5];
-		item->name = "Quicksave";
-		item->desc = "Automatically resume current state next power on.";
-		item->on_confirm = OptionQuicksave_onConfirm;
-	}
+	// if (!HAS_POWER_BUTTON && !HAS_POWEROFF_BUTTON) {
+	// 	MenuItem* item = &options_menu.items[5];
+	// 	item->name = "Quicksave";
+	// 	item->desc = "Automatically resume current state next power on.";
+	// 	item->on_confirm = OptionQuicksave_onConfirm;
+	// }
 	
 	// path and string things
 	char* tmp;
