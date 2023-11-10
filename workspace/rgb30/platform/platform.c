@@ -93,6 +93,12 @@ SDL_Surface* PLAT_initVideo(void) {
 		x_scale = (float)renderer_width / w;
 		y_scale = (float)renderer_height / h;
 		SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
+		
+		// for some reason we need to clear and present 
+		// after setting the window size or we'll miss
+		// the first frame
+		SDL_RenderClear(vid.renderer);
+		SDL_RenderPresent(vid.renderer);
 	}
 	
 	// SDL_RendererInfo info;
