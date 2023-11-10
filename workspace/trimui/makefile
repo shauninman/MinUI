@@ -13,7 +13,7 @@ endif
 REQUIRES_SDL=other/sdl
 REQUIRES_COMMANDER=other/DinguxCommander
 
-all: 
+all: readmes
 	# all
 	
 early: $(REQUIRES_SDL) $(REQUIRES_COMMANDER)
@@ -30,3 +30,5 @@ $(REQUIRES_SDL):
 	git clone --depth 1 --branch union-trimui-model-s https://github.com/shauninman/SDL-1.2.git $(REQUIRES_SDL)
 $(REQUIRES_COMMANDER):
 	git clone --depth 1 --branch union-trimui-model-s https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)
+
+include ../all/readmes/makefile

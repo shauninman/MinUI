@@ -13,7 +13,7 @@ endif
 REQUIRES_SDL=other/sdl
 REQUIRES_COMMANDER=other/DinguxCommander
 
-all: 
+all: readmes
 	cd blank && make
 	cd batmon && make
 	cd lumon && make
@@ -39,3 +39,5 @@ $(REQUIRES_SDL):
 	git clone --depth 1 --branch miniui-miyoomini https://github.com/shauninman/SDL-1.2.git $(REQUIRES_SDL)
 $(REQUIRES_COMMANDER):
 	git clone --depth 1 --branch miniui-miyoomini https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)
+
+include ../all/readmes/makefile

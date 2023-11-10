@@ -13,7 +13,7 @@ endif
 REQUIRES_COMMANDER=other/DinguxCommander
 REQUIRES_UNZIP60=other/unzip60
 
-all:
+all: readmes
 	cd show && make
 
 early: $(REQUIRES_COMMANDER) $(REQUIRES_UNZIP60)
@@ -29,3 +29,5 @@ $(REQUIRES_COMMANDER):
 	git clone --depth 1 --branch trimui-smart https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)
 $(REQUIRES_UNZIP60):
 	git clone --depth 1 https://github.com/shauninman/unzip60.git $(REQUIRES_UNZIP60)
+
+include ../all/readmes/makefile

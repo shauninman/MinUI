@@ -14,7 +14,7 @@ endif
 
 REQUIRES_COMMANDER=other/DinguxCommander
 
-all:
+all: readmes
 	cd ./overclock && make
 	cd ./boot && ./build.sh
 
@@ -28,3 +28,5 @@ clean:
 	
 $(REQUIRES_COMMANDER):
 	git clone --depth 1 --branch minui-rg35xx https://github.com/shauninman/DinguxCommander.git $(REQUIRES_COMMANDER)
+
+include ../all/readmes/makefile
