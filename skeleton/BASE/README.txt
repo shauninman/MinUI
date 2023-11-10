@@ -84,6 +84,11 @@ TRIMUI SMART
   Wake: MENU
 
 ----------------------------------------
+Quicksave & auto-resume
+
+MinUI will create a quicksave when powering off in-game. The next time you power on the device it will automatically resume from where you left off. A quicksave is created when powering off manually or automatically after a short sleep. On devices without a POWER button (eg. the Trimui Smart) press the MENU button twice to put the device to sleep before flipping the POWER switch.
+
+----------------------------------------
 Roms
 
 Included in this zip is a "Roms" folder containing folders for each console MinUI currently supports. You can rename these folders but you must keep the uppercase tag name in parentheses in order to retain the mapping to the correct emulator (eg. "Nintendo Entertainment System (FC)" could be renamed to "Nintendo (FC)", "NES (FC)", or "Famicom (FC)"). 
