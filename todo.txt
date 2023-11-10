@@ -18,9 +18,7 @@ EXTRAS
 ---
 
 next
-	merge giovannygb's RTC patch, add to release notes, credit
-		https://github.com/shauninman/MinUI/pull/3/commits/1e14dd33ed9511a5fe2bb6216ed710cc96a6669e
-		
+	figure out a way to build readmes from any toolchain (but only once)
 	ooh, &(SDL_Rect){x,y,w,h} idiom is problematic because if it's defined inside a block it may go out of scope before being used outside the block
 		this is probably the cause of that gfx blit message issue I was having
 
@@ -80,6 +78,8 @@ next
 		but default/nearest scaling is awful
 			linear is still pretty bad
 			try cpu upscaling once then let gpu downsample linear?
+			upscaling on the gpu to a target texture works but is slow on higher end systems
+				will need to sort out platform-renderer*.c
 	
 	rgb30
 		could wifi support more than one access point?

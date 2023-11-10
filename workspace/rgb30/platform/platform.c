@@ -43,27 +43,27 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
 	SDL_ShowCursor(0);
 	
-	LOG_info("Available video drivers:\n");
-	for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
-		LOG_info("- %s\n", SDL_GetVideoDriver(i));
-	}
-	LOG_info("Current video driver: %s\n", SDL_GetCurrentVideoDriver());
-
-	LOG_info("Available render drivers:\n");
-	for (int i=0; i<SDL_GetNumRenderDrivers(); i++) {
-		SDL_RendererInfo info;
-		SDL_GetRenderDriverInfo(i,&info);
-		LOG_info("- %s\n", info.name);
-	}
-
-	LOG_info("Available display modes:\n");
-	SDL_DisplayMode mode;
-	for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
-		SDL_GetDisplayMode(0, i, &mode);
-		LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
-	}
-	SDL_GetCurrentDisplayMode(0, &mode);
-	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// LOG_info("Available video drivers:\n");
+	// for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
+	// 	LOG_info("- %s\n", SDL_GetVideoDriver(i));
+	// }
+	// LOG_info("Current video driver: %s\n", SDL_GetCurrentVideoDriver());
+	//
+	// LOG_info("Available render drivers:\n");
+	// for (int i=0; i<SDL_GetNumRenderDrivers(); i++) {
+	// 	SDL_RendererInfo info;
+	// 	SDL_GetRenderDriverInfo(i,&info);
+	// 	LOG_info("- %s\n", info.name);
+	// }
+	//
+	// LOG_info("Available display modes:\n");
+	// SDL_DisplayMode mode;
+	// for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
+	// 	SDL_GetDisplayMode(0, i, &mode);
+	// 	LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// }
+	// SDL_GetCurrentDisplayMode(0, &mode);
+	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
@@ -75,15 +75,15 @@ SDL_Surface* PLAT_initVideo(void) {
 	}
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	
-	SDL_GetCurrentDisplayMode(0, &mode);
-	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// SDL_GetCurrentDisplayMode(0, &mode);
+	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	puts("");
 	
 	int renderer_width,renderer_height;
 	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
-	LOG_info("output size: %ix%i\n", renderer_width, renderer_height);
+	// LOG_info("output size: %ix%i\n", renderer_width, renderer_height);
 	if (renderer_width!=w) { // I think this can only be hdmi
 		float x_scale = (float)renderer_width / w;
 		float y_scale = (float)renderer_height / h;
@@ -95,17 +95,17 @@ SDL_Surface* PLAT_initVideo(void) {
 		SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
 	}
 	
-	SDL_RendererInfo info;
-	SDL_GetRendererInfo(vid.renderer, &info);
-	LOG_info("Current render driver: %s\n", info.name);
+	// SDL_RendererInfo info;
+	// SDL_GetRendererInfo(vid.renderer, &info);
+	// LOG_info("Current render driver: %s\n", info.name);
 	
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
 	SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeLinear); // we always start at device size so use linear for better upscaling over hdmi
 	
-	int format;
-	int access_;
-	SDL_QueryTexture(vid.texture, &format, &access_, NULL,NULL);
-	LOG_info("texture format: %s (streaming: %i)\n", SDL_GetPixelFormatName(format), access_==SDL_TEXTUREACCESS_STREAMING);
+	// int format;
+	// int access_;
+	// SDL_QueryTexture(vid.texture, &format, &access_, NULL,NULL);
+	// LOG_info("texture format: %s (streaming: %i)\n", SDL_GetPixelFormatName(format), access_==SDL_TEXTUREACCESS_STREAMING);
 	
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
 	vid.screen	= SDL_CreateRGBSurface(SDL_SWSURFACE, w,h, FIXED_DEPTH, RGBA_MASK_565);
@@ -123,9 +123,9 @@ SDL_Surface* PLAT_initVideo(void) {
 }
 
 static void clearVideo(void) {
+	SDL_FillRect(vid.screen, NULL, 0);
 	for (int i=0; i<3; i++) {
 		SDL_RenderClear(vid.renderer);
-		SDL_FillRect(vid.screen, NULL, 0);
 		SDL_RenderPresent(vid.renderer);
 	}
 }
@@ -167,7 +167,6 @@ static void resizeVideo(int w, int h, int p) {
 	// PLAT_clearVideo(vid.screen);
 	
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
-	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
 	SDL_SetTextureScaleMode(vid.texture, w==device_width&&h==device_height?SDL_ScaleModeLinear:SDL_ScaleModeNearest);
 	
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
@@ -175,6 +174,8 @@ static void resizeVideo(int w, int h, int p) {
 	vid.width	= w;
 	vid.height	= h;
 	vid.pitch	= p;
+	
+	// vid.blit = NULL; // TODO: don't do this here!
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
@@ -200,19 +201,22 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
 	SDL_RenderClear(vid.renderer);
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
-	scale1x1_c16(
-		renderer->src,renderer->dst,
-		renderer->true_w,renderer->true_h,renderer->src_p,
-		vid.screen->w,vid.screen->h,vid.screen->pitch // fixed in this implementation
-		// renderer->dst_w,renderer->dst_h,renderer->dst_p
-	);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	if (!vid.blit) resizeVideo(device_width,device_height,device_pitch); // !!!???
 	
 	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-	SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
+	if (vid.blit) {
+		scale1x1_c16(
+			vid.blit->src,vid.buffer->pixels,
+			vid.blit->src_w,vid.blit->src_h,vid.blit->src_p,
+			vid.buffer->w,vid.buffer->h,vid.buffer->pitch
+		);
+	}
+	else {
+		SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
+	}
 	SDL_UnlockTexture(vid.texture);
 	
 	SDL_Rect* src_rect = NULL;
