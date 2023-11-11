@@ -3739,7 +3739,7 @@ static void Menu_loop(void) {
 			});
 			SDL_FreeSurface(text);
 			
-			if (show_setting) GFX_blitHardwareHints(screen, show_setting);
+			if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
 			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, 0, screen, 0);
 			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
 			

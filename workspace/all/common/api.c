@@ -684,7 +684,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 	int setting_min;
 	int setting_max;
 	
-	if (show_setting) {
+	if (show_setting && !GetHDMI()) {
 		ow = SCALE1(PILL_SIZE + SETTINGS_WIDTH + 10 + 4);
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
