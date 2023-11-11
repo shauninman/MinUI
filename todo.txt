@@ -21,9 +21,6 @@ EXTRAS
 ---
 
 next
-	rgb30
-		display volume and brightness as 100% when on HDMI
-
 	m17
 		handle headphone state
 		look into replacing boot logo
@@ -31,15 +28,17 @@ next
 			including grabbing missing sdl libs from sysroot
 			tar then untar on device during install to maintain symlinks?
 
-	full tests
-		install on each device
-		update on each device
-
 	smartpro
 		can't detect headphone state at boot?
-		make leds throb when sleeping?
-			leds aren't even turning on when sleeping anymore...
-
+		add rumble
+	
+	sdl2
+		figure out how analogs work and hook them up (if only to double d-pad)
+	
+	all
+		restore simple mode
+		
+		
 	user reported
 		random reports of minui not booting reliably 
 			first smart

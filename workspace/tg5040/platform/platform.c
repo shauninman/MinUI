@@ -310,8 +310,12 @@ void PLAT_setCPUSpeed(int speed) {
 	system(cmd);
 }
 
+#define RUMBLE_PATH "/sys/class/gpio/gpio227/value"
+
 void PLAT_setRumble(int strength) {
-	// buh
+	char cmd[256];
+	sprintf(cmd,"echo %i > %s", strength?1:0, RUMBLE_PATH);
+	system(cmd);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
