@@ -1,6 +1,6 @@
 # MinUI
 
-MinUI is a focused, custom launcher and libretro frontend for the RGB30, Trimui Smart, Miyoo Mini(s), and Anbernic RG35XX.
+MinUI is a focused, custom launcher and libretro frontend for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), and Anbernic RG35XX.
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 />  
 See [more screenshots](github/).
@@ -54,13 +54,14 @@ Base:
 
 Extras:
 
+- Neo Geo Pocket (and Color)
+- Pico-8
+- Pokémon mini
 - Sega Game Gear
 - Sega Master System
-- TurboGrafx-16
-- Pokémon mini
 - Super Game Boy
+- TurboGrafx-16 (and TurboGrafx-CD)
 - Virtual Boy
-- Pico-8
 
 
 ## Legacy versions
