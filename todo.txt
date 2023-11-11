@@ -7,6 +7,7 @@ BASE
 - rgb30: fixed inability to restore max brightness
 - rg35xx: fixed missing custom MinUI charging graphic
 - tg5040: initial Trimui Smart Pro support (_very_ alpha)
+- trimuismart: removed Quicksave from Options menu
 
 EXTRAS
 
@@ -20,14 +21,16 @@ EXTRAS
 ---
 
 next
-	MOSS
-		disable SDL2 vsync patch
-		test new MOSS image
-		having trouble building MOSS atm
-			just a different seemingly random step failing each build
-		build lib32 to try to fix snes9x save state compatibility
-				first attempt did not go well :sweat_smile:
-	
+	rgb30
+		display volume and brightness as 100% when on HDMI
+
+	m17
+		handle headphone state
+		look into replacing boot logo
+		get into build
+			including grabbing missing sdl libs from sysroot
+			tar then untar on device during install to maintain symlinks?
+
 	full tests
 		install on each device
 		update on each device
@@ -44,26 +47,19 @@ next
 				already waits 3 seconds
 			then rgb30
 				I can reproduce with the card that came with the M17
-				adding up to 3 second wait for SD card to mount
 		
 		install on rg35xx, install on smart doesn't work
 			but smart to rg35xx does
+			couldn't reproduce (possibly result of confusion over model s trimui.zip)
 
 	move PLAT_isOnline() into PWR_* formally
 			
 	all
 		revisit localization?
-		fake-08 it looks like save states might have been fixed
-			14243c0
-			save states in general are wonky, eg.
-				load a Celeste state in later levels with pink sky
-				then load a state from earlier levels, the sky should
-				be black but instead it's pink like a later level
-		
 		pull latest gpsp (fixes for long standing problem games I guess?)
 			nope, breaks save state compatibility
 			oddly it appears to be fixed on a branch? https://github.com/libretro/gpsp/commit/8745bf3d8fbb708db13bb726e5d89a6832f74d73
-			but it looks like the save state format has been updated 2 more times since then so using that commit as a patch probably won't work
+				but it looks like the save state format has been updated 2 more times since then so using that commit as a patch probably won't work
 			f4e65d15 is known safe
 			broken
 				f0bacff
@@ -72,6 +68,7 @@ next
 				1d1c719
 	
 	minarch:
+		remove Options > Quicksave (double press of power accomplishes the same thing, document in readme?)
 		crop save state pillar/letter-boxing?
 		before I can even look at psp or n64 I need to support XRGB8888
 		force aspect over hdmi?
@@ -79,17 +76,10 @@ next
 	build datetime disconnect
 		build products on macos use local time
 		build products in dockers use gmt
-			
-	m17
-		get into build
-		SDL2 accelerated rendering fixes framerate issues
-		but default/nearest scaling is awful
-			linear is still pretty bad
-			try cpu upscaling once then let gpu downsample linear?
-			upscaling on the gpu to a target texture works but is slow on higher end systems
-				will need to sort out platform-renderer*.c
-	
+				
 	rgb30
+		volume buttons sometimes get stuck
+			haven't figured out how to reproduce reliably but I've had it happen kinda frequently
 		could wifi support more than one access point?
 			an additional two lines for each AP?
 			then try them in order?
@@ -113,10 +103,18 @@ next
 			could this have anything to do with the performance versus userspace governor?
 				no
 			I think it's caused by the forced vsync in sdl2 (still most likely)
-				or fullscreen blitting? possibly--nope
-		debug overlay drawing glitches
-			not an issue any more (not compatible with my SDL2 render path :sob:)
+				unless the JELOS build process is lying about rebuilding without that patch, nope
+			or fullscreen blitting? 
+				nope
+			I think I need to look into SDL2 audio handling (since it wasn't an issue with SDL1 but was with the SDL2-backed SDL12-compat)
+				tried disabling pulse/pipewire (using alsa anyway)
+					nope
+				could it be non-threaded? that would be insane right?
 	
+	moss
+		build lib32 to try to fix snes9x save state compatibility
+				first attempt did not go well :sweat_smile:
+		
 	trimui: scaling (see DE test)
 		
 known issues
