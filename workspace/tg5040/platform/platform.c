@@ -282,7 +282,7 @@ void PLAT_enableBacklight(int enable) {
 	}
 	else {
 		SetRawBrightness(0);
-		system("echo 16 > /sys/class/led_anim/max_scale");
+		system("echo 52 > /sys/class/led_anim/max_scale"); // 52 seems to be the max brightness
 	}
 }
 
