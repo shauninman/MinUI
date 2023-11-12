@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), and RG35XX--all from the same SD card. Why? Why not?
+MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), M17, and RG35XX--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -42,6 +42,10 @@ MIYOO MINI PLUS
 
 Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
+M17
+
+Copy the "em_ui.sh" file and "MinUI.zip" (without unzipping) to the root of the SD card.
+
 RG35XX
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
@@ -58,17 +62,17 @@ Copy "MinUI.zip" (without unzipping) to the root of the SD card containing your 
 ----------------------------------------
 Shortcuts
 
-RGB30
+For devices without a dedicated MENU button
 
-	Menu: L3 or R3
-
+	RGB30: use L3 or R3 for MENU
+	M17:   use + or - for MENU
 
 RGB30 / MIYOO MINI PLUS / RG35XX / TRIMUI SMART PRO
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
   
-MIYOO MINI / TRIMUI SMART
+MIYOO MINI / TRIMUI SMART / M17
 
   Volume: SELECT + L or R
   Brightness: START + L or R1
@@ -78,7 +82,7 @@ RGB30 / MIYOO MINI (PLUS) / RG35XX / TRIMUI SMART PRO
   Sleep: POWER
   Wake: POWER
   
-TRIMUI SMART
+TRIMUI SMART / M17
   
   Sleep: MENU (twice)
   Wake: MENU
@@ -86,7 +90,7 @@ TRIMUI SMART
 ----------------------------------------
 Quicksave & auto-resume
 
-MinUI will create a quicksave when powering off in-game. The next time you power on the device it will automatically resume from where you left off. A quicksave is created when powering off manually or automatically after a short sleep. On devices without a POWER button (eg. the Trimui Smart) press the MENU button twice to put the device to sleep before flipping the POWER switch.
+MinUI will create a quicksave when powering off in-game. The next time you power on the device it will automatically resume from where you left off. A quicksave is created when powering off manually or automatically after a short sleep. On devices without a POWER button (eg. the Trimui Smart or M17) press the MENU button twice to put the device to sleep before flipping the POWER switch.
 
 ----------------------------------------
 Roms

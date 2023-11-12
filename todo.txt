@@ -2,43 +2,31 @@ unreleased changes:
 
 BASE
 
-- all: added RETRO_MEMORY_RTC support to minarch (submitted by @giovannygb)
-- rgb30: moved all in-game scaling from the cpu to the gpu
-- rgb30: fixed inability to restore max brightness
-- rg35xx: fixed missing custom MinUI charging graphic
-- tg5040: initial Trimui Smart Pro support (_very_ alpha)
-- trimuismart: removed Quicksave from Options menu
+- m17: added initial support (_very_ alpha)
 
 EXTRAS
 
-- all: added Neo Geo Pocket and Neo Geo Pocket Color paks (race core)
-- all: updated PICO-8 pak (fake-08 core)
-- rgb30: added missing Game Gear and Master System paks (picodrive core)
-- rgb30: added Splore.pak (and supporting Wi-Fi.pak) for native PICO-8 splore
-- rgb30: L3/R3 added as alternate MENU button to Files.pak to match other platforms
-- rgb30: fixed file browser background in Files.pak
+- 
 
 ---
 
 next
+	all
+		look into mednafen/beetle ngp core (neopop?)
+		restore simple mode
+		add Developer.pak
+		rewrite Shortcuts section by device not the tangle mess it currently is
+		
 	m17
-		handle headphone state
+		add to readmes
 		look into replacing boot logo
-		get into build
-			including grabbing missing sdl libs from sysroot
-			tar then untar on device during install to maintain symlinks?
 
 	smartpro
 		can't detect headphone state at boot?
-		add rumble
 	
 	sdl2
 		figure out how analogs work and hook them up (if only to double d-pad)
 	
-	all
-		restore simple mode
-		
-		
 	user reported
 		random reports of minui not booting reliably 
 			first smart
@@ -67,22 +55,22 @@ next
 				1d1c719
 	
 	minarch:
-		remove Options > Quicksave (double press of power accomplishes the same thing, document in readme?)
 		crop save state pillar/letter-boxing?
 		before I can even look at psp or n64 I need to support XRGB8888
-		force aspect over hdmi?
+		force aspect over hdmi? (or at least disable cropped?)
 	
 	build datetime disconnect
 		build products on macos use local time
 		build products in dockers use gmt
 				
 	rgb30
-		volume buttons sometimes get stuck
-			haven't figured out how to reproduce reliably but I've had it happen kinda frequently
+		does jack detection work?
 		could wifi support more than one access point?
 			an additional two lines for each AP?
 			then try them in order?
 			
+		volume buttons sometimes get stuck
+			haven't figured out how to reproduce reliably but I've had it happen kinda frequently
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
 			fewt has a fix?
