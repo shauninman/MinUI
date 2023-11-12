@@ -4,7 +4,7 @@
 # it has to, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = tg5040 rgb30 trimuismart miyoomini rg35xx
+PLATFORMS = tg5040 rgb30 miyoomini trimuismart rg35xx m17
 endif
 
 ###########################################################
@@ -57,8 +57,10 @@ ifneq ($(PLATFORM),trimui)
 	cp ./workspace/$(PLATFORM)/cores/output/pcsx_rearmed_libretro.so ./build/SYSTEM/$(PLATFORM)/cores
 	
 	# extras
-ifeq ($(PLATFORM), trimuismart) # TODO tmp?
-	cp ./workspace/miyoomini/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/trimuismart/P8.pak
+ifeq ($(PLATFORM), trimuismart)
+	cp ./workspace/miyoomini/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
+else ifeq ($(PLATFORM), m17)
+	cp ./workspace/miyoomini/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
 else
 	cp ./workspace/$(PLATFORM)/cores/output/fake08_libretro.so ./build/EXTRAS/Emus/$(PLATFORM)/P8.pak
 endif
@@ -178,6 +180,11 @@ nano:
 	# ----------------------------------------------------
 
 tg5040:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+m17:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------

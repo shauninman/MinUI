@@ -1,0 +1,5 @@
+480x272
+Save as BMP
+Windows
+32 bit
+Flip row order
