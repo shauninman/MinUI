@@ -73,10 +73,11 @@
 #define JOY_SELECT		6
 #define JOY_START		7
 
-#define JOY_A			0
-#define JOY_B			1
-#define JOY_X			2
-#define JOY_Y			3
+// TODO: these ended up swapped in the first public release of stock :sob:
+#define JOY_A			1
+#define JOY_B			0
+#define JOY_X			3
+#define JOY_Y			2
 
 #define JOY_L1			4
 #define JOY_R1			5
