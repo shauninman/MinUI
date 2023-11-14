@@ -20,7 +20,8 @@ mkdir -p "$SHARED_USERDATA_PATH/.minui"
 
 #######################################
 
-echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo performance > /sys/devices/platform/10091000.gpu/devfreq/10091000.gpu/governor
 
 #######################################
 

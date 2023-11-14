@@ -12,22 +12,14 @@ EXTRAS
 
 next
 	smartpro
-		everything is broken on the shipping version of the firmware
-			wth
-			okay, I updated to 1.0
-				emulators aren't loading
-					hadn't copied over Roms or Bios folders
-					so there's some dependency on those that shouldn't exist...
-					was it the roms or the bios that were the problem?
-				face buttons are swapped though
 		can't detect headphone state at boot?
 	
 	all
-		restore simple mode
 		add Developer.pak
 			only for devices with adb or ssh
 		make a generic input tester
 		rewrite Shortcuts section by device not the tangle mess it currently is
+			maybe do the same for all?
 		look into mednafen/beetle ngp core (neopop?)
 			beetle-ngp-libretro
 			this ran at about 1 frame per 10 seconds...
@@ -37,6 +29,7 @@ next
 		look into replacing boot logo
 		performance
 			look into /sys/devices/platform/10091000.gpu/devfreq/10091000.gpu
+			not much to see?
 		improve volume ramp
 		fat32 doesn't support symlinks :face_palm: I knew this!
 			we need
