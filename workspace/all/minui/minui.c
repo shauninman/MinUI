@@ -353,6 +353,7 @@ static Array* recents; // RecentArray
 static int quit = 0;
 static int can_resume = 0;
 static int should_resume = 0; // set to 1 on BTN_RESUME but only if can_resume==1
+static int simple_mode = 0;
 static char slot_path[256];
 
 static int restore_depth = -1;
@@ -617,7 +618,7 @@ static Array* getRoot(void) {
 	Array_free(entries); // root now owns entries' entries
 	
 	char* tools_path = SDCARD_PATH "/Tools/" PLATFORM;
-	if (exists(tools_path)) Array_push(root, Entry_new(tools_path, ENTRY_DIR));
+	if (exists(tools_path) && !simple_mode) Array_push(root, Entry_new(tools_path, ENTRY_DIR));
 	
 	return root;
 }
@@ -1159,12 +1160,14 @@ static void Menu_quit(void) {
 int main (int argc, char *argv[]) {
 	if (autoResume()) return 0; // nothing to do
 	
+	simple_mode = exists(SIMPLE_MODE_PATH);
+
 	LOG_info("MinUI\n");
 	InitSettings();
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
 	PWR_init();
-	if (!HAS_POWER_BUTTON) PWR_disableSleep();
+	if (!HAS_POWER_BUTTON && !simple_mode) PWR_disableSleep();
 	
 	SDL_Surface* version = NULL;
 	
@@ -1198,14 +1201,14 @@ int main (int argc, char *argv[]) {
 			if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
 				show_version = 0;
 				dirty = 1;
-				if (!HAS_POWER_BUTTON) PWR_disableSleep();
+				if (!HAS_POWER_BUTTON && !simple_mode) PWR_disableSleep();
 			}
 		}
 		else {
 			if (PAD_tappedMenu(now)) {
 				show_version = 1;
 				dirty = 1;
-				if (!HAS_POWER_BUTTON) PWR_enableSleep();
+				if (!HAS_POWER_BUTTON && !simple_mode) PWR_enableSleep();
 			}
 			else if (total>0) {
 				if (PAD_justRepeated(BTN_UP)) {

@@ -23,6 +23,7 @@
 static SDL_Surface* screen;
 static int quit;
 static int show_menu;
+static int simple_mode = 0;
 
 enum {
 	SCALE_NATIVE,
@@ -2436,7 +2437,8 @@ enum {
 	STATUS_LOAD = 11,
 	STATUS_OPTS = 23,
 	STATUS_DISC = 24,
-	STATUS_QUIT = 30
+	STATUS_QUIT = 30,
+	STATUS_RESET= 31,
 };
 
 // TODO: I don't love how overloaded this has become
@@ -2482,6 +2484,8 @@ void Menu_init(void) {
 	mkdir(menu.minui_dir, 0755);
 
 	sprintf(menu.slot_path, "%s/%s.txt", menu.minui_dir, game.name);
+	
+	if (simple_mode) menu.items[ITEM_OPTS] = "Reset";
 	
 	if (game.m3u_path[0]) {
 		char* tmp;
@@ -3679,20 +3683,27 @@ static void Menu_loop(void) {
 				}
 				break;
 				case ITEM_OPTS: {
-					int old_scaling = screen_scaling;
-					Menu_options(&options_menu);
-					if (screen_scaling!=old_scaling) {
-						selectScaler(renderer.true_w,renderer.true_h,renderer.src_p);
-						
-						restore_w = screen->w;
-						restore_h = screen->h;
-						restore_p = screen->pitch;
-						screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
-						
-						SDL_FillRect(backing, NULL, 0);
-						Menu_scale(menu.bitmap, backing);
+					if (simple_mode) {
+						core.reset();
+						status = STATUS_RESET;
+						show_menu = 0;
 					}
-					dirty = 1;
+					else {
+						int old_scaling = screen_scaling;
+						Menu_options(&options_menu);
+						if (screen_scaling!=old_scaling) {
+							selectScaler(renderer.true_w,renderer.true_h,renderer.src_p);
+						
+							restore_w = screen->w;
+							restore_h = screen->h;
+							restore_p = screen->pitch;
+							screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
+						
+							SDL_FillRect(backing, NULL, 0);
+							Menu_scale(menu.bitmap, backing);
+						}
+						dirty = 1;
+					}
 				}
 				break;
 				case ITEM_QUIT:
@@ -3981,6 +3992,8 @@ int main(int argc , char* argv[]) {
 	Core_open(core_path, tag_name);
 	Game_open(rom_path);
 	if (!game.is_open) goto finish;
+	
+	simple_mode = exists(SIMPLE_MODE_PATH);
 	
 	// restore options
 	Config_load();
