@@ -11,19 +11,43 @@ EXTRAS
 ---
 
 next
-	all
-		look into mednafen/beetle ngp core (neopop?)
-		restore simple mode
-		add Developer.pak
-		rewrite Shortcuts section by device not the tangle mess it currently is
-		
-	m17
-		add to readmes
-		look into replacing boot logo
-
 	smartpro
+		everything is broken on the shipping version of the firmware
+			wth
+			okay, I updated to 1.0
+				emulators aren't loading
+					hadn't copied over Roms or Bios folders
+					so there's some dependency on those that shouldn't exist...
+					was it the roms or the bios that were the problem?
+				face buttons are swapped though
 		can't detect headphone state at boot?
 	
+	all
+		restore simple mode
+		add Developer.pak
+			only for devices with adb or ssh
+		make a generic input tester
+		rewrite Shortcuts section by device not the tangle mess it currently is
+		look into mednafen/beetle ngp core (neopop?)
+			beetle-ngp-libretro
+			this ran at about 1 frame per 10 seconds...
+			add logging
+		
+	m17
+		look into replacing boot logo
+		performance
+			look into /sys/devices/platform/10091000.gpu/devfreq/10091000.gpu
+		improve volume ramp
+		fat32 doesn't support symlinks :face_palm: I knew this!
+			we need
+				mv libpng16.so.16.34.0 libpng16.so.16
+				mv libSDL2_ttf-2.0.so.0.14.0 libSDL2_ttf-2.0.so.0
+			we don't appear to need (currently)
+				libSDL-1.2.so.0.11.4
+				libSDL_image-1.2.so.0.8.4
+			so skip the tar-ing and just copy/rename directly
+				this will address the other problem of installing on a different platform and missing those libs too
+
 	sdl2
 		figure out how analogs work and hook them up (if only to double d-pad)
 	
@@ -34,6 +58,7 @@ next
 				already waits 3 seconds
 			then rgb30
 				I can reproduce with the card that came with the M17
+					but that might be because the card is formatted exfat
 		
 		install on rg35xx, install on smart doesn't work
 			but smart to rg35xx does

@@ -27,6 +27,7 @@ echo BINARY >> $TARGET
 uuencode data data >> $TARGET
 
 # tar missing libs from toolchain
-if [ ! -f extra-libs.tar ]; then
-	find /opt \( -name libpng*.so* -o -name libSDL_image*.so* -o -name libSDL*_ttf*.so* -o -name libSDL-*.so* -o -name libSDL.so \) -print0 | tar --transform 's/.*\///g' -cvf extra-libs.tar --null --files-from -
+if [ ! -f libpng16.so.16 ] || [ ! -f libSDL2_ttf-2.0.so.0 ]; then
+	cp /opt/m17-toolchain/usr/arm-buildroot-linux-gnueabihf/sysroot/usr/lib/libpng16.so.16.34.0 libpng16.so.16
+	cp /opt/m17-toolchain/usr/arm-buildroot-linux-gnueabihf/sysroot/usr/lib/libSDL2_ttf-2.0.so.0.14.0 libSDL2_ttf-2.0.so.0
 fi
