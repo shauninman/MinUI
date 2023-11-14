@@ -66,4 +66,15 @@ while [ -f $EXEC_PATH ]; do
 		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
+	
+	# physical powerswitch, enter low power mode
+	if [ -f "/tmp/poweroff" ]; then
+		rm -f "/tmp/poweroff"
+		killall keymon.elf
+		shutdown
+		# TODO: figure out how to control led?
+		while :; do
+			sleep 5
+		done
+	fi
 done

@@ -279,7 +279,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 void PLAT_enableBacklight(int enable) {
 	// haven't figured out how to turn it off (or change brightness)
 	if (!enable) {
-		system("echo 1 > /sys/class/graphics/fb0/blank");
+		system("echo 1 > /sys/class/graphics/fb0/blank"); // clear
 		SetRawBrightness(8001); // off
 	}
 	else {
@@ -288,7 +288,18 @@ void PLAT_enableBacklight(int enable) {
 }
 
 void PLAT_powerOff(void) {
-	// TODO: check trimuismart
+	// system("leds_on");
+	sleep(2);
+
+	SetRawVolume(MUTE_VOLUME_RAW);
+	PLAT_enableBacklight(0);
+	SND_quit();
+	VIB_quit();
+	PWR_quit();
+	GFX_quit();
+	
+	touch("/tmp/poweroff");
+	exit(0);
 }
 
 ///////////////////////////////
