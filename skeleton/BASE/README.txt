@@ -177,6 +177,10 @@ Check out JELOS:
 
 To BlackSeraph, for introducing me to chroot.
 
+Check out the GarlicOS repos:
+
+	https://github.com/GarlicOS
+
 And to Jim Gray, for commiserating during development, for early alpha testing, and for providing the soundtrack for much of MinUI's development.
 
 Check out Jim's music: 
