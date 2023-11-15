@@ -2,7 +2,9 @@ unreleased changes:
 
 BASE
 
+- tg5040: updated button mapping for compatability with 1.0 ofw firmware 
 - m17: added initial support (_very_ alpha)
+- all: added simple mode
 
 EXTRAS
 
@@ -11,20 +13,34 @@ EXTRAS
 ---
 
 next
-	smartpro
-		can't detect headphone state at boot?
-	
 	all
+		document creating paks
+			targeting a platform
+			emus
+				selecting a tag
+				libretro cores
+				standalone (including caveats)
+			tools
+		document 
 		add Developer.pak
 			only for devices with adb or ssh
 		make a generic input tester
 		rewrite Shortcuts section by device not the tangle mess it currently is
 			maybe do the same for all?
+			break out platforms into completely separate installers/updaters?
+				will require revisiting unzipping system
+				will need to inject not replace
+					but then how to handle removing deleted files?
 		look into mednafen/beetle ngp core (neopop?)
 			beetle-ngp-libretro
 			this ran at about 1 frame per 10 seconds...
 			add logging
+		draw debug to core framebufer before scaling
+			using pixel instead of default font so it will fit on things like PKM and GB*
 		
+	smartpro
+		can't detect headphone state at boot?
+	
 	m17
 		look into replacing boot logo
 		performance

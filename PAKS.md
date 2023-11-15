@@ -1,5 +1,6 @@
 MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), M17, and RG35XX--all from the same SD card. Why? Why not?
-Source:
+
+Source:  
 https://github.com/shauninman/minui
 
 ----------------------------------------
@@ -10,7 +11,7 @@ A pak is just a folder with a ".pak" extension that contains a shell script name
 
 There are two kinds of paks, emulators and tools. Emulator paks live in the Emus folder. Tool paks live in the Tools folder. These two folders live at the root of your SD card. Third-party paks should never be added to the hidden ".system" folder at the root of the SD card. This folder is deleted and replaced every time a user updates MinUI.
 
-Paks are platform specific. Inside the Emus and Tools folders you will find (or need to create) platform folders. Some platform folders are named after the target device (eg. "rgb30" for the Powkiddy RGB30), others use the devices internal name (eg. "tg5040" for the Trimui Smart Pro), other use an arbitrary shortname (eg. "trimui" for the Trimui Model S), all are completely lowercase.
+Paks are platform specific. Inside the Emus and Tools folders you will find (or need to create) platform folders. Some platform folders are named after the target device (eg. "rgb30" for the Powkiddy RGB30), others use the devices internal name (eg. "tg5040" for the Trimui Smart Pro), other use an arbitrary shortname (eg. "trimui" for the Trimui Model S), all are completely lowercase. See the extras bundle for up-to-date supported platform folder names.
 
 # The types of emulator pak
 
@@ -20,13 +21,13 @@ The first type reuses a libretro core included with a base MinUI install. This t
 
 The second type includes its own libretro core. This allows you to support completely new systems while still taking advantage of MinUI's standard features like resume from menu, quicksave and auto-resume, and consistent in-game menus, behaviors, and options. An example of this type is the extra MGBA.pak which bundles its own mgba core.
 
-The third type launches a bundled standalone emulator. This may allow you to squeeze more performance out of a piece of hardware than a libretro core could. The downside of this type is no integration with MinUI. No resume from menu, no quicksave and auto-resume, no consistent in-game menus, behaviors, or options. In some cases the MENU (and if available, POWER) button may not function as expected, if at all. This type of pak should be a last resort. An example of this type is the community developed NDS.pak which is available for only a handful of platforms MinUI supports.
+The third type launches a bundled standalone emulator. This may allow you to squeeze more performance out of a piece of hardware than a libretro core could. The downside of this type is no integration with MinUI. No resume from menu, no quicksave and auto-resume, no consistent in-game menus, behaviors, or options. In some cases the MENU (and if available, POWER) button may not function as expected, if at all. This type of pak should be a last resort. An example of this type is the community developed NDS.pak which is available for a handful of platforms MinUI supports.
 
 In all cases please make clear to your users that I (@shauninman) can't support third-party paks. If I've excluded a console or core from MinUI's base or extra bundles it's usually for good reason, either the core's integration wasn't up to snuff (eg. arcade cores expect roms to have specific, arcane file names with only certain rom sets working with certain cores), has too many bugs (eg. unable to reliably resume from a save state), has poor performance on a given device, or is just a console I have no familiarity with or interest in.
 
 # Naming your emulator pak
 
-MinUI maps roms to paks based on the tag in the name of the rom's parent folder (eg. /Roms/Game Boy (GB)/Dr. Mario (World).gb will launch the GB.pak). A tag should be all uppercase. When choosing a tag, start with common abbreviations used by other emulation frontends like Retroarch or EmulationStation (eg. FC for Famicom/Nintendo or MD for MegaDrive/Genesis). If that tag is already being used by another pak, use the core name (eg. MGBA) or an abbreviation (eg. PKM for pokemini) or truncation (eg. SUPA for mednafen_supafaust) of the core name.
+MinUI maps roms to paks based on the tag in parentheses at the end the name of the rom's parent folder (eg. "/Roms/Game Boy (GB)/Dr. Mario (World).gb" will launch the "GB.pak"). A tag should be all uppercase. When choosing a tag, start with common abbreviations used by other emulation frontends like Retroarch or EmulationStation (eg. FC for Famicom/Nintendo or MD for MegaDrive/Genesis). If that tag is already being used by another pak, use the core name if short (eg. MGBA) or an abbreviation (eg. PKM for pokemini) or truncation (eg. SUPA for mednafen_supafaust) of the core name.
 
 # Launching your core
 
@@ -50,15 +51,15 @@ This will open the requested rom using the "picodrive\_libretro.so" core include
 
 	CORES_PATH=$(dirname "$0")
 
-There's no need to edit anything below the strings of hash marks. The rest is boilerplat that will extract the pak's tag from its folder name, create corresponding bios and save folders, set the HOME env to "/.userdata/[platform]/", launch the game, and log any output from minarch and the core to "/.userdata/[platform]/logs/[TAG].txt".
+There's no need to edit anything below the strings of hash marks. The rest is boilerplat that will extract the pak's tag from its folder name, create corresponding bios and save folders, set the `HOME` env to "/.userdata/[platform]/", launch the game, and log any output from minarch and the core to "/.userdata/[platform]/logs/[TAG].txt".
 
 That's it! Feel free to experiement with cores from the stock firmware, other compatible devices, or building your own.
 
-# Binding buttons and options defaults
+# Option defaults and button bindings
 
 Copy your new pak and some roms to your SD card and launch a game. Press the MENU button and select Options. Configure the Frontend, Emulator, and Controls. MinUI standard practice is to only bind controls present on the physical controller of the original system (eg. no turbo buttons or core features like palette or disk switching). Let the player dig into that if they want to, the same goes for Shortcuts. Finally select Save Changes > Save for Console. Then quit and pop your SD card back into your computer. 
 
-Inside the hidden ".userdata" folder at the root of your SD card, you'll find platform folders, and inside your platform folder a "[TAG]-[core]" folder. Copy the "minarch.cfg" file found within to your pak folder and rename it "default.cfg". Open "default.cfg" and delete any options you didn't customize. Any option name prefixed with a "-" will be set and hidden. This is useful for disabling features that may not be available (eg. overclocking) or perform poorly (eg. upscaling) on a specific platform. Near the bottom of the file you will find the button bindings. Here's an example from the MGBA.pak:
+Inside the hidden ".userdata" folder at the root of your SD card, you'll find platform folders, and inside your platform folder a "[TAG]-[core]" folder. Copy the "minarch.cfg" file found within to your pak folder and rename it "default.cfg". Open "default.cfg" and delete any options you didn't customize. Any option name prefixed with a "-" will be set and hidden. This is useful for disabling features that may not be available (eg. overclocking) or perform poorly (eg. upscaling) on a specific platform. Near the bottom of the file you will find the button bindings. Here's an example from the "MGBA.pak":
 
 	bind Up = UP
 	bind Down = DOWN
@@ -77,7 +78,7 @@ Inside the hidden ".userdata" folder at the root of your SD card, you'll find pl
 	bind More Sun = NONE:L3
 	bind Less Sun = NONE:R3
 
-Everything after `bind ` up to the `=` is the button label that will appear in the Controls menu. I usually normalize these labels (eg. "Up" instead of "D-pad up", "A Button" instead of just "A"). Everything after the `=` up to the optional `:` is the button mapping. Button mappings are all uppercase. Shoulder buttons and analog stick buttons include the number, (eg. "L1" instead of just "L"). Use "NONE" if the button should not be bound by default. "NONE" should always be followed by a ":" and the core defined button mapping. In the example above, I removed the default More Sun binding by changing:
+Everything after `bind ` up to the `=` is the button label that will appear in the Controls menu. I usually normalize these labels (eg.  "Up" instead of "D-pad up", "A Button" instead of just "A"). Everything after the `=` up to the optional `:` is the button mapping. Button mappings are all uppercase. Shoulder buttons and analog stick buttons always include the number, (eg. "L1" instead of just "L"). Use "NONE" if the button should not be bound by default. "NONE" should always be followed by a ":" and the default core-defined button mapping. In the example above, I removed the default More Sun binding by changing:
 
 	bind More Sun = L3
 
@@ -85,3 +86,6 @@ to
 
 	bind More Sun = NONE:L3
 
+# Packaging your pak
+
+...
