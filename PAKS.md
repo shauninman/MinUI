@@ -1,10 +1,3 @@
-MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), M17, and RG35XX--all from the same SD card. Why? Why not?
-
-Source:  
-https://github.com/shauninman/minui
-
-----------------------------------------
-
 # About MinUI paks
 
 A pak is just a folder with a ".pak" extension that contains a shell script named "launch.sh". 
@@ -78,7 +71,7 @@ Inside the hidden ".userdata" folder at the root of your SD card, you'll find pl
 	bind More Sun = NONE:L3
 	bind Less Sun = NONE:R3
 
-Everything after `bind ` up to the `=` is the button label that will appear in the Controls menu. I usually normalize these labels (eg.  "Up" instead of "D-pad up", "A Button" instead of just "A"). Everything after the `=` up to the optional `:` is the button mapping. Button mappings are all uppercase. Shoulder buttons and analog stick buttons always include the number, (eg. "L1" instead of just "L"). Use "NONE" if the button should not be bound by default. When customizing a binding (or removing with "NONE"), the default core-defined button mapping should always be added after a ":". In the example above, I removed the default More Sun binding by changing:
+Everything after `bind ` up to the `=` is the button label that will appear in the Controls menu. I usually normalize these labels (eg.  "Up" instead of "D-pad up", "A Button" instead of just "A"). Everything after the `=` up to the optional `:` is the button mapping. Button mappings are all uppercase. Shoulder buttons and analog stick buttons always include the number, (eg. "L1" instead of just "L"). Use "NONE" if the button should not be bound by default. When customizing or removing a binding, the default core-defined button mapping should always be added after a ":". In the example above, I removed the default "More Sun" binding by changing:
 
 	bind More Sun = L3
 
@@ -93,6 +86,6 @@ to
 
 # Caveats
 
-MinUI currently only supports the RGB565 pixel format. This means no ppsspp core (and probably others).
+MinUI currently only supports the RGB565 pixel format. This means no ppsspp core (and probably others) for now.
 
 ...
