@@ -11,7 +11,7 @@ A pak is just a folder with a ".pak" extension that contains a shell script name
 
 There are two kinds of paks, emulators and tools. Emulator paks live in the Emus folder. Tool paks live in the Tools folder. These two folders live at the root of your SD card. Third-party paks should never be added to the hidden ".system" folder at the root of the SD card. This folder is deleted and replaced every time a user updates MinUI.
 
-Paks are platform specific. Inside the Emus and Tools folders you will find (or need to create) platform folders. Some platform folders are named after the target device (eg. "rgb30" for the Powkiddy RGB30), others use the devices internal name (eg. "tg5040" for the Trimui Smart Pro), other use an arbitrary shortname (eg. "trimui" for the Trimui Model S), all are completely lowercase. See the extras bundle for up-to-date supported platform folder names.
+Paks are platform specific. Inside the Emus and Tools folders you will find (or need to create) platform folders. Some platform folders are named after the target device (eg. "rgb30" for the Powkiddy RGB30), others use the device's internal name (eg. "tg5040" for the Trimui Smart Pro), other use an arbitrary shortname (eg. "trimui" for the Trimui Model S), all are completely lowercase. See the extras bundle for up-to-date supported platform folder names.
 
 # The types of emulator pak
 
@@ -51,13 +51,13 @@ This will open the requested rom using the "picodrive\_libretro.so" core include
 
 	CORES_PATH=$(dirname "$0")
 
-There's no need to edit anything below the strings of hash marks. The rest is boilerplat that will extract the pak's tag from its folder name, create corresponding bios and save folders, set the `HOME` env to "/.userdata/[platform]/", launch the game, and log any output from minarch and the core to "/.userdata/[platform]/logs/[TAG].txt".
+There's no need to edit anything below the line of hash marks. The rest is boilerplat that will extract the pak's tag from its folder name, create corresponding bios and save folders, set the `HOME` env to "/.userdata/[platform]/", launch the game, and log any output from minarch and the core to "/.userdata/[platform]/logs/[TAG].txt".
 
 That's it! Feel free to experiement with cores from the stock firmware, other compatible devices, or building your own.
 
 # Option defaults and button bindings
 
-Copy your new pak and some roms to your SD card and launch a game. Press the MENU button and select Options. Configure the Frontend, Emulator, and Controls. MinUI standard practice is to only bind controls present on the physical controller of the original system (eg. no turbo buttons or core features like palette or disk switching). Let the player dig into that if they want to, the same goes for Shortcuts. Finally select Save Changes > Save for Console. Then quit and pop your SD card back into your computer. 
+Copy your new pak and some roms to your SD card and launch a game. Press the MENU button and select Options. Configure the Frontend, Emulator, and Controls. MinUI standard practice is to only bind controls present on the physical controller of the original system (eg. no turbo buttons or core-specific features like palette or disk switching). Let the player dig into that if they want to, the same goes for Shortcuts. Finally select Save Changes > Save for Console. Then quit and pop your SD card back into your computer. 
 
 Inside the hidden ".userdata" folder at the root of your SD card, you'll find platform folders, and inside your platform folder a "[TAG]-[core]" folder. Copy the "minarch.cfg" file found within to your pak folder and rename it "default.cfg". Open "default.cfg" and delete any options you didn't customize. Any option name prefixed with a "-" will be set and hidden. This is useful for disabling features that may not be available (eg. overclocking) or perform poorly (eg. upscaling) on a specific platform. Near the bottom of the file you will find the button bindings. Here's an example from the "MGBA.pak":
 
@@ -78,7 +78,7 @@ Inside the hidden ".userdata" folder at the root of your SD card, you'll find pl
 	bind More Sun = NONE:L3
 	bind Less Sun = NONE:R3
 
-Everything after `bind ` up to the `=` is the button label that will appear in the Controls menu. I usually normalize these labels (eg.  "Up" instead of "D-pad up", "A Button" instead of just "A"). Everything after the `=` up to the optional `:` is the button mapping. Button mappings are all uppercase. Shoulder buttons and analog stick buttons always include the number, (eg. "L1" instead of just "L"). Use "NONE" if the button should not be bound by default. "NONE" should always be followed by a ":" and the default core-defined button mapping. In the example above, I removed the default More Sun binding by changing:
+Everything after `bind ` up to the `=` is the button label that will appear in the Controls menu. I usually normalize these labels (eg.  "Up" instead of "D-pad up", "A Button" instead of just "A"). Everything after the `=` up to the optional `:` is the button mapping. Button mappings are all uppercase. Shoulder buttons and analog stick buttons always include the number, (eg. "L1" instead of just "L"). Use "NONE" if the button should not be bound by default. When customizing a binding (or removing with "NONE"), the default core-defined button mapping should always be added after a ":". In the example above, I removed the default More Sun binding by changing:
 
 	bind More Sun = L3
 
@@ -87,5 +87,12 @@ to
 	bind More Sun = NONE:L3
 
 # Packaging your pak
+
+...
+
+
+# Caveats
+
+MinUI currently only supports the RGB565 pixel format. This means no ppsspp core (and probably others).
 
 ...
