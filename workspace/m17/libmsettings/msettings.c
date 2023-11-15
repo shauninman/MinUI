@@ -155,7 +155,7 @@ void SetRawBrightness(int val) { // 8000-0 (>8000 == off)
 void SetRawVolume(int val) { // 0 - 100
 	printf("SetRawVolume(%i)\n", val); fflush(stdout);
 	char cmd[256];
-	sprintf(cmd, "amixer sset -M 'Master' %i%% &> /dev/null", val);
+	sprintf(cmd, "amixer sset -M 'Master' %i%%,0 &> /dev/null", val);
 	// puts(cmd); fflush(stdout);
 	system(cmd);
 }
