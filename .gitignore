@@ -14,6 +14,7 @@ libretro-common
 **/cores/output
 **/boot/output
 
+**/other/evtest
 **/other/sdl
 **/other/sdl12-compat
 **/other/unzip60
