@@ -3,7 +3,7 @@ unreleased changes:
 BASE
 
 - tg5040: updated button mapping for compatability with 1.0 ofw firmware 
-- m17: added initial support (_very_ alpha)
+- m17: added initial support
 - all: added simple mode
 
 EXTRAS
@@ -13,15 +13,36 @@ EXTRAS
 ---
 
 next
+	rgb30: christian suggests setting cpu, gpu, and dmc governors all to performance
+		echo performance > /sys/devices/platform/fde60000.gpu/devfreq/fde60000.gpu/governor
+		echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+		echo performance > /sys/devices/platform/dmc/devfreq/dmc/governor
+			no changes
+	m17:
+		echo performance > /sys/devices/platform/10091000.gpu/devfreq/10091000.gpu/governor
+		echo performance > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
+		echo performance > /sys/devices/platform/dmc/devfreq/dmc/govenor
+			no change
+		echo 1 > /proc/sys/vm/swappiness
+			waiting (confirm with sysctl vm.swappiness)
+			no change in fceumm
+			seems to have halted lags in pcsx_rearmed
+
+	stash 8888 changes
+	test m17 stock for slowdown
+		none in CIII:DC
+			is stock using fceumm?
+			is stock requesting a different audio driver maybe?
+		confirmed use of sdl2 (thats es though I should be looking at ra)
+			
+		does stock use a bad allocator by default?
+		decompile ~es~ to see if I'm missing anything (flags, extra calls, is it using opengl instead of regular SDL?)
+			decompile ra
+				looks like they're using drm/alsa directly not sdl/sdl2
+
 	all
-		document creating paks
-			targeting a platform
-			emus
-				selecting a tag
-				libretro cores
-				standalone (including caveats)
-			tools
-		document 
+		add make fetch to get all external sources before build?
+		add XRGB8888 support to minarch where available
 		add Developer.pak
 			only for devices with adb or ssh
 		make a generic input tester
@@ -33,7 +54,7 @@ next
 					but then how to handle removing deleted files?
 		look into mednafen/beetle ngp core (neopop?)
 			beetle-ngp-libretro
-			this ran at about 1 frame per 10 seconds...
+			this ran at about 1 frame per 10 seconds...on rgb30
 			add logging
 		draw debug to core framebufer before scaling
 			using pixel instead of default font so it will fit on things like PKM and GB*
@@ -43,20 +64,7 @@ next
 	
 	m17
 		look into replacing boot logo
-		performance
-			look into /sys/devices/platform/10091000.gpu/devfreq/10091000.gpu
-			not much to see?
-		improve volume ramp
-		fat32 doesn't support symlinks :face_palm: I knew this!
-			we need
-				mv libpng16.so.16.34.0 libpng16.so.16
-				mv libSDL2_ttf-2.0.so.0.14.0 libSDL2_ttf-2.0.so.0
-			we don't appear to need (currently)
-				libSDL-1.2.so.0.11.4
-				libSDL_image-1.2.so.0.8.4
-			so skip the tar-ing and just copy/rename directly
-				this will address the other problem of installing on a different platform and missing those libs too
-
+		
 	sdl2
 		figure out how analogs work and hook them up (if only to double d-pad)
 	
@@ -66,8 +74,6 @@ next
 				can't reproduce
 				already waits 3 seconds
 			then rgb30
-				I can reproduce with the card that came with the M17
-					but that might be because the card is formatted exfat
 		
 		install on rg35xx, install on smart doesn't work
 			but smart to rg35xx does
@@ -90,7 +96,6 @@ next
 	
 	minarch:
 		crop save state pillar/letter-boxing?
-		before I can even look at psp or n64 I need to support XRGB8888
 		force aspect over hdmi? (or at least disable cropped?)
 	
 	build datetime disconnect
@@ -105,6 +110,7 @@ next
 			
 		volume buttons sometimes get stuck
 			haven't figured out how to reproduce reliably but I've had it happen kinda frequently
+			just experienced on the smart so it's probably something in keymon
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
 			fewt has a fix?
@@ -204,6 +210,7 @@ miniplus
 	-
 	
 rg35xx
+	revisit hdmi basedon rgb30 implementation?
 	overclock.elf with userspace versus performance
 		performance should be slower because it will max out to the max defined scaling frequency
 		userspace should accept the specific scaling frequency

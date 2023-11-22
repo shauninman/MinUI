@@ -40,11 +40,11 @@ Here's an example "launch.sh":
 	cd "$HOME"
 	minarch.elf "$CORES_PATH/${EMU_EXE}_libretro.so" "$ROM" &> "$LOGS_PATH/$EMU_TAG.txt"
 
-This will open the requested rom using the "picodrive\_libretro.so" core included with the base MinUI install. To use a different core just change the value of `EMU_EXE` to another core name (minus the "_libretro.so"). If that core is included in your pak add the following after the `EMU_EXE` line:
+This will open the requested rom using the "picodrive\_libretro.so" core included with the base MinUI install. To use a different core just change the value of `EMU_EXE` to another core name (minus the "_libretro.so"). If that core is bundled in your pak add the following after the `EMU_EXE` line:
 
 	CORES_PATH=$(dirname "$0")
 
-There's no need to edit anything below the line of hash marks. The rest is boilerplat that will extract the pak's tag from its folder name, create corresponding bios and save folders, set the `HOME` env to "/.userdata/[platform]/", launch the game, and log any output from minarch and the core to "/.userdata/[platform]/logs/[TAG].txt".
+There's no need to edit anything below the line of hash marks. The rest is boilerplate that will extract the pak's tag from its folder name, create corresponding bios and save folders, set the `HOME` env to "/.userdata/[platform]/", launch the game, and log any output from minarch and the core to "/.userdata/[platform]/logs/[TAG].txt".
 
 That's it! Feel free to experiement with cores from the stock firmware, other compatible devices, or building your own.
 
@@ -79,13 +79,6 @@ to
 
 	bind More Sun = NONE:L3
 
-# Packaging your pak
-
-...
-
-
 # Caveats
 
-MinUI currently only supports the RGB565 pixel format. This means no ppsspp core (and probably others) for now.
-
-...
+MinUI currently only supports the RGB565 pixel format. This may prevent otherwize compatible cores from working at all.

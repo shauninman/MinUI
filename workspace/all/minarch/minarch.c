@@ -2215,8 +2215,6 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	fps_ticks += 1;
 	
 	// if source has changed size (or forced by dst_p==0)
-	// TODO: this is broken when cropped because renderer.src_w|h != w|h
-	// TODO: again, we're trying to store 4 logical rects in just 2 variables
 	// eg. true src + cropped src + fixed dst + cropped dst
 	if (renderer.dst_p==0 || width!=renderer.true_w || height!=renderer.true_h) {
 		selectScaler(width, height, pitch);

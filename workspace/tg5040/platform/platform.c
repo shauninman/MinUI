@@ -104,8 +104,8 @@ void PLAT_quitVideo(void) {
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
 
-	system("cat /dev/zero > /dev/fb0");
 	SDL_Quit();
+	system("cat /dev/zero > /dev/fb0");
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
