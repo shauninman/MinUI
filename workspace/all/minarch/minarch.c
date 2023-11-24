@@ -1716,8 +1716,14 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 			*out = core.saves_dir; // save_dir;
 		break;
 	}
+	// RETRO_ENVIRONMENT_SET_CONTROLLER_INFO 35
+	// RETRO_ENVIRONMENT_SET_MEMORY_MAPS (36 | RETRO_ENVIRONMENT_EXPERIMENTAL)
 	// RETRO_ENVIRONMENT_GET_LANGUAGE 39
-	case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS: { /* 51 */
+	// RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS (42 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+	// RETRO_ENVIRONMENT_GET_VFS_INTERFACE (45 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+	// RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE (47 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+	// RETRO_ENVIRONMENT_GET_INPUT_BITMASKS (51 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+	case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS: { /* 51 | RETRO_ENVIRONMENT_EXPERIMENTAL */
 		bool *out = (bool *)data;
 		if (out)
 			*out = true;
@@ -1803,7 +1809,9 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		// if (info) LOG_info("has overrides");
 		break;
 	}
+	// RETRO_ENVIRONMENT_GET_GAME_INFO_EXT 66
 	// TODO: RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK 69
+	// used by fceumm
 	// TODO: used by gambatte for L/R palette switching (seems like it needs to return true even if data is NULL to indicate support)
 	case RETRO_ENVIRONMENT_SET_VARIABLE: {
 		// puts("RETRO_ENVIRONMENT_SET_VARIABLE");
@@ -1834,13 +1842,8 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	// 	break;
 	// };
 	
-	// TODO: these unknowns are probably some flag OR'd to RETRO_ENVIRONMENT_EXPERIMENTAL
-	// TODO: UNKNOWN 65572
-	// TODO: UNKNOWN 65578
-	// TODO: UNKNOWN 65581
-	// TODO: UNKNOWN 65587
 	default:
-		LOG_debug("Unsupported environment cmd: %u\n", cmd);
+		// LOG_debug("Unsupported environment cmd: %u\n", cmd);
 		return false;
 	}
 	return true;
@@ -2189,6 +2192,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
 }
 static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
+	// return;
+	
 	// static int tmp_frameskip = 0;
 	// if ((tmp_frameskip++)%2) return;
 	
