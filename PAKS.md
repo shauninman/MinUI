@@ -2,7 +2,7 @@
 
 A pak is just a folder with a ".pak" extension that contains a shell script named "launch.sh". 
 
-There are two kinds of paks, emulators and tools. Emulator paks live in the Emus folder. Tool paks live in the Tools folder. These two folders live at the root of your SD card. Third-party paks should never be added to the hidden ".system" folder at the root of the SD card. This folder is deleted and replaced every time a user updates MinUI.
+There are two kinds of paks, emulators and tools. Emulator paks live in the Emus folder. Tool paks live in the Tools folder. These two folders live at the root of your SD card. Extra paks should never be added to the hidden ".system" folder at the root of the SD card. This folder is deleted and replaced every time a user updates MinUI.
 
 Paks are platform specific. Inside the Emus and Tools folders you will find (or need to create) platform folders. Some platform folders are named after the target device (eg. "rgb30" for the Powkiddy RGB30), others use the device's internal name (eg. "tg5040" for the Trimui Smart Pro), other use an arbitrary shortname (eg. "trimui" for the Trimui Model S), all are completely lowercase. See the extras bundle for up-to-date supported platform folder names.
 
