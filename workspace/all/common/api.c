@@ -1257,25 +1257,6 @@ static struct VIB_Context {
 	int queued_strength;
 	int strength;
 } vib = {0};
-// based on eggs retroarch miyoomini rumble
-static void miyoomini_rumble(uint16_t strength) {
-   static char lastvalue = 0;
-   const char str_export[2] = "48";
-   const char str_direction[3] = "out";
-   char value[1];
-   int fd;
-
-   value[0] = (strength == 0 ? 0x31 : 0x30); // '0' : '1'
-   if (lastvalue != value[0]) {
-      fd = open("/sys/class/gpio/export", O_WRONLY);
-      if (fd > 0) { write(fd, str_export, 2); close(fd); }
-      fd = open("/sys/class/gpio/gpio48/direction", O_WRONLY);
-      if (fd > 0) { write(fd, str_direction, 3); close(fd); }
-      fd = open("/sys/class/gpio/gpio48/value", O_WRONLY);
-      if (fd > 0) { write(fd, value, 1); close(fd); }
-      lastvalue = value[0];
-   }
-}
 static void* VIB_thread(void *arg) {
 #define DEFER_FRAMES 3
 	static int defer = 0;
