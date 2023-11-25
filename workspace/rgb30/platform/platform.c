@@ -219,7 +219,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	if (vid.blit) {
 		scale1x1_c16(
 			vid.blit->src,vid.buffer->pixels,
-			vid.blit->src_w,vid.blit->src_h,vid.blit->src_p,
+			vid.blit->true_w,vid.blit->true_h,vid.blit->src_p,
 			vid.buffer->w,vid.buffer->h,vid.buffer->pitch
 		);
 	}
