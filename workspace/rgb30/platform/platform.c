@@ -64,6 +64,12 @@ SDL_Surface* PLAT_initVideo(void) {
 	// }
 	// SDL_GetCurrentDisplayMode(0, &mode);
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	//
+	// LOG_info("Availabel audio drivers:\n");
+	// for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
+	// 	LOG_info("- %s\n", SDL_GetAudioDriver(i));
+	// }
+	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
@@ -203,6 +209,7 @@ void PLAT_vsync(int remaining) {
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
+	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
 	return scale1x1_c16;
 }
 
@@ -268,6 +275,32 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 			dst_r.h = h;
 			dst_rect = &dst_r;
 		}
+		
+		/** /
+		LOG_info("true %ix%i\nsrc   %i,%i %ix%i dst   %i,%i %ix%i\nsrc_r %i,%i %ix%i dst_r %i,%i %ix%i\n",
+			vid.blit->true_w,
+			vid.blit->true_h,
+		
+			vid.blit->src_x,
+			vid.blit->src_y,
+			vid.blit->src_w,
+			vid.blit->src_h,
+		
+			vid.blit->dst_x,
+			vid.blit->dst_y,
+			vid.blit->dst_w,
+			vid.blit->dst_h,
+		
+			src_r.x,
+			src_r.y,
+			src_r.w,
+			src_r.h,
+		
+			dst_r.x,
+			dst_r.y,
+			dst_r.w,
+			dst_r.h
+		);/**/
 	}
 	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
 	SDL_RenderPresent(vid.renderer);

@@ -18,28 +18,6 @@ next
 			nes
 			snes
 		
-	m17:
-		echo performance > /sys/devices/platform/10091000.gpu/devfreq/10091000.gpu/governor
-		echo performance > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
-		echo performance > /sys/devices/platform/dmc/devfreq/dmc/govenor
-			no change
-		echo 1 > /proc/sys/vm/swappiness
-			waiting (confirm with sysctl vm.swappiness)
-			no change in fceumm
-			seems to have halted lags in pcsx_rearmed
-
-	stash 8888 changes
-	test m17 stock for slowdown
-		none in CIII:DC
-			is stock using fceumm?
-			is stock requesting a different audio driver maybe?
-		confirmed use of sdl2 (thats es though I should be looking at ra)
-			
-		does stock use a bad allocator by default?
-		decompile ~es~ to see if I'm missing anything (flags, extra calls, is it using opengl instead of regular SDL?)
-			decompile ra
-				looks like they're using drm/alsa directly not sdl/sdl2
-
 	all
 		add make fetch to get all external sources before build?
 		add XRGB8888 support to minarch where available
@@ -98,10 +76,6 @@ next
 		crop save state pillar/letter-boxing?
 		force aspect over hdmi? (or at least disable cropped?)
 	
-	build datetime disconnect
-		build products on macos use local time
-		build products in dockers use gmt
-				
 	rgb30
 		does jack detection work?
 		could wifi support more than one access point?

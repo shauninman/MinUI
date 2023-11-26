@@ -40,6 +40,33 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
 	SDL_ShowCursor(0);
 	
+	// LOG_info("Available video drivers:\n");
+	// for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
+	// 	LOG_info("- %s\n", SDL_GetVideoDriver(i));
+	// }
+	// LOG_info("Current video driver: %s\n", SDL_GetCurrentVideoDriver());
+	//
+	// LOG_info("Available render drivers:\n");
+	// for (int i=0; i<SDL_GetNumRenderDrivers(); i++) {
+	// 	SDL_RendererInfo info;
+	// 	SDL_GetRenderDriverInfo(i,&info);
+	// 	LOG_info("- %s\n", info.name);
+	// }
+	//
+	// LOG_info("Available display modes:\n");
+	// SDL_DisplayMode mode;
+	// for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
+	// 	SDL_GetDisplayMode(0, i, &mode);
+	// 	LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// }
+	// SDL_GetCurrentDisplayMode(0, &mode);
+	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	//
+	// LOG_info("Availabel audio drivers:\n");
+	// for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
+	// 	LOG_info("- %s\n", SDL_GetAudioDriver(i));
+	// }
+	
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
@@ -48,7 +75,15 @@ SDL_Surface* PLAT_initVideo(void) {
 	// SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC, "1", SDL_HINT_OVERRIDE); // TODO: not doing anything
 	
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
+	
+	// SDL_GetCurrentDisplayMode(0, &mode);
+	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+	
+	// SDL_RendererInfo info;
+	// SDL_GetRendererInfo(vid.renderer, &info);
+	// LOG_info("Current render driver: %s\n", info.name);
 	
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
 	vid.target	= NULL; // only needed for non-native sizes
@@ -142,6 +177,7 @@ static void resizeVideo(int w, int h, int p) {
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
+	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
 	resizeVideo(w,h,p);
 	return vid.screen;
 }
