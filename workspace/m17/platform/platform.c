@@ -266,12 +266,12 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	char state[256];
 	
 	// works with old model
-	// getFile("/sys/class/udc/10180000.usb/state", state, 256);
-	// *is_charging = strncmp("not attached",state,strlen("not attached")); // I don't understand how this works, if it's a match it would equal 0 which is false...
+	getFile("/sys/class/udc/10180000.usb/state", state, 256);
+	*is_charging = strncmp("not attached",state,strlen("not attached")); // I don't understand how this works, if it's a match it would equal 0 which is false...
 	
 	// nothing works with new model :sob:
-	getFile("/sys/class/power_supply/battery/status", state, 256);
-	*is_charging = exactMatch(state,"Charging\n");
+	// getFile("/sys/class/power_supply/battery/status", state, 256);
+	// *is_charging = exactMatch(state,"Charging\n");
 
 	int i = getInt("/sys/class/power_supply/battery/capacity");
 	// worry less about battery and more about the game you're playing
