@@ -189,6 +189,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	((scaler_t)vid.blit->blit)(
 		vid.blit->src,vid.buffer->pixels,
 		vid.blit->src_w,vid.blit->src_h,vid.blit->src_p,
+		// vid.blit->true_w,vid.blit->true_h,vid.blit->src_p, // TODO: fix to be confirmed, issue may not present on this platform
 		vid.buffer->w,vid.buffer->h,vid.buffer->pitch
 	);
 	SDL_UnlockTexture(vid.texture);

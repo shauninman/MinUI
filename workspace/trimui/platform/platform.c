@@ -26,6 +26,8 @@ static struct VID_Context {
 } vid;
 static int _;
 
+// TODO: drop custom SDL, use HW surface and pan (or will we stil lose vsync without eggs TCON threading?)
+
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
@@ -94,6 +96,90 @@ void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
+// taken from minarch
+static void ma_scale_nn(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
+	uint16_t* s = src;
+	uint16_t* d = dst;
+	
+	sp /= FIXED_BPP;
+	dp /= FIXED_BPP;
+	
+	int rx = 0;
+	int ry = 0;
+	int rw = dw;
+	int rh = dh;
+	
+	int mx = (sw << 16) / rw;
+	int my = (sh << 16) / rh;
+	int ox = (0 << 16);
+	int sx = ox;
+	int sy = (0 << 16);
+	int lr = -1;
+	int sr = 0;
+	int dr = ry * dp;
+	int cp = dp * FIXED_BPP;
+	
+	for (int dy=0; dy<rh; dy++) {
+		sx = ox;
+		sr = (sy >> 16) * sp;
+		if (sr==lr) {
+			memcpy(d+dr,d+dr-dp,cp);
+		}
+		else {
+	        for (int dx=0; dx<rw; dx++) {
+	            d[dr + rx + dx] = s[sr + (sx >> 16)];
+				sx += mx;
+	        }
+		}
+		lr = sr;
+		sy += my;
+		dr += dp;
+    }
+}
+// taken from picoarch
+static void pa_scale_nn(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp)
+{
+	int dy = -dh;
+	unsigned lines = sh;
+	int copy = 0;
+	size_t cpy_w = dw * FIXED_BPP;
+
+	while (lines) {
+		int dx = -dw;
+		const uint16_t *psrc16 = src;
+		uint16_t *pdst16 = dst;
+
+		if (copy) {
+			copy = 0;
+			memcpy(dst, dst - FIXED_PITCH, cpy_w);
+			dst += FIXED_PITCH;
+			dy += sh;
+		} else if (dy < 0) {
+			int col = sw;
+			while(col--) {
+				while (dx < 0) {
+					*pdst16++ = *psrc16;
+					dx += sw;
+				}
+
+				dx -= dw;
+				psrc16++;
+			}
+
+			dst += FIXED_PITCH;
+			dy += sh;
+		}
+
+		if (dy >= 0) {
+			dy -= dh;
+			src += sp;
+			lines--;
+		} else {
+			copy = 1;
+		}
+	}
+}
+
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 	GFX_freeAAScaler();
 	switch (renderer->scale) {
@@ -102,7 +188,22 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 		case  4: return scale4x4_c16;
 		case  3: return scale3x3_c16;
 		case  2: return scale2x2_c16;
+		
+		// nn (both ma and pa versions) performs better than aa (~54fps vs ~48fps) in FFVI in gpsp (native is ~58fps)
+		// hmm, even TLoZ:LA in gbc at native is ~58fps...
+		// but M:ZM in gpsp runs at 60fps with aspect scaler, unless there's a lot onscreen
+
+		// CIII:DC in fceumm at native runs at an unplayable 54fps
+		// without blit it runs at 55fps
+		// without blit and flip it's a steady 60fps (by sound)
+		// without flip it's still noticeably clippy (I'd guess about 57-ish)
+		// stock sdl, HWSurface + no flip = 58fps
+		// 	then without snd = 59fps
+
+		// case -1: return ma_scale_nn;
+		// case -1: return pa_scale_nn;
 		case -1: return GFX_getAAScaler(renderer);
+		
 		default: return scale1x1_c16; // this includes crop (0)
 	}
 }
@@ -139,7 +240,7 @@ void PLAT_quitOverlay(void) {
 	if (ovl.overlay) SDL_FreeSurface(ovl.overlay);
 }
 void PLAT_enableOverlay(int enable) {
-
+	// buh
 }
 
 
@@ -197,15 +298,8 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 }
 
 void PLAT_enableBacklight(int enable) {
-	if (enable) {
-		// TODO: restore screen
-		SetBrightness(GetBrightness());
-	}
-	else {
-		// TODO: copy screen
-		// TODO: clear screen
-		SetRawBrightness(0);
-	}
+	if (enable) SetBrightness(GetBrightness());
+	else SetRawBrightness(0);
 }
 
 void PLAT_powerOff(void) {
