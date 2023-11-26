@@ -3,12 +3,15 @@ unreleased changes:
 BASE
 
 - tg5040: updated button mapping for compatability with 1.0 ofw firmware 
+- rgb30: fixed cropped scaling mode
 - m17: added initial support
+- m17: fixed random lag
+- m17: fixed overdriven volume (submitted by @carlosjdelgado 🙏)
 - all: added simple mode
 
 EXTRAS
 
-- 
+- m17: increased default scale, PKM.pak
 
 ---
 
@@ -42,6 +45,7 @@ next
 	
 	m17
 		look into replacing boot logo
+		still haven't found way to disable volume controls
 		
 	sdl2
 		figure out how analogs work and hook them up (if only to double d-pad)

@@ -79,7 +79,7 @@ killall MtpDaemon
 killall wpa_supplicant
 ifconfig wlan0 down
 
-keymon.elf &> $SDCARD_PATH/keymon.txt &
+keymon.elf & # &> $SDCARD_PATH/keymon.txt &
 
 #######################################
 
