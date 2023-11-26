@@ -39,7 +39,7 @@ fi
 
 LAUNCH_PATH="$SYSTEM_PATH/$PLATFORM/paks/MinUI.pak/launch.sh"
 while [ -f "$LAUNCH_PATH" ] ; do
-	"$LAUNCH_PATH"
+	taskset 8 "$LAUNCH_PATH"
 done
 
 poweroff # under no circumstances should stock be allowed to touch this card
