@@ -273,7 +273,7 @@ static Directory* Directory_new(char* path, int selected) {
 	else if (exactMatch(path, FAUX_RECENT_PATH)) {
 		self->entries = getRecents();
 	}
-	else if (!exactMatch(path, COLLECTIONS_PATH) && prefixMatch(COLLECTIONS_PATH, path)) {
+	else if (!exactMatch(path, COLLECTIONS_PATH) && prefixMatch(COLLECTIONS_PATH, path) && suffixMatch(".txt", path)) {
 		self->entries = getCollection(path);
 	}
 	else if (suffixMatch(".m3u", path)) {
