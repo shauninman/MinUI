@@ -1,5 +1,24 @@
+FRAMBUFFER
+
 480x272
 Save as BMP
 Windows
 32 bit
 Flip row order
+
+---
+
+BOOT LOGO
+
+264x40 (flipped vertical)
+	or
+40x264 (rotated 90 then flipped horizontal)
+
+appears to be centered in framebuffer at 1x
+	can it be different dimensions within a certain size?
+	
+
+Save as BMP
+Windows
+24-bit
+DO NOT flip row order

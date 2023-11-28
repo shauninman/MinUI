@@ -2,11 +2,12 @@ unreleased changes:
 
 BASE
 
-- tg5040: updated button mapping for compatability with 1.0 ofw firmware 
-- rgb30: fixed cropped scaling mode
+- all: Collections now support sub-folders
 - m17: added initial support
 - m17: fixed random lag
 - m17: fixed overdriven volume (submitted by @carlosjdelgado 🙏)
+- rgb30: fixed cropped scaling mode
+- tg5040: updated button mapping for compatability with shipping firmware 
 - all: added simple mode
 
 EXTRAS
@@ -16,12 +17,15 @@ EXTRAS
 ---
 
 next
-	rgb30: 
-		still missing a column of when cropped (I thought I had fixed this...)
-			nes
-			snes
-		
+	native Files.pak
+	m17
+		run battery tests on new unit
+		look into replacing boot logo
+		still haven't found way to disable volume controls
 	all
+		collects can't handle accented characters (eg. é) in path/rom name...
+			wait, why can recents.txt but not collections.txt?
+		update stored rom path logic to only require TAG and not full folder name? (would simplify Collection authoring?)
 		add make fetch to get all external sources before build?
 		add XRGB8888 support to minarch where available
 		add Developer.pak
@@ -42,10 +46,10 @@ next
 		
 	smartpro
 		can't detect headphone state at boot?
+		standalone volume starts at max ()
+		figure out how to clear framebuffer when quitting binary (eg. shutdown)
+		can nds scaling be fixed (it's blurry for no reason)
 	
-	m17
-		look into replacing boot logo
-		still haven't found way to disable volume controls
 		
 	sdl2
 		figure out how analogs work and hook them up (if only to double d-pad)
