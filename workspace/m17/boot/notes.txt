@@ -10,15 +10,75 @@ Flip row order
 
 BOOT LOGO
 
+	oof, offsets in /dev/block/by-name/boot are different between revs
+		maybe copy the first two bytes at the known offsets to confirm the "BM" bitmap signature before proceeding?
+			
+			SIGNATURE=`dd if=/dev/block/by-name/boot bs=1 skip=$OFFSET count=2 status=none` # then test for "BM"
+		
+	http://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
+		filesize is 31734 (Photoshop created one is 31736)
+
+	rev a
+		HORIZONTAL extract
+			dd if=/dev/block/by-name/boot of=/sdcard/logo-h.bmp bs=1 skip=4044800 count=31734
+		VERTICAL extract
+			dd if=/dev/block/by-name/boot of=/sdcard/logo-v.bmp bs=1 skip=4087296 count=31734
+		REPLACE (tested and working)
+			dd conv=notrunc if=/sdcard/logo-h.bmp of=/dev/block/by-name/boot bs=1 seek=4044800
+	
+	rev b
+		HORIZONTAL extract
+			dd if=/dev/block/by-name/boot of=/sdcard/logo-h.bmp bs=1 skip=4045312 count=31734
+		VERTICAL extract
+			dd if=/dev/block/by-name/boot of=/sdcard/logo-v.bmp bs=1 skip=4087808 count=31734
+		REPLACE (tested and working)
+			dd conv=notrunc if=/sdcard/logo-h.bmp of=/dev/block/by-name/boot bs=1 seek=4045312
+
+---
+
+OFFSETS
+
+			HORIZONTAL	VERTICAL
+	REV A	4044800		4087296
+	REV B	4045312		4087808
+
+---
+
 264x40 (flipped vertical)
 	or
 40x264 (rotated 90 then flipped horizontal)
 
 appears to be centered in framebuffer at 1x
 	can it be different dimensions within a certain size?
-	
+	yes, 100x100 works :tada:
 
-Save as BMP
-Windows
-24-bit
-DO NOT flip row order
+Photoshop
+	Save as BMP
+	Windows
+	24-bit
+	DO NOT flip row order
+
+
+---
+
+tests
+
+	echo ANDROID > tmp
+	printf 'BA' | dd conv=notrunc of=tmp bs=1
+	cat tmp
+		BADROID
+	printf 'AN' | dd conv=notrunc of=tmp bs=1
+	cat tmp
+		ANDROID
+	printf 'EW' | dd conv=notrunc of=tmp bs=1 seek=4
+	cat tmp
+		ANDREWD
+	printf 'OI' | dd conv=notrunc of=tmp bs=1 seek=4
+	cat tmp
+		ANDROID
+
+tested with /dev/block/by-name/boot
+	it's writable (at least it didn't claim it wasn't)
+
+figure out which it uses, I'm guessing the vertical version
+	nope, it's using the horizontal version

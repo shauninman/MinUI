@@ -19,8 +19,12 @@ EXTRAS
 next
 	native Files.pak
 	m17
+		option to disable vsync or use threaded video? (under Prevent Tearing option)
 		run battery tests on new unit
+			running, just waiting for the battery to fully charge before discharging
 		look into replacing boot logo
+			figure it out
+			pak it up
 		still haven't found way to disable volume controls
 	all
 		collects can't handle accented characters (eg. é) in path/rom name...
