@@ -3,9 +3,6 @@ unreleased changes:
 BASE
 
 - all: Collections now support sub-folders
-- m17: added initial support
-- m17: fixed random lag
-- m17: fixed overdriven volume (submitted by @carlosjdelgado 🙏)
 - rgb30: fixed cropped scaling mode
 - tg5040: updated button mapping for compatability with shipping firmware 
 - all: added simple mode
@@ -13,21 +10,29 @@ BASE
 EXTRAS
 
 - m17: increased default scale, PKM.pak
+- m17: added Bootlogo.pak (replaces LOADING... with MinUI logo)
+- tg5040: added Bootlogo.pak (replaces Trimui logo with MinUI logo)
 
 ---
 
 next
 	native Files.pak
 	m17
-		option to disable vsync or use threaded video? (under Prevent Tearing option)
 		run battery tests on new unit
 			running, just waiting for the battery to fully charge before discharging
-		look into replacing boot logo
-			figure it out
-			pak it up
+			capacity and voltage_now are out of sync
+			voltage drops to low 3700 then starts rising (wtaf)
+			this seems to be an issue unique to this unit, not the revision itself
 		still haven't found way to disable volume controls
+			I think it's controlled by /usr/bin/gpio-volctrl.sh
+			but rootfs is a 500MB ro squashfs so patching isn't really ideal
+		option to disable vsync or use threaded video? (under Prevent Tearing option)
 	all
-		collects can't handle accented characters (eg. é) in path/rom name...
+		
+		document simple mode
+		better document the new Bootlogo.paks
+		
+		collections can't handle accented characters (eg. é) in path/rom name...
 			wait, why can recents.txt but not collections.txt?
 		update stored rom path logic to only require TAG and not full folder name? (would simplify Collection authoring?)
 		add make fetch to get all external sources before build?
@@ -49,6 +54,15 @@ next
 			using pixel instead of default font so it will fit on things like PKM and GB*
 		
 	smartpro
+		bootlogo
+			/dev/mmcblk0p1
+				offset	42496
+				size	104600
+				396x66 (32bpp)
+			extract with
+				dd if=/dev/mmcblk0p1 of=/mnt/SDCARD/bootlogo.bmp bs=1 skip=42496 count=104600
+			insert with
+				dd conv=notrunc if=/mnt/SDCARD/bootlogo.bmp of=/dev/mmcblk0p1 bs=1 seek=42496
 		can't detect headphone state at boot?
 		standalone volume starts at max ()
 		figure out how to clear framebuffer when quitting binary (eg. shutdown)

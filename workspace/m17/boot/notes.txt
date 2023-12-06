@@ -53,6 +53,7 @@ appears to be centered in framebuffer at 1x
 	yes, 100x100 works :tada:
 
 Photoshop
+	264x40 (or fewer pixels)
 	Save as BMP
 	Windows
 	24-bit

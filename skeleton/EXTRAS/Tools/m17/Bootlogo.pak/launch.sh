@@ -3,6 +3,12 @@
 DIR=$(dirname "$0")
 cd $DIR
 
+# 264x40 (or fewer pixels)
+# Save as BMP
+# Windows
+# 24-bit
+# DO NOT flip row order
+
 {
 
 LOGO_PATH=$DIR/logo.bmp
