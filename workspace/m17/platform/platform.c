@@ -40,6 +40,13 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
 	SDL_ShowCursor(0);
 	
+	// SDL_version compiled;
+	// SDL_version linked;
+	// SDL_VERSION(&compiled);
+	// SDL_GetVersion(&linked);
+	// LOG_info("We compiled against SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
+	// LOG_info("But we linked against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+	
 	// LOG_info("Available video drivers:\n");
 	// for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
 	// 	LOG_info("- %s\n", SDL_GetVideoDriver(i));
@@ -80,6 +87,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+	// SDL_RenderSetVSync(vid.renderer, 0); // added SDL 2.0.18, m17 has 2.0.7
 	
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(vid.renderer, &info);

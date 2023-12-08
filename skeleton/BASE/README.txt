@@ -148,6 +148,11 @@ A collection is just a text file containing an ordered list of full paths to rom
   /Roms/GBA/Metroid Fusion.gba
 
 ----------------------------------------
+Simple mode
+
+Not simple enough for you (or maybe your kids)? MinUI has a simple mode that hides the Tools folder and replaces Options in the in-game menu with Reset. Perfect for handing off to littles (and olds too I guess). Just create an empty file named "enable-simple-mode" (no extension) in "/.userdata/shared/".
+
+----------------------------------------
 Advanced
 
 MinUI can automatically run a user-authored shell script on boot. Just place a file named "auto.sh" in "/.userdata/<DEVICE>/".

@@ -2,21 +2,19 @@ unreleased changes:
 
 BASE
 
-- all: Collections now support sub-folders
-- rgb30: fixed cropped scaling mode
-- tg5040: updated button mapping for compatability with shipping firmware 
-- all: added simple mode
+- 
 
 EXTRAS
 
-- m17: increased default scale, PKM.pak
-- m17: added Bootlogo.pak (replaces LOADING... with MinUI logo)
-- tg5040: added Bootlogo.pak (replaces Trimui logo with MinUI logo)
+- 
 
 ---
 
 next
+	feeling pretty burnt out on this
+	
 	native Files.pak
+		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)
 	m17
 		run battery tests on new unit
 			running, just waiting for the battery to fully charge before discharging
@@ -27,9 +25,9 @@ next
 			I think it's controlled by /usr/bin/gpio-volctrl.sh
 			but rootfs is a 500MB ro squashfs so patching isn't really ideal
 		option to disable vsync or use threaded video? (under Prevent Tearing option)
+			counterintuitively disabling vsync tanks performance...
 	all
 		
-		document simple mode
 		better document the new Bootlogo.paks
 		
 		collections can't handle accented characters (eg. é) in path/rom name...
