@@ -2393,7 +2393,10 @@ void Core_load(void) {
 	// NOTE: must be called after core.load_game!
 	struct retro_system_av_info av_info = {};
 	core.get_system_av_info(&av_info);
-	
+
+	// FIX: some cores need configure a default controller.
+	core.set_controller_port_device(0, 1);
+
 	core.fps = av_info.timing.fps;
 	core.sample_rate = av_info.timing.sample_rate;
 	double a = av_info.geometry.aspect_ratio;
