@@ -27,7 +27,7 @@ next
 		option to disable vsync or use threaded video? (under Prevent Tearing option)
 			counterintuitively disabling vsync tanks performance...
 	all
-		
+		commits.txt is missing newer platforms
 		better document the new Bootlogo.paks
 		
 		collections can't handle accented characters (eg. é) in path/rom name...
