@@ -512,6 +512,14 @@ void PLAT_enableBacklight(int enable) {
 }
 void PLAT_powerOff(void) {
 	sleep(2);
+
+	SetRawVolume(MUTE_VOLUME_RAW);
+	PLAT_enableBacklight(0);
+	SND_quit();
+	VIB_quit();
+	PWR_quit();
+	GFX_quit();
+	
 	system("shutdown");
 }
 

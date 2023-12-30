@@ -89,6 +89,12 @@ static void clearVideo(void) {
 	for (int i=0; i<3; i++) {
 		SDL_RenderClear(vid.renderer);
 		SDL_FillRect(vid.screen, NULL, 0);
+		
+		SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
+		SDL_FillRect(vid.buffer, NULL, 0);
+		SDL_UnlockTexture(vid.texture);
+		SDL_RenderCopy(vid.renderer, vid.texture, NULL, NULL);
+		
 		SDL_RenderPresent(vid.renderer);
 	}
 }
@@ -288,6 +294,15 @@ void PLAT_enableBacklight(int enable) {
 
 void PLAT_powerOff(void) {
 	sleep(2);
+
+	SetRawVolume(MUTE_VOLUME_RAW);
+	PLAT_enableBacklight(0);
+	SND_quit();
+	VIB_quit();
+	PWR_quit();
+	GFX_quit();
+	
+	system("cat /dev/zero > /dev/fb0");
 	system("poweroff");
 	while (1) pause(); // lolwat
 }
