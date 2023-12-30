@@ -48,6 +48,7 @@ static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
 static int overclock = 1; // normal
+static int downsample = 0; // set to 1 to convert from 8888 to 565
 static int DEVICE_WIDTH = FIXED_WIDTH;
 static int DEVICE_HEIGHT = FIXED_HEIGHT;
 static int DEVICE_PITCH = FIXED_PITCH;
@@ -1648,7 +1649,8 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 
 		if (*format != RETRO_PIXEL_FORMAT_RGB565) { // TODO: pull from platform.h?
 			/* 565 is only supported format */
-			return false;
+			downsample = 1;
+			// return false;
 		}
 		break;
 	}
@@ -1962,8 +1964,40 @@ static SDL_Surface* scaler_surface;
 	static int fit = 0;
 #endif	
 
+// buffer to convert xrgb8888 to rgb565
+static void* buffer = NULL;
+static void buffer_dealloc(void) {
+	if (!buffer) return;
+	free(buffer);
+	buffer = NULL;
+}
+static void buffer_realloc(int w, int h, int p) {
+	buffer_dealloc();
+	buffer = malloc((w * sizeof(uint16_t)) * h);
+}
+static void buffer_downsample(const void *data, unsigned width, unsigned height, size_t pitch) {
+	// from picoarch! https://git.crowdedwood.com/picoarch/tree/video.c#n51
+	const uint32_t *input = data;
+	uint16_t *output = buffer;
+	size_t extra = pitch / sizeof(uint32_t) - width;
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			*output =  (*input & 0xF80000) >> 8;
+			*output |= (*input & 0xFC00) >> 5;
+			*output |= (*input & 0xF8) >> 3;
+			input++;
+			output++;
+		}
+
+		input += extra;
+	}
+}
+
 static void selectScaler(int src_w, int src_h, int src_p) {
 	LOG_info("selectScaler\n");
+	
+	if (downsample) buffer_realloc(src_w,src_h,src_p);
 	
 	int src_x,src_y,dst_x,dst_y,dst_w,dst_h,dst_p,scale;
 	double aspect;
@@ -2242,7 +2276,13 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	if (top_width) SDL_FillRect(screen, &(SDL_Rect){0,0,top_width,DIGIT_HEIGHT}, RGB_BLACK);
 	if (bottom_width) SDL_FillRect(screen, &(SDL_Rect){0,screen->h-DIGIT_HEIGHT,bottom_width,DIGIT_HEIGHT}, RGB_BLACK);
 	
-	renderer.src = (void*)data;
+	if (downsample) {
+		buffer_downsample(data,width,height,pitch);
+		renderer.src = buffer;
+	}
+	else {
+		renderer.src = (void*)data;
+	}
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
 	GFX_blitRenderer(&renderer);
@@ -4080,6 +4120,8 @@ finish:
 	VIB_quit();
 	SND_quit();
 	GFX_quit();
+	
+	buffer_dealloc();
 	
 	return EXIT_SUCCESS;
 }
