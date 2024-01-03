@@ -29,6 +29,8 @@ next
 	native Files.pak
 		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)
 	m17
+		found stray SDL.tar and SDL_.tar files in workspace and mention of extra-libs.tar in install.sh but no other mention
+			is this left over from an old workflow?
 		test changes from vid.blit->src_* to vid.blit->true_* (may not be necessary but I don't think it should hurt anything)
 		still haven't found way to disable volume controls
 			I think it's controlled by /usr/bin/gpio-volctrl.sh
