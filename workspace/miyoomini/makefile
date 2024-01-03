@@ -18,6 +18,7 @@ all: readmes
 	cd batmon && make
 	cd lumon && make
 	cd show && make
+	cd overclock && make
 
 early: $(REQUIRES_SDL) $(REQUIRES_COMMANDER)
 	cd other/sdl && ./make.sh
