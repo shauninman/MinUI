@@ -64,21 +64,27 @@ bump() {
 	# list ./workspace/trimui/cores/src
 	# bump
 	#
-	# tell RG353
-	# show ./workspace/rg353/other/DinguxCommander
-	# echo CORES
-	# list ./workspace/rg353/cores/src
-	# bump
-	#
 	# tell RGNANO
 	# echo CORES
 	# list ./workspace/nano/cores/src
 	# bump
 
 	tell RGB30
-	show ./workspace/trimui/other/DinguxCommander
+	show ./workspace/rgb30/other/DinguxCommander
 	echo CORES
 	list ./workspace/rgb30/cores/src
+	bump
+
+	tell TG5040
+	show ./workspace/tg5040/other/evtest
+	show ./workspace/tg5040/other/unzip60
+	echo CORES
+	list ./workspace/tg5040/cores/src
+	bump
+
+	tell M17
+	echo CORES
+	list ./workspace/m17/cores/src
 	bump
 
 } | sed 's/\n/ /g'
