@@ -21,6 +21,7 @@ all:
 	cd ./all/minui/ && make
 	cd ./all/minarch/ && make
 	cd ./all/clock/ && make
+	cd ./all/minput/ && make
 	cd ./$(PLATFORM)/cores && make
 	cd ./$(PLATFORM) && make
 

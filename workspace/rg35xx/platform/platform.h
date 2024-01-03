@@ -53,6 +53,8 @@
 #define CODE_R1			0x65
 #define CODE_L2			0x66
 #define CODE_R2			0x67
+#define CODE_L3			CODE_NA
+#define CODE_R3			CODE_NA
 
 #define CODE_MENU		0x68
 #define CODE_POWER		0x74

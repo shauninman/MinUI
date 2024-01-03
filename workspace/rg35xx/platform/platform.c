@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <msettings.h>
+
 #include "defines.h"
 #include "platform.h"
 #include "api.h"

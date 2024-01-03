@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <msettings.h>
+
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 

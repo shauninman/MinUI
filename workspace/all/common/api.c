@@ -92,6 +92,7 @@ static SDL_Rect asset_rects[] = {
 	[ASSET_SCROLL_DOWN]		= (SDL_Rect){SCALE4(97,31,24, 6)},
 
 	[ASSET_WIFI]			= (SDL_Rect){SCALE4(95,39,14,10)},
+	[ASSET_HOLE]			= (SDL_Rect){SCALE4( 1,63,20,20)},
 };
 static uint32_t asset_rgbs[ASSET_COLORS];
 GFX_Fonts font;
@@ -141,6 +142,7 @@ SDL_Surface* GFX_init(int mode) {
 	asset_rgbs[ASSET_BAR_BG_MENU]	= RGB_DARK_GRAY;
 	asset_rgbs[ASSET_UNDERLINE]		= RGB_GRAY;
 	asset_rgbs[ASSET_DOT]			= RGB_LIGHT_GRAY;
+	asset_rgbs[ASSET_HOLE]			= RGB_BLACK;
 	
 	char asset_path[MAX_PATH];
 	sprintf(asset_path, RES_PATH "/assets@%ix.png", FIXED_SCALE);
@@ -1229,7 +1231,10 @@ void PAD_poll(void) {
 	}
 }
 
+int PAD_anyJustPressed(void)	{ return pad.just_pressed!=BTN_NONE; }
 int PAD_anyPressed(void)		{ return pad.is_pressed!=BTN_NONE; }
+int PAD_anyJustReleased(void)	{ return pad.just_released!=BTN_NONE; }
+
 int PAD_justPressed(int btn)	{ return pad.just_pressed & btn; }
 int PAD_isPressed(int btn)		{ return pad.is_pressed & btn; }
 int PAD_justReleased(int btn)	{ return pad.just_released & btn; }

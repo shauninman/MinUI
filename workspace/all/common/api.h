@@ -67,6 +67,7 @@ enum {
 	ASSET_BAR_BG_MENU,
 	ASSET_UNDERLINE,
 	ASSET_DOT,
+	ASSET_HOLE,
 	
 	ASSET_COLORS,
 	
@@ -194,7 +195,10 @@ void SND_quit(void);
 
 void PAD_reset(void);
 void PAD_poll(void);
+int PAD_anyJustPressed(void);
 int PAD_anyPressed(void);
+int PAD_anyJustReleased(void);
+
 int PAD_justPressed(int btn);
 int PAD_isPressed(int btn);
 int PAD_justReleased(int btn);

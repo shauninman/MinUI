@@ -34,10 +34,9 @@ next
 			wait, why can recents.txt but not collections.txt?
 		update stored rom path logic to only require TAG and not full folder name? (would simplify Collection authoring?)
 		add make fetch to get all external sources before build?
-		add XRGB8888 support to minarch where available
 		add Developer.pak
 			only for devices with adb or ssh
-		make a generic input tester
+			
 		rewrite Shortcuts section by device not the tangle mess it currently is
 			maybe do the same for all?
 			break out platforms into completely separate installers/updaters?
