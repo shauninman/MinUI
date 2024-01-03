@@ -13,25 +13,36 @@ EXTRAS
 next
 	feeling pretty burnt out on this
 	
+	35xxplus
+		publish rg35xxplus-toolchain
+		figure out
+			extras (be sure to change `*.elf &> log.txt` to `*.elf > log.txt 2>&1` everywhere)
+			install/update
+				no unzip by default, so tar.gz for bootstrapping it is
+			sleep
+			implement jack
+			check hdmi
+				nothing
+				/dev/hdmi?
+			can we reuse
+	
 	native Files.pak
 		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)
 	m17
-		run battery tests on new unit
-			running, just waiting for the battery to fully charge before discharging
-			capacity and voltage_now are out of sync
-			voltage drops to low 3700 then starts rising (wtaf)
-			this seems to be an issue unique to this unit, not the revision itself
+		test changes from vid.blit->src_* to vid.blit->true_* (may not be necessary but I don't think it should hurt anything)
 		still haven't found way to disable volume controls
 			I think it's controlled by /usr/bin/gpio-volctrl.sh
 			but rootfs is a 500MB ro squashfs so patching isn't really ideal
-		option to disable vsync or use threaded video? (under Prevent Tearing option)
-			counterintuitively disabling vsync tanks performance...
 	all
+		standarize /bin/shutdown
+			while (1) pause(); prevents shutdown on some platforms
+			just system("rm /tmp/minui_exec") and exit(0) ?
 		commits.txt is missing newer platforms
 		better document the new Bootlogo.paks
 		
 		collections can't handle accented characters (eg. é) in path/rom name...
 			wait, why can recents.txt but not collections.txt?
+			because one is written by the system so its using native accented chars
 		update stored rom path logic to only require TAG and not full folder name? (would simplify Collection authoring?)
 		add make fetch to get all external sources before build?
 		add Developer.pak
@@ -47,23 +58,28 @@ next
 			beetle-ngp-libretro
 			this ran at about 1 frame per 10 seconds...on rgb30
 			add logging
+		wonderswan
+			runs at 1fps
+			possibly because minarch forces 60fps but this handheld runs at 75?
+			
 		draw debug to core framebufer before scaling
 			using pixel instead of default font so it will fit on things like PKM and GB*
 		
 	smartpro
-		bootlogo
-			/dev/mmcblk0p1
-				offset	42496
-				size	104600
-				396x66 (32bpp)
-			extract with
-				dd if=/dev/mmcblk0p1 of=/mnt/SDCARD/bootlogo.bmp bs=1 skip=42496 count=104600
-			insert with
-				dd conv=notrunc if=/mnt/SDCARD/bootlogo.bmp of=/dev/mmcblk0p1 bs=1 seek=42496
+		Clock.pak doesn't work?
 		can't detect headphone state at boot?
-		standalone volume starts at max ()
-		figure out how to clear framebuffer when quitting binary (eg. shutdown)
+		standalone volume starts at max (why?)
+			psp uses dsp so maybe a different audio path? volume buttons don't work to change but the Global Volume setting in ppsspp settings does...
+				commenting out dsp audio allows volume buttons to work
+					but only sometimes?
+			ds can be controlled by volume buttons
+				but only sometimes
 		can nds scaling be fixed (it's blurry for no reason)
+		n64
+			requires libretro opengl implementation
+		psp
+			after adding xrgb8888 support to MinUI it still chokes on a number of missing libraries 
+			and eventually an unlinked function (something like XUnlockMutex)
 	
 		
 	sdl2

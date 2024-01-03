@@ -24,8 +24,8 @@
 
 #define BUTTON_L1		SDLK_L
 #define BUTTON_R1		SDLK_R
-#define BUTTON_L2		SDLK_Z
-#define BUTTON_R2		SDLK_C
+#define BUTTON_L2		SDLK_z
+#define BUTTON_R2		SDLK_c
 #define BUTTON_L3		BUTTON_NA
 #define BUTTON_R3		BUTTON_NA
 
