@@ -388,8 +388,12 @@ void PLAT_setCPUSpeed(int speed) {
 
 }
 
+#define RUMBLE_PATH "/sys/class/power_supply/axp2202-battery/moto"
+
 void PLAT_setRumble(int strength) {
-	// buh
+	char cmd[256];
+	sprintf(cmd,"echo %i > %s", strength?1:0, RUMBLE_PATH);
+	system(cmd);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
