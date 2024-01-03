@@ -12,7 +12,7 @@ index 14b8cbedb12860aedc2bc21119735247929bdbd3..0d1787ef81ffc6cdb2b4982c779a89ef
 +   CC = $(CROSS_COMPILE)gcc
 +   CXX = $(CROSS_COMPILE)g++
 +   AR = $(CROSS_COMPILE)ar
-+   SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
++   SHARED := -shared -Wl,--version-script=src/libretro/link.T -Wl,-no-undefined
 +   LDFLAGS += -fPIC -flto
 +   CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer
 +   CFLAGS += -fomit-frame-pointer -ffast-math -fPIC -flto
