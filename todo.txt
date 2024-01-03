@@ -2,11 +2,20 @@ unreleased changes:
 
 BASE
 
-- 
+- all: updated fceumm (Nintendo/FC) core (submitted by @frarees 🙏)
+- all: added xrgb8888 support
+- all: fast forward persists across opening in-game menu
+- all: configure default controller (submitted by @DSkywalk 🙏)
+- all: Collections now support subfolders
+- docs: documented "simple" mode
+- tg5040: clear screen on exit/poweroff
+- rg35xxplus: initial support (very alpha!)
 
 EXTRAS
 
-- 
+- all: added Input.pak to Tools
+- m17: added Bootlogo.pak to Tools (for MinUI boot logo)
+- tg5040: added Bootlogo.pak to Tools (for MinUI boot logo)
 
 ---
 
@@ -16,19 +25,23 @@ next
 	35xxplus
 		publish rg35xxplus-toolchain
 		figure out
-			extras (be sure to change `*.elf &> log.txt` to `*.elf > log.txt 2>&1` everywhere)
 			install/update
 				no unzip by default, so tar.gz for bootstrapping it is
-			sleep
+				don't forget boot image
+				don't forget sdl2 libs
+					need to be copied from toolchain during device makefile then mv to build during copy phase
 			implement jack
+				sysfs state doesn't update
 			check hdmi
 				nothing
 				/dev/hdmi?
-			can we reuse
+			integrate into root makefile
+				build rg35xx first, copy its cores
 	
 	native Files.pak
 		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)
 	m17
+		prevent installing on unsupported revisions?
 		found stray SDL.tar and SDL_.tar files in workspace and mention of extra-libs.tar in install.sh but no other mention
 			is this left over from an old workflow?
 		test changes from vid.blit->src_* to vid.blit->true_* (may not be necessary but I don't think it should hurt anything)
@@ -36,6 +49,8 @@ next
 			I think it's controlled by /usr/bin/gpio-volctrl.sh
 			but rootfs is a 500MB ro squashfs so patching isn't really ideal
 	all
+		evtest
+			random note: doesn't know about /dev/input/js0?
 		standarize /bin/shutdown
 			while (1) pause(); prevents shutdown on some platforms
 			just system("rm /tmp/minui_exec") and exit(0) ?
