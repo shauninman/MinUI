@@ -86,5 +86,10 @@ bump() {
 	echo CORES
 	list ./workspace/m17/cores/src
 	bump
+	
+	tell RG35XXPLUS
+	echo CORES
+	list ./workspace/rg35xxplus/cores/src
+	bump
 
 } | sed 's/\n/ /g'
