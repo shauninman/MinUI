@@ -441,7 +441,7 @@ void PLAT_enableBacklight(int enable) {
 	}
 }
 void PLAT_powerOff(void) {
-	if (is_plus) sleep(2);
+	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
