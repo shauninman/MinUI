@@ -3,6 +3,7 @@
 TARGET=dmenu.bin
 
 mkdir -p output
+# TODO: shouldn't this be skipping 54 bytes (the size of the bitmap format header)?
 if [ ! -f output/installing ]; then
 	dd skip=64 iflag=skip_bytes if=installing.bmp of=output/installing
 fi

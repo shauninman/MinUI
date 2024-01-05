@@ -191,7 +191,7 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 }
 
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
-	
+	// buh
 }
 void PLAT_setNearestNeighbor(int enabled) {
 	// always enabled?
@@ -213,9 +213,8 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
-	
 	SDL_RenderClear(vid.renderer);
-	resizeVideo(vid.blit->src_w,vid.blit->src_h,vid.blit->src_p);
+	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
