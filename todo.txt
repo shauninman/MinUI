@@ -22,21 +22,19 @@ EXTRAS
 next
 	feeling pretty burnt out on this
 	
+	unzip60
+		rename Makefile.trimuismartpro to just Makefile.minui?
 	35xxplus
+		auto.sh isn't working here
 		publish rg35xxplus-toolchain
 		figure out
-			install/update
-				no unzip by default, so tar.gz for bootstrapping it is
-				don't forget boot image
-				don't forget sdl2 libs
-					need to be copied from toolchain during device makefile then mv to build during copy phase
+			audio crackle on quit sdl
+				setting raw volume to 0 doesn't fix
 			implement jack
 				sysfs state doesn't update
 			check hdmi
 				nothing
 				/dev/hdmi?
-			integrate into root makefile
-				build rg35xx first, copy its cores
 	
 	native Files.pak
 		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)

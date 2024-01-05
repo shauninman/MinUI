@@ -1,7 +1,8 @@
 $(PLATFORM):
 	# $@
 	cp ./workspace/$@/overclock/overclock.elf ./build/SYSTEM/$@/bin/
-	cp ./workspace/$@/boot/output/dmenu.bin ./build/BASE/
+	mkdir -p ./build/BASE/$@
+	cp ./workspace/$@/boot/output/dmenu.bin ./build/BASE/$@/
 	cp ./workspace/$@/boot/output/dmenu.bin ./build/SYSTEM/$@/dat/
 	cp ./workspace/$@/boot/output/boot_logo.bmp.gz ./build/SYSTEM/$@/dat/
 	cp ./workspace/$@/boot/output/rootfs.ext2 ./build/SYSTEM/$@/

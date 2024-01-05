@@ -12,15 +12,23 @@ endif
 
 ###########################################################
 
-all: readmes
-	# buh
+REQUIRES_UNZIP60=other/unzip60
 
-early:
+all: readmes
+	cd boot && ./build.sh
+
+early: $(REQUIRES_UNZIP60)
+	mkdir -p other
+	cd $(REQUIRES_UNZIP60) && make -f unix/Makefile.trimuismart unzip
 	# copy libs from toolchain (later moved to build)
 	cp $(PREFIX)/lib/libSDL2_image-2.0.so.0.0.1 ../libSDL2_image-2.0.so.0
 	cp $(PREFIX)/lib/libSDL2_ttf-2.0.so.0.14.0 ../libSDL2_ttf-2.0.so.0
 	
 clean:
-	# buh
+	cd boot && rm -rf output
+	cd other/unzip60 && make -f unix/Makefile.trimuismart clean
+	
+$(REQUIRES_UNZIP60):
+	git clone --depth 1 https://github.com/shauninman/unzip60.git $(REQUIRES_UNZIP60)
 	
 include ../all/readmes/makefile

@@ -4,7 +4,7 @@
 # it has to, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = tg5040 rgb30 miyoomini trimuismart rg35xx m17
+PLATFORMS = tg5040 rgb30 miyoomini trimuismart m17 rg35xx rg35xxplus
 endif
 
 ###########################################################
@@ -149,6 +149,11 @@ package: tidy
 # TODO: make this a template like the cores makefile?
 
 rg35xx:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+rg35xxplus:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------
