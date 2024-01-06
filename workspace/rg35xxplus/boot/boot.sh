@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# while :; do; sleep 5; done
+
 TF1_PATH=/mnt/mmc # TF1/NO NAME partition
 TF2_PATH=/mnt/sdcard # TF2
 SDCARD_PATH=$TF1_PATH
@@ -11,6 +13,11 @@ UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
 
 rm $TF1_PATH/log.txt
 touch $TF1_PATH/log.txt
+
+if [ "$TF2_PATH" -ef "$TF1_PATH" ]; then
+	echo "deleting old TF2 -> TF1 symlink" >> $TF1_PATH/log.txt
+	rm $TF2_PATH
+fi
 
 if mountpoint -q $TF2_PATH; then
 	echo "TF2 already mounted" >> $TF1_PATH/log.txt
@@ -91,7 +98,7 @@ if [ -f $SYSTEM_PATH/paks/MinUI.pak/launch.sh ]; then
 	$SYSTEM_PATH/paks/MinUI.pak/launch.sh > $SDCARD_PATH/log.txt 2>&1
 else
 	echo "couldn't find launch.sh" >> $TF1_PATH/log.txt
-	ls $SDCARD_PATH >> $TF1_PATH/log.txt
+	ls -l $SDCARD_PATH >> $TF1_PATH/log.txt
 fi
 
 sync && poweroff
