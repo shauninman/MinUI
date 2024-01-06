@@ -71,21 +71,29 @@ void getEmuName(const char* in_name, char* out_name) { // NOTE: both char arrays
 	strcpy(out_name, in_name);
 	tmp = out_name;
 	
+	// printf("--------\n  in_name: %s\n",in_name); fflush(stdout);
+	
 	// extract just the Roms folder name if necessary
 	if (prefixMatch(ROMS_PATH, tmp)) {
 		tmp += strlen(ROMS_PATH) + 1;
 		char* tmp2 = strchr(tmp, '/');
 		if (tmp2) tmp2[0] = '\0';
+		// printf("    tmp1: %s\n", tmp);
+		strcpy(out_name, tmp);
+		tmp = out_name;
 	}
 
 	// finally extract pak name from parenths if present
 	tmp = strrchr(tmp, '(');
 	if (tmp) {
 		tmp += 1;
+		// printf("    tmp2: %s\n", tmp);
 		strcpy(out_name, tmp);
 		tmp = strchr(out_name,')');
 		tmp[0] = '\0';
 	}
+	
+	// printf(" out_name: %s\n", out_name); fflush(stdout);
 }
 void getEmuPath(char* emu_name, char* pak_path) {
 	sprintf(pak_path, "%s/Emus/%s/%s.pak/launch.sh", SDCARD_PATH, PLATFORM, emu_name);

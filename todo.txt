@@ -11,18 +11,13 @@ EXTRAS
 ---
 
 next
-	
-	
-	
+	all
+		MinUI can no longer parse tag-only rom folder names
+			eg. "GBA" results in it trying to load 
+				/mnt/sdcard/.system/rg35xxplus/paks/Emus//mnt/sdcard/Roms/GBC.pak
+			instead of
+				/mnt/sdcard/.system/rg35xxplus/paks/Emus/GBC.pak
 
-	////////////////////////////
-	publish rg35xxplus-toolchain
-	////////////////////////////
-	
-	
-	
-	
-	
 	unzip60
 		rename Makefile.trimuismartpro to just Makefile.minui?
 	35xxplus
