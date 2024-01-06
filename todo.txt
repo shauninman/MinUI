@@ -3,10 +3,10 @@ unreleased changes:
 BASE
 
 - all: updated fceumm (Nintendo/FC) core (submitted by @frarees 🙏)
+- all: configure default controller (submitted by @DSkywalk 🙏)
 - all: added xrgb8888 support
 - all: fast forward persists across opening in-game menu
-- all: configure default controller (submitted by @DSkywalk 🙏)
-- all: Collections now support subfolders
+- all: collections now support subfolders
 - docs: documented "simple" mode
 - tg5040: clear screen on exit/poweroff
 - rg35xxplus: initial support (very alpha!)
