@@ -88,14 +88,14 @@ if [ -f $UPDATE_PATH ]; then
 	rm data installing updating bootlogo.bmp unzip
 	
 	# the updated system finishes the install/update
-	$SYSTEM_PATH/bin/install.sh # &> $SDCARD_PATH/install.txt
+	$SYSTEM_PATH/bin/install.sh
 fi
 
 # while :; do; sleep 5; done
 
 if [ -f $SYSTEM_PATH/paks/MinUI.pak/launch.sh ]; then
 	echo "launch MinUI" >> $TF1_PATH/log.txt
-	$SYSTEM_PATH/paks/MinUI.pak/launch.sh > $SDCARD_PATH/log.txt 2>&1
+	$SYSTEM_PATH/paks/MinUI.pak/launch.sh
 else
 	echo "couldn't find launch.sh" >> $TF1_PATH/log.txt
 	ls -l $SDCARD_PATH >> $TF1_PATH/log.txt
