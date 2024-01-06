@@ -70,7 +70,7 @@ int main (int argc, char *argv[]) {
 			val = ev.value;
 
 			if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
-			printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
+			// printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
 			switch (ev.code) {
 				case CODE_MENU:
 					menu_pressed = val;
