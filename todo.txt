@@ -1,32 +1,32 @@
-unreleased changes:
+Please see the README.txt in the zip files for installation and update instructions.
 
 BASE
 
-- all: updated fceumm (Nintendo/FC) core (submitted by @frarees 🙏)
-- all: configure default controller (submitted by @DSkywalk 🙏)
-- all: added xrgb8888 support
-- all: fast forward persists across opening in-game menu
-- all: collections now support subfolders
-- docs: documented "simple" mode
-- tg5040: clear screen on exit/poweroff
-- rg35xxplus: initial support (very alpha!)
+- 
 
 EXTRAS
 
-- all: added Input.pak to Tools
-- m17: added Bootlogo.pak to Tools (for MinUI boot logo)
-- tg5040: added Bootlogo.pak to Tools (for MinUI boot logo)
+- 
 
 ---
 
 next
-	feeling pretty burnt out on this
+	
+	
+	
+
+	////////////////////////////
+	publish rg35xxplus-toolchain
+	////////////////////////////
+	
+	
+	
+	
 	
 	unzip60
 		rename Makefile.trimuismartpro to just Makefile.minui?
 	35xxplus
 		auto.sh isn't working here
-		publish rg35xxplus-toolchain
 		figure out
 			audio crackle on quit sdl
 				setting raw volume to 0 doesn't fix
@@ -52,6 +52,8 @@ next
 		standarize /bin/shutdown
 			while (1) pause(); prevents shutdown on some platforms
 			just system("rm /tmp/minui_exec") and exit(0) ?
+		.res
+			use standard naming (replace ext with png instead of append png)
 		commits.txt is missing newer platforms
 		better document the new Bootlogo.paks
 		
