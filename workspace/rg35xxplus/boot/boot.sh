@@ -9,24 +9,28 @@ UPDATE_FRAG=/MinUI.zip
 SYSTEM_PATH=${SDCARD_PATH}${SYSTEM_FRAG}
 UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
 
+rm $TF1_PATH/log.txt
 touch $TF1_PATH/log.txt
 
-echo "mount TF2" >> $TF1_PATH/log.txt
-mkdir $TF2_PATH
-SDCARD_DEVICE=/dev/mmcblk1p1
-mount -t vfat -o rw,utf8,noatime $SDCARD_DEVICE $TF2_PATH
-if [ $? -ne 0 ]; then
-	echo "mount failed, symlink to TF1" >> $TF1_PATH/log.txt
-	rm -rf $TF2_PATH
-	ln -s $TF1_PATH $TF2_PATH
+if mountpoint -q $TF2_PATH; then
+	echo "TF2 already mounted" >> $TF1_PATH/log.txt
+else
+	echo "mount TF2" >> $TF1_PATH/log.txt
+	mkdir -p $TF2_PATH
+	SDCARD_DEVICE=/dev/mmcblk1p1
+	mount -t vfat -o rw,utf8,noatime $SDCARD_DEVICE $TF2_PATH
+	if [ $? -ne 0 ]; then
+		echo "mount failed, symlink to TF1" >> $TF1_PATH/log.txt
+		rm -d $TF2_PATH
+		ln -s $TF1_PATH $TF2_PATH
+	fi
+	
 fi
 
 if [ -d ${TF1_PATH}${SYSTEM_FRAG} ] || [ -f ${TF1_PATH}${UPDATE_FRAG} ]; then
 	echo "found MinUI on TF1" >> $TF1_PATH/log.txt
 	if [ ! -L $TF2_PATH ]; then
 		echo "no system on TF2, unmount and symlink to TF1" >> $TF1_PATH/log.txt
-		# .system found on TF1 but TF2 is present
-		# so unmount and symlink to TF1 path
 		umount $TF2_PATH
 		rm -rf $TF2_PATH
 		ln -s $TF1_PATH $TF2_PATH
@@ -80,11 +84,16 @@ if [ -f $UPDATE_PATH ]; then
 	$SYSTEM_PATH/bin/install.sh # &> $SDCARD_PATH/install.txt
 fi
 
-echo "launch MinUI" >> $TF1_PATH/log.txt
-
 # while :; do; sleep 5; done
 
-$SYSTEM_PATH/paks/MinUI.pak/launch.sh > $SDCARD_PATH/log.txt 2>&1
+if [ -f $SYSTEM_PATH/paks/MinUI.pak/launch.sh ]; then
+	echo "launch MinUI" >> $TF1_PATH/log.txt
+	$SYSTEM_PATH/paks/MinUI.pak/launch.sh > $SDCARD_PATH/log.txt 2>&1
+else
+	echo "couldn't find launch.sh" >> $TF1_PATH/log.txt
+	ls $SDCARD_PATH >> $TF1_PATH/log.txt
+fi
+
 sync && poweroff
 
 exit 0
