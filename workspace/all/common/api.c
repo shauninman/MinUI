@@ -1069,22 +1069,15 @@ void SND_quit(void) { // plat_sound_finish
 
 ///////////////////////////////
 
-static struct PAD_Context {
-	int is_pressed;
-	int just_pressed;
-	int just_released;
-	int just_repeated;
-	uint32_t repeat_at[BTN_ID_COUNT];
-} pad;
-#define PAD_REPEAT_DELAY	300
-#define PAD_REPEAT_INTERVAL 100
+PAD_Context pad;
+
 void PAD_reset(void) {
 	pad.just_pressed = BTN_NONE;
 	pad.is_pressed = BTN_NONE;
 	pad.just_released = BTN_NONE;
 	pad.just_repeated = BTN_NONE;
 }
-void PAD_poll(void) {
+void PAD_poll_SDL(void) {
 	// reset transient state
 	pad.just_pressed = BTN_NONE;
 	pad.just_released = BTN_NONE;
@@ -1128,7 +1121,7 @@ void PAD_poll(void) {
 			else if (code==CODE_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
 			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
 			else if (code==CODE_POWER)		{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
-			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;	id = BTN_ID_POWEROFF; }
+			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;	id = BTN_ID_POWEROFF; } // nano-only
 		}
 		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
@@ -1229,6 +1222,24 @@ void PAD_poll(void) {
 			pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
 		}
 	}
+}
+int PAD_wake_SDL(void) {
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type==SDL_KEYUP) {
+			uint8_t code = event.key.keysym.scancode;
+			if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && (code==CODE_MENU || code==CODE_MENU_ALT))) {
+				return 1;
+			}
+		}
+		else if (event.type==SDL_JOYBUTTONUP) {
+			uint8_t joy = event.jbutton.button;
+			if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && (joy==JOY_MENU || joy==JOY_MENU_ALT))) {
+				return 1;
+			}
+		} 
+	}
+	return 0;
 }
 
 int PAD_anyJustPressed(void)	{ return pad.just_pressed!=BTN_NONE; }
@@ -1516,32 +1527,8 @@ static void PWR_exitSleep(void) {
 }
 
 static void PWR_waitForWake(void) {
-	SDL_Event event;
-	int wake = 0;
 	uint32_t sleep_ticks = SDL_GetTicks();
-	while (!wake) {
-		while (SDL_PollEvent(&event)) {
-			if (event.type==SDL_KEYUP) {
-				uint8_t code = event.key.keysym.scancode;
-				if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && (code==CODE_MENU || code==CODE_MENU_ALT))) {
-					wake = 1;
-					break;
-				}
-				
-				// SDLKey key = event.key.keysym.sym;
-				// if ((BTN_WAKE==BTN_POWER && key==BUTTON_POWER) || (BTN_WAKE==BTN_MENU && key==BUTTON_MENU)) {
-				// 	wake = 1;
-				// 	break;
-				// }
-			}
-			else if (event.type==SDL_JOYBUTTONUP) {
-				uint8_t joy = event.jbutton.button;
-				if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && (joy==JOY_MENU || joy==JOY_MENU_ALT))) {
-					wake = 1;
-					break;
-				}
-			} 
-		}
+	while (!PAD_wake()) {
 		SDL_Delay(200);
 		if (pwr.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
 			if (pwr.is_charging) sleep_ticks += 60000; // check again in a minute

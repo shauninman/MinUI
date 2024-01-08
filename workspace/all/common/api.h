@@ -193,8 +193,29 @@ void SND_quit(void);
 
 ///////////////////////////////
 
+typedef struct PAD_Context {
+	int is_pressed;
+	int just_pressed;
+	int just_released;
+	int just_repeated;
+	uint32_t repeat_at[BTN_ID_COUNT];
+} PAD_Context;
+extern PAD_Context pad;
+
+#define PAD_REPEAT_DELAY	300
+#define PAD_REPEAT_INTERVAL 100
+
+#define PAD_init PLAT_initInput
+#define PAD_quit PLAT_quitInput
+
+#ifndef PAD_poll
+#define PAD_poll PAD_poll_SDL
+#define PAD_wake PAD_wake_SDL
+void PAD_poll_SDL(void);
+int PAD_wake_SDL(void);
+#endif
+
 void PAD_reset(void);
-void PAD_poll(void);
 int PAD_anyJustPressed(void);
 int PAD_anyPressed(void);
 int PAD_anyJustReleased(void);
@@ -250,6 +271,11 @@ enum {
 #define PWR_setCPUSpeed PLAT_setCPUSpeed
 
 ///////////////////////////////
+
+void PLAT_initInput(void);
+void PLAT_quitInput(void);
+void PLAT_pollInput(void);
+int PLAT_shouldWake(void);
 
 SDL_Surface* PLAT_initVideo(void);
 void PLAT_quitVideo(void);
