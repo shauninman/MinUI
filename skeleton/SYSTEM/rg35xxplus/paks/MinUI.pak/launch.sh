@@ -18,6 +18,11 @@ export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 
 #######################################
 
+systemctl disable ondemand
+echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+
+#######################################
+
 keymon.elf & # > $LOGS_PATH/keymon.txt 2>&1 &
 
 #######################################
@@ -55,4 +60,4 @@ while [ -f "$EXEC_PATH" ]; do
 done
 
 # TODO: need a shutdown script to write to datetime.txt
-poweroff # just in case
+shutdown # just in case
