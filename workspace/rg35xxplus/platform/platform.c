@@ -524,8 +524,14 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 }
 
 void PLAT_enableBacklight(int enable) {
-	if (enable) SetBrightness(GetBrightness());
-	else SetRawBrightness(0);
+	if (enable) {
+		SetBrightness(GetBrightness());
+		system("echo 0 > /sys/class/power_supply/axp2202-battery/work_led");
+	}
+	else {
+		SetRawBrightness(0);
+		system("echo 1 > /sys/class/power_supply/axp2202-battery/work_led");
+	}
 }
 
 void PLAT_powerOff(void) {
@@ -533,6 +539,7 @@ void PLAT_powerOff(void) {
 
 	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
+	system("echo 1 > /sys/class/power_supply/axp2202-battery/work_led");
 	SND_quit();
 	VIB_quit();
 	PWR_quit();
