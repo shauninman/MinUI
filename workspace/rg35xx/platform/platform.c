@@ -24,6 +24,15 @@
 
 ///////////////////////////////
 
+void PLAT_initInput(void) {
+	// buh
+}
+void PLAT_quitInput(void) {
+	// buh
+}
+
+///////////////////////////////
+
 typedef struct ion_alloc_info {
 	uint32_t			size;
 	struct ion_handle	*handle;

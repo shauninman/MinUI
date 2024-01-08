@@ -1166,6 +1166,7 @@ int main (int argc, char *argv[]) {
 	InitSettings();
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
+	PAD_init();
 	PWR_init();
 	if (!HAS_POWER_BUTTON && !simple_mode) PWR_disableSleep();
 	
@@ -1497,6 +1498,7 @@ int main (int argc, char *argv[]) {
 
 	Menu_quit();
 	PWR_quit();
+	PAD_quit();
 	GFX_quit();
 	QuitSettings();
 }

@@ -18,13 +18,177 @@
 
 #include "scaler.h"
 
+///////////////////////////////
+
+#define RAW_UP		103
+#define RAW_DOWN	108
+#define RAW_LEFT	105
+#define RAW_RIGHT	106
+#define RAW_A		304
+#define RAW_B		305
+#define RAW_X		307
+#define RAW_Y		306
+#define RAW_START	311
+#define RAW_SELECT	310
+#define RAW_MENU	312
+#define RAW_L1		308
+#define RAW_L2		314
+#define RAW_L3		313
+#define RAW_R1		309
+#define RAW_R2		315
+#define RAW_R3		316
+#define RAW_PLUS	115
+#define RAW_MINUS	114
+#define RAW_POWER	116
+#define RAW_YAXIS	17
+#define RAW_XAXIS	16
+
+#define RAW_MENU1	RAW_L3
+#define RAW_MENU2	RAW_R3
+
+#define INPUT_COUNT 2
+static int inputs[INPUT_COUNT];
+
+void PLAT_initInput(void) {
+	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+}
+void PLAT_quitInput(void) {
+	close(inputs[1]);
+	close(inputs[0]);
+}
+
+// from <linux/input.h> which has BTN_ constants that conflict with platform.h
+struct input_event {
+	struct timeval time;
+	__u16 type;
+	__u16 code;
+	__s32 value;
+};
+#define EV_KEY			0x01
+#define EV_ABS			0x03
+
+void PLAT_pollInput(void) {
+	// reset transient state
+	pad.just_pressed = BTN_NONE;
+	pad.just_released = BTN_NONE;
+	pad.just_repeated = BTN_NONE;
+
+	uint32_t tick = SDL_GetTicks();
+	for (int i=0; i<BTN_ID_COUNT; i++) {
+		int btn = 1 << i;
+		if ((pad.is_pressed & btn) && (tick>=pad.repeat_at[i])) {
+			pad.just_repeated |= btn; // set
+			pad.repeat_at[i] += PAD_REPEAT_INTERVAL;
+		}
+	}
+	
+	// the actual poll
+	int input;
+	static struct input_event event;
+	for (int i=0; i<INPUT_COUNT; i++) {
+		input = inputs[i];
+		while (read(input, &event, sizeof(event))==sizeof(event)) {
+			if (event.value>1) continue; // ignore repeats
+			if (event.type!=EV_KEY && event.type!=EV_ABS) continue;
+
+			int btn = BTN_NONE;
+			int pressed = 0; // 0=up,1=down
+			int id = -1;
+			int type = event.type;
+			int code = event.code;
+			int value = event.value;
+			
+			// TODO: tmp, hardcoded, missing some buttons
+			if (type==EV_KEY) {
+				pressed = value;
+				// LOG_info("key event: %i (%i)\n", code,pressed);
+					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
+	 			else if (code==RAW_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
+				else if (code==RAW_LEFT)	{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
+				else if (code==RAW_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
+				else if (code==RAW_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
+				else if (code==RAW_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
+				else if (code==RAW_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
+				else if (code==RAW_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
+				else if (code==RAW_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
+				else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+				else if (code==RAW_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
+				else if (code==RAW_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
+				else if (code==RAW_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
+				else if (code==RAW_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
+				else if (code==RAW_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+				else if (code==RAW_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
+				else if (code==RAW_PLUS)	{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
+				else if (code==RAW_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
+				else if (code==RAW_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+			}
+			else if (type==EV_ABS) {
+				// LOG_info("abs event: %i (%i)\n", code,value);
+				// { up, down, left, right }
+				int hats[4] = {-1,-1,-1,-1}; // -1=no change,1=pressed,0=released
+				if (code==RAW_YAXIS) {
+					hats[0] = value==-1; // up
+					hats[1] = value==1; // down
+				}
+				else if (code==RAW_XAXIS) { // left/right
+					hats[2] = value==-1; // left
+					hats[3] = value==1; // right
+				}
+				
+				for (id=0; id<4; id++) {
+					int state = hats[id];
+					btn = 1 << id;
+					if (state==0) {
+						pad.is_pressed		&= ~btn; // unset
+						pad.just_repeated	&= ~btn; // unset
+						pad.just_released	|= btn; // set
+					}
+					else if (state==1 && (pad.is_pressed & btn)==BTN_NONE) {
+						pad.just_pressed	|= btn; // set
+						pad.just_repeated	|= btn; // set
+						pad.is_pressed		|= btn; // set
+						pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
+					}
+				}
+				btn = BTN_NONE; // already handled, force continue
+			}
+			
+			if (btn==BTN_NONE) continue;
+		
+			if (!pressed) {
+				pad.is_pressed		&= ~btn; // unset
+				pad.just_repeated	&= ~btn; // unset
+				pad.just_released	|= btn; // set
+			}
+			else if ((pad.is_pressed & btn)==BTN_NONE) {
+				pad.just_pressed	|= btn; // set
+				pad.just_repeated	|= btn; // set
+				pad.is_pressed		|= btn; // set
+				pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
+			}
+		}
+	}
+}
+
+int PLAT_shouldWake(void) {
+	int input = inputs[0];
+	static struct input_event event;
+	while (read(input, &event, sizeof(event))==sizeof(event)) {
+		if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) return 1;
+	}
+	return 0;
+}
+
+///////////////////////////////
 
 // based on rgb30 + tg5040 + m17
-
 #define HDMI_STATE_PATH "/sys/class/switch/hdmi/cable.0/state" // TODO: can detect but doesn't update automatically
 
 static struct VID_Context {
-	SDL_Joystick *joystick;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
@@ -45,7 +209,7 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 SDL_Surface* PLAT_initVideo(void) {
-	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
 	// int num_displays = SDL_GetNumVideoDisplays();
@@ -146,8 +310,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	vid.sharpness = SHARPNESS_SOFT;
 	
-	vid.joystick = SDL_JoystickOpen(0);
-	
 	return vid.screen;
 }
 
@@ -161,8 +323,6 @@ static void clearVideo(void) {
 
 void PLAT_quitVideo(void) {
 	// clearVideo();
-	
-	SDL_JoystickClose(vid.joystick);
 
 	SDL_FreeSurface(vid.screen);
 	SDL_FreeSurface(vid.buffer);
@@ -385,7 +545,7 @@ void PLAT_powerOff(void) {
 ///////////////////////////////
 
 void PLAT_setCPUSpeed(int speed) {
-
+	// buh
 }
 
 #define RUMBLE_PATH "/sys/class/power_supply/axp2202-battery/moto"

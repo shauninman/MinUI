@@ -18,8 +18,21 @@
 
 #include "scaler.h"
 
+///////////////////////////////
+
+static SDL_Joystick *joystick;
+void PLAT_initInput(void) {
+	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+	joystick = SDL_JoystickOpen(0);
+}
+void PLAT_quitInput(void) {
+	SDL_JoystickClose(joystick);
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+}
+
+///////////////////////////////
+
 static struct VID_Context {
-	SDL_Joystick *joystick;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
@@ -34,8 +47,7 @@ static struct VID_Context {
 } vid;
 
 SDL_Surface* PLAT_initVideo(void) {
-	
-	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
 	LOG_info("Available video drivers:\n");
@@ -80,8 +92,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.height	= h;
 	vid.pitch	= p;
 	
-	vid.joystick = SDL_JoystickOpen(0);
-	
 	return vid.screen;
 }
 
@@ -101,8 +111,6 @@ static void clearVideo(void) {
 
 void PLAT_quitVideo(void) {
 	clearVideo();
-	
-	SDL_JoystickClose(vid.joystick);
 
 	SDL_FreeSurface(vid.screen);
 	SDL_FreeSurface(vid.buffer);

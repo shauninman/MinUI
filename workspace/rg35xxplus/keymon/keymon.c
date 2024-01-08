@@ -21,7 +21,7 @@
 #define BRIGHTNESS_MAX 	10
 
 // uses different codes from SDL
-#define CODE_MENU		312
+#define CODE_MENU		312 // but also 354
 #define CODE_PLUS		115
 #define CODE_MINUS		114
 

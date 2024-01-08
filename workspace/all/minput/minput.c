@@ -45,6 +45,7 @@ int main(int argc , char* argv[]) {
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
+	PAD_init();
 	PWR_init();
 	InitSettings();
 	
@@ -264,6 +265,7 @@ int main(int argc , char* argv[]) {
 	
 	QuitSettings();
 	PWR_quit();
+	PAD_quit();
 	GFX_quit();
 	
 	return EXIT_SUCCESS;

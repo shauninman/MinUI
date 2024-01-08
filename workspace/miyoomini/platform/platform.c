@@ -151,6 +151,15 @@ static inline void GFX_BlitSurfaceExec(SDL_Surface *src, SDL_Rect *srcrect, SDL_
 
 ///////////////////////////////
 
+void PLAT_initInput(void) {
+	// buh
+}
+void PLAT_quitInput(void) {
+	// buh
+}
+
+///////////////////////////////
+
 typedef struct HWBuffer {
 	MI_PHY padd;
 	void* vadd;

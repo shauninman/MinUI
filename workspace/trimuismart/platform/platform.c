@@ -22,6 +22,15 @@
 #include "scaler.h"
 
 ///////////////////////////////
+
+void PLAT_initInput(void) {
+	// buh
+}
+void PLAT_quitInput(void) {
+	// buh
+}
+
+///////////////////////////////
 // 100% eggs
 
 #define FB_CH (0)

@@ -20,6 +20,15 @@
 
 ///////////////////////////////
 
+void PLAT_initInput(void) {
+	// buh
+}
+void PLAT_quitInput(void) {
+	// buh
+}
+
+///////////////////////////////
+
 static struct VID_Context {
 	SDL_Surface* screen;
 	GFX_Renderer* renderer;

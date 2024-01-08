@@ -4036,6 +4036,7 @@ int main(int argc , char* argv[]) {
 	getEmuName(rom_path, tag_name);
 	
 	screen = GFX_init(MODE_MENU);
+	PAD_init();
 	DEVICE_WIDTH = screen->w; // yea or nay?
 	DEVICE_HEIGHT = screen->h; // yea or nay?
 	DEVICE_PITCH = screen->pitch; // yea or nay?
@@ -4123,6 +4124,7 @@ finish:
 	PWR_quit();
 	VIB_quit();
 	SND_quit();
+	PAD_quit();
 	GFX_quit();
 	
 	buffer_dealloc();
