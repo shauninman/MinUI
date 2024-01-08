@@ -56,7 +56,7 @@ RG35XX PLUS
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
 
-Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the NO NAME partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
+Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the "NO NAME" partition (FAT32 with an "anbernic" folder) of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
 ----------------------------------------
 Updating
