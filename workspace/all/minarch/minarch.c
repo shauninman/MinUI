@@ -793,7 +793,7 @@ static struct Config {
 	int loaded;
 	int initialized;
 } config = {
-	.frontend = (OptionList){
+	.frontend = { // (OptionList)
 		.count = FE_OPT_COUNT,
 		.options = (Option[]){
 			[FE_OPT_SCALING] = {
@@ -863,7 +863,7 @@ static struct Config {
 			[FE_OPT_COUNT] = {NULL}
 		}
 	},
-	.core = (OptionList){
+	.core = { // (OptionList)
 		.count = 0,
 		.options = (Option[]){
 			{NULL},

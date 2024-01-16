@@ -65,34 +65,34 @@ static struct GFX_Context {
 } gfx;
 
 static SDL_Rect asset_rects[] = {
-	[ASSET_WHITE_PILL]		= (SDL_Rect){SCALE4( 1, 1,30,30)},
-	[ASSET_BLACK_PILL]		= (SDL_Rect){SCALE4(33, 1,30,30)},
-	[ASSET_DARK_GRAY_PILL]	= (SDL_Rect){SCALE4(65, 1,30,30)},
-	[ASSET_OPTION]			= (SDL_Rect){SCALE4(97, 1,20,20)},
-	[ASSET_BUTTON]			= (SDL_Rect){SCALE4( 1,33,20,20)},
-	[ASSET_PAGE_BG]			= (SDL_Rect){SCALE4(64,33,15,15)},
-	[ASSET_STATE_BG]		= (SDL_Rect){SCALE4(23,54, 8, 8)},
-	[ASSET_PAGE]			= (SDL_Rect){SCALE4(39,54, 6, 6)},
-	[ASSET_BAR]				= (SDL_Rect){SCALE4(33,58, 4, 4)},
-	[ASSET_BAR_BG]			= (SDL_Rect){SCALE4(15,55, 4, 4)},
-	[ASSET_BAR_BG_MENU]		= (SDL_Rect){SCALE4(85,56, 4, 4)},
-	[ASSET_UNDERLINE]		= (SDL_Rect){SCALE4(85,51, 3, 3)},
-	[ASSET_DOT]				= (SDL_Rect){SCALE4(33,54, 2, 2)},
+	[ASSET_WHITE_PILL]		= {SCALE4( 1, 1,30,30)},
+	[ASSET_BLACK_PILL]		= {SCALE4(33, 1,30,30)},
+	[ASSET_DARK_GRAY_PILL]	= {SCALE4(65, 1,30,30)},
+	[ASSET_OPTION]			= {SCALE4(97, 1,20,20)},
+	[ASSET_BUTTON]			= {SCALE4( 1,33,20,20)},
+	[ASSET_PAGE_BG]			= {SCALE4(64,33,15,15)},
+	[ASSET_STATE_BG]		= {SCALE4(23,54, 8, 8)},
+	[ASSET_PAGE]			= {SCALE4(39,54, 6, 6)},
+	[ASSET_BAR]				= {SCALE4(33,58, 4, 4)},
+	[ASSET_BAR_BG]			= {SCALE4(15,55, 4, 4)},
+	[ASSET_BAR_BG_MENU]		= {SCALE4(85,56, 4, 4)},
+	[ASSET_UNDERLINE]		= {SCALE4(85,51, 3, 3)},
+	[ASSET_DOT]				= {SCALE4(33,54, 2, 2)},
 	
-	[ASSET_BRIGHTNESS]		= (SDL_Rect){SCALE4(23,33,19,19)},
-	[ASSET_VOLUME_MUTE]		= (SDL_Rect){SCALE4(44,33,10,16)},
-	[ASSET_VOLUME]			= (SDL_Rect){SCALE4(44,33,18,16)},
-	[ASSET_BATTERY]			= (SDL_Rect){SCALE4(47,51,17,10)},
-	[ASSET_BATTERY_LOW]		= (SDL_Rect){SCALE4(66,51,17,10)},
-	[ASSET_BATTERY_FILL]	= (SDL_Rect){SCALE4(81,33,12, 6)},
-	[ASSET_BATTERY_FILL_LOW]= (SDL_Rect){SCALE4( 1,55,12, 6)},
-	[ASSET_BATTERY_BOLT]	= (SDL_Rect){SCALE4(81,41,12, 6)},
+	[ASSET_BRIGHTNESS]		= {SCALE4(23,33,19,19)},
+	[ASSET_VOLUME_MUTE]		= {SCALE4(44,33,10,16)},
+	[ASSET_VOLUME]			= {SCALE4(44,33,18,16)},
+	[ASSET_BATTERY]			= {SCALE4(47,51,17,10)},
+	[ASSET_BATTERY_LOW]		= {SCALE4(66,51,17,10)},
+	[ASSET_BATTERY_FILL]	= {SCALE4(81,33,12, 6)},
+	[ASSET_BATTERY_FILL_LOW]= {SCALE4( 1,55,12, 6)},
+	[ASSET_BATTERY_BOLT]	= {SCALE4(81,41,12, 6)},
 	
-	[ASSET_SCROLL_UP]		= (SDL_Rect){SCALE4(97,23,24, 6)},
-	[ASSET_SCROLL_DOWN]		= (SDL_Rect){SCALE4(97,31,24, 6)},
+	[ASSET_SCROLL_UP]		= {SCALE4(97,23,24, 6)},
+	[ASSET_SCROLL_DOWN]		= {SCALE4(97,31,24, 6)},
 
-	[ASSET_WIFI]			= (SDL_Rect){SCALE4(95,39,14,10)},
-	[ASSET_HOLE]			= (SDL_Rect){SCALE4( 1,63,20,20)},
+	[ASSET_WIFI]			= {SCALE4(95,39,14,10)},
+	[ASSET_HOLE]			= {SCALE4( 1,63,20,20)},
 };
 static uint32_t asset_rgbs[ASSET_COLORS];
 GFX_Fonts font;
@@ -1535,6 +1535,7 @@ static void PWR_waitForWake(void) {
 			else PWR_powerOff();
 		}
 	}
+	
 	return;
 }
 void PWR_fauxSleep(void) {
@@ -1543,6 +1544,7 @@ void PWR_fauxSleep(void) {
 	PWR_enterSleep();
 	PWR_waitForWake();
 	PWR_exitSleep();
+	PAD_reset();
 }
 
 void PWR_disableAutosleep(void) {
