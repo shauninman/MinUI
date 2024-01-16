@@ -13,9 +13,25 @@ EXTRAS
 next
 	unzip60
 		rename Makefile.trimuismartpro to just Makefile.minui?
-	35xxplus
+	gkdpixel
+		graphics
+			jitter while scrolling
+			but only on randon launches
+			othertimes it's perfectly smooth (same core, same game)
+		
+		create toolchain repo
+		build
+			test install/update
+		readme
+		shutdown
+			not powering off now
+			do I need to kill keymon?
+	35xxplus/h
+		I bet this processes input received during sleep...
 		auto.sh isn't working here
 		figure out
+			judder
+				vsync?
 			audio crackle on quit sdl
 				setting raw volume to 0 doesn't fix
 			implement jack

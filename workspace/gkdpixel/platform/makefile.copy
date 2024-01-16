@@ -1,0 +1,4 @@
+$(PLATFORM):
+	cp ./workspace/$@/install/install.sh ./build/SYSTEM/$@/bin/
+	cp ./workspace/$@/boot/boot.sh ./build/SYSTEM/$@/dat/
+	cp -r ./workspace/$@/boot/ ./build/BASE/$@/

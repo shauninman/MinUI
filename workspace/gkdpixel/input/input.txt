@@ -1,0 +1,94 @@
+path 0: /dev/input/event0
+path 1: /dev/input/event1
+path 2: /dev/input/event2
+path 3: /dev/input/event3
+
+input: 0 type:1 code:103 value:1	UP
+input: 2 type:1 code:103 value:1
+input: 0 type:1 code:103 value:0
+input: 2 type:1 code:103 value:0
+
+input: 0 type:1 code:108 value:1	DOWN
+input: 2 type:1 code:108 value:1
+input: 0 type:1 code:108 value:0
+input: 2 type:1 code:108 value:0
+
+input: 0 type:1 code:105 value:1	LEFT
+input: 2 type:1 code:105 value:1
+input: 0 type:1 code:105 value:0
+input: 2 type:1 code:105 value:0
+
+input: 0 type:1 code:106 value:1	RIGHT
+input: 2 type:1 code:106 value:1
+input: 0 type:1 code:106 value:0
+input: 2 type:1 code:106 value:0
+
+input: 0 type:1 code:57 value:1		X
+input: 2 type:1 code:57 value:1
+input: 0 type:1 code:57 value:0
+input: 2 type:1 code:57 value:0
+
+input: 0 type:1 code:56 value:1		B
+input: 2 type:1 code:56 value:1
+input: 0 type:1 code:56 value:0
+input: 2 type:1 code:56 value:0
+
+input: 0 type:1 code:42 value:1		Y
+input: 2 type:1 code:42 value:1
+input: 0 type:1 code:42 value:0
+input: 2 type:1 code:42 value:0
+
+input: 0 type:1 code:29 value:1		A
+input: 2 type:1 code:29 value:1
+input: 0 type:1 code:29 value:0
+input: 2 type:1 code:29 value:0
+
+input: 0 type:1 code:1 value:1		SELECT
+input: 2 type:1 code:1 value:1
+input: 0 type:1 code:1 value:0
+input: 2 type:1 code:1 value:0
+
+input: 0 type:1 code:28 value:1		START
+input: 2 type:1 code:28 value:1
+input: 0 type:1 code:28 value:0
+input: 2 type:1 code:28 value:0
+
+input: 0 type:1 code:15 value:1		L1
+input: 2 type:1 code:15 value:1
+input: 0 type:1 code:15 value:0
+input: 2 type:1 code:15 value:0
+
+input: 0 type:1 code:104 value:1	L2
+input: 2 type:1 code:104 value:1
+input: 0 type:1 code:104 value:0
+input: 2 type:1 code:104 value:0
+
+input: 0 type:1 code:109 value:1	R2
+input: 2 type:1 code:109 value:1
+input: 0 type:1 code:109 value:0
+input: 2 type:1 code:109 value:0
+
+input: 0 type:1 code:14 value:1		R1
+input: 2 type:1 code:14 value:1
+input: 0 type:1 code:14 value:0
+input: 2 type:1 code:14 value:0
+
+input: 0 type:1 code:78 value:1		PLUS
+input: 2 type:1 code:78 value:1
+input: 0 type:1 code:78 value:0
+input: 2 type:1 code:78 value:0
+
+input: 0 type:1 code:74 value:1		MINUS
+input: 2 type:1 code:74 value:1
+input: 0 type:1 code:74 value:0
+input: 2 type:1 code:74 value:0
+
+input: 0 type:1 code:102 value:1	MENU
+input: 2 type:1 code:102 value:1
+input: 0 type:1 code:102 value:0
+input: 2 type:1 code:102 value:0
+
+input: 3 type:1 code:116 value:1	POWER (killall -9 power_daemon)
+input: 3 type:1 code:116 value:0
+input: 3 type:1 code:116 value:1
+input: 3 type:1 code:116 value:0

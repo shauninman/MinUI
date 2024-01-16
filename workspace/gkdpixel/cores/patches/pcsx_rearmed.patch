@@ -1,0 +1,44 @@
+diff --git a/Makefile.libretro b/Makefile.libretro
+index 1169d89..0746529 100644
+--- a/Makefile.libretro
++++ b/Makefile.libretro
+@@ -530,6 +530,19 @@ else ifneq (,$(findstring armv,$(platform)))
+ 	ARCH = arm
+ 	DYNAREC = ari64
+ 
++# GCW0
++else ifeq ($(platform), gcw0)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
++	CXX = /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
++	fpic := -fPIC
++	CFLAGS += -fomit-frame-pointer -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
++	CFLAGS += -D_DINGUX -std=gnu99
++	ARCH = mips
++	BUILTIN_GPU = unai
++	DYNAREC = lightrec
++	HAVE_NEON = 0
++
+ else ifeq ($(platform), miyoo)
+ 	TARGET := $(TARGET_NAME)_libretro.so
+ 	fpic := -fPIC
+diff --git a/deps/lightrec/lightrec-private.h b/deps/lightrec/lightrec-private.h
+index 0df9f93..1174f6c 100644
+--- a/deps/lightrec/lightrec-private.h
++++ b/deps/lightrec/lightrec-private.h
+@@ -56,11 +56,11 @@
+ #define SET_DEFAULT_ELM(table, value) [0] = NULL
+ #endif
+ 
+-#if __has_attribute(__fallthrough__)
+-#	define fallthrough	__attribute__((__fallthrough__))
+-#else
++// #if __has_attribute(__fallthrough__)
++// #	define fallthrough	__attribute__((__fallthrough__))
++// #else
+ #	define fallthrough	do {} while (0)  /* fallthrough */
+-#endif
++// #endif
+ 
+ #define container_of(ptr, type, member) \
+ 	((type *)((void *)(ptr) - offsetof(type, member)))
