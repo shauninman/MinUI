@@ -2119,7 +2119,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			dst_p = DEVICE_PITCH;
 			dst_x = (DEVICE_WIDTH  - dst_w) / 2;
 			dst_y = (DEVICE_HEIGHT - dst_h) / 2;
-			scale = scale_f==1.0 ? 1 : -1;
+			scale = (scale_f==1.0 && dst_w==src_w && dst_h==src_h) ? 1 : -1;
 		}
 	}
 	else {
