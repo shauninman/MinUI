@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), M17, and RG35XX (and Plus)--all from the same SD card. Why? Why not?
+MinUI is a minimal launcher for the RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), M17, and RG35XX (and Plus/H)--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -52,7 +52,7 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 
 Copy "/rg35xx/dmenu.bin" (just the file) to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
-RG35XX PLUS
+RG35XX PLUS / H
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
 
