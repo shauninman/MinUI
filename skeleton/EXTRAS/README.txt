@@ -26,6 +26,9 @@ MGBA: gba_bios.bin
  PCE: syscard3.pce
  PKM: bios.min
  SGB: sgb.bios
+ MD: bios_CD_E.bin (for SegaCD european games)
+ MD: bios_CD_J.bin (for SegaCD japan games)
+ MD: bios_CD_U.bin (for SegaCD USA games)
 
 ----------------------------------------
 Splore.pak (RGB30-only)
