@@ -25,7 +25,7 @@ bump() {
 }
 
 {
-	tell UNION
+	tell MINUI
 	show ./
 	bump
 	
@@ -63,11 +63,6 @@ bump() {
 	# echo CORES
 	# list ./workspace/trimui/cores/src
 	# bump
-	#
-	# tell RGNANO
-	# echo CORES
-	# list ./workspace/nano/cores/src
-	# bump
 
 	tell RGB30
 	show ./workspace/rgb30/other/DinguxCommander
@@ -76,7 +71,6 @@ bump() {
 	bump
 
 	tell TG5040
-	show ./workspace/tg5040/other/evtest
 	show ./workspace/tg5040/other/unzip60
 	echo CORES
 	list ./workspace/tg5040/cores/src
@@ -88,8 +82,14 @@ bump() {
 	bump
 	
 	tell RG35XXPLUS
+	show ./workspace/tg5040/other/unzip60
 	echo CORES
-	list ./workspace/rg35xxplus/cores/src
+	list ./workspace/rg35xx/cores/src # just copied from normal rg35xx
+	bump
+	
+	tell GKDPIXEL
+	echo CORES
+	list ./workspace/gkdpixel/cores/src
 	bump
 
 } | sed 's/\n/ /g'

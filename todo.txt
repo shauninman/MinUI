@@ -2,8 +2,9 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- rg35xxplus: added RG35XX H support
 - gkdpixel: initial support (_very_ alpha)
+- rg35xxplus: added RG35XX H support
+- rg35xxplus: disable led when screen is on
 - all: removed xrgb8888 support for now (buggy)
 
 EXTRAS
@@ -14,11 +15,9 @@ EXTRAS
 
 next
 	test on all devices
-	test queued input during sleep on rg35xxplus/h
 	update changelog
 	
 	35xxplus/h
-		I bet this processes input received during sleep...
 		auto.sh isn't working here
 		figure out
 			judder
@@ -46,6 +45,9 @@ next
 			look into standalones for console specific scalers
 			regba had a good subpixel scaler
 			subpixel scaler work is underway
+				gb/gbc
+				gba
+				nes/snes
 				
 			
 		readme
@@ -56,11 +58,11 @@ next
 		prevent installing on unsupported revisions?
 		found stray SDL.tar and SDL_.tar files in workspace and mention of extra-libs.tar in install.sh but no other mention
 			is this left over from an old workflow?
-		test changes from vid.blit->src_* to vid.blit->true_* (may not be necessary but I don't think it should hurt anything)
 		still haven't found way to disable volume controls
 			I think it's controlled by /usr/bin/gpio-volctrl.sh
 			but rootfs is a 500MB ro squashfs so patching isn't really ideal
 	all
+		investigate Clock.pak issues (timezone related primarily)
 		evtest
 			random note: doesn't know about /dev/input/js0?
 		standarize /bin/shutdown
@@ -68,12 +70,11 @@ next
 			just system("rm /tmp/minui_exec") and exit(0) ?
 		.res
 			use standard naming (replace ext with png instead of append png)
-		commits.txt is missing newer platforms
 		better document the new Bootlogo.paks
 		
 		collections can't handle accented characters (eg. é) in path/rom name...
 			wait, why can recents.txt but not collections.txt?
-			because one is written by the system so its using native accented chars
+			because one is written by the device so its using device native accented chars
 		update stored rom path logic to only require TAG and not full folder name? (would simplify Collection authoring?)
 		add make fetch to get all external sources before build?
 		add Developer.pak
@@ -97,7 +98,6 @@ next
 			using pixel instead of default font so it will fit on things like PKM and GB*
 		
 	smartpro
-		Clock.pak doesn't work?
 		can't detect headphone state at boot?
 		standalone volume starts at max (why?)
 			psp uses dsp so maybe a different audio path? volume buttons don't work to change but the Global Volume setting in ppsspp settings does...
@@ -105,14 +105,13 @@ next
 					but only sometimes?
 			ds can be controlled by volume buttons
 				but only sometimes
-		can nds scaling be fixed (it's blurry for no reason)
+		can nds scaling be fixed (it's blurry for no good reason)
 		n64
 			requires libretro opengl implementation
 		psp
 			after adding xrgb8888 support to MinUI it still chokes on a number of missing libraries 
 			and eventually an unlinked function (something like XUnlockMutex)
 	
-		
 	sdl2
 		figure out how analogs work and hook them up (if only to double d-pad)
 	
@@ -122,11 +121,8 @@ next
 				can't reproduce
 				already waits 3 seconds
 			then rgb30
+			related to orphaned clusters issue?
 		
-		install on rg35xx, install on smart doesn't work
-			but smart to rg35xx does
-			couldn't reproduce (possibly result of confusion over model s trimui.zip)
-
 	move PLAT_isOnline() into PWR_* formally
 			
 	all
