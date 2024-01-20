@@ -1653,8 +1653,8 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 
 		if (*format != RETRO_PIXEL_FORMAT_RGB565) { // TODO: pull from platform.h?
 			/* 565 is only supported format */
-			downsample = 1;
-			// return false;
+			return false;
+			// downsample = 1; // TODO: not ready for primetime yet
 		}
 		break;
 	}
