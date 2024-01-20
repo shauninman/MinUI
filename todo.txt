@@ -2,7 +2,8 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- 
+- rg35xx: added RG35XX H support
+- gkdpixel: initial support (_very_ alpha)
 
 EXTRAS
 
@@ -11,21 +12,12 @@ EXTRAS
 ---
 
 next
-	unzip60
-		rename Makefile.trimuismartpro to just Makefile.minui?
-	gkdpixel
-		graphics
-			jitter while scrolling
-			but only on randon launches
-			othertimes it's perfectly smooth (same core, same game)
-		
-		create toolchain repo
-		build
-			test install/update
-		readme
-		shutdown
-			not powering off now
-			do I need to kill keymon?
+	tg5040
+		test CPS2.pak for squished screen
+			suspect xrgb8888 addition (interaction with scalers that expect rgb565, 16 vs 32bpp)
+			just disable it for now since it's not working anyway
+
+
 	35xxplus/h
 		I bet this processes input received during sleep...
 		auto.sh isn't working here
@@ -39,6 +31,25 @@ next
 			check hdmi
 				nothing
 				/dev/hdmi?
+
+	unzip60
+		rename Makefile.trimuismartpro to just Makefile.minui?
+	gkdpixel
+		light bleed
+			experiement with /sys/devices/platform/jz-pwm-dev.0/jz-pwm/pwm0/period
+				default is 10000
+				nothing
+		graphics
+			jitter while scrolling
+			but only on randon launches
+			othertimes it's perfectly smooth (same core, same game)
+		scaling
+			look into standalones for console specific scalers
+			regba had a good subpixel scaler
+			subpixel scaler work is underway
+				
+			
+		readme
 	
 	native Files.pak
 		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)

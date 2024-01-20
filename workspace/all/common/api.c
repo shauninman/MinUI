@@ -154,6 +154,11 @@ SDL_Surface* GFX_init(int mode) {
 	font.small 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_SMALL));
 	font.tiny 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_TINY));
 	
+	TTF_SetFontStyle(font.large, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.medium, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.small, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.tiny, TTF_STYLE_BOLD);
+	
 	return gfx.screen;
 }
 void GFX_quit(void) {
