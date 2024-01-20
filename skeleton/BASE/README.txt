@@ -116,6 +116,9 @@ Bios file names are case-sensitive:
    GB: gb_bios.bin
   GBA: gba_bios.bin
   GBC: gbc_bios.bin
+   MD: bios_CD_E.bin
+       bios_CD_J.bin
+	   bios_CD_U.bin
    PS: psxonpsp660.bin
 	
 ----------------------------------------
