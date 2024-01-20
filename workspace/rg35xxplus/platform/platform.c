@@ -572,7 +572,8 @@ int PLAT_pickSampleRate(int requested, int max) {
 
 static char model[256];
 char* PLAT_getModel(void) {
-	return "RG35XX Plus";
+	// sadly there is nothing distinguishable about the hardware...
+	return "RG35XX Plus/H";
 }
 
 int PLAT_isOnline(void) {

@@ -2,8 +2,9 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- rg35xx: added RG35XX H support
+- rg35xxplus: added RG35XX H support
 - gkdpixel: initial support (_very_ alpha)
+- all: removed xrgb8888 support for now (buggy)
 
 EXTRAS
 
@@ -12,12 +13,10 @@ EXTRAS
 ---
 
 next
-	tg5040
-		test CPS2.pak for squished screen
-			suspect xrgb8888 addition (interaction with scalers that expect rgb565, 16 vs 32bpp)
-			just disable it for now since it's not working anyway
-
-
+	test on all devices
+	test queued input during sleep on rg35xxplus/h
+	update changelog
+	
 	35xxplus/h
 		I bet this processes input received during sleep...
 		auto.sh isn't working here
