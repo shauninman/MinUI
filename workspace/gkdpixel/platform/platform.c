@@ -20,108 +20,12 @@
 
 ///////////////////////////////
 
-// TODO: not necessary
-#define INPUT_COUNT 2
-static int inputs[INPUT_COUNT];
-
 void PLAT_initInput(void) {
-	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK);
-	inputs[1] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK);
+	// buh
 }
+
 void PLAT_quitInput(void) {
-	close(inputs[1]);
-	close(inputs[0]);
-}
-
-// from <linux/input.h> which has BTN_ constants that conflict with platform.h
-struct input_event {
-	struct timeval time;
-	__u16 type;
-	__u16 code;
-	__s32 value;
-};
-#define EV_KEY			0x01
-
-void PLAT_pollInput(void) {
-	// reset transient state
-	pad.just_pressed = BTN_NONE;
-	pad.just_released = BTN_NONE;
-	pad.just_repeated = BTN_NONE;
-
-	uint32_t tick = SDL_GetTicks();
-	for (int i=0; i<BTN_ID_COUNT; i++) {
-		int btn = 1 << i;
-		if ((pad.is_pressed & btn) && (tick>=pad.repeat_at[i])) {
-			pad.just_repeated |= btn; // set
-			pad.repeat_at[i] += PAD_REPEAT_INTERVAL;
-		}
-	}
-	
-	// the actual poll
-	int input;
-	static struct input_event event;
-	for (int i=0; i<INPUT_COUNT; i++) {
-		input = inputs[i];
-		while (read(input, &event, sizeof(event))==sizeof(event)) {
-			if (event.value>1) continue; // ignore repeats
-			if (event.type!=EV_KEY) continue;
-
-			int btn = BTN_NONE;
-			int pressed = 0; // 0=up,1=down
-			int id = -1;
-			int type = event.type;
-			int code = event.code;
-			int value = event.value;
-			
-			// TODO: tmp, hardcoded, missing some buttons
-			if (type==EV_KEY) {
-				pressed = value;
-				// LOG_info("key event: %i (%i) ticks: %i\n", code,pressed,tick);
-					 if (code==CODE_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
-	 			else if (code==CODE_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
-				else if (code==CODE_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
-				else if (code==CODE_RIGHT)		{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
-				else if (code==CODE_A)			{ btn = BTN_A; 			id = BTN_ID_A; }
-				else if (code==CODE_B)			{ btn = BTN_B; 			id = BTN_ID_B; }
-				else if (code==CODE_X)			{ btn = BTN_X; 			id = BTN_ID_X; }
-				else if (code==CODE_Y)			{ btn = BTN_Y; 			id = BTN_ID_Y; }
-				else if (code==CODE_START)		{ btn = BTN_START; 		id = BTN_ID_START; }
-				else if (code==CODE_SELECT)		{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-				else if (code==CODE_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==CODE_L1)			{ btn = BTN_L1; 		id = BTN_ID_L1; }
-				else if (code==CODE_L2)			{ btn = BTN_L2; 		id = BTN_ID_L2; }
-				else if (code==CODE_R1)			{ btn = BTN_R1; 		id = BTN_ID_R1; }
-				else if (code==CODE_R2)			{ btn = BTN_R2; 		id = BTN_ID_R2; }
-				else if (code==CODE_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
-				else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
-				else if (code==CODE_POWER)		{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
-				else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF; 	id = BTN_ID_POWEROFF; }
-			}
-			
-			if (btn==BTN_NONE) continue;
-		
-			if (!pressed) {
-				pad.is_pressed		&= ~btn; // unset
-				pad.just_repeated	&= ~btn; // unset
-				pad.just_released	|= btn; // set
-			}
-			else if ((pad.is_pressed & btn)==BTN_NONE) {
-				pad.just_pressed	|= btn; // set
-				pad.just_repeated	|= btn; // set
-				pad.is_pressed		|= btn; // set
-				pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
-			}
-		}
-	}
-}
-
-int PLAT_shouldWake(void) {
-	int input = inputs[1];
-	static struct input_event event;
-	while (read(input, &event, sizeof(event))==sizeof(event)) {
-		if (event.type==EV_KEY && event.code==CODE_POWER && event.value==0) return 1;
-	}
-	return 0;
+	// buh
 }
 
 ///////////////////////////////
