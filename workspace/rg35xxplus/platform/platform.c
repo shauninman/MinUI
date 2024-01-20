@@ -175,10 +175,13 @@ void PLAT_pollInput(void) {
 }
 
 int PLAT_shouldWake(void) {
-	int input = inputs[0];
+	int input;
 	static struct input_event event;
-	while (read(input, &event, sizeof(event))==sizeof(event)) {
-		if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) return 1;
+	for (int i=0; i<INPUT_COUNT; i++) {
+		input = inputs[i];
+		while (read(input, &event, sizeof(event))==sizeof(event)) {
+			if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) return 1;
+		}
 	}
 	return 0;
 }
