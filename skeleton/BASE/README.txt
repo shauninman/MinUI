@@ -58,6 +58,14 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 
 Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the "NO NAME" partition (FAT32 with an "anbernic" folder) of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
+GKD PIXEL
+
+Backup your stock SD card (not just the "ROMS" partition but the entire thing). If you like to live on the edge just create a folder named "stock" on the "ROMS" partition and copy everything into that folder.
+
+Copy the "gkdpixel" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+
+Boot stock, navigate to the "APP" folder and launch "file manager". Press right twice to highlight the right column. Press down and highlight the "gkdpixel" folder and press A to open. Highlight the "install.sh" file and press A to open a menu. Press down to highlight "Execute" and press A to install MinUI.
+
 ----------------------------------------
 Updating
 
@@ -73,7 +81,7 @@ For devices without a dedicated MENU button
 	RGB30: use L3 or R3 for MENU
 	M17:   use + or - for MENU
 
-RGB30 / MIYOO MINI PLUS / RG35XX (PLUS) / TRIMUI SMART PRO
+RGB30 / MIYOO MINI PLUS / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
@@ -83,7 +91,7 @@ MIYOO MINI / TRIMUI SMART / M17
   Volume: SELECT + L or R
   Brightness: START + L or R1
 
-RGB30 / MIYOO MINI (PLUS) / RG35XX (PLUS) / TRIMUI SMART PRO
+RGB30 / MIYOO MINI (PLUS) / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL
   
   Sleep: POWER
   Wake: POWER
