@@ -2,10 +2,7 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- gkdpixel: initial support (_very_ alpha)
-- rg35xxplus: added RG35XX H support
-- rg35xxplus: disable led when screen is on
-- all: removed xrgb8888 support for now (buggy)
+- 
 
 EXTRAS
 
@@ -14,9 +11,6 @@ EXTRAS
 ---
 
 next
-	test on all devices
-	update changelog
-	
 	35xxplus/h
 		auto.sh isn't working here
 		figure out
@@ -33,6 +27,8 @@ next
 	unzip60
 		rename Makefile.trimuismartpro to just Makefile.minui?
 	gkdpixel
+		non-plus snes9x2005 for perf?
+		codify alt paks to use stock standalone emus in MinUI
 		light bleed
 			experiement with /sys/devices/platform/jz-pwm-dev.0/jz-pwm/pwm0/period
 				default is 10000
@@ -41,10 +37,7 @@ next
 			jitter while scrolling
 			but only on randon launches
 			othertimes it's perfectly smooth (same core, same game)
-		scaling
-			look into standalones for console specific scalers
-			regba had a good subpixel scaler
-			subpixel scaler work is underway
+		subpixel scaler work underway
 				gb/gbc
 				gba
 				nes/snes

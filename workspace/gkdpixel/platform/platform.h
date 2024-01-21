@@ -57,6 +57,7 @@
 #define CODE_R3			CODE_NA
 
 #define CODE_MENU		102
+#define CODE_MENU_ALT	107
 #define CODE_POWER		116
 #define CODE_POWEROFF	68
 
