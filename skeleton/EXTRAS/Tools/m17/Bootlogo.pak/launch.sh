@@ -38,8 +38,14 @@ else
 	if [ "$SIGNATURE" = "BM" ]; then
 		echo "Rev B"
 	else
-		echo "Rev unknown. Aborted."
-		exit 1
+		OFFSET=4046848 # rev C
+		SIGNATURE=`dd if=/dev/block/by-name/boot bs=1 skip=$OFFSET count=2 status=none`
+		if [ "$SIGNATURE" = "BM" ]; then
+			echo "Rev C"
+		else
+			echo "Rev unknown. Aborted."
+			exit 1
+		fi
 	fi
 fi
 

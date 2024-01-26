@@ -32,7 +32,8 @@
 #define RELEASED	0
 #define PRESSED		1
 
-static int	input_fd = 0;
+#define INPUT_COUNT 4
+static int inputs[INPUT_COUNT];
 static struct input_event ev;
 
 static pthread_t ports_pt;
@@ -72,7 +73,11 @@ int main (int argc, char *argv[]) {
 	InitSettings();
 	pthread_create(&ports_pt, NULL, &watchPorts, NULL);
 	
-	input_fd = open("/dev/input/event2", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	char path[256];
+	for (int i=0; i<INPUT_COUNT; i++) {
+		sprintf(path, "/dev/input/event%i", i);
+		inputs[i] = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	}
 	
 	// TODO: make sure manually handling repeat is necessary on this device
 	uint32_t input;
@@ -95,34 +100,37 @@ int main (int argc, char *argv[]) {
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;
 		
-		while(read(input_fd, &ev, sizeof(ev))==sizeof(ev)) {
-			if (ev.type != EV_KEY ) continue;
-			val = ev.value;
+		int input;
+		static struct input_event event;
+		for (int i=0; i<INPUT_COUNT; i++) {
+			input = inputs[i];
 			
-			switch (ev.code) {
-				case CODE_START:
-					start_pressed = val;
-				break;
-				case CODE_SELECT:
-					select_pressed = val;
-				break;
-				case CODE_R1:
-					up_pressed = up_just_pressed = val;
-					if (val) up_repeat_at = now + 300;
-				break;
-				case CODE_L1:
-					down_pressed = down_just_pressed = val;
-					if (val) down_repeat_at = now + 300;
-				break;
-				case CODE_PLUS:
-				case CODE_MINUS:
-					// cancel out hardcoded volume button behavior
-					system("echo 0 > /data/volctrl");
-					system("echo 0 > /sys/devices/platform/0gpio-keys/scaled");
-					SetVolume(GetVolume());
-				break;
-				default:
-				break;
+			while(read(input, &ev, sizeof(ev))==sizeof(ev)) {
+				if (ev.type != EV_KEY ) continue;
+				val = ev.value;
+				switch (ev.code) {
+					case CODE_START:
+						start_pressed = val;
+					break;
+					case CODE_SELECT:
+						select_pressed = val;
+					break;
+					case CODE_R1:
+						up_pressed = up_just_pressed = val;
+						if (val) up_repeat_at = now + 300;
+					break;
+					case CODE_L1:
+						down_pressed = down_just_pressed = val;
+						if (val) down_repeat_at = now + 300;
+					break;
+					case CODE_PLUS:
+					case CODE_MINUS:
+						system("echo 0 > /sys/devices/platform/0gpio-keys/scaled");
+						SetVolume(GetVolume());
+					break;
+					default:
+					break;
+				}
 			}
 		}
 		
