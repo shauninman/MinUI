@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
@@ -1212,6 +1211,7 @@ void PAD_poll_SDL(void) {
 				btn = BTN_NONE;
 			}
 		}
+		else if (event.type==SDL_QUIT) PWR_powerOff();
 		
 		if (btn==BTN_NONE) continue;
 		
