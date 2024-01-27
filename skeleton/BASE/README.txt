@@ -58,13 +58,13 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 
 Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the "NO NAME" partition (FAT32 with an "anbernic" folder) of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
-GKD PIXEL
+GKD PIXEL / GKD MINI
 
 Backup your stock SD card (not just the "ROMS" partition but the entire thing). If you like to live on the edge just create a folder named "stock" on the "ROMS" partition and copy everything into that folder.
 
-Copy the "gkdpixel" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "gkdpixel" folder and "MinUI.zip" (without unzipping) to the root of the "ROMS" partition of the SD card. (On the GKD Mini should be TF1.)
 
-Boot stock, navigate to the "APP" folder and launch "file manager". Press right twice to highlight the right column. Press down and highlight the "gkdpixel" folder and press A to open. Highlight the "install.sh" file and press A to open a menu. Press down to highlight "Execute" and press A to install MinUI.
+Boot stock, navigate to the "APP" folder and launch "file manager". Then use the d-pad and A button to navigate to "/media/roms/gkdpixel". Highlight the "install.sh" file and press A to open a menu and select "Execute" to install MinUI.
 
 ----------------------------------------
 Updating
