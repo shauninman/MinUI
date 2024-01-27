@@ -117,6 +117,13 @@
 #define AXIS_R2	AXIS_NA
 #endif 
 
+#ifndef AXIS_LX
+#define AXIS_LX	AXIS_NA
+#define AXIS_LY	AXIS_NA
+#define AXIS_RX	AXIS_NA
+#define AXIS_RY	AXIS_NA
+#endif 
+
 #ifndef HAS_HDMI
 #define HDMI_WIDTH	FIXED_WIDTH
 #define HDMI_HEIGHT	FIXED_HEIGHT

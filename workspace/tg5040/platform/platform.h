@@ -96,6 +96,11 @@
 #define AXIS_L2			2 // ABSZ
 #define AXIS_R2			5 // RABSZ
 
+#define AXIS_LX			0 // ABS_X, -30k (left) to 30k (right)
+#define AXIS_LY			1 // ABS_Y, -30k (up) to 30k (down)
+#define AXIS_RX			3 // ABS_RX, -30k (left) to 30k (right)
+#define AXIS_RY			4 // ABS_RY, -30k (up) to 30k (down)
+
 ///////////////////////////////
 
 #define BTN_RESUME			BTN_X

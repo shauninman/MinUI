@@ -1720,6 +1720,12 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	        iface->set_rumble_state = set_rumble_state;
 		break;
 	}
+	// case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES: {
+	// 	unsigned *out = (unsigned *)data;
+	// 	if (out)
+	// 		*out = (1 << RETRO_DEVICE_JOYPAD) | (1 << RETRO_DEVICE_ANALOG);
+	// 	break;
+	// }
 	case RETRO_ENVIRONMENT_GET_LOG_INTERFACE: { /* 27 */
 		struct retro_log_callback *log_cb = (struct retro_log_callback *)data;
 		if (log_cb)
@@ -4035,6 +4041,8 @@ int main(int argc , char* argv[]) {
 	strcpy(rom_path, argv[2]);
 	getEmuName(rom_path, tag_name);
 	
+	LOG_info("rom_path: %s\n", rom_path);
+
 	screen = GFX_init(MODE_MENU);
 	PAD_init();
 	DEVICE_WIDTH = screen->w; // yea or nay?

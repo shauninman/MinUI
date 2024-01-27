@@ -1190,8 +1190,9 @@ void PAD_poll_SDL(void) {
 		else if (event.type==SDL_JOYAXISMOTION) {
 			int axis = event.jaxis.axis;
 			int val = event.jaxis.value;
-			// LOG_info("axis: %i (%i)\n", axis,val>0);
+			// LOG_info("axis: %i (%i)\n", axis,val);
 			
+			// triggers on tg5040
 			if (axis==AXIS_L2) {
 				btn = BTN_L2;
 				id = BTN_ID_L2;
@@ -1202,6 +1203,57 @@ void PAD_poll_SDL(void) {
 				id = BTN_ID_R2;
 				pressed = val>0;
 			}
+			
+			/** /
+			// TODO: as coded this prevents the d-pad from working...
+			else if (axis==AXIS_LX) {
+				if (val>9999) {
+					btn = BTN_RIGHT;
+					id = BTN_ID_RIGHT;
+					pressed = 1;
+				}
+				else if (val<-9999) {
+					btn = BTN_LEFT;
+					id = BTN_ID_LEFT;
+					pressed = 1;
+				}
+				
+				if (btn==BTN_NONE || (btn==BTN_RIGHT && pad.is_pressed & BTN_LEFT)) {
+					pad.is_pressed		&= ~BTN_LEFT; // unset
+					pad.just_repeated	&= ~BTN_LEFT; // unset
+					pad.just_released	|= BTN_LEFT; // set
+				}
+				if (btn==BTN_NONE || (btn==BTN_LEFT && pad.is_pressed & BTN_RIGHT)) {
+					pad.is_pressed		&= ~BTN_RIGHT; // unset
+					pad.just_repeated	&= ~BTN_RIGHT; // unset
+					pad.just_released	|= BTN_RIGHT; // set
+				}
+			}
+			else if (axis==AXIS_LY) {
+				int dir = 0;
+				if (val>9999) {
+					btn = BTN_DOWN;
+					id = BTN_ID_DOWN;
+					pressed = 1;
+				}
+				else if (val<-9999) {
+					btn = BTN_UP;
+					id = BTN_ID_UP;
+					pressed = 1;
+				}
+				
+				if (btn==BTN_NONE || (btn==BTN_DOWN && pad.is_pressed & BTN_UP)) {
+					pad.is_pressed		&= ~BTN_UP; // unset
+					pad.just_repeated	&= ~BTN_UP; // unset
+					pad.just_released	|= BTN_UP; // set
+				}
+				if (btn==BTN_NONE || (btn==BTN_UP && pad.is_pressed & BTN_DOWN)) {
+					pad.is_pressed		&= ~BTN_DOWN; // unset
+					pad.just_repeated	&= ~BTN_DOWN; // unset
+					pad.just_released	|= BTN_DOWN; // set
+				}
+			}
+			/**/
 			
 			// axis will fire off what looks like a release
 			// before the first press but you can't release
