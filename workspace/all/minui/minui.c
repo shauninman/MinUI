@@ -814,33 +814,38 @@ static void queueNext(char* cmd) {
 	putFile("/tmp/next", cmd);
 	quit = 1;
 }
+
+// based on https://stackoverflow.com/a/31775567/145965
+static int replaceString(char *line, const char *search, const char *replace) {
+   char *sp; // start of pattern
+   if ((sp = strstr(line, search)) == NULL) {
+      return 0;
+   }
+   int count = 1;
+   int sLen = strlen(search);
+   int rLen = strlen(replace);
+   if (sLen > rLen) {
+      // move from right to left
+      char *src = sp + sLen;
+      char *dst = sp + rLen;
+      while((*dst = *src) != '\0') { dst++; src++; }
+   } else if (sLen < rLen) {
+      // move from left to right
+      int tLen = strlen(sp) - sLen;
+      char *stop = sp + rLen;
+      char *src = sp + sLen + tLen;
+      char *dst = sp + rLen + tLen;
+      while(dst >= stop) { *dst = *src; dst--; src--; }
+   }
+   memcpy(sp, replace, rLen);
+   count += replaceString(sp + rLen, search, replace);
+   return count;
+}
 static char* escapeSingleQuotes(char* str) {
-	// based on https://stackoverflow.com/a/31775567/145965
-	int replaceString(char *line, const char *search, const char *replace) {
-	   char *sp; // start of pattern
-	   if ((sp = strstr(line, search)) == NULL) {
-	      return 0;
-	   }
-	   int count = 1;
-	   int sLen = strlen(search);
-	   int rLen = strlen(replace);
-	   if (sLen > rLen) {
-	      // move from right to left
-	      char *src = sp + sLen;
-	      char *dst = sp + rLen;
-	      while((*dst = *src) != '\0') { dst++; src++; }
-	   } else if (sLen < rLen) {
-	      // move from left to right
-	      int tLen = strlen(sp) - sLen;
-	      char *stop = sp + rLen;
-	      char *src = sp + sLen + tLen;
-	      char *dst = sp + rLen + tLen;
-	      while(dst >= stop) { *dst = *src; dst--; src--; }
-	   }
-	   memcpy(sp, replace, rLen);
-	   count += replaceString(sp + rLen, search, replace);
-	   return count;
-	}
+	// why not call replaceString directly?
+	// call points require the modified string be returned
+	// but replaceString is recursive and depends on its
+	// own return value (but does it need to?)
 	replaceString(str, "'", "'\\''");
 	return str;
 }
