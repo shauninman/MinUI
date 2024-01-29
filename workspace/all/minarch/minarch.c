@@ -3613,6 +3613,46 @@ static void Menu_loadState(void) {
 	State_read();
 }
 
+static char* getAlias(char* path, char* alias) {
+	LOG_info("alias path: %s\n", path);
+	char* tmp;
+	char map_path[256];
+	strcpy(map_path, path);
+	tmp = strrchr(map_path, '/');
+	if (tmp) {
+		tmp += 1;
+		strcpy(tmp, "map.txt");
+		LOG_info("map_path: %s\n", map_path);
+	}
+	char* file_name = strrchr(path,'/');
+	if (file_name) file_name += 1;
+	LOG_info("file_name: %s\n", file_name);
+	
+	if (exists(map_path)) {
+		FILE* file = fopen(map_path, "r");
+		if (file) {
+			char line[256];
+			while (fgets(line,256,file)!=NULL) {
+				normalizeNewline(line);
+				trimTrailingNewlines(line);
+				if (strlen(line)==0) continue; // skip empty lines
+			
+				tmp = strchr(line,'\t');
+				if (tmp) {
+					tmp[0] = '\0';
+					char* key = line;
+					char* value = tmp+1;
+					if (exactMatch(file_name,key)) {
+						strcpy(alias, value);
+						break;
+					}
+				}
+			}
+			fclose(file);
+		}
+	}
+}
+
 static void Menu_loop(void) {
 	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.true_w, renderer.true_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
 	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
@@ -3651,6 +3691,7 @@ static void Menu_loop(void) {
 	char* tmp;
 	char rom_name[256]; // without extension or cruft
 	getDisplayName(game.name, rom_name);
+	getAlias(game.path, rom_name);
 	
 	int rom_disc = -1;
 	char disc_name[16];

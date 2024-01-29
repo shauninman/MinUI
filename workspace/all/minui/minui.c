@@ -214,11 +214,65 @@ static void getUniqueName(Entry* entry, char* out_name) {
 static void Directory_index(Directory* self) {
 	int skip_index = exactMatch(FAUX_RECENT_PATH, self->path) || prefixMatch(COLLECTIONS_PATH, self->path); // not alphabetized
 	
+	Hash* map = NULL;
+	char map_path[256];
+	sprintf(map_path, "%s/map.txt", self->path);
+	if (exists(map_path)) {
+		FILE* file = fopen(map_path, "r");
+		if (file) {
+			map = Hash_new();
+			char line[256];
+			int resort = 0;
+			while (fgets(line,256,file)!=NULL) {
+				normalizeNewline(line);
+				trimTrailingNewlines(line);
+				if (strlen(line)==0) continue; // skip empty lines
+
+				char* tmp = strchr(line,'\t');
+				if (tmp) {
+					tmp[0] = '\0';
+					char* key = line;
+					char* value = tmp+1;
+					Hash_set(map, key, value);
+				}
+			}
+			fclose(file);
+			
+			// need to 
+			for (int i=0; i<self->entries->count; i++) {
+				Entry* entry = self->entries->items[i];
+				char* filename = strrchr(entry->path, '/')+1;
+				char* alias = Hash_get(map, filename);
+				if (alias) {
+					free(entry->name);
+					entry->name = strdup(alias);
+					resort = 1;
+				}
+			}
+			
+			// oof, double s
+			
+			// TODO: maybe map.txt logic should be moved to EntryArray_sort()
+			// or another precursor?
+			
+			if (resort) EntryArray_sort(self->entries);
+		}
+	}
+	
 	Entry* prior = NULL;
 	int alpha = -1;
 	int index = 0;
 	for (int i=0; i<self->entries->count; i++) {
 		Entry* entry = self->entries->items[i];
+		if (map) {
+			char* filename = strrchr(entry->path, '/')+1;
+			char* alias = Hash_get(map, filename);
+			if (alias) {
+				free(entry->name);
+				entry->name = strdup(alias);
+			}
+		}
+		
 		if (prior!=NULL && exactMatch(prior->name, entry->name)) {
 			if (prior->unique) free(prior->unique);
 			if (entry->unique) free(entry->unique);
@@ -252,6 +306,8 @@ static void Directory_index(Directory* self) {
 		
 		prior = entry;
 	}
+	
+	if (map) Hash_free(map);
 }
 
 static Array* getRoot(void);
@@ -309,10 +365,14 @@ static void DirectoryArray_free(Array* self) {
 
 typedef struct Recent {
 	char* path; // NOTE: this is without the SDCARD_PATH prefix!
+	char* alias;
 	int available;
 } Recent;
+ // yiiikes
+static char* recent_alias = NULL;
+
 static int hasEmu(char* emu_name);
-static Recent* Recent_new(char* path) {
+static Recent* Recent_new(char* path, char* alias) {
 	Recent* self = malloc(sizeof(Recent));
 
 	char sd_path[256]; // only need to get emu name
@@ -322,11 +382,13 @@ static Recent* Recent_new(char* path) {
 	getEmuName(sd_path, emu_name);
 	
 	self->path = strdup(path);
+	self->alias = alias ? strdup(alias) : NULL;
 	self->available = hasEmu(emu_name);
 	return self;
 }
 static void Recent_free(Recent* self) {
 	free(self->path);
+	if (self->alias) free(self->alias);
 	free(self);
 }
 
@@ -371,19 +433,23 @@ static void saveRecents(void) {
 		for (int i=0; i<recents->count; i++) {
 			Recent* recent = recents->items[i];
 			fputs(recent->path, file);
+			if (recent->alias) {
+				fputs("\t", file);
+				fputs(recent->alias, file);
+			}
 			putc('\n', file);
 		}
 		fclose(file);
 	}
 }
-static void addRecent(char* path) {
+static void addRecent(char* path, char* alias) {
 	path += strlen(SDCARD_PATH); // makes paths platform agnostic
 	int id = RecentArray_indexOf(recents, path);
 	if (id==-1) { // add
 		while (recents->count>=MAX_RECENTS) {
 			Recent_free(Array_pop(recents));
 		}
-		Array_unshift(recents, Recent_new(path));
+		Array_unshift(recents, Recent_new(path, alias));
 	}
 	else if (id>0) { // bump to top
 		for (int i=id; i>0; i--) {
@@ -439,6 +505,7 @@ static int hasM3u(char* rom_path, char* m3u_path) { // NOTE: rom_path not dir_pa
 }
 
 static int hasRecents(void) {
+	LOG_info("hasRecents %s\n", RECENT_PATH);
 	int has = 0;
 	
 	Array* parent_paths = Array_new();
@@ -447,7 +514,7 @@ static int hasRecents(void) {
 		getFile(CHANGE_DISC_PATH, sd_path, 256);
 		if (exists(sd_path)) {
 			char* disc_path = sd_path + strlen(SDCARD_PATH); // makes path platform agnostic
-			Recent* recent = Recent_new(disc_path);
+			Recent* recent = Recent_new(disc_path, NULL);
 			if (recent->available) has += 1;
 			Array_push(recents, recent);
 		
@@ -468,15 +535,25 @@ static int hasRecents(void) {
 			trimTrailingNewlines(line);
 			if (strlen(line)==0) continue; // skip empty lines
 			
+			LOG_info("line: %s\n", line);
+			
+			char* path = line;
+			char* alias = NULL;
+			char* tmp = strchr(line,'\t');
+			if (tmp) {
+				tmp[0] = '\0';
+				alias = tmp+1;
+			}
+			
 			char sd_path[256];
-			sprintf(sd_path, "%s%s", SDCARD_PATH, line);
+			sprintf(sd_path, "%s%s", SDCARD_PATH, path);
 			if (exists(sd_path)) {
 				if (recents->count<MAX_RECENTS) {
 					// this logic replaces an existing disc from a multi-disc game with the last used
 					char m3u_path[256];
 					if (hasM3u(sd_path, m3u_path)) { // TODO: this might tank launch speed
 						char parent_path[256];
-						strcpy(parent_path, line);
+						strcpy(parent_path, path);
 						char* tmp = strrchr(parent_path, '/') + 1;
 						tmp[0] = '\0';
 						
@@ -492,7 +569,10 @@ static int hasRecents(void) {
 						
 						Array_push(parent_paths, strdup(parent_path));
 					}
-					Recent* recent = Recent_new(line);
+					
+					LOG_info("path:%s alias:%s\n", path, alias);
+					
+					Recent* recent = Recent_new(path, alias);
 					if (recent->available) has += 1;
 					Array_push(recents, recent);
 				}
@@ -631,7 +711,12 @@ static Array* getRecents(void) {
 		char sd_path[256];
 		sprintf(sd_path, "%s%s", SDCARD_PATH, recent->path);
 		int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM; // ???
-		Array_push(entries, Entry_new(sd_path, type));
+		Entry* entry = Entry_new(sd_path, type);
+		if (recent->alias) {
+			free(entry->name);
+			entry->name = strdup(recent->alias);
+		}
+		Array_push(entries, entry);
 	}
 	return entries;
 }
@@ -994,7 +1079,7 @@ static void openRom(char* path, char* last) {
 	
 	// NOTE: escapeSingleQuotes() modifies the passed string 
 	// so we need to save the path before we call that
-	addRecent(recent_path);
+	addRecent(recent_path, recent_alias); // yiiikes
 	saveLast(last==NULL ? sd_path : last);
 	
 	char cmd[256];
@@ -1049,6 +1134,7 @@ static void closeDirectory(void) {
 }
 
 static void Entry_open(Entry* self) {
+	recent_alias = self->name;  // yiiikes
 	if (self->type==ENTRY_ROM) {
 		char *last = NULL;
 		if (prefixMatch(COLLECTIONS_PATH, top->path)) {
