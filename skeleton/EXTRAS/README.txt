@@ -30,13 +30,13 @@ MGBA: gba_bios.bin
 ----------------------------------------
 Native PICO-8 and Splore.pak (RGB30-only)
 
-Download the official PICO-8 fantasy console for the Raspberry Pi from https://lexaloffle.itch.io/pico-8 (If you've bought a bundle on itch.io any time in the last few years you might already have a copy in your library https://itch.io/my-collections) At the time of writing, the file is named "pico-8_0.2.5g_raspi.zip". Copy that zip file into "/Tools/rgb30/Splore.pak/". Copy "/Emus/rgb30/P8-NATIVE.pak", "/Tools/rgb30/Splore.pak", and "/Tools/rgb30/Wi-Fi.pak" to your SD card. (You also need the Wi-Fi.pak to download PICO-8 games in Splore.pak.)
+Download the official PICO-8 fantasy console for the Raspberry Pi from https://lexaloffle.itch.io/pico-8 (If you've bought a bundle on itch.io any time in the last few years you might already have a copy in your library https://itch.io/my-collections) At the time of writing, the file is named "pico-8_0.2.5g_raspi.zip". Copy that zip file into "/Tools/rgb30/Splore.pak/". Copy "/Emus/rgb30/P8-NATIVE.pak", "/Tools/rgb30/Splore.pak", and "/Tools/rgb30/Wi-Fi.pak" to your SD card. (You need the Wi-Fi.pak to download PICO-8 games in Splore.pak.)
 
 Place carts you would like to play with native PICO-8 in "/Roms/Pico-8 (P8-NATIVE)/".
 
-To exit Splore.pak, press start. In-game select "EXIT TO SPLORE". With a cart selected in splore press start, select "OPTIONS", and then "SHUTDOWN PICO-8". 
-
 To exit P8-NATIVE.pak, press start. Then select "SHUTDOWN".
+
+To exit Splore.pak, press start. In-game select "EXIT TO SPLORE". With a cart selected in splore press start, select "OPTIONS", and then "SHUTDOWN PICO-8". 
 
 Please note that Splore.pak and P8-NATIVE.pak don't/can't implement MinUI's uniform features like the in-game menu (including save states), faux sleep, and quicksave/auto-resume.
 
