@@ -255,31 +255,34 @@ SDL_Surface* PLAT_initVideo(void) {
 		p = HDMI_PITCH;
 	}
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
+	LOG_info("window size: %ix%i\n", w,h);
 	
 	// SDL_GetCurrentDisplayMode(0, &mode);
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+	SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
 	
-	int renderer_width,renderer_height;
-	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
+	// int renderer_width,renderer_height;
+	// SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
 	// LOG_info("output size: %ix%i\n", renderer_width, renderer_height);
-	if (renderer_width!=w) { // I think this can only be hdmi
-		float x_scale = (float)renderer_width / w;
-		float y_scale = (float)renderer_height / h;
-		SDL_SetWindowSize(vid.window, w / x_scale, h / y_scale);
-
-		SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
-		x_scale = (float)renderer_width / w;
-		y_scale = (float)renderer_height / h;
-		SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
-		
-		// for some reason we need to clear and present 
-		// after setting the window size or we'll miss
-		// the first frame
-		SDL_RenderClear(vid.renderer);
-		SDL_RenderPresent(vid.renderer);
-	}
+	// if (renderer_width!=w) { // I think this can only be hdmi
+	// 	float x_scale = (float)renderer_width / w;
+	// 	float y_scale = (float)renderer_height / h;
+	// 	SDL_SetWindowSize(vid.window, w / x_scale, h / y_scale);
+	//
+	// 	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
+	// 	LOG_info("adjusted size: %ix%i\n", renderer_width, renderer_height);
+	// 	x_scale = (float)renderer_width / w;
+	// 	y_scale = (float)renderer_height / h;
+	// 	SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
+	//
+	// 	// for some reason we need to clear and present
+	// 	// after setting the window size or we'll miss
+	// 	// the first frame
+	// 	SDL_RenderClear(vid.renderer);
+	// 	SDL_RenderPresent(vid.renderer);
+	// }
 	
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(vid.renderer, &info);

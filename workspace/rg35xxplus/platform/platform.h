@@ -120,6 +120,8 @@
 #define HDMI_PITCH 	(HDMI_WIDTH * FIXED_BPP)
 #define HDMI_SIZE	(HDMI_PITCH * HDMI_HEIGHT)
 
+// TODO: if HDMI_HEIGHT > FIXED_HEIGHT then MAIN_ROW_COUNT will be insufficient
+
 ///////////////////////////////
 
 #define SDCARD_PATH "/mnt/sdcard"
