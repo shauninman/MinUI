@@ -1,6 +1,7 @@
 $(PLATFORM):
 	# $@
 	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
+	cp ./workspace/$@/syncvolume/syncvolume.elf ./build/SYSTEM/$@/bin
 	# installer
 	cp ./workspace/$@/install/boot.sh ./build/BOOT/common/$@.sh
 	mkdir -p ./build/BOOT/common/$@/

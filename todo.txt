@@ -92,15 +92,22 @@ next
 		draw debug to core framebufer before scaling
 			using pixel instead of default font so it will fit on things like PKM and GB*
 		
-	smartpro
-		can't detect headphone state at boot?
+	tg5040
 		standalone volume starts at max (why?)
 			psp uses dsp so maybe a different audio path? volume buttons don't work to change but the Global Volume setting in ppsspp settings does...
 				commenting out dsp audio allows volume buttons to work
 					but only sometimes?
 			ds can be controlled by volume buttons
 				but only sometimes
+			I think the "only sometimes" is the result of trying to reduce volume that is already 0 according to libmsettings
+			created syncvolume.elf call (with &) right before launching a standalone to match MinUI volume
+		can't detect headphone state at boot?
 		can nds scaling be fixed (it's blurry for no good reason)
+		wifi
+			Splore.pak can pull updated lists from bbs but cannot download carts
+				no idea why
+			this seems to be necessary to enable wifi even if operstat is up (is that just hardware status versus online status??)
+				udhcpc -i wlan0 -S -t 5 -T 7 -b -q
 		n64
 			requires libretro opengl implementation
 		psp

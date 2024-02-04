@@ -116,7 +116,6 @@ void SetBrightness(int value) {
 	
 	int raw;
 	switch (value) {
-		// TODO: redo, range is 0-255
 		case 0: raw=4; break; 		//  0
 		case 1: raw=6; break; 		//  2
 		case 2: raw=10; break; 		//  4
