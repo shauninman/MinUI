@@ -630,10 +630,8 @@ static Array* getRoot(void) {
 	
 	if (hasRecents()) Array_push(root, Entry_new(FAUX_RECENT_PATH, ENTRY_DIR));
 	
-	DIR *dh;
-	
 	Array* entries = Array_new();
-	dh = opendir(ROMS_PATH);
+	DIR* dh = opendir(ROMS_PATH);
 	if (dh!=NULL) {
 		struct dirent *dp;
 		char* tmp;
@@ -663,6 +661,45 @@ static Array* getRoot(void) {
 		}
 		Array_free(emus); // just free the array part, entries now owns emus entries
 		closedir(dh);
+	}
+	
+	// copied/modded from Directory_index
+	char map_path[256];
+	sprintf(map_path, "%s/map.txt", ROMS_PATH);
+	if (entries->count>0 && exists(map_path)) {
+		FILE* file = fopen(map_path, "r");
+		if (file) {
+			Hash* map = Hash_new();
+			char line[256];
+			int resort = 0;
+			while (fgets(line,256,file)!=NULL) {
+				normalizeNewline(line);
+				trimTrailingNewlines(line);
+				if (strlen(line)==0) continue; // skip empty lines
+
+				char* tmp = strchr(line,'\t');
+				if (tmp) {
+					tmp[0] = '\0';
+					char* key = line;
+					char* value = tmp+1;
+					Hash_set(map, key, value);
+				}
+			}
+			fclose(file);
+			
+			for (int i=0; i<entries->count; i++) {
+				Entry* entry = entries->items[i];
+				char* filename = strrchr(entry->path, '/')+1;
+				char* alias = Hash_get(map, filename);
+				if (alias) {
+					free(entry->name);
+					entry->name = strdup(alias);
+					resort = 1;
+				}
+			} 
+			if (resort) EntryArray_sort(entries);
+			Hash_free(map);
+		}
 	}
 	
 	if (hasCollections()) {
