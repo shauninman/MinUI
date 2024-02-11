@@ -19,8 +19,8 @@
 #define CODE_MENU 317 // 11 in SDL for some reason...
 #define CODE_MENU_ALT 318 // 12 in SDL...
 
-#define CODE_PLUS 114
-#define CODE_MINUS 115
+#define CODE_PLUS 115
+#define CODE_MINUS 114
 
 #define VOLUME_MIN 		0
 #define VOLUME_MAX 		20
