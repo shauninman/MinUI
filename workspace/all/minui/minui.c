@@ -1007,7 +1007,7 @@ static void readyResumePath(char* rom_path, int type) {
 	tmp = strrchr(path, '/') + 1;
 	strcpy(rom_file, tmp);
 	
-	sprintf(slot_path, "%s/.minui/%s/%s.txt", SHARED_USERDATA_PATH, emu_name, rom_file); // /.userdata/arm-480/.minui/<EMU>/<romname>.ext.txt
+	sprintf(slot_path, "%s/.minui/%s/%s.txt", SHARED_USERDATA_PATH, emu_name, rom_file); // /.userdata/.minui/<EMU>/<romname>.ext.txt
 	
 	can_resume = exists(slot_path);
 }

@@ -11,16 +11,26 @@ EXTRAS
 ---
 
 next
+	merge pull requests
+	
+	document map.txt
+		allow hiding files with map, eg. neogeo.bios .neogeo.bios
+			remove . files after sort?
+	
 	pretty sure nothing uses the various platform.h BUTTON_* macros (because SDLK_* mappings are so spotty on these devices)
 		pretty sure they all use CODE_* or JOY_* now
+
 	macos (for modern compiler and debugging tools not for release!)
 		minarch
 	
-	35xxplus/h
+	add extra atari7800 A78.pak
+		https://github.com/libretro/prosystem-libretro
+	rg35xxplus/h
 		auto.sh isn't working here
 		figure out
+			fceumm audio crackle
 			judder
-				vsync?
+				vsync? nope...
 			audio crackle on quit sdl
 				setting raw volume to 0 doesn't fix
 			implement jack
@@ -32,6 +42,11 @@ next
 	unzip60
 		rename Makefile.trimuismartpro to just Makefile.minui?
 	gkdpixel
+		usb mode
+			rndis? related? /etc/default/configfs
+		bootlogo?
+			haven't located on disk or in memory
+		figure out dual sdcard support for mini?
 		non-plus snes9x2005 for perf?
 		codify alt paks to use stock standalone emus in MinUI
 		light bleed
@@ -48,7 +63,7 @@ next
 				nes/snes
 	
 	native Files.pak
-		I might just accept some duplication with MinUI (eg. Array and Directory/Entry arrays)
+		I might just need to accept some duplication with MinUI (eg. Array and Directory/Entry arrays)
 	m17
 		still haven't found way to disable volume controls
 			I think it's controlled by /usr/bin/gpio-volctrl.sh
