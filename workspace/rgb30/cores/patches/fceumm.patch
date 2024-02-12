@@ -13,7 +13,7 @@ index 0cd567cf174249e92a43c4c78be582ba4c36a57c..2597db6a4fe1a1c4a4a9dd5e42de37f5
 +	CXX = $(CROSS_COMPILE)g++
 +	AR = $(CROSS_COMPILE)ar
 +	fpic := -fPIC
-+	SHARED := -shared -Wl,--version-script=src/libretro/link.T -Wl,-no-undefined
++	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 +	PLATFORM_DEFINES += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a 
 +	EXTERNAL_ZLIB = 1
 +

@@ -16,6 +16,7 @@ REQUIRES_UNZIP60=other/unzip60
 
 all: readmes
 	cd boot && ./build.sh
+	cd init && make
 
 early: $(REQUIRES_UNZIP60)
 	mkdir -p other
