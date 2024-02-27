@@ -1,6 +1,6 @@
 # MinUI
 
-MinUI is a focused, custom launcher and libretro frontend for the RGB30, M17 (early revs), Trimui Smart (and Pro), Miyoo Mini (and Plus), and Anbernic RG35XX (and Plus).
+MinUI is a focused, custom launcher and libretro frontend for the RGB30, M17 (early revs), Trimui Smart (and Pro), Miyoo Mini (and Plus), and Anbernic RG35XX (and Plus/H).
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 />  
 See [more screenshots](github/).
