@@ -215,6 +215,14 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
+	// SDL_version compiled;
+	// SDL_version linked;
+	// SDL_VERSION(&compiled);
+	// SDL_GetVersion(&linked);
+	// LOG_info("We compiled against SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
+	// LOG_info("But we linked against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+	//
+	//
 	// int num_displays = SDL_GetNumVideoDisplays();
 	// LOG_info("SDL_GetNumVideoDisplays(): %i\n", num_displays);
 	//

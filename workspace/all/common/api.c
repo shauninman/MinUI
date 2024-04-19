@@ -145,6 +145,7 @@ SDL_Surface* GFX_init(int mode) {
 	
 	char asset_path[MAX_PATH];
 	sprintf(asset_path, RES_PATH "/assets@%ix.png", FIXED_SCALE);
+	if (!exists(asset_path)) LOG_info("missing assets, you're about to segfault dummy!\n");
 	gfx.assets = IMG_Load(asset_path);
 	
 	TTF_Init();
