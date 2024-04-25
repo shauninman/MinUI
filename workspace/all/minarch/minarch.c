@@ -3004,6 +3004,12 @@ static int OptionQuicksave_onConfirm(MenuList* list, int i) {
 	PWR_powerOff();
 }
 
+static int OptionResetGame(MenuList* list, int i) {
+	Core_reset();
+	show_menu = 0;
+	return MENU_CALLBACK_EXIT;
+}
+
 static MenuList options_menu = {
 	.type = MENU_LIST,
 	.items = (MenuItem[]) {
@@ -3012,7 +3018,7 @@ static MenuList options_menu = {
 		{"Controls",.on_confirm=OptionControls_openMenu},
 		{"Shortcuts",.on_confirm=OptionShortcuts_openMenu}, 
 		{"Save Changes",.on_confirm=OptionSaveChanges_openMenu},
-		{NULL},
+		{"Reset Game",.on_confirm=OptionResetGame},
 		{NULL},
 		{NULL},
 	}
