@@ -211,6 +211,7 @@ static struct VID_Context {
 static int device_width;
 static int device_height;
 static int device_pitch;
+static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
@@ -265,11 +266,13 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	LOG_info("window size: %ix%i\n", w,h);
 	
-	// SDL_GetCurrentDisplayMode(0, &mode);
-	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	SDL_DisplayMode mode;
+	SDL_GetCurrentDisplayMode(0, &mode);
+	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	if (mode.h>mode.w) rotate = 3;
 	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
-	SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
+	// SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
 	
 	// int renderer_width,renderer_height;
 	// SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
@@ -436,7 +439,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
 		SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
 		SDL_UnlockTexture(vid.texture);
-		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
+		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		else SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_RenderPresent(vid.renderer);
 		return;
 	}
@@ -483,7 +487,12 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		int y = (device_height - h) / 2;
 		dst_rect = &(SDL_Rect){x,y,w,h};
 	}
-	SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+	
+	int ox,oy;
+	oy = (device_width-device_height)/2;
+	ox = -oy;
+	if (rotate) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
+	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 	SDL_RenderPresent(vid.renderer);
 	vid.blit = NULL;
 }
@@ -549,6 +558,7 @@ void PLAT_enableBacklight(int enable) {
 }
 
 void PLAT_powerOff(void) {
+	system("rm -f /tmp/minui_exec && sync");
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
@@ -558,9 +568,14 @@ void PLAT_powerOff(void) {
 	VIB_quit();
 	PWR_quit();
 	GFX_quit();
+
+	// system("cat /dev/zero > /dev/fb0");
+	// system("shutdown");
+	// while (1) pause(); // lolwat
 	
-	system("shutdown");
-	while (1) pause(); // lolwat
+	// touch("/tmp/poweroff");
+	// system("touch /tmp/poweroff && sync");
+	exit(0);
 }
 
 ///////////////////////////////
@@ -584,7 +599,7 @@ int PLAT_pickSampleRate(int requested, int max) {
 static char model[256];
 char* PLAT_getModel(void) {
 	// sadly there is nothing distinguishable about the hardware...
-	return "RG35XX Plus/H";
+	return "RG*XX Family";
 }
 
 int PLAT_isOnline(void) {

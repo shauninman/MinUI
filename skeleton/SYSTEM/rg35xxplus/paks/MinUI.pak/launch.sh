@@ -60,5 +60,4 @@ while [ -f "$EXEC_PATH" ]; do
 	fi
 done
 
-# TODO: need a shutdown script to write to datetime.txt
-shutdown # just in case
+shutdown

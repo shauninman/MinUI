@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# while :; do; sleep 5; done
-
 TF1_PATH=/mnt/mmc # TF1/NO NAME partition
 TF2_PATH=/mnt/sdcard # TF2
 SDCARD_PATH=$TF1_PATH
@@ -11,12 +9,16 @@ UPDATE_FRAG=/MinUI.zip
 SYSTEM_PATH=${SDCARD_PATH}${SYSTEM_FRAG}
 UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
 
+# rm /mnt/sdcard
+# mkdir -p /mnt/sdcard
+# poweroff
+
 rm $TF1_PATH/log.txt
 touch $TF1_PATH/log.txt
 
-if [ "$TF2_PATH" -ef "$TF1_PATH" ]; then
+if [ -h $TF2_PATH ] && [ "$TF2_PATH" -ef "$TF1_PATH" ]; then
 	echo "deleting old TF2 -> TF1 symlink" >> $TF1_PATH/log.txt
-	rm $TF2_PATH
+	unlink $TF2_PATH
 fi
 
 if mountpoint -q $TF2_PATH; then
@@ -31,12 +33,11 @@ else
 		rm -d $TF2_PATH
 		ln -s $TF1_PATH $TF2_PATH
 	fi
-	
 fi
 
 if [ -d ${TF1_PATH}${SYSTEM_FRAG} ] || [ -f ${TF1_PATH}${UPDATE_FRAG} ]; then
 	echo "found MinUI on TF1" >> $TF1_PATH/log.txt
-	if [ ! -L $TF2_PATH ]; then
+	if [ ! -h $TF2_PATH ]; then
 		echo "no system on TF2, unmount and symlink to TF1" >> $TF1_PATH/log.txt
 		umount $TF2_PATH
 		rm -rf $TF2_PATH
@@ -52,6 +53,14 @@ UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
 if [ -f $UPDATE_PATH ]; then
 	echo "zip detected" >> $TF1_PATH/log.txt
 	
+	MODES=`cat /sys/class/graphics/fb0/modes`
+	case $MODES in
+	*"480x640"*)
+		SUFFIX="-r"
+		echo "rotated framebuffer" >> $TF1_PATH/log.txt
+		;;
+	esac
+	
 	if [ ! -d $SYSTEM_PATH ]; then
 		ACTION=installing
 		echo "install MinUI" >> $TF1_PATH/log.txt
@@ -66,32 +75,32 @@ if [ -f $UPDATE_PATH ]; then
 	tar -xf /tmp/data -C /tmp > /dev/null 2>&1
 	
 	# show action
-	dd if=/tmp/$ACTION of=/dev/fb0
+	dd if=/tmp/$ACTION$SUFFIX of=/dev/fb0
 	sync
 	echo 0,0 > /sys/class/graphics/fb0/pan
-	
+
 	# install bootlogo.bmp
 	if [ $ACTION = "installing" ]; then
 		BOOT_DEVICE=/dev/mmcblk0p2
 		BOOT_PATH=/mnt/boot
 		mkdir -p $BOOT_PATH
 		mount -t vfat -o rw,utf8,noatime $BOOT_DEVICE $BOOT_PATH
-		cp /tmp/bootlogo.bmp $BOOT_PATH
+		cp /tmp/bootlogo$SUFFIX.bmp $BOOT_PATH/bootlogo.bmp
 		umount $BOOT_PATH
 		rm -rf $BOOT_PATH
 	fi
-	
-	/tmp/unzip -o $UPDATE_PATH -d $SDCARD_PATH
-	rm -f $UPDATE_PATH
-		
-	cd /tmp
-	rm data installing updating bootlogo.bmp unzip
-	
-	# the updated system finishes the install/update
-	$SYSTEM_PATH/bin/install.sh
-fi
 
-# while :; do; sleep 5; done
+	/tmp/unzip -o $UPDATE_PATH -d $SDCARD_PATH >> $TF1_PATH/log.txt
+	rm -f $UPDATE_PATH
+
+	ls -la $SDCARD_PATH >> $TF1_PATH/log.txt
+	
+	# cd /tmp
+	# rm data installing updating bootlogo.bmp installing-r updating-r bootlogo-r.bmp unzip
+
+	# the updated system finishes the install/update
+	$SYSTEM_PATH/bin/install.sh >> $TF1_PATH/log.txt
+fi
 
 if [ -f $SYSTEM_PATH/paks/MinUI.pak/launch.sh ]; then
 	echo "launch MinUI" >> $TF1_PATH/log.txt
