@@ -2,6 +2,7 @@
 
 TF1_PATH=/mnt/mmc # TF1/NO NAME partition
 TF2_PATH=/mnt/sdcard # TF2
+FLAG_PATH=$TF1_PATH/.minstalled
 SDCARD_PATH=$TF1_PATH
 SYSTEM_DIR=/.system
 SYSTEM_FRAG=$SYSTEM_DIR/rg35xxplus
@@ -80,7 +81,9 @@ if [ -f $UPDATE_PATH ]; then
 	echo 0,0 > /sys/class/graphics/fb0/pan
 
 	# install bootlogo.bmp
-	if [ $ACTION = "installing" ]; then
+	if [ $ACTION = "installing" ] || [ ! -f $FLAG_PATH ]; then
+		echo "replace bootlogo" >> $TF1_PATH/log.txt
+		touch $FLAG_PATH
 		BOOT_DEVICE=/dev/mmcblk0p2
 		BOOT_PATH=/mnt/boot
 		mkdir -p $BOOT_PATH
