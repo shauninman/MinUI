@@ -14,7 +14,7 @@ index 7b9618e1ccfc63982be50b82fda498d75e307fdc..6fae9d28a2867214e3cae29b2abbe1f9
 +   AR = $(CROSS_COMPILE)ar
 +   # CFLAGS += -marm -mtune=cortex-a9 -mfpu=vfpv3-d16 -mfloat-abi=hard -march=armv7-a
 +   CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer
-+   CFLAGS += -ffast-math -fdata-sections -ffunction-sections -fsingle-precision-constant -flto -fPIC
++   CFLAGS += -ffast-math -fdata-sections -ffunction-sections -fsingle-precision-constant -flto -fPIC -DNO_HWCAP 
 +   LDFLAGS += -flto -fPIC
 +   LDFLAGS += -flto
 +   CPU_ARCH := arm
