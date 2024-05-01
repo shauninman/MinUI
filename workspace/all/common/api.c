@@ -1036,12 +1036,6 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 
-	LOG_info("Available audio drivers:\n");
-	for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
-		LOG_info("- %s\n", SDL_GetAudioDriver(i));
-	}
-	LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
-	
 	snd.frame_rate = frame_rate;
 
 	SDL_AudioSpec spec_in;

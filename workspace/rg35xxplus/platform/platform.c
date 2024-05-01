@@ -248,6 +248,12 @@ SDL_Surface* PLAT_initVideo(void) {
 	// SDL_GetCurrentDisplayMode(0, &mode);
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 
+	// LOG_info("Available audio drivers:\n");
+	// for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
+	// 	LOG_info("- %s\n", SDL_GetAudioDriver(i));
+	// }
+	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+
 	// SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0");
 
 	int w = FIXED_WIDTH;
