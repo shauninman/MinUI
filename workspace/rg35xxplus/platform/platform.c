@@ -223,7 +223,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("We compiled against SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
 	// LOG_info("But we linked against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
 	//
-	//
 	// int num_displays = SDL_GetNumVideoDisplays();
 	// LOG_info("SDL_GetNumVideoDisplays(): %i\n", num_displays);
 	//
@@ -248,12 +247,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	// }
 	// SDL_GetCurrentDisplayMode(0, &mode);
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
-	//
-	// LOG_info("Availabel audio drivers:\n");
-	// for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
-	// 	LOG_info("- %s\n", SDL_GetAudioDriver(i));
-	// }
-	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+
+	// SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0");
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
@@ -270,7 +265,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_GetCurrentDisplayMode(0, &mode);
 	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	if (mode.h>mode.w) rotate = 3;
-	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	// SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
 	

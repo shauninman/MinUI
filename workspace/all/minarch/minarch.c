@@ -1983,7 +1983,8 @@ static void buffer_dealloc(void) {
 }
 static void buffer_realloc(int w, int h, int p) {
 	buffer_dealloc();
-	buffer = malloc((w * sizeof(uint16_t)) * h);
+	buffer = malloc((w * FIXED_BPP) * h);
+	// LOG_info("buffer_realloc(%i,%i,%i)\n", w,h,p);
 }
 static void buffer_downsample(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// from picoarch! https://git.crowdedwood.com/picoarch/tree/video.c#n51
@@ -2000,7 +2001,7 @@ static void buffer_downsample(const void *data, unsigned width, unsigned height,
 			output++;
 		}
 
-		input += extra;
+		input += extra; // TODO: commenting this out fixes geolith when cropped, it appears to be lying about the pitch...
 	}
 }
 
@@ -2273,6 +2274,8 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 
 	fps_ticks += 1;
 	
+	if (downsample) pitch /= 2; // everything expects 16 but we're downsampling from 32
+	
 	// if source has changed size (or forced by dst_p==0)
 	// eg. true src + cropped src + fixed dst + cropped dst
 	if (renderer.dst_p==0 || width!=renderer.true_w || height!=renderer.true_h) {
@@ -2287,7 +2290,7 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 	if (bottom_width) SDL_FillRect(screen, &(SDL_Rect){0,screen->h-DIGIT_HEIGHT,bottom_width,DIGIT_HEIGHT}, RGB_BLACK);
 	
 	if (downsample) {
-		buffer_downsample(data,width,height,pitch);
+		buffer_downsample(data,width,height,pitch*2);
 		renderer.src = buffer;
 	}
 	else {

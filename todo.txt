@@ -13,6 +13,29 @@ EXTRAS
 next
 	merge pull requests
 	
+	muos-base (rg*xx family):
+		on hold
+		https://github.com/MustardOS
+		volume doesn't work
+			updates correctly in MinUI (with no audio)
+			but maxes out in minarch
+			changing from `lineout volume` to `digital volume` fixes...
+		doesn't detect charging state
+			sometimes
+			seems to have resolved itself
+		change default shell in /etc/passwd
+		use C reboot(); for poweroff and reboot (see poweroff_real and reboot_real in other)
+			try this on original miyoomini
+	
+	figure out uncommitted changes
+		what to keep
+		what to nuke
+		
+		really feeling like a fresh start
+		no more monolithic repos
+		just start fresh with any new device that catches my eye
+		or not, just walk away
+	
 	document map.txt
 		allow hiding files with map, eg. neogeo.bios .neogeo.bios
 			remove . files after sort?
@@ -29,6 +52,7 @@ next
 		auto.sh isn't working here
 		figure out
 			fceumm audio crackle
+				this is caused by SDL_RenderPresent() taking a long time on stock fw (and MOSS on the RGB30)
 			judder
 				vsync? nope...
 			audio crackle on quit sdl
@@ -128,7 +152,9 @@ next
 				can't reproduce
 				already waits 3 seconds
 			then rgb30
-			related to orphaned clusters issue?
+				related to orphaned clusters issue? likely
+				if so it needs to either be solved in MOSS/JELOS (RIP)
+				or the other platforms MinUI supports (the non-Plus Mini in particular has a really terrible shutdown process at least on older firmwares)
 		
 	move PLAT_isOnline() into PWR_* formally
 			

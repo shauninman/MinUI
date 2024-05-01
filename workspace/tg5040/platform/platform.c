@@ -82,8 +82,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_GetRendererInfo(vid.renderer, &info);
 	LOG_info("Current render driver: %s\n", info.name);
 	
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
-	
 	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
 	
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
