@@ -110,7 +110,10 @@ if [ -f $SYSTEM_PATH/paks/MinUI.pak/launch.sh ]; then
 	$SYSTEM_PATH/paks/MinUI.pak/launch.sh
 else
 	echo "couldn't find launch.sh" >> $TF1_PATH/log.txt
-	ls -l $SDCARD_PATH >> $TF1_PATH/log.txt
+	if [ -h $TF2_PATH ] && [ "$TF2_PATH" -ef "$TF1_PATH" ]; then
+		echo "deleting old TF2 -> TF1 symlink" >> $TF1_PATH/log.txt
+		unlink $TF2_PATH
+	fi
 fi
 
 sync && poweroff
