@@ -369,7 +369,6 @@ static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
-	
 	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native
 	
 	if (w>=device_width && h>=device_height) hard_scale = 1;
@@ -467,13 +466,17 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	}
 	
 	SDL_Rect* src_rect = &(SDL_Rect){0,0,w,h};
-	SDL_Rect* dst_rect = NULL;
+	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
 	if (vid.blit->aspect==0) { // native or cropped
 		int w = vid.blit->src_w * vid.blit->scale;
 		int h = vid.blit->src_h * vid.blit->scale;
 		int x = (device_width - w) / 2;
 		int y = (device_height - h) / 2;
-		dst_rect = &(SDL_Rect){x,y,w,h};
+		// dst_rect = &(SDL_Rect){x,y,w,h};
+		dst_rect->x = x;
+		dst_rect->y = y;
+		dst_rect->w = w;
+		dst_rect->h = h;
 	}
 	else if (vid.blit->aspect>0) { // aspect
 		int h = device_height;
@@ -485,7 +488,11 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		}
 		int x = (device_width - w) / 2;
 		int y = (device_height - h) / 2;
-		dst_rect = &(SDL_Rect){x,y,w,h};
+		// dst_rect = &(SDL_Rect){x,y,w,h};
+		dst_rect->x = x;
+		dst_rect->y = y;
+		dst_rect->w = w;
+		dst_rect->h = h;
 	}
 	
 	int ox,oy;
