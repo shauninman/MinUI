@@ -81,4 +81,4 @@ to
 
 # Caveats
 
-MinUI currently only supports the RGB565 pixel format. This may prevent otherwize compatible cores from working at all.
+MinUI currently only supports the RGB565 pixel format and does not implement the OpenGL libretro APIs. This may prevent otherwise compatible cores from working at all. It may be possible to use the stock firmware's retroarch instead of MinUI's minarch to run certain cores but that is left as an exercise for the reader.
