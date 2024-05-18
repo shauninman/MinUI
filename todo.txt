@@ -3,6 +3,7 @@ Please see the README.txt in the zip files for installation and update instructi
 BASE
 
 - all w/analogs: added DualShock support to PlayStation.pak.
+- rg_xx & rgb30: added Frontend > Thread Core (primarily to fix audio crackle in Nintendo.pak)
 
 EXTRAS
 
@@ -36,15 +37,9 @@ next
 	macos (for modern compiler and debugging tools not for release!)
 		minarch
 	
-	add extra atari7800 A78.pak
-		https://github.com/libretro/prosystem-libretro
 	rg35xxplus/h
 		auto.sh isn't working here
 		figure out
-			fceumm audio crackle
-				this is caused by SDL_RenderPresent() taking a long time on stock fw (and MOSS on the RGB30)
-			judder
-				vsync? nope...
 			audio crackle on quit sdl
 				setting raw volume to 0 doesn't fix
 			implement jack

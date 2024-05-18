@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <zlib.h>
+#include <pthread.h>
 
 #include "libretro.h"
 #include "defines.h"
@@ -21,9 +22,18 @@
 ///////////////////////////////////////
 
 static SDL_Surface* screen;
-static int quit;
-static int show_menu;
+static int quit = 0;
+static int show_menu = 0;
 static int simple_mode = 0;
+static int thread_video = 0;
+static int was_threaded = 0;
+static int should_run_core = 1; // used by threaded video
+
+static pthread_t		core_pt;
+static pthread_mutex_t	core_mx;
+static pthread_cond_t	core_rq; // not sure this is required
+static SDL_Surface*	backbuffer = NULL;
+static void* coreThread(void *arg);
 
 enum {
 	SCALE_NATIVE,
@@ -647,6 +657,7 @@ enum {
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_OVERCLOCK,
+	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
 	FE_OPT_MAXFF,
 	FE_OPT_COUNT,
@@ -855,6 +866,16 @@ static struct Config {
 				.values = overclock_labels,
 				.labels = overclock_labels,
 			},
+			[FE_OPT_THREAD] = {
+				.key	= "minarch_thread_video",
+				.name	= "Thread Core",
+				.desc	= "Move emulation to a thread.\nPrevents audio crackle but may\ncause dropped frames.",
+				.default_value = 0,
+				.value = 0,
+				.count = 2,
+				.values = onoff_labels,
+				.labels = onoff_labels,
+			},
 			[FE_OPT_DEBUG] = {
 				.key	= "minarch_debug_hud",
 				.name	= "Debug HUD",
@@ -923,6 +944,7 @@ static void setOverclock(int i) {
 		case 2: PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
 	}
 }
+static int toggle_thread = 0;
 static void Config_syncFrontend(char* key, int value) {
 	int i = -1;
 	if (exactMatch(key,config.frontend.options[FE_OPT_SCALING].key)) {
@@ -943,6 +965,11 @@ static void Config_syncFrontend(char* key, int value) {
 	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
 		prevent_tearing = value;
 		i = FE_OPT_TEARING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_THREAD].key)) {
+		int old_value = thread_video || was_threaded;
+		toggle_thread = old_value!=value;
+		i = FE_OPT_THREAD;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
 		overclock = value;
@@ -1484,6 +1511,21 @@ static void Menu_afterSleep(void);
 static void Menu_saveState(void);
 static void Menu_loadState(void);
 
+static int setFastForward(int enable) {
+	if (!fast_forward && enable && thread_video) {
+		// LOG_info("entered fast forward with threaded core...\n");
+		was_threaded = 1;
+		toggle_thread = 1;
+	}
+	else if (fast_forward && !enable && !thread_video && was_threaded) {
+		// LOG_info("exited fast forward with previously threaded core...\n");
+		was_threaded = 0;
+		toggle_thread = 1;
+	}
+	fast_forward = enable;
+	return enable;
+}
+
 static uint32_t buttons = 0; // RETRO_DEVICE_ID_JOYPAD_* buttons
 static int ignore_menu = 0;
 static void input_poll_callback(void) {
@@ -1500,6 +1542,21 @@ static void input_poll_callback(void) {
 		ignore_menu = 1;
 	}
 	
+	if (PAD_justPressed(BTN_POWER)) {
+		if (thread_video) {
+			// LOG_info("pressed power with threaded core...\n");
+			was_threaded = 1;
+			toggle_thread = 1;
+		}
+	}
+	else if (PAD_justReleased(BTN_POWER)) {
+		if (!thread_video && was_threaded) {
+			// LOG_info("released power with previously threaded core before power off...\n");
+			was_threaded = 0;
+			toggle_thread = 1;
+		}
+	}
+	
 	static int toggled_ff_on = 0; // this logic only works because TOGGLE_FF is before HOLD_FF in the menu...
 	for (int i=0; i<SHORTCUT_COUNT; i++) {
 		ButtonMapping* mapping = &config.shortcuts[i];
@@ -1508,7 +1565,7 @@ static void input_poll_callback(void) {
 		if (!mapping->mod || PAD_isPressed(BTN_MENU)) {
 			if (i==SHORTCUT_TOGGLE_FF) {
 				if (PAD_justPressed(btn)) {
-					fast_forward = toggled_ff_on = !fast_forward;
+					toggled_ff_on = setFastForward(!fast_forward);
 					if (mapping->mod) ignore_menu = 1;
 					break;
 				}
@@ -1521,7 +1578,7 @@ static void input_poll_callback(void) {
 				// don't allow turn off fast_forward with a release of the hold button 
 				// if it was initially turned on with the toggle button
 				if (PAD_justPressed(btn) || (!toggled_ff_on && PAD_justReleased(btn))) {
-					fast_forward = PAD_isPressed(btn);
+					fast_forward = setFastForward(PAD_isPressed(btn));
 					if (mapping->mod) ignore_menu = 1; // very unlikely but just in case
 				}
 			}
@@ -1545,6 +1602,12 @@ static void input_poll_callback(void) {
 	
 	if (!ignore_menu && PAD_justReleased(BTN_MENU)) {
 		show_menu = 1;
+		
+		if (thread_video) {
+			pthread_mutex_lock(&core_mx);
+			should_run_core = 0;
+			pthread_mutex_unlock(&core_mx);
+		}
 	}
 	
 	// TODO: figure out how to ignore button when MENU+button is handled first
@@ -2310,7 +2373,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	if (scaler_surface) SDL_FreeSurface(scaler_surface);
 	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
 }
-static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
+static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
 	
 	// static int tmp_frameskip = 0;
@@ -2413,10 +2476,33 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 		if (x>top_width) top_width = x; // keep the largest width because triple buffer
 	}
 	
-	GFX_flip(screen);
+	if (!thread_video) GFX_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
-
+static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
+	if (!data) return;
+	
+	if (thread_video) {
+		pthread_mutex_lock(&core_mx);
+		
+		if (backbuffer && (backbuffer->w!=width || backbuffer->h!=height || backbuffer->pitch!=pitch)) {
+			free(backbuffer->pixels);
+			SDL_FreeSurface(backbuffer);
+			backbuffer = NULL;
+		}
+		if (!backbuffer) {
+			uint16_t* pixels = malloc(height*pitch);
+			// backbuffer = SDL_CreateRGBSurface(0,width,height,FIXED_DEPTH,RGBA_MASK_565);
+			backbuffer = SDL_CreateRGBSurfaceFrom(pixels, width, height, FIXED_DEPTH, pitch, RGBA_MASK_565);
+		}
+		
+		memcpy(backbuffer->pixels, data, backbuffer->h*backbuffer->pitch);
+		
+		pthread_cond_signal(&core_rq);
+		pthread_mutex_unlock(&core_mx);
+	}
+	else video_refresh_callback_main(data,width,height,pitch);
+}
 ///////////////////////////////
 
 // NOTE: sound must be disabled for fast forward to work...
@@ -4089,6 +4175,12 @@ static void Menu_loop(void) {
 		
 		GFX_setVsync(prevent_tearing);
 		if (!HAS_POWER_BUTTON) PWR_disableSleep();
+
+		if (thread_video) {
+			pthread_mutex_lock(&core_mx);
+			should_run_core = 1;
+			pthread_mutex_unlock(&core_mx);
+		}
 	}
 	
 	SDL_FreeSurface(menu.bitmap);
@@ -4170,6 +4262,22 @@ static void limitFF(void) {
 	last_time = now;
 }
 
+static void* coreThread(void *arg) {
+	while (!quit) {
+		int run = 0;
+		pthread_mutex_lock(&core_mx);
+		run = should_run_core;
+		pthread_mutex_unlock(&core_mx);
+		
+		if (run) {
+			core.run();
+			limitFF();
+			trackFPS();
+		}
+	}
+	pthread_exit(NULL);
+}
+
 int main(int argc , char* argv[]) {
 	LOG_info("MinArch\n");
 
@@ -4235,29 +4343,60 @@ int main(int argc , char* argv[]) {
 	State_resume();
 	Menu_initState(); // make ready for state shortcuts
 	
+	if (thread_video) {
+		core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+		core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+		pthread_create(&core_pt, NULL, &coreThread, NULL);
+	}
+	
 	PWR_warn(1);
 	PWR_disableAutosleep();
 	sec_start = SDL_GetTicks();
 	while (!quit) {
 		GFX_startFrame();
 		
-		core.run();
-		limitFF();
+		if (!thread_video) {
+			core.run();
+			limitFF();
+			trackFPS();
+		}
+
+		if (thread_video && !quit) {
+			pthread_mutex_lock(&core_mx);
+			pthread_cond_wait(&core_rq,&core_mx);
+			
+			if (backbuffer) {
+				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
+				GFX_flip(screen);
+			}
+			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+			pthread_mutex_unlock(&core_mx);
+		}
 		
 		if (show_menu) Menu_loop();
 		
-		trackFPS();
-		
-		// TODO: this is working as expected 
-		// but I for some reason kmsdrm isn't ready 
-		// by the time we relaunch minarch
-		
-		// if (GFX_hdmiChanged()) {
-		// 	LOG_info("hdmi changed\n");
-		// 	Menu_beforeSleep();
-		// 	sleep(5);
-		// 	quit = 1;
-		// }
+		if (toggle_thread) {
+			toggle_thread = 0;
+			if (was_threaded && !thread_video) {
+				// LOG_info("was fast forwarding while previously threaded (%i) so re-enabling threading %i\n", thread_video, !thread_video);
+				// revert to pre-fast_forward state before toggling
+				was_threaded = 0;
+				thread_video = !thread_video;
+			}
+			// LOG_info("toggling thread from %i to %i\n", thread_video, !thread_video);
+			thread_video = !thread_video;
+			if (thread_video) {
+				// enable
+				core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+				core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
+				pthread_create(&core_pt, NULL, &coreThread, NULL);
+			}
+			else {
+				// disable
+				pthread_cancel(core_pt);
+				pthread_join(core_pt,NULL);
+			}
+		}
 	}
 	
 	Menu_quit();
