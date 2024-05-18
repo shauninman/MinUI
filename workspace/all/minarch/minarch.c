@@ -48,7 +48,10 @@ static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
 static int overclock = 1; // normal
+static int has_custom_controllers = 0;
+static int gamepad_type = 0; // index in gamepad_labels/gamepad_values
 static int downsample = 0; // set to 1 to convert from 8888 to 565
+
 static int DEVICE_WIDTH = FIXED_WIDTH;
 static int DEVICE_HEIGHT = FIXED_HEIGHT;
 static int DEVICE_PITCH = FIXED_PITCH;
@@ -776,6 +779,18 @@ static char* overclock_labels[] = {
 	NULL,
 };
 
+// TODO: this should be provided by the core
+static char* gamepad_labels[] = {
+	"Standard",
+	"DualShock",
+	NULL,
+};
+static char* gamepad_values[] = {
+	"1",
+	"517",
+	NULL,
+};
+
 enum {
 	CONFIG_NONE,
 	CONFIG_CONSOLE,
@@ -1039,6 +1054,12 @@ static void Config_readOptionsString(char* cfg) {
 		Config_syncFrontend(option->key, option->value);
 	}
 	
+	if (has_custom_controllers && Config_getValue(cfg,"minarch_gamepad_type",value,NULL)) {
+		gamepad_type = strtol(value, NULL, 0);
+		int device = strtol(gamepad_values[gamepad_type], NULL, 0);
+		core.set_controller_port_device(0, device);
+	}
+	
 	for (int i=0; config.core.options[i].key; i++) {
 		Option* option = &config.core.options[i];
 		if (!Config_getValue(cfg, option->key, value, &option->lock)) continue;
@@ -1171,6 +1192,9 @@ static void Config_write(int override) {
 		Option* option = &config.core.options[i];
 		fprintf(file, "%s = %s\n", option->key, option->values[option->value]);
 	}
+	
+	if (has_custom_controllers) fprintf(file, "%s = %i\n", "minarch_gamepad_type", gamepad_type);
+	
 	for (int i=0; config.controls[i].name; i++) {
 		ButtonMapping* mapping = &config.controls[i];
 		int j = mapping->local + 1;
@@ -1209,6 +1233,11 @@ static void Config_restore(void) {
 		option->value = option->default_value;
 	}
 	config.core.changed = 1; // let the core know
+	
+	if (has_custom_controllers) {
+		gamepad_type = 0;
+		core.set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
+	}
 
 	for (int i=0; config.controls[i].name; i++) {
 		ButtonMapping* mapping = &config.controls[i];
@@ -1542,10 +1571,22 @@ static void input_poll_callback(void) {
 	// if (buttons) LOG_info("buttons: %i\n", buttons);
 }
 static int16_t input_state_callback(unsigned port, unsigned device, unsigned index, unsigned id) {
-	// id == RETRO_DEVICE_ID_JOYPAD_MASK or RETRO_DEVICE_ID_JOYPAD_*
-	if (port == 0 && device == RETRO_DEVICE_JOYPAD && index == 0) {
+	if (port==0 && device==RETRO_DEVICE_JOYPAD && index==0) {
 		if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return buttons;
 		return (buttons >> id) & 1;
+	}
+	else if (port==0 && device==RETRO_DEVICE_ANALOG) {
+		// LOG_info("wants analog input\n");
+		if (index==RETRO_DEVICE_INDEX_ANALOG_LEFT) {
+			// LOG_info("wants left stick %i,%i\n", pad.laxis.x,pad.laxis.y);
+			if (id==RETRO_DEVICE_ID_ANALOG_X) return pad.laxis.x;
+			else if (id==RETRO_DEVICE_ID_ANALOG_Y) return pad.laxis.y;
+		}
+		else if (index==RETRO_DEVICE_INDEX_ANALOG_RIGHT) {
+			// LOG_info("wants right stick %i,%i\n", pad.raxis.x,pad.raxis.y);
+			if (id==RETRO_DEVICE_ID_ANALOG_X) return pad.raxis.x;
+			else if (id==RETRO_DEVICE_ID_ANALOG_Y) return pad.raxis.y;
+		}
 	}
 	return 0;
 }
@@ -1676,12 +1717,13 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 
 	// TODO: this is called whether using variables or options
 	case RETRO_ENVIRONMENT_GET_VARIABLE: { /* 15 */
-		// puts("RETRO_ENVIRONMENT_GET_VARIABLE");
+		// puts("RETRO_ENVIRONMENT_GET_VARIABLE ");
 		struct retro_variable *var = (struct retro_variable *)data;
 		if (var && var->key) {
 			var->value = OptionList_getOptionValue(&config.core, var->key);
 			// printf("\t%s = %s\n", var->key, var->value);
 		}
+		// fflush(stdout);
 		break;
 	}
 	// TODO: I think this is where the core reports its variables (the precursor to options)
@@ -1713,6 +1755,10 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		// LOG_info("%i: RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK\n", cmd);
 		break;
 	}
+	case RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK: { /* 22 */
+		// LOG_info("%i: RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK\n", cmd);
+		break;
+	}
 	case RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE: { /* 23 */
 	        struct retro_rumble_interface *iface = (struct retro_rumble_interface*)data;
 
@@ -1720,12 +1766,12 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	        iface->set_rumble_state = set_rumble_state;
 		break;
 	}
-	// case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES: {
-	// 	unsigned *out = (unsigned *)data;
-	// 	if (out)
-	// 		*out = (1 << RETRO_DEVICE_JOYPAD) | (1 << RETRO_DEVICE_ANALOG);
-	// 	break;
-	// }
+	case RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES: {
+		unsigned *out = (unsigned *)data;
+		if (out)
+			*out = (1 << RETRO_DEVICE_JOYPAD) | (1 << RETRO_DEVICE_ANALOG);
+		break;
+	}
 	case RETRO_ENVIRONMENT_GET_LOG_INTERFACE: { /* 27 */
 		struct retro_log_callback *log_cb = (struct retro_log_callback *)data;
 		if (log_cb)
@@ -1738,7 +1784,25 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 			*out = core.saves_dir; // save_dir;
 		break;
 	}
-	// RETRO_ENVIRONMENT_SET_CONTROLLER_INFO 35
+	case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO: { /* 35 */
+		// LOG_info("RETRO_ENVIRONMENT_SET_CONTROLLER_INFO\n");
+		const struct retro_controller_info *infos = (const struct retro_controller_info *)data;
+		if (infos) {
+			// TODO: store to gamepad_values/gamepad_labels for gamepad_device
+			const struct retro_controller_info *info = &infos[0];
+			for (int i=0; i<info->num_types; i++) {
+				const struct retro_controller_description *type = &info->types[i];
+				if (exactMatch((char*)type->desc,"dualshock")) { // currently only enabled for PlayStation
+					has_custom_controllers = 1;
+					break;
+				}
+				// printf("\t%i: %s\n", type->id, type->desc);
+			}
+		}
+		fflush(stdout);
+		return false; // TODO: tmp
+		break;
+	}
 	// RETRO_ENVIRONMENT_SET_MEMORY_MAPS (36 | RETRO_ENVIRONMENT_EXPERIMENTAL)
 	// RETRO_ENVIRONMENT_GET_LANGUAGE 39
 	// RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS (42 | RETRO_ENVIRONMENT_EXPERIMENTAL)
@@ -2456,9 +2520,7 @@ void Core_load(void) {
 	// NOTE: must be called after core.load_game!
 	struct retro_system_av_info av_info = {};
 	core.get_system_av_info(&av_info);
-
-	// FIX: some cores need configure a default controller.
-	core.set_controller_port_device(0, 1);
+	core.set_controller_port_device(0, RETRO_DEVICE_JOYPAD); // set a default, may update after loading configs
 
 	core.fps = av_info.timing.fps;
 	core.sample_rate = av_info.timing.sample_rate;
@@ -2594,6 +2656,7 @@ void Menu_quit(void) {
 	SDL_FreeSurface(menu.overlay);
 }
 void Menu_beforeSleep(void) {
+	// LOG_info("beforeSleep\n");
 	SRAM_write();
 	RTC_write();
 	State_autosave();
@@ -2601,6 +2664,7 @@ void Menu_beforeSleep(void) {
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 }
 void Menu_afterSleep(void) {
+	// LOG_info("beforeSleep\n");
 	unlink(AUTO_RESUME_PATH);
 	setOverclock(overclock);
 }
@@ -2800,6 +2864,11 @@ static int OptionEmulator_openMenu(MenuList* list, int i) {
 
 int OptionControls_bind(MenuList* list, int i) {
 	MenuItem* item = &list->items[i];
+	if (item->values!=button_labels) {
+		// LOG_info("changed gamepad_type\n");
+		return MENU_CALLBACK_NOP;
+	}
+	
 	ButtonMapping* button = &config.controls[item->id];
 	
 	int bound = 0;
@@ -2829,9 +2898,22 @@ int OptionControls_bind(MenuList* list, int i) {
 }
 static int OptionControls_unbind(MenuList* list, int i) {
 	MenuItem* item = &list->items[i];
+	if (item->values!=button_labels) return MENU_CALLBACK_NOP;
+	
 	ButtonMapping* button = &config.controls[item->id];
 	button->local = -1;
 	button->mod = 0;
+	return MENU_CALLBACK_NOP;
+}
+static int OptionControls_optionChanged(MenuList* list, int i) {
+	MenuItem* item = &list->items[i];
+	if (item->values!=gamepad_labels) return MENU_CALLBACK_NOP;
+
+	if (has_custom_controllers) {
+		gamepad_type = item->value;
+		int device = strtol(gamepad_values[item->value], NULL, 0);
+		core.set_controller_port_device(0, device);
+	}
 	return MENU_CALLBACK_NOP;
 }
 static MenuList OptionControls_menu = {
@@ -2845,10 +2927,22 @@ static MenuList OptionControls_menu = {
 };
 static int OptionControls_openMenu(MenuList* list, int i) {
 	LOG_info("OptionControls_openMenu\n");
+
 	if (OptionControls_menu.items==NULL) {
+		
 		// TODO: where do I free this?
-		OptionControls_menu.items = calloc(RETRO_BUTTON_COUNT+1, sizeof(MenuItem));
+		OptionControls_menu.items = calloc(RETRO_BUTTON_COUNT+1+has_custom_controllers, sizeof(MenuItem));
 		int k = 0;
+		
+		if (has_custom_controllers) {
+			MenuItem* item = &OptionControls_menu.items[k++];
+			item->name = "Controller";
+			item->desc = "Select the type of controller.";
+			item->value = gamepad_type;
+			item->values = gamepad_labels;
+			item->on_change = OptionControls_optionChanged;
+		}
+		
 		for (int j=0; config.controls[j].name; j++) {
 			ButtonMapping* button = &config.controls[j];
 			if (button->ignore) continue;
@@ -2867,6 +2961,12 @@ static int OptionControls_openMenu(MenuList* list, int i) {
 	else {
 		// update values
 		int k = 0;
+		
+		if (has_custom_controllers) {
+			MenuItem* item = &OptionControls_menu.items[k++];
+			item->value = gamepad_type;
+		}
+		
 		for (int j=0; config.controls[j].name; j++) {
 			ButtonMapping* button = &config.controls[j];
 			if (button->ignore) continue;
@@ -3092,30 +3192,31 @@ static int Menu_options(MenuList* list) {
 			}
 			dirty = 1;
 		}
-		else if (type!=MENU_INPUT && type!=MENU_LIST) {
-			if (PAD_justRepeated(BTN_LEFT)) {
-				MenuItem* item = &items[selected];
-				if (item->value>0) item->value -= 1;
-				else {
-					int j;
-					for (j=0; item->values[j]; j++);
-					item->value = j - 1;
+		else {
+			MenuItem* item = &items[selected];
+			if (item->values!=button_labels) { // not an input binding
+				if (PAD_justRepeated(BTN_LEFT)) {
+					if (item->value>0) item->value -= 1;
+					else {
+						int j;
+						for (j=0; item->values[j]; j++);
+						item->value = j - 1;
+					}
+				
+					if (item->on_change) item->on_change(list, selected);
+					else if (list->on_change) list->on_change(list, selected);
+				
+					dirty = 1;
 				}
+				else if (PAD_justRepeated(BTN_RIGHT)) {
+					if (item->values[item->value+1]) item->value += 1;
+					else item->value = 0;
 				
-				if (item->on_change) item->on_change(list, selected);
-				else if (list->on_change) list->on_change(list, selected);
+					if (item->on_change) item->on_change(list, selected);
+					else if (list->on_change) list->on_change(list, selected);
 				
-				dirty = 1;
-			}
-			else if (PAD_justRepeated(BTN_RIGHT)) {
-				MenuItem* item = &items[selected];
-				if (item->values[item->value+1]) item->value += 1;
-				else item->value = 0;
-				
-				if (item->on_change) item->on_change(list, selected);
-				else if (list->on_change) list->on_change(list, selected);
-				
-				dirty = 1;
+					dirty = 1;
+				}
 			}
 		}
 		
@@ -3131,7 +3232,7 @@ static int Menu_options(MenuList* list) {
 			// TODO: is there a way to defer on_confirm for MENU_INPUT so we can clear the currently set value to indicate it is awaiting input? 
 			// eg. set a flag to call on_confirm at the beginning of the next frame?
 			else if (list->on_confirm) {
-				if (type==MENU_INPUT) await_input = 1;
+				if (item->values==button_labels) await_input = 1; // button binding
 				else result = list->on_confirm(list, selected); // list-specific action, eg. show item detail view or input binding
 			}
 			if (result==MENU_CALLBACK_EXIT) show_options = 0;
@@ -3982,7 +4083,7 @@ static void Menu_loop(void) {
 		}
 		GFX_clear(screen);
 		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
-
+		
 		setOverclock(overclock); // restore overclock value
 		if (rumble_strength) VIB_setStrength(rumble_strength);
 		

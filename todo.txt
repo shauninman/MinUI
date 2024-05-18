@@ -2,7 +2,7 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- 
+- all w/analogs: added DualShock support to PlayStation.pak.
 
 EXTRAS
 
@@ -11,31 +11,21 @@ EXTRAS
 ---
 
 next
-	merge pull requests
-	
-	muos-base (rg*xx family):
-		on hold
-		https://github.com/MustardOS
-		volume doesn't work
-			updates correctly in MinUI (with no audio)
-			but maxes out in minarch
-			changing from `lineout volume` to `digital volume` fixes...
-		doesn't detect charging state
-			sometimes
-			seems to have resolved itself
-		change default shell in /etc/passwd
-		use C reboot(); for poweroff and reboot (see poweroff_real and reboot_real in other)
-			try this on original miyoomini
-	
-	figure out uncommitted changes
-		what to keep
-		what to nuke
+	making good progress on analog support
+		add to minput?
+			plenty of room on the rgb30
+			less so on the 35xx h
 		
-		really feeling like a fresh start
-		no more monolithic repos
-		just start fresh with any new device that catches my eye
-		or not, just walk away
+	rg35xx sp
+		/sys/class/power_supply/axp2202-battery/hallkey (or something like that)
+			1: open
+			0: closed
+		
+
+	separate BTN_UP into BTN_DPAD_UP and BTN_ANALOG_UP and OR them together?
+		at least in MinUI and menus in minarch
 	
+
 	document map.txt
 		allow hiding files with map, eg. neogeo.bios .neogeo.bios
 			remove . files after sort?
@@ -112,6 +102,7 @@ next
 			only for devices with adb or ssh
 			
 		rewrite Shortcuts section by device not the tangle mess it currently is
+			Shortcuts section? I have no idea what this means
 			maybe do the same for all?
 			break out platforms into completely separate installers/updaters?
 				will require revisiting unzipping system
@@ -142,10 +133,7 @@ next
 		psp
 			after adding xrgb8888 support to MinUI it still chokes on a number of missing libraries 
 			and eventually an unlinked function (something like XUnlockMutex)
-	
-	sdl2
-		figure out how analogs work and hook them up (if only to double d-pad)
-	
+		
 	user reported
 		random reports of minui not booting reliably 
 			first smart
@@ -160,16 +148,6 @@ next
 			
 	all
 		revisit localization?
-		pull latest gpsp (fixes for long standing problem games I guess?)
-			nope, breaks save state compatibility
-			oddly it appears to be fixed on a branch? https://github.com/libretro/gpsp/commit/8745bf3d8fbb708db13bb726e5d89a6832f74d73
-				but it looks like the save state format has been updated 2 more times since then so using that commit as a patch probably won't work
-			f4e65d15 is known safe
-			broken
-				f0bacff
-				bcd062e
-			works!
-				1d1c719
 	
 	minarch:
 		crop save state pillar/letter-boxing?
@@ -189,28 +167,6 @@ next
 			fewt has a fix?
 				https://github.com/JustEnoughLinuxOS/distribution/pull/2195/files#diff-719d790f2d3c1d5a0884ae9eb69fb77956fcaaae235282acb6e6817339f35105
 
-		do some benchmarking to see where the slowdown is coming from
-			the software scaler?
-			the core?
-			minarch?
-			sdl12-compat?
-			
-		performance issues (both frame rate and audio clipping)
-			fceuum 
-			picodrive
-			vb
-			pcsx
-			could this have anything to do with the performance versus userspace governor?
-				no
-			I think it's caused by the forced vsync in sdl2 (still most likely)
-				unless the JELOS build process is lying about rebuilding without that patch, nope
-			or fullscreen blitting? 
-				nope
-			I think I need to look into SDL2 audio handling (since it wasn't an issue with SDL1 but was with the SDL2-backed SDL12-compat)
-				tried disabling pulse/pipewire (using alsa anyway)
-					nope
-				could it be non-threaded? that would be insane right?
-	
 	moss
 		build lib32 to try to fix snes9x save state compatibility
 			first attempt did not go well :sweat_smile:
@@ -257,13 +213,6 @@ all
 		GFX_blitDebug(text,x,y)?
 			simple for everything but trimuismart with its -90° screen
 	minui
-		support multiple tags in folder name?
-			eg. Super Nintendo (SFC,SFCALT)
-			where SFX.pak is only present on higher power systems and
-			SFCALT.pak is an older core meant for lower power systems
-			states will not be compatible because of the different core but...
-		shows games in alt collated folders even if the alt pak isn't present...
-			not sure how that's possible...
 		alt tag is getting truncated, should be added after truncation
 	add a "res" (or "many"?) folder 
 		for install/update and charging gfx?
@@ -283,7 +232,7 @@ miniplus
 	-
 	
 rg35xx
-	revisit hdmi basedon rgb30 implementation?
+	revisit hdmi based on rgb30 implementation?
 	overclock.elf with userspace versus performance
 		performance should be slower because it will max out to the max defined scaling frequency
 		userspace should accept the specific scaling frequency
@@ -312,31 +261,6 @@ rg35xx
 		trimui smart has a similar issue now
 			the bootstrap folder updates /etc/main
 
-nano
-	the lack of shared SD card support is a big downer
-		abandon this platform?
-		have I documented the boot process or how to create the modified firmware image?
-	L+R and d-pad to offset cropped "scaling"?
-	keep an eye out for a 60fps fix
-		https://github.com/DrUm78/linux/tags
-		I think I got it (though I coudln't tell it wasn't running 60fps before so...)
-		this might be running worse after the fix...
-	test nano MinUI SD in all other (fully) supported devices
-		no joy :sob:
-		can the boot partition be hidden from other devices?
-		or can I change the boot order to prioritize nand over sd?
-	minarch
-		cores
-			sfc - not great, non-plus is better but still struggles with sfx chip games like SF or YI
-			psx?
-		patches
-	hardware scaling
-		no? but screen is so tiny, relative ppi so high, it might not matter
-	is overclocking possible?
-		no?
-	installer/updater
-		(build into /etc/rcS logic)
-
 trimui
 	overclock
 		crashy
@@ -360,9 +284,6 @@ trimui
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
 
-sf2000
-	hahahahahahaha no.
-
 ---
 
 FIXME: main makefile is a brittle mess
@@ -380,10 +301,6 @@ FIXME: main makefile is a brittle mess
 there's more to this now (eg. PLATFORM/makefile.copy)
 
 ---
-
-potential mm+ identifier
-	/customer/app/axp_test exists
-	/miyoo354 instead of /miyoo
 
 replace 
 	git clone repo && cd repo && git checkout branch 

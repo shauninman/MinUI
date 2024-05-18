@@ -1206,6 +1206,11 @@ void PAD_poll_SDL(void) {
 				pressed = val>0;
 			}
 			
+			else if (axis==AXIS_LX) pad.laxis.x = val;
+			else if (axis==AXIS_LY) pad.laxis.y = val;
+			else if (axis==AXIS_RX) pad.raxis.x = val;
+			else if (axis==AXIS_RY) pad.raxis.y = val;
+			
 			/** /
 			// TODO: as coded this prevents the d-pad from working...
 			else if (axis==AXIS_LX) {
@@ -1456,9 +1461,7 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	}
 	
 	if (PAD_justReleased(BTN_POWEROFF) || (power_pressed_at && now-power_pressed_at>=1000)) {
-		if (before_sleep) {
-			before_sleep();
-		}
+		if (before_sleep) before_sleep();
 		PWR_powerOff();
 	}
 	

@@ -40,8 +40,12 @@
 #define RAW_PLUS	115
 #define RAW_MINUS	114
 #define RAW_POWER	116
-#define RAW_YAXIS	17
-#define RAW_XAXIS	16
+#define RAW_HATY	17
+#define RAW_HATX	16
+#define RAW_LSY		3
+#define RAW_LSX		2
+#define RAW_RSY		5
+#define RAW_RSX		4
 
 #define RAW_MENU1	RAW_L3
 #define RAW_MENU2	RAW_R3
@@ -54,8 +58,9 @@ void PLAT_initInput(void) {
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 }
 void PLAT_quitInput(void) {
-	close(inputs[1]);
-	close(inputs[0]);
+	for (int i=0; i<INPUT_COUNT; i++) {
+		close(inputs[i]);
+	}
 }
 
 // from <linux/input.h> which has BTN_ constants that conflict with platform.h
@@ -89,7 +94,6 @@ void PLAT_pollInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
 		input = inputs[i];
 		while (read(input, &event, sizeof(event))==sizeof(event)) {
-			if (event.value>1) continue; // ignore repeats
 			if (event.type!=EV_KEY && event.type!=EV_ABS) continue;
 
 			int btn = BTN_NONE;
@@ -101,6 +105,8 @@ void PLAT_pollInput(void) {
 			
 			// TODO: tmp, hardcoded, missing some buttons
 			if (type==EV_KEY) {
+				if (value>1) continue; // ignore repeats
+			
 				pressed = value;
 				// LOG_info("key event: %i (%i)\n", code,pressed);
 					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
@@ -129,31 +135,40 @@ void PLAT_pollInput(void) {
 			else if (type==EV_ABS) {
 				// LOG_info("abs event: %i (%i)\n", code,value);
 				// { up, down, left, right }
-				int hats[4] = {-1,-1,-1,-1}; // -1=no change,1=pressed,0=released
-				if (code==RAW_YAXIS) {
-					hats[0] = value==-1; // up
-					hats[1] = value==1; // down
-				}
-				else if (code==RAW_XAXIS) { // left/right
-					hats[2] = value==-1; // left
-					hats[3] = value==1; // right
-				}
+				if (code==RAW_HATY || code==RAW_HATX) {
+					if (value>1) continue; // ignore repeats
+			
+					int hats[4] = {-1,-1,-1,-1}; // -1=no change,1=pressed,0=released
+					if (code==RAW_HATY) {
+						hats[0] = value==-1; // up
+						hats[1] = value==1; // down
+					}
+					else if (code==RAW_HATX) { // left/right
+						hats[2] = value==-1; // left
+						hats[3] = value==1; // right
+					}
 				
-				for (id=0; id<4; id++) {
-					int state = hats[id];
-					btn = 1 << id;
-					if (state==0) {
-						pad.is_pressed		&= ~btn; // unset
-						pad.just_repeated	&= ~btn; // unset
-						pad.just_released	|= btn; // set
-					}
-					else if (state==1 && (pad.is_pressed & btn)==BTN_NONE) {
-						pad.just_pressed	|= btn; // set
-						pad.just_repeated	|= btn; // set
-						pad.is_pressed		|= btn; // set
-						pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
+					for (id=0; id<4; id++) {
+						int state = hats[id];
+						btn = 1 << id;
+						if (state==0) {
+							pad.is_pressed		&= ~btn; // unset
+							pad.just_repeated	&= ~btn; // unset
+							pad.just_released	|= btn; // set
+						}
+						else if (state==1 && (pad.is_pressed & btn)==BTN_NONE) {
+							pad.just_pressed	|= btn; // set
+							pad.just_repeated	|= btn; // set
+							pad.is_pressed		|= btn; // set
+							pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
+						}
 					}
 				}
+				else if (code==RAW_LSX) pad.laxis.x = (value / 4096) * 32767;
+				else if (code==RAW_LSY) pad.laxis.y = (value / 4096) * 32767;
+				else if (code==RAW_RSX) pad.raxis.x = (value / 4096) * 32767;
+				else if (code==RAW_RSY) pad.raxis.y = (value / 4096) * 32767;
+				
 				btn = BTN_NONE; // already handled, force continue
 			}
 			
@@ -220,8 +235,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	// SDL_version linked;
 	// SDL_VERSION(&compiled);
 	// SDL_GetVersion(&linked);
-	// LOG_info("We compiled against SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
-	// LOG_info("But we linked against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+	// LOG_info("Compiled SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
+	// LOG_info("Linked SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
 	//
 	// int num_displays = SDL_GetNumVideoDisplays();
 	// LOG_info("SDL_GetNumVideoDisplays(): %i\n", num_displays);

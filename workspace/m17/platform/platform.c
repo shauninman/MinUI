@@ -88,7 +88,6 @@ void PLAT_pollInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
 		input = inputs[i];
 		while (read(input, &event, sizeof(event))==sizeof(event)) {
-			if (event.value>1) continue; // ignore repeats
 			if (event.type!=EV_KEY && event.type!=EV_ABS) continue;
 
 			int btn = BTN_NONE;
@@ -100,6 +99,8 @@ void PLAT_pollInput(void) {
 			
 			// TODO: tmp, hardcoded, missing some buttons
 			if (type==EV_KEY) {
+				if (value>1) continue; // ignore repeats
+				
 				pressed = value;
 				// LOG_info("key event: %i (%i)\n", code,pressed); // no L3/R3
 					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
@@ -120,7 +121,15 @@ void PLAT_pollInput(void) {
 				else if (code==RAW_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
 				else if (code==RAW_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
 			}
-
+			else if (type==EV_ABS) {
+				// LOG_info("axis: %i (%i)\n",code,value);
+				// else if (code==RAW_LSX) pad.laxis.x = (value / 4096) * 32767;
+				// else if (code==RAW_LSY) pad.laxis.y = (value / 4096) * 32767;
+				// else if (code==RAW_RSX) pad.raxis.x = (value / 4096) * 32767;
+				// else if (code==RAW_RSY) pad.raxis.y = (value / 4096) * 32767;
+				
+				btn = BTN_NONE; // already handled, force continue
+			}
 			
 			if (btn==BTN_NONE) continue;
 		

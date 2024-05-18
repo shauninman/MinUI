@@ -20,14 +20,170 @@
 
 ///////////////////////////////
 
-static SDL_Joystick *joystick;
+// static SDL_Joystick *joystick;
+// void PLAT_initInput(void) {
+// 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+// 	joystick = SDL_JoystickOpen(0);
+// }
+// void PLAT_quitInput(void) {
+// 	SDL_JoystickClose(joystick);
+// 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+// }
+
+///////////////////////////////
+
+#define RAW_UP		544
+#define RAW_DOWN	545
+#define RAW_LEFT	546
+#define RAW_RIGHT	547
+#define RAW_A		305
+#define RAW_B		304
+#define RAW_X		307
+#define RAW_Y		308
+#define RAW_START	315
+#define RAW_SELECT	314
+#define RAW_MENU	139
+#define RAW_L1		310
+#define RAW_L2		312
+#define RAW_L3		317
+#define RAW_R1		311
+#define RAW_R2		313
+#define RAW_R3		318
+#define RAW_PLUS	115
+#define RAW_MINUS	114
+#define RAW_POWER	116
+#define RAW_HATY	17
+#define RAW_HATX	16
+#define RAW_LSY		1
+#define RAW_LSX		0
+#define RAW_RSY		3
+#define RAW_RSX		4
+
+#define RAW_MENU1	RAW_L3
+#define RAW_MENU2	RAW_R3
+
+#define INPUT_COUNT 4
+static int inputs[INPUT_COUNT];
+
 void PLAT_initInput(void) {
-	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
-	joystick = SDL_JoystickOpen(0);
+	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	inputs[2] = open("/dev/input/event2", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	inputs[3] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 }
 void PLAT_quitInput(void) {
-	SDL_JoystickClose(joystick);
-	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+	for (int i=0; i<INPUT_COUNT; i++) {
+		close(inputs[i]);
+	}
+}
+
+// from <linux/input.h> which has BTN_ constants that conflict with platform.h
+struct input_event {
+	struct timeval time;
+	__u16 type;
+	__u16 code;
+	__s32 value;
+};
+#define EV_KEY			0x01
+#define EV_ABS			0x03
+
+void PLAT_pollInput(void) {
+	// reset transient state
+	pad.just_pressed = BTN_NONE;
+	pad.just_released = BTN_NONE;
+	pad.just_repeated = BTN_NONE;
+
+	uint32_t tick = SDL_GetTicks();
+	for (int i=0; i<BTN_ID_COUNT; i++) {
+		int btn = 1 << i;
+		if ((pad.is_pressed & btn) && (tick>=pad.repeat_at[i])) {
+			pad.just_repeated |= btn; // set
+			pad.repeat_at[i] += PAD_REPEAT_INTERVAL;
+		}
+	}
+	
+	// the actual poll
+	int input;
+	static struct input_event event;
+	for (int i=0; i<INPUT_COUNT; i++) {
+		input = inputs[i];
+		while (read(input, &event, sizeof(event))==sizeof(event)) {
+			if (event.type!=EV_KEY && event.type!=EV_ABS) continue;
+
+			int btn = BTN_NONE;
+			int pressed = 0; // 0=up,1=down
+			int id = -1;
+			int type = event.type;
+			int code = event.code;
+			int value = event.value;
+			
+			// TODO: tmp, hardcoded, missing some buttons
+			if (type==EV_KEY) {
+				if (value>1) continue; // ignore repeats
+			
+				pressed = value;
+				LOG_info("key event: %i (%i)\n", code,pressed);
+					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
+	 			else if (code==RAW_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
+				else if (code==RAW_LEFT)	{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
+				else if (code==RAW_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
+				else if (code==RAW_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
+				else if (code==RAW_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
+				else if (code==RAW_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
+				else if (code==RAW_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
+				else if (code==RAW_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
+				else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+				else if (code==RAW_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
+				else if (code==RAW_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
+				else if (code==RAW_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
+				else if (code==RAW_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
+				else if (code==RAW_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+				else if (code==RAW_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
+				else if (code==RAW_PLUS)	{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
+				else if (code==RAW_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
+				else if (code==RAW_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+			}
+			else if (type==EV_ABS) {
+				LOG_info("abs event: %i (%i==%i)\n",code,value,(value * 32767) / 1800);
+				
+					 if (code==RAW_LSX) pad.laxis.x = (value * 32767) / 1800;
+				else if (code==RAW_LSY) pad.laxis.y = (value * 32767) / 1800;
+				else if (code==RAW_RSX) pad.raxis.x = (value * 32767) / 1800;
+				else if (code==RAW_RSY) pad.raxis.y = (value * 32767) / 1800;
+				
+				btn = BTN_NONE; // already handled, force continue
+			}
+			
+			if (btn==BTN_NONE) continue;
+		
+			if (!pressed) {
+				pad.is_pressed		&= ~btn; // unset
+				pad.just_repeated	&= ~btn; // unset
+				pad.just_released	|= btn; // set
+			}
+			else if ((pad.is_pressed & btn)==BTN_NONE) {
+				pad.just_pressed	|= btn; // set
+				pad.just_repeated	|= btn; // set
+				pad.is_pressed		|= btn; // set
+				pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
+			}
+		}
+	}
+}
+
+int PLAT_shouldWake(void) {
+	int input;
+	static struct input_event event;
+	for (int i=0; i<INPUT_COUNT; i++) {
+		input = inputs[i];
+		while (read(input, &event, sizeof(event))==sizeof(event)) {
+			if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) return 1;
+		}
+	}
+	return 0;
 }
 
 ///////////////////////////////

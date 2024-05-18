@@ -193,12 +193,18 @@ void SND_quit(void);
 
 ///////////////////////////////
 
+typedef struct PAD_Axis {
+		int x;
+		int y;
+} PAD_Axis;
 typedef struct PAD_Context {
 	int is_pressed;
 	int just_pressed;
 	int just_released;
 	int just_repeated;
 	uint32_t repeat_at[BTN_ID_COUNT];
+	PAD_Axis laxis;
+	PAD_Axis raxis;
 } PAD_Context;
 extern PAD_Context pad;
 
