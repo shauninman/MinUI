@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include <msettings.h>
 
@@ -17,6 +18,23 @@
 #include "utils.h"
 
 #include "scaler.h"
+
+///////////////////////////////
+
+#define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
+static pthread_t lid_pt;
+static void* PLAT_lidThread(void *arg) {
+	static int lid_open = 1;
+	while (1) {
+		int lid = getInt(LID_PATH);
+		if (lid!=lid_open) {
+			lid_open = lid;
+			if (lid) PWR_requestWake();
+			else PWR_requestSleep();
+		}
+		SDL_Delay(500);
+	}
+}
 
 ///////////////////////////////
 
@@ -56,10 +74,17 @@ static int inputs[INPUT_COUNT];
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	
+	if (exists(LID_PATH)) pthread_create(&lid_pt, NULL, &PLAT_lidThread, NULL);
 }
 void PLAT_quitInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
 		close(inputs[i]);
+	}
+	
+	if (exists(LID_PATH)) {
+		pthread_cancel(lid_pt);
+		pthread_join(lid_pt,NULL);
 	}
 }
 

@@ -257,6 +257,8 @@ void PWR_powerOff(void);
 int PWR_isPoweringOff(void);
 
 void PWR_fauxSleep(void);
+void PWR_requestSleep(void);
+void PWR_requestWake(void);
 
 void PWR_disableSleep(void);
 void PWR_enableSleep(void);

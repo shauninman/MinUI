@@ -104,6 +104,8 @@ static struct PWR_Context {
 	int can_sleep;
 	int can_poweroff;
 	int can_autosleep;
+	int requested_sleep;
+	int requested_wake;
 	
 	pthread_t battery_pt;
 	int is_charging;
@@ -1407,6 +1409,10 @@ void PWR_init(void) {
 	pwr.can_sleep = 1;
 	pwr.can_poweroff = 1;
 	pwr.can_autosleep = 1;
+	
+	pwr.requested_sleep = 0;
+	pwr.requested_wake = 0;
+	
 	pwr.should_warn = 0;
 	pwr.charge = PWR_LOW_CHARGE;
 	
@@ -1432,6 +1438,13 @@ void PWR_warn(int enable) {
 
 int PWR_ignoreSettingInput(int btn, int show_setting) {
 	return show_setting && (btn==BTN_MOD_PLUS || btn==BTN_MOD_MINUS);
+}
+
+void PWR_requestSleep(void) {
+	pwr.requested_sleep = 1;
+}
+void PWR_requestWake(void) {
+	pwr.requested_wake = 1;
 }
 
 void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PWR_callback_t after_sleep) {
@@ -1473,9 +1486,11 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	if (now-last_input_at>=SLEEP_DELAY && PWR_preventAutosleep()) last_input_at = now;
 	
 	if (
+		pwr.requested_sleep || // hardware requested sleep
 		now-last_input_at>=SLEEP_DELAY || // autosleep
 		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP)) // manual sleep
 	) {
+		pwr.requested_sleep = 0;
 		if (before_sleep) before_sleep();
 		PWR_fauxSleep();
 		if (after_sleep) after_sleep();
@@ -1591,6 +1606,10 @@ static void PWR_exitSleep(void) {
 static void PWR_waitForWake(void) {
 	uint32_t sleep_ticks = SDL_GetTicks();
 	while (!PAD_wake()) {
+		if (pwr.requested_wake) {
+			pwr.requested_wake = 0;
+			break;
+		}
 		SDL_Delay(200);
 		if (pwr.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
 			if (pwr.is_charging) sleep_ticks += 60000; // check again in a minute
