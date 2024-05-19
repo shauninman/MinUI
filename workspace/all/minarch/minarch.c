@@ -49,7 +49,6 @@ enum {
 	int SCALE_CROPPED = -1;
 #endif
 
-
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
 static int screen_sharpness = SHARPNESS_SOFT;
@@ -1299,6 +1298,19 @@ static void Option_setValue(Option* item, const char* value) {
 	item->value = Option_getValueIndex(item, value);
 }
 
+// TODO: does this also need to be applied to OptionList_vars()?
+static const char* option_key_name[] = {
+	"pcsx_rearmed_analog_combo", "DualShock Toggle Combo",
+	NULL
+};
+static const char* getOptionNameFromKey(const char* key, const char* name) {
+	char* _key = NULL;
+	for (int i=0; (_key = (char*)option_key_name[i]); i+=2) {
+		if (exactMatch((char*)key,_key)) return option_key_name[i+1];
+	}
+	return name;
+}
+
 // the following 3 functions always touch config.core, the rest can operate on arbitrary OptionLists
 static void OptionList_init(const struct retro_core_option_definition *defs) {
 	LOG_info("OptionList_init\n");
@@ -1324,7 +1336,7 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 			
 			len = strlen(def->desc) + 1;
 			item->name = calloc(len, sizeof(char));
-			strcpy(item->name, def->desc);
+			strcpy(item->name, getOptionNameFromKey(def->key,def->desc));
 			
 			if (def->info) {
 				len = strlen(def->info) + 1;
