@@ -1440,13 +1440,6 @@ int PWR_ignoreSettingInput(int btn, int show_setting) {
 	return show_setting && (btn==BTN_MOD_PLUS || btn==BTN_MOD_MINUS);
 }
 
-void PWR_requestSleep(void) {
-	pwr.requested_sleep = 1;
-}
-void PWR_requestWake(void) {
-	pwr.requested_wake = 1;
-}
-
 void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PWR_callback_t after_sleep) {
 	int dirty = _dirty ? *_dirty : 0;
 	int show_setting = _show_setting ? *_show_setting : 0;

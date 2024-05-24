@@ -21,23 +21,6 @@
 
 ///////////////////////////////
 
-#define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
-static pthread_t lid_pt;
-static void* PLAT_lidThread(void *arg) {
-	static int lid_open = 1;
-	while (1) {
-		int lid = getInt(LID_PATH);
-		if (lid!=lid_open) {
-			lid_open = lid;
-			if (lid) PWR_requestWake();
-			else PWR_requestSleep();
-		}
-		SDL_Delay(500);
-	}
-}
-
-///////////////////////////////
-
 #define RAW_UP		103
 #define RAW_DOWN	108
 #define RAW_LEFT	105
@@ -71,20 +54,29 @@ static void* PLAT_lidThread(void *arg) {
 #define INPUT_COUNT 2
 static int inputs[INPUT_COUNT];
 
+#define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
+static int check_lid = 0;
+static int lid_open = 1;
+int PLAT_lidChanged(int* state) {
+	if (check_lid) {
+		int lid = getInt(LID_PATH);
+		if (lid!=lid_open) {
+			lid_open = lid;
+			if (state) *state = lid;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-	
-	if (exists(LID_PATH)) pthread_create(&lid_pt, NULL, &PLAT_lidThread, NULL);
+	check_lid = exists(LID_PATH);
 }
 void PLAT_quitInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
 		close(inputs[i]);
-	}
-	
-	if (exists(LID_PATH)) {
-		pthread_cancel(lid_pt);
-		pthread_join(lid_pt,NULL);
 	}
 }
 
@@ -134,7 +126,7 @@ void PLAT_pollInput(void) {
 			
 				pressed = value;
 				// LOG_info("key event: %i (%i)\n", code,pressed);
-					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
+					 if (code==RAW_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
 	 			else if (code==RAW_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
 				else if (code==RAW_LEFT)	{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
 				else if (code==RAW_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
@@ -212,15 +204,24 @@ void PLAT_pollInput(void) {
 			}
 		}
 	}
+	
+	if (check_lid && PLAT_lidChanged(NULL)) pad.just_released |= BTN_SLEEP;
 }
 
 int PLAT_shouldWake(void) {
+	int lid = 1; // assume open by default
+	if (check_lid && PLAT_lidChanged(&lid) && lid) return 1;
+	
 	int input;
 	static struct input_event event;
 	for (int i=0; i<INPUT_COUNT; i++) {
 		input = inputs[i];
 		while (read(input, &event, sizeof(event))==sizeof(event)) {
-			if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) return 1;
+			if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) {
+				// ignore input while lid is closed
+				if (check_lid && !lid_open) return 0;  // do it here so we eat the input
+				return 1;
+			}
 		}
 	}
 	return 0;
