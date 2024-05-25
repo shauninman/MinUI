@@ -151,8 +151,9 @@ void PLAT_pollInput(void) {
 				
 					 if (code==RAW_LSX) pad.laxis.x = (value * 32767) / 1800;
 				else if (code==RAW_LSY) pad.laxis.y = (value * 32767) / 1800;
-				else if (code==RAW_RSX) pad.raxis.x = (value * 32767) / 1800;
-				else if (code==RAW_RSY) pad.raxis.y = (value * 32767) / 1800;
+				// TODO: these seem to be switched on the rgb30 according to the padtest rom
+				else if (code==RAW_RSX) pad.raxis.y = (value * 32767) / 1800;
+				else if (code==RAW_RSY) pad.raxis.x = (value * 32767) / 1800;
 				
 				btn = BTN_NONE; // already handled, force continue
 			}
