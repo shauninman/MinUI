@@ -1,0 +1,3 @@
+# MinUI screenshots
+
+<img src="minui-clock.png" width=320 /> <img src="minui-main.png" width=320 /> <img src="minui-menu-gbc.png" width=320 /> <img src="minui-menu-md.png" width=320 /> <img src="minui-menu-options-controls.png" width=320 /> <img src="minui-menu-options-core.png" width=320 /> <img src="minui-menu-options-frontend.png" width=320 /> <img src="minui-menu-options-shortcuts.png" width=320 /> <img src="minui-menu-p8.png" width=320 /> <img src="minui-menu-ps.png" width=320 /> <img src="minui-menu-sfc.png" width=320 /> <img src="minui-menu-sgb.png" width=320 /> <img src="minui-menu-vb.png" width=320 />
