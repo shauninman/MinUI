@@ -101,7 +101,7 @@ setup:
 	cp ./skeleton/EXTRAS/README.txt ./workspace/readmes/EXTRAS-in.txt
 	
 done:
-	say "done"
+	$(if $(shell which say 2> /dev/null), @say "done", @echo "done")
 
 special:
 	# ----------------------------------------------------
