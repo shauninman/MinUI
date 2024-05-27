@@ -31,6 +31,7 @@ define TEMPLATE=
 $1_REPO ?= https://github.com/libretro/$(1)
 $1_MAKE ?= make $(and $($1_MAKEFILE),-f $($1_MAKEFILE)) platform=$(PLATFORM) $($(1)_FLAGS)
 $1_BUILD_PATH ?= $(1)
+$1_CORE ?= $(1)_libretro.so
 
 src/$(1):
 	mkdir -p src
@@ -38,16 +39,17 @@ src/$(1):
 	$(if $($1_HASH),cd src/$$($1_BUILD_PATH) && git checkout $($1_HASH) && echo $($1_HASH),)
 
 src/$(1)/.patched: src/$(1)
-	(test ! -f patches/$(1).patch) || (test -f src/$(1)/.patched) || (cd src/$(1) && $(PATCH) -p1 < ../../patches/$(1).patch && touch .patched && true)
+	(test ! -f patches/$(1).patch) || (test -f src/$(1)/.patched) || (cd src/$(1) && $(PATCH) -p1 < ../../patches/$(1).patch)
+	(test -f src/$(1)/.patched) || (touch src/$(1)/.patched)
 
 src/$(1)/.patched-all:
-	(test ! -d ../../all/cores/patches/$(1)) || (test -f src/$(1)/.patched-all) || (cd src/$(1) && $(foreach patch, $(sort $(wildcard ../../all/cores/patches/$(1)/*.patch)), $(PATCH) -p1 < ../../$(patch) &&) touch .patched-all && true)
-	
+	(test ! -d ../../all/cores/patches/$(1)) || (test -f src/$(1)/.patched-all) || (cd src/$(1) && $(foreach patch, $(sort $(wildcard ../../all/cores/patches/$(1)/*.patch)), $(PATCH) -p1 < ../../$(patch) &&) true)
+	(test -f src/$(1)/.patched-all) || (touch src/$(1)/.patched-all)
 
-output/$(1)_libretro.so: src/$(1)/.patched src/$(1)/.patched-all
+output/$$($(1)_CORE): src/$(1)/.patched src/$(1)/.patched-all
 	mkdir -p output
 	cd src/$$($1_BUILD_PATH) && $$($1_MAKE) $(PROCS)
-	mv src/$$($1_BUILD_PATH)/$(if $($(1)_CORE),$($(1)_CORE),$(1)_libretro.so) ./output
+	mv src/$$($1_BUILD_PATH)/$$($(1)_CORE) ./output
 
 clone-$(1): src/$(1)
 
@@ -60,7 +62,7 @@ clean-$(1):
 	test ! -d src/$(1) || cd src/$$($1_BUILD_PATH) && $$($1_MAKE) clean
 	rm -rf output/$(1)_libretro.so
 
-$(1): output/$(1)_libretro.so
+$(1): output/$$($(1)_CORE)
 
 endef
 
@@ -70,7 +72,7 @@ all: cores
 
 $(foreach CORE,$(CORES),$(eval $(call TEMPLATE,$(CORE))))
 
-cores: $(foreach CORE,$(CORES),$(CORE))
+cores: $(CORES)
 	
 clean: $(foreach CORE,$(CORES),clean-$(CORE))
 	
