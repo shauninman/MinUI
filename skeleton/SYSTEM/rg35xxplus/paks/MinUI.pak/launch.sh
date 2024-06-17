@@ -30,7 +30,7 @@ keymon.elf & # > $LOGS_PATH/keymon.txt 2>&1 &
 
 mkdir -p "$LOGS_PATH"
 mkdir -p "$SHARED_USERDATA_PATH/.minui"
-AUTO_PATH=$USERDATA_PATH/auto.sh
+AUTO_PATH="$USERDATA_PATH/auto.sh"
 if [ -f "$AUTO_PATH" ]; then
 	"$AUTO_PATH" # > $LOGS_PATH/auto.txt 2>&1
 fi
@@ -43,7 +43,7 @@ init.elf # > $LOGS_PATH/init.txt 2>&1
 
 #######################################
 
-EXEC_PATH=/tmp/minui_exec
+EXEC_PATH="/tmp/minui_exec"
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH" && sync
 while [ -f "$EXEC_PATH" ]; do

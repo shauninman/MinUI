@@ -2,27 +2,31 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- all w/analogs: added DualShock support to PlayStation.pak.
-- rg_xx & rgb30: added Frontend > Thread Core (primarily to fix audio crackle in Nintendo.pak)
+- rg_xx: added show.elf utility
 
 EXTRAS
 
-- 
+- rg_xx: added Files.pak (requires up-to-date stock firmware)
+
+---
+
+BUGS
+
+- I suspected Threaded Core is incompatible with cores that change resolution
+- BUG: tg5040 minarch options list is too short
 
 ---
 
 next
+	/tmp/noui
+		show poweroff on quit in minarch if present
+		tricky because of thread core option...
+
 	making good progress on analog support
 		add to minput?
 			plenty of room on the rgb30
 			less so on the 35xx h
 		
-	rg35xx sp
-		/sys/class/power_supply/axp2202-battery/hallkey (or something like that)
-			1: open
-			0: closed
-		
-
 	separate BTN_UP into BTN_DPAD_UP and BTN_ANALOG_UP and OR them together?
 		at least in MinUI and menus in minarch
 	
@@ -38,7 +42,6 @@ next
 		minarch
 	
 	rg35xxplus/h
-		auto.sh isn't working here
 		figure out
 			audio crackle on quit sdl
 				setting raw volume to 0 doesn't fix

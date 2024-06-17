@@ -80,7 +80,7 @@ common: build system cores
 clean:
 	rm -rf ./build
 
-setup:
+setup: name
 	# ----------------------------------------------------
 	# make sure we're running in an input device
 	tty -s 
