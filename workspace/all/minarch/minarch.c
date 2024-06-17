@@ -4194,6 +4194,7 @@ static void Menu_loop(void) {
 			pthread_mutex_unlock(&core_mx);
 		}
 	}
+	else if (exists(NOUI_PATH)) PWR_powerOff(); // TODO: won't work with threaded core, only check this once per launch
 	
 	SDL_FreeSurface(menu.bitmap);
 	menu.bitmap = NULL;

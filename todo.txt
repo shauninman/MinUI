@@ -18,6 +18,17 @@ BUGS
 ---
 
 next
+	all
+		enable SELECT/START+L/R for volume/brightness
+		limit option name replacements based on core lib name
+		noui
+			quit doesn't work as expected on trimuismart
+			possibly because of absense of shutdown?
+	h700
+		hijack boot earlier
+		look into using fbdev directly
+		
+
 	/tmp/noui
 		show poweroff on quit in minarch if present
 		tricky because of thread core option...
@@ -99,8 +110,7 @@ next
 		add Developer.pak
 			only for devices with adb or ssh
 			
-		rewrite Shortcuts section by device not the tangle mess it currently is
-			Shortcuts section? I have no idea what this means
+		rewrite Shortcuts section of readme by device not the tangle mess it currently is
 			maybe do the same for all?
 			break out platforms into completely separate installers/updaters?
 				will require revisiting unzipping system
@@ -124,8 +134,22 @@ next
 		wifi
 			Splore.pak can pull updated lists from bbs but cannot download carts
 				no idea why
-			this seems to be necessary to enable wifi even if operstat is up (is that just hardware status versus online status??)
-				udhcpc -i wlan0 -S -t 5 -T 7 -b -q
+				wget works on stock so I'm failing to initiaize the network properly
+					this gets ping working: udhcpc -i wlan0
+					but wget is not compiled with ssl support
+					the following did not work to enable opkg to install/update wget
+					
+						echo "src/gz openwrt_core_cortexa53 http://downloads.openwrt.org/snapshots/packages/aarch64_cortex-a53/packages" > /etc/opkg/customfeeds.conf
+						echo "src/gz openwrt_core_sunxi http://downloads.openwrt.org/snapshots/targets/sunxi/cortexa53/packages" >> /etc/opkg/customfeeds.conf
+						
+						no valid architecture
+					just remap wget calls to curl (which has ssl support)
+			need to patch pico8_64
+			
+				xxd old > old.hex
+				xxd new > new.hex
+				diff -u old.hex new.hex > pico8_64.patch
+						
 		n64
 			requires libretro opengl implementation
 		psp
