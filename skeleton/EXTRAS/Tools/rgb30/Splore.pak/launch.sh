@@ -35,4 +35,10 @@ if [ ! -d ./pico-8 ]; then
 	fi
 fi
 
+# ensure correct sdl controller file is in place
+cmp -s "$DIR/sdl_controllers.txt" "$DIR/pico-8/sdl_controllers.txt"
+if [ "$?" -eq 1 ]; then
+	cp ./sdl_controllers.txt ./pico-8;
+fi
+
 cd ./pico-8 && ./pico8_64 -splore -pixel_perfect 1 -joystick 0
