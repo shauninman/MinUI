@@ -3295,7 +3295,7 @@ static int Menu_options(MenuList* list) {
 		}
 		else {
 			MenuItem* item = &items[selected];
-			if (item->values!=button_labels) { // not an input binding
+			if (item->values && item->values!=button_labels) { // not an input binding
 				if (PAD_justRepeated(BTN_LEFT)) {
 					if (item->value>0) item->value -= 1;
 					else {
