@@ -2626,7 +2626,7 @@ void Core_load(void) {
 	if (a<=0) a = (double)av_info.geometry.base_width / av_info.geometry.base_height;
 	core.aspect_ratio = a;
 	
-	LOG_info("aspect_ratio: %f fps: %f\n", a, core.fps);
+	LOG_info("aspect_ratio: %f (%ix%i) fps: %f\n", a, av_info.geometry.base_width,av_info.geometry.base_height, core.fps);
 }
 void Core_reset(void) {
 	core.reset();
@@ -2826,8 +2826,6 @@ static int Menu_message(char* message, char** pairs) {
 	return MENU_CALLBACK_NOP; // TODO: this should probably be an arg
 }
 
-#define OPTION_PADDING 8
-#define MAX_VISIBLE_OPTIONS 7
 static int Menu_options(MenuList* list);
 
 static int MenuList_freeItems(MenuList* list, int i) {
@@ -3223,6 +3221,8 @@ static void OptionSaveChanges_updateDesc(void) {
 	options_menu.items[4].desc = getSaveDesc();
 }
 
+#define OPTION_PADDING 8
+
 static int Menu_options(MenuList* list) {
 	MenuItem* items = list->items;
 	int type = list->type;
@@ -3232,11 +3232,14 @@ static int Menu_options(MenuList* list) {
 	int show_settings = 0;
 	int await_input = 0;
 	
+	// dependent on option list offset top and bottom, eg. the gray triangles
+	int max_visible_options = (screen->h - ((SCALE1(PADDING + PILL_SIZE) * 2) + SCALE1(BUTTON_SIZE))) / SCALE1(BUTTON_SIZE); // 7 for 480, 10 for 720
+	
 	int count;
 	for (count=0; items[count].name; count++);
 	int selected = 0;
 	int start = 0;
-	int end = MIN(count,MAX_VISIBLE_OPTIONS);
+	int end = MIN(count,max_visible_options);
 	int visible_rows = end;
 	
 	OptionSaveChanges_updateDesc();
@@ -3268,7 +3271,7 @@ static int Menu_options(MenuList* list) {
 			selected -= 1;
 			if (selected<0) {
 				selected = count - 1;
-				start = MAX(0,count - MAX_VISIBLE_OPTIONS);
+				start = MAX(0,count - max_visible_options);
 				end = count;
 			}
 			else if (selected<start) {
@@ -3572,7 +3575,7 @@ static int Menu_options(MenuList* list) {
 				}
 			}
 			
-			if (count>MAX_VISIBLE_OPTIONS) {
+			if (count>max_visible_options) {
 				#define SCROLL_WIDTH 24
 				#define SCROLL_HEIGHT 4
 				int ox = (screen->w - SCALE1(SCROLL_WIDTH))/2;
