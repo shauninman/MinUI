@@ -24,13 +24,13 @@ next
 	all
 		add Clear Recently Played.pak, copy to all platforms
 			maybe include confirmation?
+			requires show.elf
 		enable SELECT/START+L/R for volume/brightness
 		limit option name replacements based on core lib name
 		noui
 			quit doesn't work as expected on trimuismart
 			possibly because of absense of shutdown?
 	h700
-		add an Enable SSH.pak
 		hijack boot earlier?
 			hangs boot
 			reflashing a fresh stock image takes too long to happily trial and error this
