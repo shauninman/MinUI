@@ -254,6 +254,8 @@ static int device_height;
 static int device_pitch;
 static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
+	// LOG_info("PLAT_initVideo\n");
+	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
@@ -293,9 +295,9 @@ SDL_Surface* PLAT_initVideo(void) {
 	// for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
 	// 	LOG_info("- %s\n", SDL_GetAudioDriver(i));
 	// }
-	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver()); // NOTE: hadn't been selected yet so will always be NULL!
 
-	// SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0");
+	// SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0"); // ignored
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
@@ -541,7 +543,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	ox = -oy;
 	if (rotate) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
 	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
+	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
 	vid.blit = NULL;
 }
 

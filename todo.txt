@@ -2,6 +2,8 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
+- all: fixed in-game menu crasher
+- rgb30+tg5040: fixed missing rows in options menus
 - rg_xx: added show.elf utility
 
 EXTRAS
@@ -12,21 +14,71 @@ EXTRAS
 
 BUGS
 
+- BUG: Aria of Sorrow is kinda choppy on h700
 - I suspected Threaded Core is incompatible with cores that change resolution
-- BUG: tg5040 minarch options list is too short
 
 ---
 
 next
+	createa  simple bitmap text blitter to add debug info directly to video data bitmap (for sdl2 + rotated displays)
 	all
+		add Clear Recently Played.pak, copy to all platforms
+			maybe include confirmation?
 		enable SELECT/START+L/R for volume/brightness
 		limit option name replacements based on core lib name
 		noui
 			quit doesn't work as expected on trimuismart
 			possibly because of absense of shutdown?
 	h700
-		hijack boot earlier
+		add an Enable SSH.pak
+		hijack boot earlier?
+			hangs boot
+			reflashing a fresh stock image takes too long to happily trial and error this
+			was able to "takeover" /etc/init.d/launcher.sh and inject it into systemd's basic.target
+				but it didn't improve boot time
 		look into using fbdev directly
+			I was able to get this working
+				SDL_NOMOUSE=1 required for SDL1.2 to work
+				WAITFORVSYNC doesn't appear to work
+				more notes in separate 28xx/notes.txt
+		
+		muos uses sdl 1.2 fbdev_mali+alsa for retroarch...which what
+			refried beans uses SDL2
+			no underruns in fceumm without threaded video...even with the sdl2 instead of default gl driver...
+			i tried copying muos libsdl2 to minui but I think I grabbed the 64bit version, is there a 32 bit version?
+				yes but it's built with a new version of glibc than stock
+				so I'm back to having to build my own rootfs
+				or building sdl2 from muos with my toolchain
+		stock uses sdl2 fbdev_mali+alsa for retroarch
+			stock retroarch has frame pacing issues in AoS/gpsp 
+				without threaded video
+				fceumm has underruns without threaded video
+		minarch has the same issues on refried muos
+			needs modified lib path (because muos is 64bit by default)
+				export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:/usr/lib32
+				might have also had to hide MinUI's libSDL*
+				SDL_BLITTER_DISABLED=1 has no effect on underruns
+		
+		diff older version of stock that doesn't underrun so bad
+			compare with rg35xxplus (I don't remember having audio issues there)
+		
+		rebuild using opengl?
+			based on steward-fu's work
+				https://steward-fu.github.io/website/handheld/rg28xx_cpp_es_triangle.htm
+				https://steward-fu.github.io/website/handheld/rg28xx_cpp_es_texture.htm
+			
+			# add stock libs and includes to toolchain
+			mv sysroot.tar.gz /opt
+			cd /opt
+			mkdir h700
+			tar -xvzf sysroot.tar.gz -C h700
+			rsync -a --ignore-existing /opt/h700/ /opt/rg35xxplus-toolchain/usr/arm-buildroot-linux-gnueabihf/sysroot/
+
+			# build flags
+			-lGLESv2 -lEGL -lmali -ldl
+		
+		tried building sdl2 myself it crashed and burned spectacularly
+		tried using taskset to bump priority but it already appears maxed
 		
 
 	/tmp/noui
