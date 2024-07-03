@@ -20,8 +20,11 @@ BUGS
 ---
 
 next
-	createa  simple bitmap text blitter to add debug info directly to video data bitmap (for sdl2 + rotated displays)
+	create 
+		a simple bitmap text blitter to add debug info directly to video data bitmap (for sdl2 + rotated displays)
 	all
+		will forcing vsync immediately before entering run loop
+			help with frame pacing issues? eg. on the Pixel and h700 devices?
 		add Clear Recently Played.pak, copy to all platforms
 			maybe include confirmation?
 			requires show.elf

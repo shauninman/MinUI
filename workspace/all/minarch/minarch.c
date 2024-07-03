@@ -4279,6 +4279,11 @@ static void limitFF(void) {
 }
 
 static void* coreThread(void *arg) {
+	// force a vsync immediately before loop
+	// for better frame pacing?
+	GFX_clearAll();
+	GFX_flip(screen);
+	
 	while (!quit) {
 		int run = 0;
 		pthread_mutex_lock(&core_mx);
@@ -4367,6 +4372,12 @@ int main(int argc , char* argv[]) {
 	
 	PWR_warn(1);
 	PWR_disableAutosleep();
+	
+	// force a vsync immediately before loop
+	// for better frame pacing?
+	GFX_clearAll();
+	GFX_flip(screen);
+	
 	sec_start = SDL_GetTicks();
 	while (!quit) {
 		GFX_startFrame();
@@ -4411,6 +4422,11 @@ int main(int argc , char* argv[]) {
 				// disable
 				pthread_cancel(core_pt);
 				pthread_join(core_pt,NULL);
+				
+				// force a vsync immediately before loop
+				// for better frame pacing?
+				GFX_clearAll();
+				GFX_flip(screen);
 			}
 		}
 	}
