@@ -914,6 +914,7 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 
 #define MAX_SAMPLE_RATE 48000
 #define BATCH_SIZE 100
+#define SAMPLES 512
 
 typedef int (*SND_Resampler)(const SND_Frame frame);
 static struct SND_Context {
@@ -939,6 +940,8 @@ static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // pla
 	int16_t *out = (int16_t *)stream;
 	len /= (sizeof(int16_t) * 2);
 	
+	// if (snd.frame_out!=snd.frame_in) LOG_info("consuming samples (%i frames)\n", len);
+	
 	while (snd.frame_out!=snd.frame_in && len>0) {
 		*out++ = snd.buffer[snd.frame_out].left;
 		*out++ = snd.buffer[snd.frame_out].right;
@@ -950,6 +953,8 @@ static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // pla
 		
 		if (snd.frame_out>=snd.frame_count) snd.frame_out = 0;
 	}
+	
+	// if (len>0 && len!=SAMPLES) LOG_info("buffer underrun (%i frames)\n", len);
 	
 	while (len>0) {
 		*out++ = 0;
@@ -1007,25 +1012,31 @@ static void SND_selectResampler(void) { // plat_sound_select_resampler
 size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count) { // plat_sound_write / plat_sound_write_resample
 	if (snd.frame_count==0) return 0;
 	
+	// LOG_info("batching samples (%i frames)\n", frame_count);
+	
 	SDL_LockAudio();
 
 	int consumed = 0;
+	int consumed_frames = 0;
 	while (frame_count > 0) {
 		int tries = 0;
 		int amount = MIN(BATCH_SIZE, frame_count);
-
+		
 		while (tries < 10 && snd.frame_in==snd.frame_filled) {
 			tries++;
+			// LOG_info("wait for buffer to get low... (%i)\n", tries);
 			SDL_UnlockAudio();
 			SDL_Delay(1);
 			SDL_LockAudio();
 		}
 
 		while (amount && snd.frame_in != snd.frame_filled) {
-			consumed = snd.resample(*frames);
-			frames += consumed;
-			amount -= consumed;
-			frame_count -= consumed;
+			consumed_frames = snd.resample(*frames);
+			
+			frames += consumed_frames;
+			amount -= consumed_frames;
+			frame_count -= consumed_frames;
+			consumed += consumed_frames;
 		}
 	}
 	SDL_UnlockAudio();
@@ -1046,7 +1057,7 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	spec_in.freq = PLAT_pickSampleRate(sample_rate, MAX_SAMPLE_RATE);
 	spec_in.format = AUDIO_S16;
 	spec_in.channels = 2;
-	spec_in.samples = 512;
+	spec_in.samples = SAMPLES;
 	spec_in.callback = SND_audioCallback;
 	
 	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
@@ -1062,6 +1073,14 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 
 	LOG_info("sample rate: %i (req) %i (rec)\n", snd.sample_rate_in, snd.sample_rate_out);
 	snd.initialized = 1;
+	
+#if defined(USE_SDL2)
+	LOG_info("Available audio drivers:\n");
+	for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
+		LOG_info("- %s\n", SDL_GetAudioDriver(i));
+	}
+	LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+#endif	
 }
 void SND_quit(void) { // plat_sound_finish
 	if (!snd.initialized) return;
