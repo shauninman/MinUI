@@ -2,12 +2,14 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
+- my282: initial Miyoo A30 support
 - all: fixed in-game menu crasher
 - rgb30+tg5040: fixed missing rows in options menus
 - rg_xx: added show.elf utility
 
 EXTRAS
 
+- my282: initial Miyoo A30 support
 - rg_xx: added Files.pak (requires up-to-date stock firmware)
 
 ---
@@ -25,6 +27,7 @@ next
 	all
 		will forcing vsync immediately before entering run loop
 			help with frame pacing issues? eg. on the Pixel and h700 devices?
+			doesn't help h700 (in initial testing)
 		add Clear Recently Played.pak, copy to all platforms
 			maybe include confirmation?
 			requires show.elf

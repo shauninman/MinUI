@@ -44,8 +44,8 @@ export PATH=$SYSTEM_PATH/bin:/usr/trimui/bin:$PATH
 
 leds_off
 
-killall MtpDaemon
-killall wpa_supplicant
+killall -9 MtpDaemon
+killall -9 wpa_supplicant
 ifconfig wlan0 down
 
 keymon.elf &

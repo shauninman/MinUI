@@ -34,7 +34,7 @@ TRIMUI SMART / TRIMUI SMART PRO
 
 Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
-MIYOO MINI
+MIYOO MINI / MIYOO A30
 
 Copy the "miyoo" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 

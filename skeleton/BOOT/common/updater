@@ -8,7 +8,11 @@ case $INFO in
 	PLATFORM="trimui"
 	;;
 *"sun8i"*)
-	PLATFORM="trimuismart"
+	if [ -d /usr/miyoo ]; then
+		PLATFORM="my282"
+	else
+		PLATFORM="trimuismart"
+	fi
 	;;
 *"SStar"*)
 	PLATFORM="miyoomini"

@@ -1,0 +1,3 @@
+Based on Steward-fu's A30 utils GUI/CLI (currently just the CLI portion with swap disabled)
+	source: https://github.com/steward-fu/website/releases/tag/miyoo-a30
+		src_utils-v1.5.zip (current)
