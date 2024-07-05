@@ -82,7 +82,7 @@ bump() {
 	bump
 	
 	tell RG35XXPLUS
-	show ./workspace/tg5040/other/unzip60
+	show ./workspace/rg35xxplus/other/unzip60
 	echo CORES
 	list ./workspace/rg35xx/cores/src # just copied from normal rg35xx
 	bump
@@ -90,6 +90,12 @@ bump() {
 	tell GKDPIXEL
 	echo CORES
 	list ./workspace/gkdpixel/cores/src
+	bump
+	
+	tell MY282
+	show ./workspace/my282/other/unzip60
+	echo CORES
+	list ./workspace/rg35xx/cores/src # just copied from normal rg35xx
 	bump
 
 } | sed 's/\n/ /g'
