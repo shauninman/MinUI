@@ -70,7 +70,7 @@ int main (int argc, char *argv[]) {
 	while (1) {
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;
-		if (now-then>100) ignore = 1; // ignore input that arrived during sleep
+		if (now-then>1000) ignore = 1; // ignore input that arrived during sleep
 		
 		for (int i=0; i<INPUT_COUNT; i++) {
 			input = inputs[i];
@@ -100,6 +100,14 @@ int main (int argc, char *argv[]) {
 					break;
 				}
 			}
+		}
+		
+		if (ignore) {
+			menu_pressed = 0;
+			up_pressed = up_just_pressed = 0;
+			down_pressed = down_just_pressed = 0;
+			up_repeat_at = 0;
+			down_repeat_at = 0;
 		}
 		
 		if (up_just_pressed || (up_pressed && now>=up_repeat_at)) {

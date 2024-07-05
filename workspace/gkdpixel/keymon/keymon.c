@@ -63,8 +63,7 @@ int main (int argc, char *argv[]) {
 	while (1) {
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;
-		// TODO: check if if necessary...it is but it's not working :thinking:
-		if (now-then>100) ignore = 1; // ignore input that arrived during sleep
+		if (now-then>1000) ignore = 1; // ignore input that arrived during sleep
 		
 		while(read(input_fd, &ev, sizeof(ev))==sizeof(ev)) {
 			if (ignore) continue;
@@ -93,6 +92,14 @@ int main (int argc, char *argv[]) {
 				default:
 				break;
 			}
+		}
+		
+		if (ignore) {
+			menu_pressed = 0;
+			up_pressed = up_just_pressed = 0;
+			down_pressed = down_just_pressed = 0;
+			up_repeat_at = 0;
+			down_repeat_at = 0;
 		}
 		
 		// TODO: tmp
