@@ -81,7 +81,7 @@ For devices without a dedicated MENU button
 	RGB30: use L3 or R3 for MENU
 	M17:   use + or - for MENU
 
-RGB30 / MIYOO MINI PLUS / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL
+RGB30 / MIYOO MINI PLUS / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL / MIYOO A30
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
@@ -91,7 +91,7 @@ MIYOO MINI / TRIMUI SMART / M17
   Volume: SELECT + L or R
   Brightness: START + L or R1
 
-RGB30 / MIYOO MINI (PLUS) / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL
+RGB30 / MIYOO MINI (PLUS) / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL / MIYOO A30
   
   Sleep: POWER
   Wake: POWER
@@ -191,11 +191,22 @@ Check out neonloop's repos:
 
   https://git.crowdedwood.com
 
+To adixial and acmeplus and the entire muOS community, for sharing their discoveries for the h700 family of Anbernic devices.
+
+Check out muOS and Knulli:
+
+	https://muos.dev
+	https://knulli.org
+
 To fewt and the entire JELOS community, for JELOS (without which MinUI would not exist on the RGB30) and for sharing their knowledge with this perpetual Linux kernel novice.
 
 Check out JELOS:
 
   https://github.com/JustEnoughLinuxOS/distribution
+
+To Steward, for maintaining exhaustive documentation on a plethora of devices:
+
+	https://steward-fu.github.io/website/
 
 To BlackSeraph, for introducing me to chroot.
 
@@ -203,26 +214,10 @@ Check out the GarlicOS repos:
 
 	https://github.com/GarlicOS
 
-And to Jim Gray, for commiserating during development, for early alpha testing, and for providing the soundtrack for much of MinUI's development.
+To Jim Gray, for commiserating during development, for early alpha testing, and for providing the soundtrack for much of MinUI's development.
 
 Check out Jim's music: 
 
   https://ourghosts.bandcamp.com/music
   https://www.patreon.com/ourghosts/
-
-----------------------------------------
-Known Issues
-
-RGB30
-
-- garbage may be drawn below aspect scaled systems
-- some systems have (usually subtle) audio clipping
-- some systems need additional performance tuning
-
-TRIMUI SMART / TRIMUI SMART PRO
-
-- debug/battery overlay isn't implemented yet
-
-MIYOO MINI / MIYOO MINI PLUS
-
-- battery overlay isn't implemented yet
+ 

@@ -120,6 +120,7 @@ tidy:
 	# TODO: tmp, figure out a cleaner way to do this
 	rm -rf ./build/SYSTEM/trimui
 	rm -rf ./build/EXTRAS/Tools/trimui
+	rm -rf ./build/EXTRAS/Tools/tg5040/Splore.pak
 
 package: tidy
 	# ----------------------------------------------------
