@@ -2097,6 +2097,207 @@ static void MSG_quit(void) {
 
 ///////////////////////////////
 
+static const char* bitmap_font[] = {
+	['0'] = 
+		" 111 "
+		"1   1"
+		"1   1"
+		"1  11"
+		"1 1 1"
+		"11  1"
+		"1   1"
+		"1   1"
+		" 111 ",
+	['1'] =
+		"   1 "
+		" 111 "
+		"   1 "
+		"   1 "
+		"   1 "
+		"   1 "
+		"   1 "
+		"   1 "
+		"   1 ",
+	['2'] =
+		" 111 "
+		"1   1"
+		"    1"
+		"   1 "
+		"  1  "
+		" 1   "
+		"1    "
+		"1    "
+		"11111",
+	['3'] =
+		" 111 "
+		"1   1"
+		"    1"
+		"    1"
+		" 111 "
+		"    1"
+		"    1"
+		"1   1"
+		" 111 ",
+	['4'] =
+		"1   1"
+		"1   1"
+		"1   1"
+		"1   1"
+		"1   1"
+		"1   1"
+		"11111"
+		"    1"
+		"    1",
+	['5'] =
+		"11111"
+		"1    "
+		"1    "
+		"1111 "
+		"    1"
+		"    1"
+		"    1"
+		"1   1"
+		" 111 ",
+	['6'] =
+		" 111 "
+		"1    "
+		"1    "
+		"1111 "
+		"1   1"
+		"1   1"
+		"1   1"
+		"1   1"
+		" 111 ",
+	['7'] =
+		"11111"
+		"    1"
+		"    1"
+		"   1 "
+		"  1  "
+		"  1  "
+		"  1  "
+		"  1  "
+		"  1  ",
+	['8'] =
+		" 111 "
+		"1   1"
+		"1   1"
+		"1   1"
+		" 111 "
+		"1   1"
+		"1   1"
+		"1   1"
+		" 111 ",
+	['9'] =
+		" 111 "
+		"1   1"
+		"1   1"
+		"1   1"
+		"1   1"
+		" 1111"
+		"    1"
+		"    1"
+		" 111 ",
+	['.'] = 
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		" 11  "
+		" 11  ",
+	[' '] = 
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		"     "
+		"     ",
+	['('] = 
+		"   1 "
+		"  1  "
+		" 1   "
+		" 1   "
+		" 1   "
+		" 1   "
+		" 1   "
+		"  1  "
+		"   1 ",
+	[')'] = 
+		" 1   "
+		"  1  "
+		"   1 "
+		"   1 "
+		"   1 "
+		"   1 "
+		"   1 "
+		"  1  "
+		" 1   ",
+	['/'] = 
+		"   1 "
+		"   1 "
+		"   1 "
+		"  1  "
+		"  1  "
+		"  1  "
+		" 1   "
+		" 1   "
+		" 1   ",
+	['x'] = 
+		"     "
+		"     "
+		"1   1"
+		"1   1"
+		" 1 1 "
+		"  1  "
+		" 1 1 "
+		"1   1"
+		"1   1",
+	['%'] = 
+		" 1   "
+		"1 1  "
+		"1 1 1"
+		" 1 1 "
+		"  1  "
+		" 1 1 "
+		"1 1 1"
+		"  1 1"
+		"   1 ",
+};
+static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int stride) {
+	#define CHAR_WIDTH 5
+	#define CHAR_HEIGHT 9
+	#define LETTERSPACING 1
+	
+	data += oy * stride + ox;
+	for (int y=0; y<CHAR_HEIGHT; y++) {
+		uint16_t* row = data + y * stride;
+		for (int i=0; i<strlen(text); i++) {
+			const char* c = bitmap_font[text[i]];
+			for (int x=0; x<CHAR_WIDTH; x++) {
+				int j = y * CHAR_WIDTH + x;
+				if (c[j]=='1') {
+					*row = 0xffff;
+					*(row+1) = 0x0000;
+					// if (y==CHAR_HEIGHT-1) {
+						*(row+stride)   = 0x0000;
+						*(row+stride+1) = 0x0000;
+					// }
+				}
+				row++;
+			}
+			row += LETTERSPACING;
+		}
+	}
+}
+
+///////////////////////////////
+
 static int cpu_ticks = 0;
 static int fps_ticks = 0;
 static int use_ticks = 0;
@@ -2427,6 +2628,10 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	static int bottom_width = 0;
 	if (top_width) SDL_FillRect(screen, &(SDL_Rect){0,0,top_width,DIGIT_HEIGHT}, RGB_BLACK);
 	if (bottom_width) SDL_FillRect(screen, &(SDL_Rect){0,screen->h-DIGIT_HEIGHT,bottom_width,DIGIT_HEIGHT}, RGB_BLACK);
+	
+	// char debug_text[128];
+	// sprintf(debug_text, "%.02f/%.02f", fps_double, cpu_double);
+	// blitBitmapText(debug_text,2,2,(uint16_t*)data,pitch/2);
 	
 	if (downsample) {
 		buffer_downsample(data,width,height,pitch*2);
