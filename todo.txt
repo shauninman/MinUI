@@ -2,28 +2,27 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- my282: initial Miyoo A30 support
-- all: fixed in-game menu crasher
-- rgb30+tg5040: fixed missing rows in options menus
-- rg_xx: added show.elf utility
+- all: fix for randomly stuck volume/brightness controls
+- my282: added analog stick support to PlayStation.pak.
 
 EXTRAS
 
-- my282: initial Miyoo A30 support
-- rg_xx: added Files.pak (requires up-to-date stock firmware)
+- 
 
 ---
 
 BUGS
 
-- BUG: Aria of Sorrow is kinda choppy on h700
+- Aria of Sorrow is kinda choppy on h700
 - I suspected Threaded Core is incompatible with cores that change resolution
 
 ---
 
 next
-	create 
-		a simple bitmap text blitter to add debug info directly to video data bitmap (for sdl2 + rotated displays)
+	my282
+		brightness curve needs attention
+		can I modify /dev/root squashfs?
+		
 	all
 		will forcing vsync immediately before entering run loop
 			help with frame pacing issues? eg. on the Pixel and h700 devices?
