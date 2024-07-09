@@ -2,11 +2,11 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
--
+- my282: persist stick calibration across launches
 
 EXTRAS
 
-- 
+- my282: added Reset Stick.pak to reset stick calibration
 
 ---
 
