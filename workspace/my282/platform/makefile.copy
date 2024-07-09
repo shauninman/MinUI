@@ -2,6 +2,7 @@ $(PLATFORM):
 	# $@
 	cp ./workspace/$@/overclock/overclock.elf ./build/SYSTEM/$@/bin/
 	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
+	cp ./workspace/$@/libmstick/libmstick.so ./build/SYSTEM/$@/lib
 	# installer
 	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
 	mkdir -p ./build/BOOT/common/$@/

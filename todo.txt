@@ -2,8 +2,7 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- all: fix for randomly stuck volume/brightness controls
-- my282: added analog stick support to PlayStation.pak.
+-
 
 EXTRAS
 
@@ -20,10 +19,14 @@ BUGS
 
 next
 	my282
-		brightness curve needs attention
+		use disp ioctl to log stock brightness curve
+			will this give MinUI better control over brightness?
 		can I modify /dev/root squashfs?
+		stick requires calibration
 		
 	all
+		figure out how to support resolution changes when threaded
+			might help with performance of Colin McRae Rally 2.0 in PS.pak
 		will forcing vsync immediately before entering run loop
 			help with frame pacing issues? eg. on the Pixel and h700 devices?
 			doesn't help h700 (in initial testing)

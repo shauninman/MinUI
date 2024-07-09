@@ -20,6 +20,7 @@ all: readmes
 early: $(REQUIRES_UNZIP60)
 	mkdir -p other
 	cd $(REQUIRES_UNZIP60) && make -f unix/Makefile.trimuismart unzip
+	cd libmstick && make
 	
 clean:
 	cd show && make clean
