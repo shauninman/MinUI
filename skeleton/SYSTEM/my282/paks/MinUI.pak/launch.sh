@@ -21,8 +21,8 @@ export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 echo 0 > /sys/class/leds/led1/brightness
 overclock.elf userspace 1 1512 384 1080 0
 
-# TODO: this seems to be working
 killall -9 tee
+rm -f "$SDCARD_PATH/update.log"
 while :; do
 	killall -9 wpa_supplicant
 	killall -9 MtpDaemon
