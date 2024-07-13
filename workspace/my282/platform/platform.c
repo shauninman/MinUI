@@ -550,15 +550,16 @@ void PLAT_powerOff(void) {
 
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
+	int cpus = 1;
 	switch (speed) {
-		case CPU_SPEED_MENU: 		freq =  576; break;
-		case CPU_SPEED_POWERSAVE:	freq = 1152; break;
-		case CPU_SPEED_NORMAL: 		freq = 1344; break;
-		case CPU_SPEED_PERFORMANCE: freq = 1512; break;
+		case CPU_SPEED_MENU: 		freq =  576; cpus = 1; break;
+		case CPU_SPEED_POWERSAVE:	freq = 1152; cpus = 1; break;
+		case CPU_SPEED_NORMAL: 		freq = 1344; cpus = 1; break;
+		case CPU_SPEED_PERFORMANCE: freq = 1512; cpus = 2; break;
 	}
 
 	char cmd[128];
-	sprintf(cmd,"overclock.elf userspace 1 %d 384 1080 0", freq);
+	sprintf(cmd,"overclock.elf userspace %d %d 384 1080 0", cpus, freq);
 	system(cmd);
 }
 
