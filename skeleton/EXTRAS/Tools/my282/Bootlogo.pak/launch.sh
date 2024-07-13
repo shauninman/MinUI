@@ -11,8 +11,7 @@ if [ ! -f $LOGO_PATH ]; then
 	exit 1
 fi
 
-BLOCK_NAME=mtdblock0
-cp /dev/$BLOCK_NAME boot0
+cp /dev/mtdblock0 boot0
 
 VERSION=$(cat /usr/miyoo/version)
 OFFSET_PATH="res/offset-$VERSION"
@@ -31,21 +30,14 @@ gzip -k "$LOGO_PATH"
 LOGO_PATH=$LOGO_PATH.gz
 LOGO_SIZE=$(wc -c < "$LOGO_PATH")
 
-echo $LOGO_PATH $LOGO_SIZE
-
 # workaround for missing conv=notrunc support
 OFFSET_PART=$((OFFSET+LOGO_SIZE))
 dd if=boot0 of=boot0-suffix bs=1 skip=$OFFSET_PART 2>/dev/null
 dd if=$LOGO_PATH of=boot0 bs=1 seek=$OFFSET 2>/dev/null
 dd if=boot0-suffix of=boot0 bs=1 seek=$OFFSET_PART 2>/dev/null
 
-md5sum boot0
-wc -c boot0
-
 mtd write "$DIR/boot0" boot
 killall -9 show.elf
 
 rm $LOGO_PATH boot0 boot0-suffix
 mv $DIR $DIR.disabled
-
-echo "DONE."
