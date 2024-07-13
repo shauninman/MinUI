@@ -2317,8 +2317,6 @@ static double cpu_double = 0;
 static double use_double = 0;
 static uint32_t sec_start = 0;
 
-static SDL_Surface* scaler_surface;
-
 #ifdef USES_SWSCALER
 	static int fit = 1;
 #else
@@ -2592,10 +2590,6 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	// if (screen->w!=dst_w || screen->h!=dst_w || screen->pitch!=dst_p) {
 		screen = GFX_resize(dst_w,dst_h,dst_p);
 	// }
-	
-	// DEBUG HUD
-	if (scaler_surface) SDL_FreeSurface(scaler_surface);
-	scaler_surface = TTF_RenderUTF8_Blended(font.tiny, scaler_name, COLOR_WHITE);
 }
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
@@ -2635,12 +2629,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	
 	// debug
-	static int top_width = 0;
-	static int bottom_width = 0;
-	if (top_width) SDL_FillRect(screen, &(SDL_Rect){0,0,top_width,DIGIT_HEIGHT}, RGB_BLACK);
-	if (bottom_width) SDL_FillRect(screen, &(SDL_Rect){0,screen->h-DIGIT_HEIGHT,bottom_width,DIGIT_HEIGHT}, RGB_BLACK);
-	
-	if (0) {
+	if (show_debug) {
 		char debug_text[128];
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, renderer.scale);
 		blitBitmapText(debug_text,2,2,(uint16_t*)data,pitch/2, width,height);
@@ -2665,55 +2654,6 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
 	GFX_blitRenderer(&renderer);
-	
-	if (show_debug) {
-		int x = 0;
-		int y = screen->h - SCALE1(DIGIT_HEIGHT);
-#if defined(USE_SDL2)
-		y = height - SCALE1(DIGIT_HEIGHT); // TODO: tmp?
-#endif
-		
-		if (fps_double) x = MSG_blitDouble(fps_double, x,y);
-		
-		if (cpu_double) {
-			x = MSG_blitChar(DIGIT_SLASH,x,y);
-			x = MSG_blitDouble(cpu_double, x,y);
-		}
-		
-		if (use_double) {
-			x = MSG_blitChar(DIGIT_SPACE,x,y);
-			x = MSG_blitDouble(use_double, x,y);
-			x = MSG_blitChar(DIGIT_PERCENT,x,y);
-		}
-		
-		if (x>bottom_width) bottom_width = x; // keep the largest width because triple buffer
-		
-		x = 0;
-		y = 0;
-		
-		// src res
-		x = MSG_blitInt(renderer.src_w,x,y);
-		x = MSG_blitChar(DIGIT_X,x,y);
-		x = MSG_blitInt(renderer.src_h,x,y);
-		
-		x = MSG_blitChar(DIGIT_SPACE,x,y);
-		
-		// dst res
-		x = MSG_blitChar(DIGIT_OP,x,y);
-		x = MSG_blitInt(renderer.dst_w,x,y);
-		x = MSG_blitChar(DIGIT_X,x,y);
-		x = MSG_blitInt(renderer.dst_h,x,y);
-		x = MSG_blitChar(DIGIT_CP,x,y);
-		x = MSG_blitChar(DIGIT_SPACE,x,y);
-		
-		if (scaler_surface) {
-			SDL_FillRect(screen, &(SDL_Rect){x,y,scaler_surface->w,SCALE1(DIGIT_HEIGHT)}, RGB_BLACK);
-			SDL_BlitSurface(scaler_surface, NULL, screen, &(SDL_Rect){x,y+((SCALE1(DIGIT_HEIGHT) - scaler_surface->h)/2)});
-			x += SCALE1(DIGIT_WIDTH) * 3;
-		}
-		
-		if (x>top_width) top_width = x; // keep the largest width because triple buffer
-	}
 	
 	if (!thread_video) GFX_flip(screen);
 	last_flip_time = SDL_GetTicks();
