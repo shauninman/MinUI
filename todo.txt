@@ -2,27 +2,44 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- my282: persist stick calibration across launches
+- all: disabled verbose DEBUG logging
+- all: redesigned Debug HUD option now available on all devices
+- my282: performance cpu speed now uses 2 cores
 
 EXTRAS
 
-- my282: added Reset Stick.pak to reset stick calibration
+- my282: fixed Pokémon mini (PKM.pak) performance
+- my282: added Bootlogo.pak to add MinUI bootlogo
 
 ---
 
 BUGS
 
-- Aria of Sorrow is kinda choppy on h700
-- I suspected Threaded Core is incompatible with cores that change resolution
+- I suspected Thread Core is incompatible with cores that change resolution
 
 ---
 
 next
+	all
+		Thread Core
+			needs changes to support systems that change resolution (eg. PS)
+		update all cores
+			call out breaking changes (gpsp save states) in release notes 
 	my282
+		revisit Remove Loading.pak
+			compile unsquashfs and mksquashfs for platform
+			need to rebuild toolchain with libzma for xz compression
+			or maybe the toolchain can just build it for me
+				yup, in output/target/usr/bin
+				also need liblzma.so.5 from lib
+				unsquashfs is fast enough but mksquashfs takes quite a while with 1 core
+				should probably open up all 4 cores for this (since mksquashfs supports multiple cores)
+				can I copy over a functional version of dd while I'm at it? (not really necessary)
+		no ff despite having plenty of overhead cpu-wise (according to top)
+		revisit rumble
+			need to track time since last request and adjust accordingly
 		use disp ioctl to log stock brightness curve
 			will this give MinUI better control over brightness?
-		can I modify /dev/root squashfs?
-		stick requires calibration
 		
 	all
 		figure out how to support resolution changes when threaded
