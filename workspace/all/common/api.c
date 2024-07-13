@@ -27,11 +27,11 @@ void LOG_note(int level, const char* fmt, ...) {
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 	switch(level) {
-// #ifdef DEBUG
+#ifdef DEBUG
 	case LOG_DEBUG:
 		printf("[DEBUG] %s", buf);
 		break;
-// #endif
+#endif
 	case LOG_INFO:
 		printf("[INFO] %s", buf);
 		break;
