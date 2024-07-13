@@ -817,7 +817,7 @@ static int find_best_match_cpu_clock(int clk)
 
     for (cc = 0; cc < max_cpu_item; cc++) {
         if (cpu_clock[cc].clk >= clk) {
-            printf("Found Best Match CPU %dMHz (0x%08x)\n", cpu_clock[cc].clk, cpu_clock[cc].reg);
+            // printf("Found Best Match CPU %dMHz (0x%08x)\n", cpu_clock[cc].clk, cpu_clock[cc].reg);
             return cc;
         }
     }
@@ -830,7 +830,7 @@ static int find_best_match_gpu_clock(int clk)
 
     for (cc = 0; cc < max_gpu_item; cc++) {
         if (gpu_clock[cc].clk >= clk) {
-            printf("Found Best Match GPU %dMHz (0x%08x)\n", gpu_clock[cc].clk, gpu_clock[cc].reg);
+            // printf("Found Best Match GPU %dMHz (0x%08x)\n", gpu_clock[cc].clk, gpu_clock[cc].reg);
             return cc;
         }
     }
@@ -850,7 +850,7 @@ static void read_value(void)
     n = ((v >> 8) & 0x1f) + 1;
     p = p_idx[(v >> 16) & 3];
     cpu_val[0] = find_best_match_cpu_clock(24 * n * k);
-    printf("CPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, k:%d, m:%d, p:%d)\n",
+    // printf("CPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, k:%d, m:%d, p:%d)\n",
         (24 * n * k) / (m * p), cpu_clock[cpu_val[0]].clk,
         v, cpu_clock[cpu_val[0]].reg,
         n, k, m, p);
@@ -859,7 +859,7 @@ static void read_value(void)
     m = (v & 0xf) + 1;
     n = ((v >> 8) & 0x7f) + 1;
     gpu_val[0] = find_best_match_gpu_clock((24 * n) / m);
-    printf("GPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, m:%d)\n",
+    // printf("GPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, m:%d)\n",
         (24 * n) / m, gpu_clock[gpu_val[0]].clk,
         v, gpu_clock[gpu_val[0]].reg,
         n, m);
@@ -871,13 +871,13 @@ static void read_value(void)
         k = ((v >> 4) & 3) + 1;
         n = ((v >> 8) & 0x1f) + 1;
         ram_val[0] = (n * k) / m;
-        printf("DDR0 %dMHz (0x%08x)\n", 24 * ram_val[0], v);
+        // printf("DDR0 %dMHz (0x%08x)\n", 24 * ram_val[0], v);
     }
     else {
         v = *((uint32_t *)&pmem[0x4c]);
         n = (v >> 8) & 0x3f;
         ram_val[0] = n;
-        printf("DDR1 %dMHz (0x%08x)\n", 24 * ram_val[0], v);
+        // printf("DDR1 %dMHz (0x%08x)\n", 24 * ram_val[0], v);
     }
 
     FILE *fd = NULL;
@@ -898,11 +898,11 @@ static void read_value(void)
                 buf[cc] = 0;
             }
         }
-        printf("Governor: %s\n", buf);
+        // printf("Governor: %s\n", buf);
         for (cc = 0; cc < 5; cc++) {
             if (!strcmp(buf, sch_name[cc])) {
                 sch_val[0] = cc;
-                printf("Find Governor Index: %d\n", cc);
+                // printf("Find Governor Index: %d\n", cc);
                 break;
             }
         }
@@ -918,7 +918,7 @@ static void read_value(void)
         }
         pclose(fd);
     }
-    printf("SWAP %dMB\n", swap_val[0] ? 1024 : 0);
+    // printf("SWAP %dMB\n", swap_val[0] ? 1024 : 0);
 
     sch_val[1] = sch_val[0];
     core_val[1] = core_val[0];
@@ -941,28 +941,28 @@ static void check_before_set(int num, int v)
 static void set_core(int n)
 {
     if (n <= 1) {
-        printf("New CPU Core: 1\n");
+        // printf("New CPU Core: 1\n");
         check_before_set(0, 1);
         check_before_set(1, 0);
         check_before_set(2, 0);
         check_before_set(3, 0);
     }
     else if (n == 2) {
-        printf("New CPU Core: 2\n");
+        // printf("New CPU Core: 2\n");
         check_before_set(0, 1);
         check_before_set(1, 1);
         check_before_set(2, 0);
         check_before_set(3, 0);
     }
     else if (n == 3) {
-        printf("New CPU Core: 3\n");
+        // printf("New CPU Core: 3\n");
         check_before_set(0, 1);
         check_before_set(1, 1);
         check_before_set(2, 1);
         check_before_set(3, 0);
     }
     else {
-        printf("New CPU Core: 4\n");
+        // printf("New CPU Core: 4\n");
         check_before_set(0, 1);
         check_before_set(1, 1);
         check_before_set(2, 1);
@@ -1005,7 +1005,7 @@ static void set_ram(uint32_t v)
 
     v &= 0x3f;
     *p = (1 << 31) | (v << 8);
-    printf("New DDR1 Clock is %dMHz\n", (24 * v));
+    // printf("New DDR1 Clock is %dMHz\n", (24 * v));
 }
 
 static void set_cpu(uint32_t v)
@@ -1013,7 +1013,7 @@ static void set_cpu(uint32_t v)
     uint32_t *p = (uint32_t *)&pmem[0x00];
 
     *p = cpu_clock[v].reg;
-    printf("New CPU Clock is %dMHz (0x%08x)\n", cpu_clock[v].clk, cpu_clock[v].reg);
+    // printf("New CPU Clock is %dMHz (0x%08x)\n", cpu_clock[v].clk, cpu_clock[v].reg);
 }
 
 static void set_gpu(uint32_t v)
@@ -1021,7 +1021,7 @@ static void set_gpu(uint32_t v)
     uint32_t *p = (uint32_t *)&pmem[0x38];
 
     *p = gpu_clock[v].reg;
-    printf("New GPU Clock is %dMHz (0x%08x)\n", gpu_clock[v].clk, gpu_clock[v].reg);
+    // printf("New GPU Clock is %dMHz (0x%08x)\n", gpu_clock[v].clk, gpu_clock[v].reg);
 }
 
 static void set_sch(uint32_t v)
@@ -1030,7 +1030,7 @@ static void set_sch(uint32_t v)
 
     sprintf(buf, "echo %s > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", sch_name[v % 5]);
     system(buf);
-    printf("New Schedule: %s\n", sch_name[v % 5]);
+    // printf("New Schedule: %s\n", sch_name[v % 5]);
 }
 
 static void set_sch_by_name(const char *s)
@@ -1039,7 +1039,7 @@ static void set_sch_by_name(const char *s)
 
     sprintf(buf, "echo %s > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", s);
     system(buf);
-    printf("New Schedule: %s\n", s);
+    // printf("New Schedule: %s\n", s);
 }
 
 int main(int argc, char **argv) {
@@ -1053,11 +1053,11 @@ int main(int argc, char **argv) {
         printf("Failed to map memory\n");
         return -1;
     }
-    printf("pmem %p\n", pmem);
+    // printf("pmem %p\n", pmem);
     read_value();
 
     if (argc == 7) {
-        printf("User Prefers: %s, %s, %d, %d, %d, %d\n\n", argv[1], argv[2], atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
+        // printf("User Prefers: %s, %s, %d, %d, %d, %d\n\n", argv[1], argv[2], atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));
         set_sch_by_name(argv[1]);
         set_core(atoi(argv[2]));
         cpu_val[0] = find_best_match_cpu_clock(atoi(argv[3]));
