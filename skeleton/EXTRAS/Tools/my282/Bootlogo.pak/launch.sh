@@ -2,8 +2,6 @@
 
 LOGO_NAME="bootlogo.bmp"
 
-overclock.elf userspace 4 1512 384 1080 0
-
 DIR="$(dirname "$0")"
 cd "$DIR"
 
