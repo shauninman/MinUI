@@ -49,3 +49,8 @@ Open "wifi.txt" in a plain text editor and enter your network name and password 
   lessismore
 
 Copy "Wi-Fi.pak" to "/Tools/rgb30/" on your SD card. The first time you open the pak (or any time you change the contents of "wifi.txt") it will update the network name and password then connect. Subsequent launches will toggle wi-fi on and off. Wi-fi will drain the battery so it's best to only enable it when you plan to use it and disable it when you're done. Your Wi-fi state persists across reboots.
+
+----------------------------------------
+Remove Loading.pak (Miyoo A30-only)
+
+This pak removes the "LOADING" text that appears between the boot logo and the main interface when powering on. It requires patching nand memory to modify the otherwise read-only root file system. It takes around 5 minutes to complete. Please be patient and do not power off the device.

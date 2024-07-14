@@ -10,6 +10,8 @@ EXTRAS
 
 - my282: fixed Pokémon mini (PKM.pak) performance
 - my282: added Bootlogo.pak to add MinUI bootlogo
+- my282: added Remove Loading.pak (see EXTRAS README)
+- miyoomini: fixed Bootlogo.pak
 
 ---
 
@@ -26,15 +28,20 @@ next
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 
 	my282
+		update buildroot config to include squashfs-tools
 		revisit Remove Loading.pak
 			compile unsquashfs and mksquashfs for platform
-			need to rebuild toolchain with libzma for xz compression
 			or maybe the toolchain can just build it for me
 				yup, in output/target/usr/bin
 				also need liblzma.so.5 from lib
-				unsquashfs is fast enough but mksquashfs takes quite a while with 1 core
-				should probably open up all 4 cores for this (since mksquashfs supports multiple cores)
-				can I copy over a functional version of dd while I'm at it? (not really necessary)
+
+					find ~/buildroot/output/target/ -type f -name *squash*
+						/root/buildroot/output/target/usr/bin/mksquashfs
+						/root/buildroot/output/target/usr/bin/unsquashfs
+					
+					find ~/buildroot/output/target/ -type f -name *liblzma*
+						/root/buildroot/output/target/usr/lib/liblzma.so.5.2.3 > liblzma.so.5
+					
 		no ff despite having plenty of overhead cpu-wise (according to top)
 		revisit rumble
 			need to track time since last request and adjust accordingly

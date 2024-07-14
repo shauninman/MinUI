@@ -10,3 +10,5 @@ $(PLATFORM):
 	cp ./workspace/$@/install/*.png ./build/BOOT/common/$@/
 	cp ./workspace/$@/show/show.elf ./build/BOOT/common/$@/
 	cp ./workspace/$@/other/unzip60/unzip ./build/BOOT/common/$@/
+	#extras
+	cp -r ./workspace/$@/other/squashfs/output/* ./build/EXTRAS/Tools/$@/Remove\ Loading.pak/
