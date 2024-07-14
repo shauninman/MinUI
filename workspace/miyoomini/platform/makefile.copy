@@ -17,3 +17,4 @@ $(PLATFORM):
 	# extras
 	cp ./workspace/$@/other/DinguxCommander/output/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/DinguxCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/logotweak/output/*.elf ./build/EXTRAS/Tools/$@/Bootlogo.pak/

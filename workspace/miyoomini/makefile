@@ -22,6 +22,7 @@ all: readmes
 
 early: $(REQUIRES_SDL) $(REQUIRES_COMMANDER)
 	cd other/sdl && ./make.sh
+	cd other/logotweak && make
 	cd other/latency_reduction && make
 	cd other/DinguxCommander && make -j
 
