@@ -851,18 +851,18 @@ static void read_value(void)
     p = p_idx[(v >> 16) & 3];
     cpu_val[0] = find_best_match_cpu_clock(24 * n * k);
     // printf("CPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, k:%d, m:%d, p:%d)\n",
-        (24 * n * k) / (m * p), cpu_clock[cpu_val[0]].clk,
-        v, cpu_clock[cpu_val[0]].reg,
-        n, k, m, p);
+    //     (24 * n * k) / (m * p), cpu_clock[cpu_val[0]].clk,
+    //     v, cpu_clock[cpu_val[0]].reg,
+    //     n, k, m, p);
 
     v = *((uint32_t *)&pmem[0x38]);
     m = (v & 0xf) + 1;
     n = ((v >> 8) & 0x7f) + 1;
     gpu_val[0] = find_best_match_gpu_clock((24 * n) / m);
     // printf("GPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, m:%d)\n",
-        (24 * n) / m, gpu_clock[gpu_val[0]].clk,
-        v, gpu_clock[gpu_val[0]].reg,
-        n, m);
+    //     (24 * n) / m, gpu_clock[gpu_val[0]].clk,
+    //     v, gpu_clock[gpu_val[0]].reg,
+    //     n, m);
 
     v = *((uint32_t *)&pmem[0xf8]);
     if ((v & (1 << 16)) == 0) {
