@@ -5,6 +5,8 @@ ifeq (,$(PREFIX))
 $(error missing PREFIX for this toolchain)
 endif
 
+include ../platform/makefile.env
+
 TARGET=mstick
 
 .PHONY: build
@@ -15,14 +17,14 @@ CC = $(CROSS_COMPILE)gcc
 SYSROOT     := $(shell $(CC) --print-sysroot)
 
 INCLUDEDIR = $(SYSROOT)/usr/include
-CFLAGS = -I$(INCLUDEDIR)
-LDFLAGS = -ldl -lrt -s
+CFLAGS = -I$(INCLUDEDIR) $(ARCH)
+LDFLAGS = -ldl -lpthread -lrt -s
 
 OPTM=-Ofast
 
 build: 
-	$(CC) -c -Werror -fpic "$(TARGET).c" -Wl,--no-as-needed $(LDFLAGS)
-	$(CC) -shared -o "lib$(TARGET).so" "$(TARGET).o" $(LDFLAGS)
+	$(CC) -c -Werror -fpic "$(TARGET).c" $(CFLAGS) -Wl,--no-as-needed $(LDFLAGS)
+	$(CC) -shared -o "lib$(TARGET).so" "$(TARGET).o" $(CFLAGS) $(LDFLAGS)
 	cp "$(TARGET).h" "$(PREFIX)/include"
 	cp "lib$(TARGET).so" "$(PREFIX)/lib"
 clean:

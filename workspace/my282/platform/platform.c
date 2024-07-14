@@ -566,7 +566,6 @@ void PLAT_setCPUSpeed(int speed) {
 #define RUMBLE_PATH "/sys/devices/virtual/timed_output/vibrator/enable"
 
 void PLAT_setRumble(int strength) {
-	// TODO: this is a bad comparison
 	static int last = 0;
 	strength = strength?10000:0;
 	if (strength!=last) {

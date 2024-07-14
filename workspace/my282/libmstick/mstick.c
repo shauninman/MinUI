@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <linux/input.h>
+#include <pthread.h>
 
 // based on https://steward-fu.github.io/website/handheld/miyoo_a30_cpp_joystick.htm
 
@@ -342,6 +343,7 @@ static void miyoo_close_serial_input(void) {
 ///////////////////////////////
 
 static char StickPath[256];
+static pthread_t stick_pt;
 
 static void printCalibration(void) {
 	printf("calibration\n");
@@ -353,6 +355,18 @@ static void printCalibration(void) {
 	printf("\ty_mid: %i\n",calibration.y_mid);
 	printf("\ty_min: %i\n",calibration.y_min);
 	fflush(stdout);
+}
+
+static void* readStick(void *arg) {
+	while (1) {
+		char rcv_buf[256] = {0};
+		int len = uart_read(s_fd, rcv_buf, 256);
+		if (len > 0) {
+			rcv_buf[len] = '\0';
+			parser_miyoo_input(rcv_buf, len);
+		}
+	}
+	return NULL;
 }
 
 void Stick_init(void) {
@@ -368,6 +382,8 @@ void Stick_init(void) {
 		printf("loaded stick calibration\n");
 		printCalibration();
 	}
+	
+	pthread_create(&stick_pt, NULL, &readStick, NULL);
 }
 void Stick_quit(void) {
 	miyoo_close_serial_input();
@@ -382,14 +398,11 @@ void Stick_quit(void) {
 		printf("saved stick calibration\n");
 		printCalibration();
 	}
+	
+	pthread_cancel(stick_pt);
+	pthread_join(stick_pt, NULL);
 }
 void Stick_get(int* x, int* y) { // -32768 thru 32767
-	char rcv_buf[256] = {0};
-	int len = uart_read(s_fd, rcv_buf, 256);
-	if (len > 0) {
-		rcv_buf[len] = '\0';
-		parser_miyoo_input(rcv_buf, len);
-	}
 	*x = g_lastX * 256;
 	*y = g_lastY * 256;
 }
