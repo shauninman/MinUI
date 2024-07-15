@@ -20,7 +20,14 @@ cd /tmp
 rm -rf rootfs squashfs-root rootfs.modified
 
 cp /dev/mtdblock3 rootfs
+
 unsquashfs rootfs
+if [ $? -ne 0 ]; then
+	killall -9 show.elf
+	show.elf "$DIR/abort.png" 2
+	sync
+	exit 1
+fi
 
 BOOT_PATH=/tmp/squashfs-root/etc/init.d/boot
 
@@ -29,7 +36,6 @@ echo "patched $BOOT_PATH"
 
 mksquashfs squashfs-root rootfs.modified -comp xz -b 256k
 if [ $? -ne 0 ]; then
-	# mksquashfs is segfaulting on some devices
 	killall -9 show.elf
 	show.elf "$DIR/abort.png" 2
 	sync
