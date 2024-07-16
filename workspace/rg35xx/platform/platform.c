@@ -550,14 +550,11 @@ void PLAT_setCPUSpeed(int speed) {
 	system(cmd);
 }
 
+#define RUMBLE_PATH "/sys/class/power_supply/battery/moto"
 void PLAT_setRumble(int strength) {
 	int val = MAX(0, MIN((100 * strength)>>16, 100));
 	// LOG_info("strength: %8i (%3i/100)\n", strength, val);
-	int fd = open("/sys/class/power_supply/battery/moto", O_WRONLY);
-	if (fd>0) {
-		dprintf(fd, "%d", val);
-		close(fd);
-	}
+	putInt(RUMBLE_PATH, val);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {

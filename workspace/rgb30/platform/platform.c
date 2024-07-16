@@ -543,7 +543,6 @@ void PLAT_powerOff(void) {
 ///////////////////////////////
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed"
-
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
@@ -552,10 +551,7 @@ void PLAT_setCPUSpeed(int speed) {
 		case CPU_SPEED_NORMAL: 		freq = 1608000; break;
 		case CPU_SPEED_PERFORMANCE: freq = 1992000; break;
 	}
-
-	char cmd[256];
-	sprintf(cmd,"echo %i > %s", freq, GOVERNOR_PATH);
-	system(cmd);
+	putInt(GOVERNOR_PATH, freq);
 }
 
 void PLAT_setRumble(int strength) {

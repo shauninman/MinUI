@@ -289,14 +289,15 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
+#define LED_PATH "/sys/class/led_anim/max_scale"
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		SetBrightness(GetBrightness());
-		system("echo 0 > /sys/class/led_anim/max_scale");
+		putInt(LED_PATH,0);
 	}
 	else {
 		SetRawBrightness(0);
-		system("echo 52 > /sys/class/led_anim/max_scale"); // 52 seems to be the max brightness
+		putInt(LED_PATH,52); // 52 seems to be the max brightness
 	}
 }
 
@@ -318,7 +319,6 @@ void PLAT_powerOff(void) {
 ///////////////////////////////
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
-
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
@@ -327,18 +327,12 @@ void PLAT_setCPUSpeed(int speed) {
 		case CPU_SPEED_NORMAL: 		freq = 1608000; break;
 		case CPU_SPEED_PERFORMANCE: freq = 2000000; break;
 	}
-
-	char cmd[256];
-	sprintf(cmd,"echo %i > %s", freq, GOVERNOR_PATH);
-	system(cmd);
+	putInt(GOVERNOR_PATH, freq);
 }
 
 #define RUMBLE_PATH "/sys/class/gpio/gpio227/value"
-
 void PLAT_setRumble(int strength) {
-	char cmd[256];
-	sprintf(cmd,"echo %i > %s", strength?1:0, RUMBLE_PATH);
-	system(cmd);
+	putInt(RUMBLE_PATH, strength?1:0);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {

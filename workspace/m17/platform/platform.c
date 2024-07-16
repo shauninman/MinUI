@@ -467,7 +467,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 void PLAT_enableBacklight(int enable) {
 	// haven't figured out how to turn it off (or change brightness)
 	if (!enable) {
-		system("echo 1 > /sys/class/graphics/fb0/blank"); // clear
+		putInt("/sys/class/graphics/fb0/blank", 1); // clear
 		SetRawBrightness(8001); // off
 	}
 	else {

@@ -598,14 +598,15 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
+#define LED_PATH "/sys/class/power_supply/axp2202-battery/work_led"
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		SetBrightness(GetBrightness());
-		system("echo 0 > /sys/class/power_supply/axp2202-battery/work_led");
+		putInt(LED_PATH,0);
 	}
 	else {
 		SetRawBrightness(0);
-		system("echo 1 > /sys/class/power_supply/axp2202-battery/work_led");
+		putInt(LED_PATH,1);
 	}
 }
 
@@ -639,9 +640,7 @@ void PLAT_setCPUSpeed(int speed) {
 #define RUMBLE_PATH "/sys/class/power_supply/axp2202-battery/moto"
 
 void PLAT_setRumble(int strength) {
-	char cmd[256];
-	sprintf(cmd,"echo %i > %s", strength?1:0, RUMBLE_PATH);
-	system(cmd);
+	putInt(RUMBLE_PATH, strength?1:0);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
