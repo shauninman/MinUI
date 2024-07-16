@@ -1098,6 +1098,52 @@ void SND_quit(void) { // plat_sound_finish
 
 PAD_Context pad;
 
+#define AXIS_DEADZONE 0x4000
+void PAD_setAnalog(int neg_id,int pos_id,int value,int repeat_at) {
+	int neg = 1 << neg_id;
+	int pos = 1 << pos_id;	
+	if (value>AXIS_DEADZONE) { // pressing
+		if (!(pad.is_pressed&pos)) { // not pressing
+			pad.is_pressed 		|= pos; // set
+			pad.just_pressed	|= pos; // set
+			pad.just_repeated	|= pos; // set
+			pad.repeat_at[pos_id]= repeat_at;
+		
+			if (pad.is_pressed&neg) { // was pressing opposite
+				pad.is_pressed 		&= ~neg; // unset
+				pad.just_repeated 	&= ~neg; // unset
+				pad.just_released	|=  neg; // set
+			}
+		}
+	}
+	else if (value<-AXIS_DEADZONE) { // pressing
+		if (!(pad.is_pressed&neg)) { // not pressing
+			pad.is_pressed		|= neg; // set
+			pad.just_pressed	|= neg; // set
+			pad.just_repeated	|= neg; // set
+			pad.repeat_at[neg_id]= repeat_at;
+		
+			if (pad.is_pressed&pos) { // was pressing opposite
+				pad.is_pressed 		&= ~pos; // unset
+				pad.just_repeated 	&= ~pos; // unset
+				pad.just_released	|=  pos; // set
+			}
+		}
+	}
+	else { // not pressing
+		if (pad.is_pressed&neg) { // was pressing
+			pad.is_pressed 		&= ~neg; // unset
+			pad.just_repeated	&=  neg; // unset
+			pad.just_released	|=  neg; // set
+		}
+		if (pad.is_pressed&pos) { // was pressing
+			pad.is_pressed 		&= ~pos; // unset
+			pad.just_repeated	&=  pos; // unset
+			pad.just_released	|=  pos; // set
+		}
+	}
+}
+
 void PAD_reset(void) {
 	pad.just_pressed = BTN_NONE;
 	pad.is_pressed = BTN_NONE;
@@ -1129,50 +1175,50 @@ void PAD_poll_SDL(void) {
 			uint8_t code = event.key.keysym.scancode;
 			pressed = event.type==SDL_KEYDOWN;
 			// LOG_info("key event: %i (%i)\n", code,pressed);
-				 if (code==CODE_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
- 			else if (code==CODE_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
-			else if (code==CODE_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
-			else if (code==CODE_RIGHT)		{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
-			else if (code==CODE_A)			{ btn = BTN_A; 			id = BTN_ID_A; }
-			else if (code==CODE_B)			{ btn = BTN_B; 			id = BTN_ID_B; }
-			else if (code==CODE_X)			{ btn = BTN_X; 			id = BTN_ID_X; }
-			else if (code==CODE_Y)			{ btn = BTN_Y; 			id = BTN_ID_Y; }
-			else if (code==CODE_START)		{ btn = BTN_START; 		id = BTN_ID_START; }
-			else if (code==CODE_SELECT)		{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-			else if (code==CODE_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-			else if (code==CODE_MENU_ALT)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-			else if (code==CODE_L1)			{ btn = BTN_L1; 		id = BTN_ID_L1; }
-			else if (code==CODE_L2)			{ btn = BTN_L2; 		id = BTN_ID_L2; }
-			else if (code==CODE_R1)			{ btn = BTN_R1; 		id = BTN_ID_R1; }
-			else if (code==CODE_R2)			{ btn = BTN_R2; 		id = BTN_ID_R2; }
-			else if (code==CODE_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
-			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
-			else if (code==CODE_POWER)		{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
-			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;	id = BTN_ID_POWEROFF; } // nano-only
+				 if (code==CODE_UP) 		{ btn = BTN_DPAD_UP; 		id = BTN_ID_DPAD_UP; }
+ 			else if (code==CODE_DOWN)		{ btn = BTN_DPAD_DOWN; 		id = BTN_ID_DPAD_DOWN; }
+			else if (code==CODE_LEFT)		{ btn = BTN_DPAD_LEFT; 		id = BTN_ID_DPAD_LEFT; }
+			else if (code==CODE_RIGHT)		{ btn = BTN_DPAD_RIGHT; 	id = BTN_ID_DPAD_RIGHT; }
+			else if (code==CODE_A)			{ btn = BTN_A; 				id = BTN_ID_A; }
+			else if (code==CODE_B)			{ btn = BTN_B; 				id = BTN_ID_B; }
+			else if (code==CODE_X)			{ btn = BTN_X; 				id = BTN_ID_X; }
+			else if (code==CODE_Y)			{ btn = BTN_Y; 				id = BTN_ID_Y; }
+			else if (code==CODE_START)		{ btn = BTN_START; 			id = BTN_ID_START; }
+			else if (code==CODE_SELECT)		{ btn = BTN_SELECT; 		id = BTN_ID_SELECT; }
+			else if (code==CODE_MENU)		{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
+			else if (code==CODE_MENU_ALT)	{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
+			else if (code==CODE_L1)			{ btn = BTN_L1; 			id = BTN_ID_L1; }
+			else if (code==CODE_L2)			{ btn = BTN_L2; 			id = BTN_ID_L2; }
+			else if (code==CODE_R1)			{ btn = BTN_R1; 			id = BTN_ID_R1; }
+			else if (code==CODE_R2)			{ btn = BTN_R2; 			id = BTN_ID_R2; }
+			else if (code==CODE_PLUS)		{ btn = BTN_PLUS; 			id = BTN_ID_PLUS; }
+			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 			id = BTN_ID_MINUS; }
+			else if (code==CODE_POWER)		{ btn = BTN_POWER; 			id = BTN_ID_POWER; }
+			else if (code==CODE_POWEROFF)	{ btn = BTN_POWEROFF;		id = BTN_ID_POWEROFF; } // nano-only
 		}
 		else if (event.type==SDL_JOYBUTTONDOWN || event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
 			pressed = event.type==SDL_JOYBUTTONDOWN;
 			// LOG_info("joy event: %i (%i)\n", joy,pressed);
-				 if (joy==JOY_UP) 		{ btn = BTN_UP; 		id = BTN_ID_UP; }
- 			else if (joy==JOY_DOWN)		{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
-			else if (joy==JOY_LEFT)		{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
-			else if (joy==JOY_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
-			else if (joy==JOY_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
-			else if (joy==JOY_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
-			else if (joy==JOY_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
-			else if (joy==JOY_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
-			else if (joy==JOY_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
-			else if (joy==JOY_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-			else if (joy==JOY_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-			else if (joy==JOY_MENU_ALT) { btn = BTN_MENU; 		id = BTN_ID_MENU; }
-			else if (joy==JOY_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
-			else if (joy==JOY_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
-			else if (joy==JOY_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
-			else if (joy==JOY_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
-			else if (joy==JOY_PLUS)		{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
-			else if (joy==JOY_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
-			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+				 if (joy==JOY_UP) 		{ btn = BTN_DPAD_UP; 		id = BTN_ID_DPAD_UP; }
+ 			else if (joy==JOY_DOWN)		{ btn = BTN_DPAD_DOWN; 		id = BTN_ID_DPAD_DOWN; }
+			else if (joy==JOY_LEFT)		{ btn = BTN_DPAD_LEFT; 		id = BTN_ID_DPAD_LEFT; }
+			else if (joy==JOY_RIGHT)	{ btn = BTN_DPAD_RIGHT; 	id = BTN_ID_DPAD_RIGHT; }
+			else if (joy==JOY_A)		{ btn = BTN_A; 				id = BTN_ID_A; }
+			else if (joy==JOY_B)		{ btn = BTN_B; 				id = BTN_ID_B; }
+			else if (joy==JOY_X)		{ btn = BTN_X; 				id = BTN_ID_X; }
+			else if (joy==JOY_Y)		{ btn = BTN_Y; 				id = BTN_ID_Y; }
+			else if (joy==JOY_START)	{ btn = BTN_START; 			id = BTN_ID_START; }
+			else if (joy==JOY_SELECT)	{ btn = BTN_SELECT; 		id = BTN_ID_SELECT; }
+			else if (joy==JOY_MENU)		{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
+			else if (joy==JOY_MENU_ALT) { btn = BTN_MENU; 			id = BTN_ID_MENU; }
+			else if (joy==JOY_L1)		{ btn = BTN_L1; 			id = BTN_ID_L1; }
+			else if (joy==JOY_L2)		{ btn = BTN_L2; 			id = BTN_ID_L2; }
+			else if (joy==JOY_R1)		{ btn = BTN_R1; 			id = BTN_ID_R1; }
+			else if (joy==JOY_R2)		{ btn = BTN_R2; 			id = BTN_ID_R2; }
+			else if (joy==JOY_PLUS)		{ btn = BTN_PLUS; 			id = BTN_ID_PLUS; }
+			else if (joy==JOY_MINUS)	{ btn = BTN_MINUS; 			id = BTN_ID_MINUS; }
+			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 			id = BTN_ID_POWER; }
 		}
 		else if (event.type==SDL_JOYHATMOTION) {
 			int hats[4] = {-1,-1,-1,-1}; // -1=no change,0=up,1=down,2=left,3=right btn_ids
@@ -1227,61 +1273,10 @@ void PAD_poll_SDL(void) {
 				pressed = val>0;
 			}
 			
-			else if (axis==AXIS_LX) pad.laxis.x = val;
-			else if (axis==AXIS_LY) pad.laxis.y = val;
+			else if (axis==AXIS_LX) { pad.laxis.x = val; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, val, tick+PAD_REPEAT_DELAY); }
+			else if (axis==AXIS_LY) { pad.laxis.y = val; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  val, tick+PAD_REPEAT_DELAY); }
 			else if (axis==AXIS_RX) pad.raxis.x = val;
 			else if (axis==AXIS_RY) pad.raxis.y = val;
-			
-			/** /
-			// TODO: as coded this prevents the d-pad from working...
-			else if (axis==AXIS_LX) {
-				if (val>9999) {
-					btn = BTN_RIGHT;
-					id = BTN_ID_RIGHT;
-					pressed = 1;
-				}
-				else if (val<-9999) {
-					btn = BTN_LEFT;
-					id = BTN_ID_LEFT;
-					pressed = 1;
-				}
-				
-				if (btn==BTN_NONE || (btn==BTN_RIGHT && pad.is_pressed & BTN_LEFT)) {
-					pad.is_pressed		&= ~BTN_LEFT; // unset
-					pad.just_repeated	&= ~BTN_LEFT; // unset
-					pad.just_released	|= BTN_LEFT; // set
-				}
-				if (btn==BTN_NONE || (btn==BTN_LEFT && pad.is_pressed & BTN_RIGHT)) {
-					pad.is_pressed		&= ~BTN_RIGHT; // unset
-					pad.just_repeated	&= ~BTN_RIGHT; // unset
-					pad.just_released	|= BTN_RIGHT; // set
-				}
-			}
-			else if (axis==AXIS_LY) {
-				int dir = 0;
-				if (val>9999) {
-					btn = BTN_DOWN;
-					id = BTN_ID_DOWN;
-					pressed = 1;
-				}
-				else if (val<-9999) {
-					btn = BTN_UP;
-					id = BTN_ID_UP;
-					pressed = 1;
-				}
-				
-				if (btn==BTN_NONE || (btn==BTN_DOWN && pad.is_pressed & BTN_UP)) {
-					pad.is_pressed		&= ~BTN_UP; // unset
-					pad.just_repeated	&= ~BTN_UP; // unset
-					pad.just_released	|= BTN_UP; // set
-				}
-				if (btn==BTN_NONE || (btn==BTN_UP && pad.is_pressed & BTN_DOWN)) {
-					pad.is_pressed		&= ~BTN_DOWN; // unset
-					pad.just_repeated	&= ~BTN_DOWN; // unset
-					pad.just_released	|= BTN_DOWN; // set
-				}
-			}
-			/**/
 			
 			// axis will fire off what looks like a release
 			// before the first press but you can't release

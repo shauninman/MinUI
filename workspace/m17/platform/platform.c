@@ -103,23 +103,23 @@ void PLAT_pollInput(void) {
 				
 				pressed = value;
 				// LOG_info("key event: %i (%i)\n", code,pressed); // no L3/R3
-					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
-	 			else if (code==RAW_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
-				else if (code==RAW_LEFT)	{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
-				else if (code==RAW_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
-				else if (code==RAW_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
-				else if (code==RAW_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
-				else if (code==RAW_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
-				else if (code==RAW_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
-				else if (code==RAW_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
-				else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-				else if (code==RAW_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==RAW_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==RAW_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==RAW_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
-				else if (code==RAW_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
-				else if (code==RAW_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
-				else if (code==RAW_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+					 if (code==RAW_UP) 		{ btn = BTN_DPAD_UP; 		id = BTN_ID_DPAD_UP; }
+	 			else if (code==RAW_DOWN)	{ btn = BTN_DPAD_DOWN; 		id = BTN_ID_DPAD_DOWN; }
+				else if (code==RAW_LEFT)	{ btn = BTN_DPAD_LEFT; 		id = BTN_ID_DPAD_LEFT; }
+				else if (code==RAW_RIGHT)	{ btn = BTN_DPAD_RIGHT; 	id = BTN_ID_DPAD_RIGHT; }
+				else if (code==RAW_A)		{ btn = BTN_A; 				id = BTN_ID_A; }
+				else if (code==RAW_B)		{ btn = BTN_B; 				id = BTN_ID_B; }
+				else if (code==RAW_X)		{ btn = BTN_X; 				id = BTN_ID_X; }
+				else if (code==RAW_Y)		{ btn = BTN_Y; 				id = BTN_ID_Y; }
+				else if (code==RAW_START)	{ btn = BTN_START; 			id = BTN_ID_START; }
+				else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 		id = BTN_ID_SELECT; }
+				else if (code==RAW_MENU)	{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
+				else if (code==RAW_MENU1)	{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
+				else if (code==RAW_MENU2)	{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
+				else if (code==RAW_L1)		{ btn = BTN_L1; 			id = BTN_ID_L1; }
+				else if (code==RAW_L2)		{ btn = BTN_L2; 			id = BTN_ID_L2; }
+				else if (code==RAW_R1)		{ btn = BTN_R1; 			id = BTN_ID_R1; }
+				else if (code==RAW_R2)		{ btn = BTN_R2; 			id = BTN_ID_R2; }
 			}
 			else if (type==EV_ABS) {
 				// LOG_info("axis: %i (%i)\n",code,value);

@@ -672,7 +672,7 @@ enum {
 	SHORTCUT_COUNT,
 };
 
-#define LOCAL_BUTTON_COUNT 16 // depends on device
+#define LOCAL_BUTTON_COUNT 20 // depends on device
 #define RETRO_BUTTON_COUNT 16 // allow L3/R3 to be remapped by user if desired, eg. Virtual Boy uses extra buttons for right d-pad
 
 typedef struct ButtonMapping { 
@@ -685,10 +685,10 @@ typedef struct ButtonMapping {
 } ButtonMapping;
 
 static ButtonMapping default_button_mapping[] = { // used if pak.cfg doesn't exist or doesn't have bindings
-	{"Up",			RETRO_DEVICE_ID_JOYPAD_UP,		BTN_ID_UP},
-	{"Down",		RETRO_DEVICE_ID_JOYPAD_DOWN,	BTN_ID_DOWN},
-	{"Left",		RETRO_DEVICE_ID_JOYPAD_LEFT,	BTN_ID_LEFT},
-	{"Right",		RETRO_DEVICE_ID_JOYPAD_RIGHT,	BTN_ID_RIGHT},
+	{"Up",			RETRO_DEVICE_ID_JOYPAD_UP,		BTN_ID_DPAD_UP},
+	{"Down",		RETRO_DEVICE_ID_JOYPAD_DOWN,	BTN_ID_DPAD_DOWN},
+	{"Left",		RETRO_DEVICE_ID_JOYPAD_LEFT,	BTN_ID_DPAD_LEFT},
+	{"Right",		RETRO_DEVICE_ID_JOYPAD_RIGHT,	BTN_ID_DPAD_RIGHT},
 	{"A Button",	RETRO_DEVICE_ID_JOYPAD_A,		BTN_ID_A},
 	{"B Button",	RETRO_DEVICE_ID_JOYPAD_B,		BTN_ID_B},
 	{"X Button",	RETRO_DEVICE_ID_JOYPAD_X,		BTN_ID_X},
@@ -705,10 +705,10 @@ static ButtonMapping default_button_mapping[] = { // used if pak.cfg doesn't exi
 };
 static ButtonMapping button_label_mapping[] = { // used to lookup the retro_id and local btn_id from button name
 	{"NONE",	-1,								BTN_ID_NONE},
-	{"UP",		RETRO_DEVICE_ID_JOYPAD_UP,		BTN_ID_UP},
-	{"DOWN",	RETRO_DEVICE_ID_JOYPAD_DOWN,	BTN_ID_DOWN},
-	{"LEFT",	RETRO_DEVICE_ID_JOYPAD_LEFT,	BTN_ID_LEFT},
-	{"RIGHT",	RETRO_DEVICE_ID_JOYPAD_RIGHT,	BTN_ID_RIGHT},
+	{"UP",		RETRO_DEVICE_ID_JOYPAD_UP,		BTN_ID_DPAD_UP},
+	{"DOWN",	RETRO_DEVICE_ID_JOYPAD_DOWN,	BTN_ID_DPAD_DOWN},
+	{"LEFT",	RETRO_DEVICE_ID_JOYPAD_LEFT,	BTN_ID_DPAD_LEFT},
+	{"RIGHT",	RETRO_DEVICE_ID_JOYPAD_RIGHT,	BTN_ID_DPAD_RIGHT},
 	{"A",		RETRO_DEVICE_ID_JOYPAD_A,		BTN_ID_A},
 	{"B",		RETRO_DEVICE_ID_JOYPAD_B,		BTN_ID_B},
 	{"X",		RETRO_DEVICE_ID_JOYPAD_X,		BTN_ID_X},
@@ -726,22 +726,22 @@ static ButtonMapping button_label_mapping[] = { // used to lookup the retro_id a
 static ButtonMapping core_button_mapping[RETRO_BUTTON_COUNT+1] = {0};
 
 static const char* device_button_names[LOCAL_BUTTON_COUNT] = {
-	[BTN_ID_UP]		= "UP",
-	[BTN_ID_DOWN]	= "DOWN",
-	[BTN_ID_LEFT]	= "LEFT",
-	[BTN_ID_RIGHT]	= "RIGHT",
-	[BTN_ID_SELECT]	= "SELECT",
-	[BTN_ID_START]	= "START",
-	[BTN_ID_Y]		= "Y",
-	[BTN_ID_X]		= "X",
-	[BTN_ID_B]		= "B",
-	[BTN_ID_A]		= "A",
-	[BTN_ID_L1]		= "L1",
-	[BTN_ID_R1]		= "R1",
-	[BTN_ID_L2]		= "L2",
-	[BTN_ID_R2]		= "R2",
-	[BTN_ID_L3]		= "L3",
-	[BTN_ID_R3]		= "R3",
+	[BTN_ID_DPAD_UP]	= "UP",
+	[BTN_ID_DPAD_DOWN]	= "DOWN",
+	[BTN_ID_DPAD_LEFT]	= "LEFT",
+	[BTN_ID_DPAD_RIGHT]	= "RIGHT",
+	[BTN_ID_SELECT]		= "SELECT",
+	[BTN_ID_START]		= "START",
+	[BTN_ID_Y]			= "Y",
+	[BTN_ID_X]			= "X",
+	[BTN_ID_B]			= "B",
+	[BTN_ID_A]			= "A",
+	[BTN_ID_L1]			= "L1",
+	[BTN_ID_R1]			= "R1",
+	[BTN_ID_L2]			= "L2",
+	[BTN_ID_R2]			= "R2",
+	[BTN_ID_L3]			= "L3",
+	[BTN_ID_R3]			= "R3",
 };
 
 
@@ -1636,6 +1636,14 @@ static void input_poll_callback(void) {
 		ButtonMapping* mapping = &config.controls[i];
 		int btn = 1 << mapping->local;
 		if (btn==BTN_NONE) continue; // present buttons can still be unbound
+		if (gamepad_type==0) {
+			switch(btn) {
+				case BTN_DPAD_UP: 		btn = BTN_UP; break;
+				case BTN_DPAD_DOWN: 	btn = BTN_DOWN; break;
+				case BTN_DPAD_LEFT: 	btn = BTN_LEFT; break;
+				case BTN_DPAD_RIGHT: 	btn = BTN_RIGHT; break;
+			}
+		}
 		if (PAD_isPressed(btn) && (!mapping->mod || PAD_isPressed(BTN_MENU))) {
 			buttons |= 1 << mapping->retro;
 			if (mapping->mod) ignore_menu = 1;
@@ -1651,14 +1659,11 @@ static int16_t input_state_callback(unsigned port, unsigned device, unsigned ind
 		return (buttons >> id) & 1;
 	}
 	else if (port==0 && device==RETRO_DEVICE_ANALOG) {
-		// LOG_info("wants analog input\n");
 		if (index==RETRO_DEVICE_INDEX_ANALOG_LEFT) {
-			// LOG_info("wants left stick %i,%i\n", pad.laxis.x,pad.laxis.y);
 			if (id==RETRO_DEVICE_ID_ANALOG_X) return pad.laxis.x;
 			else if (id==RETRO_DEVICE_ID_ANALOG_Y) return pad.laxis.y;
 		}
 		else if (index==RETRO_DEVICE_INDEX_ANALOG_RIGHT) {
-			// LOG_info("wants right stick %i,%i\n", pad.raxis.x,pad.raxis.y);
 			if (id==RETRO_DEVICE_ID_ANALOG_X) return pad.raxis.x;
 			else if (id==RETRO_DEVICE_ID_ANALOG_Y) return pad.raxis.y;
 		}

@@ -2,7 +2,7 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- 
+- all: left analog stick doubles as dpad (except when Controller is set to DualShock in PlayStation)
 
 EXTRAS
 
@@ -85,15 +85,6 @@ next
 	/tmp/noui
 		show poweroff on quit in minarch if present
 		tricky because of thread core option...
-
-	making good progress on analog support
-		add to minput?
-			plenty of room on the rgb30
-			less so on the 35xx h
-		
-	separate BTN_UP into BTN_DPAD_UP and BTN_ANALOG_UP and OR them together?
-		at least in MinUI and menus in minarch
-	
 
 	document map.txt
 		allow hiding files with map, eg. neogeo.bios .neogeo.bios

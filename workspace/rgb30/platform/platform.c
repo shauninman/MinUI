@@ -123,10 +123,10 @@ void PLAT_pollInput(void) {
 			
 				pressed = value;
 				LOG_info("key event: %i (%i)\n", code,pressed);
-					 if (code==RAW_UP) 	{ btn = BTN_UP; 		id = BTN_ID_UP; }
-	 			else if (code==RAW_DOWN)	{ btn = BTN_DOWN; 		id = BTN_ID_DOWN; }
-				else if (code==RAW_LEFT)	{ btn = BTN_LEFT; 		id = BTN_ID_LEFT; }
-				else if (code==RAW_RIGHT)	{ btn = BTN_RIGHT; 		id = BTN_ID_RIGHT; }
+					 if (code==RAW_UP) 	{ btn = BTN_DPAD_UP; 		id = BTN_ID_DPAD_UP; }
+	 			else if (code==RAW_DOWN)	{ btn = BTN_DPAD_DOWN; 	id = BTN_ID_DPAD_DOWN; }
+				else if (code==RAW_LEFT)	{ btn = BTN_DPAD_LEFT; 	id = BTN_ID_DPAD_LEFT; }
+				else if (code==RAW_RIGHT)	{ btn = BTN_DPAD_RIGHT; id = BTN_ID_DPAD_RIGHT; }
 				else if (code==RAW_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
 				else if (code==RAW_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
 				else if (code==RAW_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
@@ -149,8 +149,8 @@ void PLAT_pollInput(void) {
 			else if (type==EV_ABS) {
 				LOG_info("abs event: %i (%i==%i)\n",code,value,(value * 32767) / 1800);
 				
-					 if (code==RAW_LSX) pad.laxis.x = (value * 32767) / 1800;
-				else if (code==RAW_LSY) pad.laxis.y = (value * 32767) / 1800;
+					 if (code==RAW_LSX) { pad.laxis.x = (value * 32767) / 1800; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+				else if (code==RAW_LSY) { pad.laxis.y = (value * 32767) / 1800; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
 				// TODO: these seem to be switched on the rgb30 according to the padtest rom
 				else if (code==RAW_RSX) pad.raxis.y = (value * 32767) / 1800;
 				else if (code==RAW_RSY) pad.raxis.x = (value * 32767) / 1800;
