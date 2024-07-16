@@ -535,7 +535,7 @@ static int hasRecents(void) {
 			trimTrailingNewlines(line);
 			if (strlen(line)==0) continue; // skip empty lines
 			
-			LOG_info("line: %s\n", line);
+			// LOG_info("line: %s\n", line);
 			
 			char* path = line;
 			char* alias = NULL;
@@ -570,7 +570,7 @@ static int hasRecents(void) {
 						Array_push(parent_paths, strdup(parent_path));
 					}
 					
-					LOG_info("path:%s alias:%s\n", path, alias);
+					// LOG_info("path:%s alias:%s\n", path, alias);
 					
 					Recent* recent = Recent_new(path, alias);
 					if (recent->available) has += 1;
@@ -1464,6 +1464,36 @@ int main (int argc, char *argv[]) {
 			
 			int ox;
 			int oy;
+			
+			// simple thumbnail support a thumbnail for a file or folder named NAME.EXT needs a corresponding /.res/NAME.EXT.png 
+			// that is no bigger than platform FIXED_HEIGHT x FIXED_HEIGHT
+			int had_thumb = 0;
+			if (!show_version && total>0) {
+				Entry* entry = top->entries->items[top->selected];
+				char res_path[MAX_PATH];
+				
+				char res_root[MAX_PATH];
+				strcpy(res_root, entry->path);
+				
+				char tmp_path[MAX_PATH];
+				strcpy(tmp_path, entry->path);
+				char* res_name = strrchr(tmp_path, '/') + 1;
+
+				char* tmp = strrchr(res_root, '/');
+				tmp[0] = '\0';
+				
+				sprintf(res_path, "%s/.res/%s.png", res_root, res_name);
+				LOG_info("res_path: %s\n", res_path);
+				if (exists(res_path)) {
+					had_thumb = 1;
+					SDL_Surface* thumb = IMG_Load(res_path);
+					ox = MAX(FIXED_WIDTH - FIXED_HEIGHT, (FIXED_WIDTH - thumb->w));
+					oy = (FIXED_HEIGHT - thumb->h) / 2;
+					SDL_BlitSurface(thumb, NULL, screen, &(SDL_Rect){ox,oy});
+					SDL_FreeSurface(thumb);
+				}
+			}
+			
 			int ow = GFX_blitHardwareGroup(screen, show_setting);
 			
 			if (show_version) {
@@ -1538,8 +1568,8 @@ int main (int argc, char *argv[]) {
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
 						char* entry_unique = entry->unique;
-						int available_width = screen->w - SCALE1(PADDING * 2);
-						if (i==top->start) available_width -= ow;
+						int available_width = (had_thumb && j!=selected_row ? ox : screen->w) - SCALE1(PADDING * 2);
+						if (i==top->start && !(had_thumb && j!=selected_row)) available_width -= ow; // 
 					
 						SDL_Color text_color = COLOR_WHITE;
 					
