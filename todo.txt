@@ -3,6 +3,7 @@ Please see the README.txt in the zip files for installation and update instructi
 BASE
 
 - all: left analog stick doubles as dpad (except when Controller is set to DualShock in PlayStation)
+- my282: improved performance on Normal CPU Speed
 
 EXTRAS
 
@@ -12,6 +13,13 @@ EXTRAS
 
 next
 	all
+		look into RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER for zero copy framebuffer
+			GB: SDL_UnlockTexture blocked for 3ms (160,144) (TLOZ:LA)
+			PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
+			PS: SDL_UnlockTexture blocked for 8ms (512,480) (BR2)
+			try using SDL_UpdateTexture instead of Lock/Unlock
+				might be saving 1-2ms
+		
 		Thread Core
 			needs changes to support systems that change resolution (eg. PS)
 		update all cores
