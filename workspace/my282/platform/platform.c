@@ -524,11 +524,11 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		SetBrightness(GetBrightness());
-		system("echo 0 > " LED_PATH);
+		putInt(LED_PATH, 0);
 	}
 	else {
 		SetRawBrightness(0);
-		system("echo 255 > " LED_PATH);
+		putInt(LED_PATH, 255);
 	}
 }
 
@@ -538,7 +538,7 @@ void PLAT_powerOff(void) {
 
 	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
-	system("echo 255 > " LED_PATH);
+	putInt(LED_PATH,255);
 	SND_quit();
 	VIB_quit();
 	PWR_quit();
@@ -557,6 +557,7 @@ void PLAT_setCPUSpeed(int speed) {
 		case CPU_SPEED_NORMAL: 		freq = 1344; cpus = 1; break;
 		case CPU_SPEED_PERFORMANCE: freq = 1512; cpus = 2; break;
 	}
+	// cpus = 2;
 
 	char cmd[128];
 	sprintf(cmd,"overclock.elf userspace %d %d 384 1080 0", cpus, freq);
@@ -564,16 +565,8 @@ void PLAT_setCPUSpeed(int speed) {
 }
 
 #define RUMBLE_PATH "/sys/devices/virtual/timed_output/vibrator/enable"
-
 void PLAT_setRumble(int strength) {
-	static int last = 0;
-	strength = strength?10000:0;
-	if (strength!=last) {
-		char cmd[256];
-		sprintf(cmd,"echo %i > %s", strength, RUMBLE_PATH); // ms
-		system(cmd);
-		last = strength;
-	}
+	putInt(RUMBLE_PATH, strength?1000:0);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
