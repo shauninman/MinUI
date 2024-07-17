@@ -1,5 +1,5 @@
 diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
-index 0d1dc08f81a11cef6b3b7238367b1ff27fcf1ead..7b3f977da6549c435b09b165f5a7589d125622be 100644
+index 0d1dc08f81a11cef6b3b7238367b1ff27fcf1ead..13e7f1b601e2476c81d34e515978355115f8bdd1 100644
 --- forkSrcPrefix/Makefile.libretro
 +++ forkDstPrefix/Makefile.libretro
 @@ -497,6 +497,23 @@ else ifeq ($(platform), miyoo)
@@ -16,7 +16,7 @@ index 0d1dc08f81a11cef6b3b7238367b1ff27fcf1ead..7b3f977da6549c435b09b165f5a7589d
 +   LIBM :=
 +   fpic := -fPIC -flto
 +   CFLAGS += -marm -mtune=cortex-a9 -mfpu=neon-fp16 -mfloat-abi=hard -march=armv7-a -fomit-frame-pointer
-+   CFLAGS += -fomit-frame-pointer -ffast-math -D__GCW0__
++   CFLAGS += -fomit-frame-pointer -ffast-math -fno-finite-math-only -D__GCW0__
 +   DONT_COMPILE_IN_ZLIB = 1
 +   HAVE_ARMv6 = 0
 +   LOW_MEMORY = 1

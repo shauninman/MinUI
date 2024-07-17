@@ -2,8 +2,9 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- all: left analog stick doubles as dpad (except when Controller is set to DualShock in PlayStation)
+- rgxx: initial RG40xxH support
 - my282: improved emulation performance on Normal and Powersave CPU Speeds
+- all: left analog stick doubles as dpad (except when Controller is set to DualShock in PlayStation)
 
 EXTRAS
 
@@ -12,14 +13,8 @@ EXTRAS
 ---
 
 next
-	40xx
-		brightness curve needs to be modified for this device
-		picodrive crashes
-			undefined symbol: __log_finite
-			needs -fno-finite-math-only
-		
 	all
-		revisit bub181's core # vs freq comments for other devices
+		revisit bub181's core # vs freq ideas for other devices
 		
 		look into RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER for zero copy framebuffer
 			GB: SDL_UnlockTexture blocked for 3ms (160,144) (TLOZ:LA)
@@ -33,10 +28,6 @@ next
 			needs changes to support systems that change resolution (eg. PS)
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 
-		
-	all
-		figure out how to support resolution changes when threaded
-			might help with performance of Colin McRae Rally 2.0 in PS.pak
 		add Clear Recently Played.pak, copy to all platforms
 			maybe include confirmation?
 			requires show.elf
@@ -108,7 +99,7 @@ next
 	pretty sure nothing uses the various platform.h BUTTON_* macros (because SDLK_* mappings are so spotty on these devices)
 		pretty sure they all use CODE_* or JOY_* now
 
-	macos (for modern compiler and debugging tools not for release!)
+	macos (for modern compiler and debugging tools, not for release!)
 		minarch
 	
 	rg35xxplus/h
