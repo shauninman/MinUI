@@ -598,13 +598,16 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
+#define BLANK_PATH "/sys/class/graphics/fb0/blank"
 #define LED_PATH "/sys/class/power_supply/axp2202-battery/work_led"
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
+		putInt(BLANK_PATH, FB_BLANK_UNBLANK); // wake
 		SetBrightness(GetBrightness());
 		putInt(LED_PATH,0);
 	}
 	else {
+		putInt(BLANK_PATH, FB_BLANK_POWERDOWN); // sleep
 		SetRawBrightness(0);
 		putInt(LED_PATH,1);
 	}
