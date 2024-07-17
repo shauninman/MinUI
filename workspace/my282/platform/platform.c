@@ -423,7 +423,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	// SDL_UnlockTexture(vid.texture); // 9ms
 	// LOG_info("SDL_LockTexture/blit/SDL_UnlockTexture blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
 	
-	// comparable, 1-2ms faster
+	// comparable, 1-2ms faster depending on size of framebuffer
 	// uint32_t then = SDL_GetTicks();
 	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
 	// LOG_info("SDL_UpdateTexture blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
@@ -560,16 +560,15 @@ void PLAT_powerOff(void) {
 
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
-	int cpus = 1;
 	switch (speed) {
-		case CPU_SPEED_MENU: 		freq =  576; cpus = 1; break;
-		case CPU_SPEED_POWERSAVE:	freq = 1152; cpus = 1; break;
-		case CPU_SPEED_NORMAL: 		freq = 1344; cpus = 2; break;
-		case CPU_SPEED_PERFORMANCE: freq = 1512; cpus = 2; break;
+		case CPU_SPEED_MENU: 		freq =  576; break;
+		case CPU_SPEED_POWERSAVE:	freq = 1056; break;
+		case CPU_SPEED_NORMAL: 		freq = 1344; break;
+		case CPU_SPEED_PERFORMANCE: freq = 1512; break;
 	}
 
 	char cmd[128];
-	sprintf(cmd,"overclock.elf userspace %d %d 384 1080 0", cpus, freq);
+	sprintf(cmd,"overclock.elf userspace 2 %d 384 1080 0", freq);
 	system(cmd);
 }
 

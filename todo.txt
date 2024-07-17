@@ -3,7 +3,7 @@ Please see the README.txt in the zip files for installation and update instructi
 BASE
 
 - all: left analog stick doubles as dpad (except when Controller is set to DualShock in PlayStation)
-- my282: improved performance on Normal CPU Speed
+- my282: improved emulation performance on Normal and Powersave CPU Speeds
 
 EXTRAS
 
@@ -12,11 +12,20 @@ EXTRAS
 ---
 
 next
+	40xx
+		brightness curve needs to be modified for this device
+		picodrive crashes
+			undefined symbol: __log_finite
+			needs -fno-finite-math-only
+		
 	all
+		revisit bub181's core # vs freq comments for other devices
+		
 		look into RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER for zero copy framebuffer
 			GB: SDL_UnlockTexture blocked for 3ms (160,144) (TLOZ:LA)
-			PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
+			PS: SDL_UnlockTexture blocked for 5ms (368,480) (TEKKEN3)
 			PS: SDL_UnlockTexture blocked for 8ms (512,480) (BR2)
+			PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
 			try using SDL_UpdateTexture instead of Lock/Unlock
 				might be saving 1-2ms
 		
@@ -24,9 +33,6 @@ next
 			needs changes to support systems that change resolution (eg. PS)
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 
-	my282	
-		use disp ioctl to log stock brightness curve
-			will this give MinUI better control over brightness?
 		
 	all
 		figure out how to support resolution changes when threaded
@@ -70,6 +76,7 @@ next
 		
 		diff older version of stock that doesn't underrun so bad
 			compare with rg35xxplus (I don't remember having audio issues there)
+		the problem is the panel is being driven at 59fps
 		
 		rebuild using opengl?
 			based on steward-fu's work
