@@ -137,9 +137,12 @@ void SetRawBrightness(int val) { // 0 - 255
 	if (settings->hdmi) return;
 	
 	printf("SetRawBrightness(%i)\n", val); fflush(stdout);
-	char cmd[256];
-	sprintf(cmd, "echo %i > /sys/class/disp/disp/attr/lcdbl", val);
-	system(cmd);
+    int fd = open("/dev/disp", O_RDWR);
+	if (fd) {
+	    unsigned long param[4]={0,val,0,0};
+		ioctl(fd, DISP_LCD_SET_BRIGHTNESS, &param);
+		close(fd);
+	}
 }
 void SetRawVolume(int val) { // 0 - 100
 	printf("SetRawVolume(%i)\n", val); fflush(stdout);
