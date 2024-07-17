@@ -652,8 +652,13 @@ int PLAT_pickSampleRate(int requested, int max) {
 
 static char model[256];
 char* PLAT_getModel(void) {
-	// sadly there is nothing distinguishable about the hardware...
-	return "RG*XX Family";
+	// firmware "strings /mnt/vendor/bin/dmenu.bin | grep ^20"
+	char* _model = getenv("RGXX_MODEL");
+	if (_model!=NULL) {
+		sprintf(model, "Anbernic %s", _model);
+		return model;
+	}
+	return "Anbernic RG*XX";
 }
 
 int PLAT_isOnline(void) {
