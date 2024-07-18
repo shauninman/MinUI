@@ -2,9 +2,7 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
-- rgxx: initial RG40xxH support
-- my282: improved emulation performance on Normal and Powersave CPU Speeds
-- all: left analog stick doubles as dpad (except when Controller is set to DualShock in PlayStation)
+-
 
 EXTRAS
 
@@ -13,6 +11,15 @@ EXTRAS
 ---
 
 next
+	
+	switch rgxx-line to /bin/bash to use &> instead of the grody construction I can never remember the syntax for
+		it works!
+	need a separate repo for failed experiments that might still be useful reference in the future
+		eg.
+			calibrate
+			brightness
+			volume
+	
 	all
 		revisit bub181's core # vs freq ideas for other devices
 		
