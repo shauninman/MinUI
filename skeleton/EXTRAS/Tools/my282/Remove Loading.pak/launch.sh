@@ -6,7 +6,7 @@ cd "$DIR"
 {
 
 # copy to tmp to get around spaces in lib path
-# these are source from the my282 toolchain buildroot
+# these are sourced from the my282 toolchain buildroot
 cp -r bin /tmp
 cp -r lib /tmp
 
