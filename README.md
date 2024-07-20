@@ -4,8 +4,6 @@ MinUI is a focused, custom launcher and libretro frontend for the Trimui Smart (
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 /> 
 
-See [more screenshots](github/).
-
 ## Features
 
 - Simple launcher, simple SD card
