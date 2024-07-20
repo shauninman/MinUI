@@ -2,11 +2,15 @@ Please see the README.txt in the zip files for installation and update instructi
 
 BASE
 
--
+- all: map.txt now supports marking an entry as hidden (see README.txt)
+- my282: revised brightness ramp again
+- my282: reverted Powersave to single core
 
 EXTRAS
 
-- 
+- my282: updated Bootlogo.pak for Miyoo firmware 0713
+- my282: updated Bootlogo.pak with checks to prevent bricking
+- rgb30: ensure pico8 paks use correct controller bindings when third-party rg35xxplus pico8 paks are used (thanks Ry!)
 
 ---
 
@@ -264,20 +268,13 @@ next
 		
 known issues
 	all: race core (NGP/C.pak) doesn't restore audio state correctly
-	miyoomini: debug/battery overlay isn't implemented
-	trimuismart: debug/battery overlay isn't available/implemented
 	rgb30: light crackling in some cores (eg. fceumm and snes9x2005_plus)
-	rgb30: debug/battery overlay isn't available/implemented
-	tg5040: debug/battery overlay isn't available/implemented
-
 	trimui: hw scaling isn't implemented yet
-	trimui: debug/battery overlay isn't implemented yet
 	nano: says it can bind MENU+button for shortcuts, it can't
 
 all
 	minarch
 		GFX_blitMessage() screen w/h is 0,0 for some reason
-		doesn't pickup on core setting ratio changes? eg. fceumm
 		prevent MENU+button from triggering button
 		prevent binding same MENU+button to control and shortcut at same time
 			reset the newer input to None and show a message, ideal something like:
@@ -298,9 +295,6 @@ all
 		move all the CORE_* vars up to all/cores (since they ended up all being the same)
 		there has got to be a better way to main these patches
 			updating fake-08 was so much copy/pasting
-	api
-		GFX_blitDebug(text,x,y)?
-			simple for everything but trimuismart with its -90° screen
 	minui
 		alt tag is getting truncated, should be added after truncation
 	add a "res" (or "many"?) folder 
