@@ -21,13 +21,11 @@ next
 		eg. SFC and SUPA folder but no SUPA.pak still shows games from SUPA
 	switch rgxx-line to /bin/bash to use &> instead of the grody construction I can never remember the syntax for
 		it works!
-	need a separate repo for failed experiments that might still be useful reference in the future
-		eg.
-			calibrate
-			brightness
-			volume
-	
 	all
+		look into how many cores support 8888
+			this might be a bottleneck (if it's having to go 8888 to 565 and back to 8888 for every pixel, every frame)
+			not a single BASE or EXTRA core requests 8888, so that won't help even if it is a bottleneck
+			
 		Thread Core
 			needs changes to support systems that change resolution (eg. PS)
 			doesn't seem to have any affect on a30 (mostly because the problems are hi res games and the copy from cpu to gpu)
