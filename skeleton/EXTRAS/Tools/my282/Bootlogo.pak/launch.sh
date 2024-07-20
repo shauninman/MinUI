@@ -30,6 +30,12 @@ gzip -k "$LOGO_PATH"
 LOGO_PATH=$LOGO_PATH.gz
 LOGO_SIZE=$(wc -c < "$LOGO_PATH")
 
+MAX_SIZE=62234
+if [ "$LOGO_SIZE" -gt "$MAX_SIZE" ]; then
+	show.elf $DIR/res/simplify.png 4
+	exit 1
+fi
+
 # workaround for missing conv=notrunc support
 OFFSET_PART=$((OFFSET+LOGO_SIZE))
 dd if=boot0 of=boot0-suffix bs=1 skip=$OFFSET_PART 2>/dev/null
