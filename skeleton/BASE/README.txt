@@ -165,6 +165,16 @@ A collection is just a text file containing an ordered list of full paths to rom
   /Roms/GBA/Metroid Fusion.gba
 
 ----------------------------------------
+
+Display names
+
+Certain (unsupported arcade) cores require roms to use arcane file names. You can override the display name used throughout MinUI by creating a map.txt in the same folder as the files you want to rename. One line per file, `rom.ext` followed by a single tab followed by `Display Name`. You can hide a file by adding a `.` at the beginning of the display name. eg.
+	
+	neogeo.zip	.Neo Geo Bios
+	mslug.zip	Metal Slug
+	sf2.zip	Street Fighter II
+
+----------------------------------------
 Simple mode
 
 Not simple enough for you (or maybe your kids)? MinUI has a simple mode that hides the Tools folder and replaces Options in the in-game menu with Reset. Perfect for handing off to littles (and olds too I guess). Just create an empty file named "enable-simple-mode" (no extension) in "/.userdata/shared/".
