@@ -12,7 +12,7 @@ EXTRAS
 
 next
 	
-	test a30 0713
+
 	patch all versions of pcsx and picodrive
 		https://github.com/shauninman/MinUI/pull/14/files#diff-d76fedd6d41fe8dd9c6a7b6066bdb39e783e6c21af2fde85415dc83d88f984df
 		related https://discord.com/channels/741895796315914271/1232969624417730630/1263579750409179271
@@ -28,9 +28,15 @@ next
 			volume
 	
 	all
+		Thread Core
+			needs changes to support systems that change resolution (eg. PS)
+			doesn't seem to have any affect on a30 (mostly because the problems are hi res games and the copy from cpu to gpu)
+
 		revisit bub181's core # vs freq ideas for other devices
 		
 		look into RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER for zero copy framebuffer
+			not sure it's really a zero copy because LockTexture has to copy the texture from the gpu to the cpu...
+		
 			GB: SDL_UnlockTexture blocked for 3ms (160,144) (TLOZ:LA)
 			PS: SDL_UnlockTexture blocked for 5ms (368,480) (TEKKEN3)
 			PS: SDL_UnlockTexture blocked for 8ms (512,480) (BR2)
@@ -38,8 +44,6 @@ next
 			try using SDL_UpdateTexture instead of Lock/Unlock
 				might be saving 1-2ms
 		
-		Thread Core
-			needs changes to support systems that change resolution (eg. PS)
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 
 		add Clear Recently Played.pak, copy to all platforms

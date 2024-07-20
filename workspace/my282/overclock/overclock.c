@@ -991,10 +991,10 @@ static void set_swap(int v)
 
     if (org != v) {
         if (v) {
-            system("swapon "SWAP);
+            system("swapon " SWAP);
         }
         else {
-            system("swapoff "SWAP);
+            system("swapoff " SWAP);
         }
     }
 }
@@ -1069,8 +1069,8 @@ int main(int argc, char **argv) {
     }
 	else {
 	    printf("Usage: \n");
-	    printf("\t%s schedule core cpu-freq gpu-freq ddr-freq swap\n\n", argv[0]);
-	    printf("\tschedule: interactive, conservative, userspace, ondemand, performance\n");
+	    printf("\t%s governor core cpu-freq gpu-freq ddr-freq swap\n\n", argv[0]);
+	    printf("\tgovernor: interactive, conservative, userspace, ondemand, performance\n");
 	    printf("\tcore: 1~4\n");
 	    printf("\tcpu-freq: MHz\n");
 	    printf("\tgpu-freq: MHz\n");
@@ -1078,7 +1078,7 @@ int main(int argc, char **argv) {
 	    printf("\tswap: on | off (ignored)\n\n");
 	    printf("Examples:\n");
 	    printf("\t%s userspace 1 648 384 1080 0\n", argv[0]);
-	    printf("\t%s performance 4 1500 384 1080 1\n\n", argv[0]);
+	    printf("\t%s performance 4 1512 384 1080 1\n\n", argv[0]);
 	}
 
     return 0;
