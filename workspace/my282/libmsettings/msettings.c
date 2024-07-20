@@ -100,17 +100,17 @@ void SetBrightness(int value) {
 	
 	int raw;
 	switch (value) {
-		// TODO: redo, range is 0-255
+		// FIXED: Visually better brightness range
 		case 0:  raw =   3;	break; 	// 0
 		case 1:  raw =   4;	break; 	// 1
 		case 2:  raw =   5;	break; 	// 1
-		case 3:  raw =   6;	break; 	// 1
-		case 4:  raw =   8;	break;	// 2
-		case 5:  raw =  10;	break;	// 2
-		case 6:  raw =  12;	break;	// 2
-		case 7:  raw =  16;	break;	// 4
-		case 8:  raw =  20;	break;	// 4
-		case 9:  raw =  32;	break;	// 12
+		case 3:  raw =   7;	break; 	// 1
+		case 4:  raw =   9;	break;	// 2
+		case 5:  raw =  12;	break;	// 2
+		case 6:  raw =  50;	break;	// 2
+		case 7:  raw =  70;	break;	// 4
+		case 8:  raw = 120;	break;	// 4
+		case 9:  raw = 180;	break;	// 12
 		case 10: raw = 255;	break;	// *
 	}
 	SetRawBrightness(raw);
