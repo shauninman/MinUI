@@ -12,6 +12,13 @@ EXTRAS
 
 next
 	
+	test a30 0713
+	patch all versions of pcsx and picodrive
+		https://github.com/shauninman/MinUI/pull/14/files#diff-d76fedd6d41fe8dd9c6a7b6066bdb39e783e6c21af2fde85415dc83d88f984df
+		related https://discord.com/channels/741895796315914271/1232969624417730630/1263579750409179271
+	
+	emu pak detection isn't working when two folders are combined
+		eg. SFC and SUPA folder but no SUPA.pak still shows games from SUPA
 	switch rgxx-line to /bin/bash to use &> instead of the grody construction I can never remember the syntax for
 		it works!
 	need a separate repo for failed experiments that might still be useful reference in the future
@@ -44,6 +51,7 @@ next
 			quit doesn't work as expected on trimuismart
 			possibly because of absense of shutdown?
 	h700
+		can taskset be used to mitigate the audio issues
 		hijack boot earlier?
 			hangs boot
 			reflashing a fresh stock image takes too long to happily trial and error this

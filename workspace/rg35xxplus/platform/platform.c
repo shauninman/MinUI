@@ -478,23 +478,16 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
-		SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-		SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
-		SDL_UnlockTexture(vid.texture);
+		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
 		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_RenderPresent(vid.renderer);
 		return;
 	}
 	
-	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-	((scaler_t)vid.blit->blit)(
-		vid.blit->src,vid.buffer->pixels,
-		// vid.blit->src_w,vid.blit->src_h,vid.blit->src_p,
-		vid.blit->true_w,vid.blit->true_h,vid.blit->src_p, // TODO: fix to be confirmed, issue may not present on this platform
-		vid.buffer->w,vid.buffer->h,vid.buffer->pitch
-	);
-	SDL_UnlockTexture(vid.texture);
+	// uint32_t then = SDL_GetTicks();
+	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
+	// LOG_info("blit blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
 	
 	SDL_Texture* target = vid.texture;
 	int w = vid.blit->src_w;
