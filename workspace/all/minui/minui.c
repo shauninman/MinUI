@@ -222,7 +222,6 @@ static void Directory_index(Directory* self) {
 		if (file) {
 			map = Hash_new();
 			char line[256];
-			int resort = 0;
 			while (fgets(line,256,file)!=NULL) {
 				normalizeNewline(line);
 				trimTrailingNewlines(line);
@@ -238,7 +237,8 @@ static void Directory_index(Directory* self) {
 			}
 			fclose(file);
 			
-			// need to 
+			int resort = 0;
+			int filter = 0;
 			for (int i=0; i<self->entries->count; i++) {
 				Entry* entry = self->entries->items[i];
 				char* filename = strrchr(entry->path, '/')+1;
@@ -247,14 +247,24 @@ static void Directory_index(Directory* self) {
 					free(entry->name);
 					entry->name = strdup(alias);
 					resort = 1;
+					if (!filter && hide(entry->name)) filter = 1;
 				}
 			}
 			
-			// oof, double s
-			
-			// TODO: maybe map.txt logic should be moved to EntryArray_sort()
-			// or another precursor?
-			
+			if (filter) {
+				Array* entries = Array_new();
+				for (int i=0; i<self->entries->count; i++) {
+					Entry* entry = self->entries->items[i];
+					if (hide(entry->name)) {
+						Entry_free(entry);
+					}
+					else {
+						Array_push(entries, entry);
+					}
+				}
+				Array_free(self->entries); // not EntryArray_free because we've just moved the entries from the original to the filtered one!
+				self->entries = entries;
+			}
 			if (resort) EntryArray_sort(self->entries);
 		}
 	}
@@ -664,6 +674,7 @@ static Array* getRoot(void) {
 	}
 	
 	// copied/modded from Directory_index
+	// we don't support hidden remaps here
 	char map_path[256];
 	sprintf(map_path, "%s/map.txt", ROMS_PATH);
 	if (entries->count>0 && exists(map_path)) {
@@ -671,7 +682,6 @@ static Array* getRoot(void) {
 		if (file) {
 			Hash* map = Hash_new();
 			char line[256];
-			int resort = 0;
 			while (fgets(line,256,file)!=NULL) {
 				normalizeNewline(line);
 				trimTrailingNewlines(line);
@@ -687,6 +697,7 @@ static Array* getRoot(void) {
 			}
 			fclose(file);
 			
+			int resort = 0;
 			for (int i=0; i<entries->count; i++) {
 				Entry* entry = entries->items[i];
 				char* filename = strrchr(entry->path, '/')+1;
