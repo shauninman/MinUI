@@ -1,16 +1,18 @@
-Please see the README.txt in the zip files for installation and update instructions.
+Changes
 
 BASE
 
 - all: map.txt now supports marking an entry as hidden (see README.txt)
 - my282: revised brightness ramp again
 - my282: reverted Powersave to single core
+- rg_xx: fixed Genesis/MegaDrive on ofw 1.1.5
 
 EXTRAS
 
 - my282: updated Bootlogo.pak for Miyoo firmware 0713
 - my282: updated Bootlogo.pak with checks to prevent bricking
-- rgb30: ensure pico8 paks use correct controller bindings when third-party rg35xxplus pico8 paks are used (thanks Ry!)
+- rgb30: validated native pico8 paks controller bindings when third-party rg35xxplus pico8 paks are used (thanks Ry!)
+- rg_xx: fixed disabling Enable SSH.pak
 
 ---
 
