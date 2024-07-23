@@ -3,6 +3,7 @@ Changes
 BASE
 
 - all: map.txt now supports marking an entry as hidden (see README.txt)
+- all: fixed crasher when binding MENU+button in Options > Controls
 - my282: revised brightness ramp again
 - my282: reverted Powersave to single core
 - rg_xx: fixed Genesis/MegaDrive on ofw 1.1.5
@@ -11,10 +12,14 @@ EXTRAS
 
 - my282: updated Bootlogo.pak for Miyoo firmware 0713
 - my282: updated Bootlogo.pak with checks to prevent bricking
-- rgb30: validated native pico8 paks controller bindings when third-party rg35xxplus pico8 paks are used (thanks Ry!)
-- rg_xx: fixed disabling Enable SSH.pak
+- rgb30: updated native pico8 paks with controller binding checks (thanks Ry!)
+- rg_xx: updated Enable SSH.pak to properly disable itself after use
 
 ---
+
+bugs
+
+- trying to bind an input to MENU+button crashes minarch (only really affects devices without L2/R2, eg. Trimui Smart)
 
 next
 	
