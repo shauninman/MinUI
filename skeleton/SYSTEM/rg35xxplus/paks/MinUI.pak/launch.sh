@@ -23,6 +23,8 @@ echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 echo 0 > /sys/class/power_supply/axp2202-battery/work_led
 
 export RGXX_MODEL=`strings /mnt/vendor/bin/dmenu.bin | grep ^RG`
+# export RGXX_TIMESTAMP=`strings /mnt/vendor/bin/dmenu.bin | grep ^202`
+# export RGXX_VERSION=`strings /mnt/vendor/bin/dmenu.bin | grep -P ^V[0-9]+`
 
 #######################################
 
