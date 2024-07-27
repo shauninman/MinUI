@@ -666,10 +666,10 @@ enum {
 	SHORTCUT_SAVE_STATE,
 	SHORTCUT_LOAD_STATE,
 	SHORTCUT_RESET_GAME,
+	SHORTCUT_SAVE_QUIT,
 	SHORTCUT_CYCLE_SCALE,
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
-	SHORTCUT_SAVE_QUIT,
 	SHORTCUT_COUNT,
 };
 
@@ -910,10 +910,10 @@ static struct Config {
 		[SHORTCUT_SAVE_STATE]			= {"Save State",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_LOAD_STATE]			= {"Load State",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_RESET_GAME]			= {"Reset Game",		-1, BTN_ID_NONE, 0},
+		[SHORTCUT_SAVE_QUIT]			= {"Save & Quit",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_CYCLE_SCALE]			= {"Cycle Scaling",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_TOGGLE_FF]			= {"Toggle FF",			-1, BTN_ID_NONE, 0},
 		[SHORTCUT_HOLD_FF]				= {"Hold FF",			-1, BTN_ID_NONE, 0},
-		[SHORTCUT_SAVE_QUIT]			= {"Save & Quit",		-1, BTN_ID_NONE, 0},
 		{NULL}
 	},
 };
@@ -1601,14 +1601,15 @@ static void input_poll_callback(void) {
 					case SHORTCUT_SAVE_STATE: Menu_saveState(); break;
 					case SHORTCUT_LOAD_STATE: Menu_loadState(); break;
 					case SHORTCUT_RESET_GAME: core.reset(); break;
+					case SHORTCUT_SAVE_QUIT:
+						Menu_saveState();
+						quit = 1;
+						break;
 					case SHORTCUT_CYCLE_SCALE:
 						screen_scaling += 1;
 						if (screen_scaling>=SCALE_COUNT) screen_scaling -= SCALE_COUNT;
 						Config_syncFrontend(config.frontend.options[FE_OPT_SCALING].key, screen_scaling);
 						break;
-					case SHORTCUT_SAVE_QUIT:
-						Menu_saveState();
-						quit = 1; break;
 					default: break;
 				}
 				
