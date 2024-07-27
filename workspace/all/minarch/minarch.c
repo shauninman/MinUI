@@ -669,6 +669,7 @@ enum {
 	SHORTCUT_CYCLE_SCALE,
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
+	SHORTCUT_SAVE_QUIT,
 	SHORTCUT_COUNT,
 };
 
@@ -912,6 +913,7 @@ static struct Config {
 		[SHORTCUT_CYCLE_SCALE]			= {"Cycle Scaling",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_TOGGLE_FF]			= {"Toggle FF",			-1, BTN_ID_NONE, 0},
 		[SHORTCUT_HOLD_FF]				= {"Hold FF",			-1, BTN_ID_NONE, 0},
+		[SHORTCUT_SAVE_QUIT]			= {"Save & Quit",		-1, BTN_ID_NONE, 0},
 		{NULL}
 	},
 };
@@ -1604,6 +1606,9 @@ static void input_poll_callback(void) {
 						if (screen_scaling>=SCALE_COUNT) screen_scaling -= SCALE_COUNT;
 						Config_syncFrontend(config.frontend.options[FE_OPT_SCALING].key, screen_scaling);
 						break;
+					case SHORTCUT_SAVE_QUIT:
+						Menu_saveState();
+						quit = 1; break;
 					default: break;
 				}
 				
