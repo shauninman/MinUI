@@ -53,4 +53,4 @@ Copy "Wi-Fi.pak" to "/Tools/rgb30/" on your SD card. The first time you open the
 ----------------------------------------
 Remove Loading.pak (Miyoo A30-only)
 
-This pak removes the "LOADING" text that appears between the boot logo and the main interface when powering on. It requires patching nand memory to modify the otherwise read-only root file system. It takes around 5 minutes to complete. Please be patient and do not power off the device.
+This pak removes the "LOADING" text that appears between the boot logo and the main interface when powering on. It requires patching nand memory to modify the otherwise read-only root file system. It takes around 5 minutes to complete. While not required it is a very good idea to be connected to power while performing this operation. Please be patient and do not power off the device before it completes.
