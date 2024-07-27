@@ -152,7 +152,7 @@ The m3u file would contain just:
   Policenauts (Japan) (Disc 1).cue
   Policenauts (Japan) (Disc 2).cue
 
-When a multi-disc game is detected the in-game menu's Continue item will also show the current disc. Press left or right to switch between them.
+When a multi-disc game is detected the in-game menu's Continue item will also show the current disc. Press left or right to switch between discs.
 
 MinUI also supports chd files and official pbp files (multi-disc pbp files larger than 2GB are not supported). Regardless of the multi-disc file format used, every disc of the same game share the same memory card and save state slots.
 
