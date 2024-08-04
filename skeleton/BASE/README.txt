@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the Powkiddy RGB30, Trimui Smart (and Pro), Miyoo Mini (and Plus), M17, and the Anbernic RG*XX family--all from the same SD card. Why? Why not?
+MinUI is a minimal launcher for the Trimui Smart (and Pro), the Miyoo Mini (and Plus) and A30, the Powkiddy RGB30, the M17, and the Anbernic RG*XX family--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -59,6 +59,8 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the "NO NAME" partition (FAT32 with an "anbernic" folder) of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
 GKD PIXEL / GKD MINI
+
+An important caveat: this device is not cross-compatible with other MinUI-supported devices because its firmware lives on the SD card and its presence trips up all the other devices.
 
 Backup your stock SD card (not just the "ROMS" partition but the entire thing). If you like to live on the edge just create a folder named "stock" on the "ROMS" partition and copy everything into that folder.
 
