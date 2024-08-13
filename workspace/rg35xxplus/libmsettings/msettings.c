@@ -40,7 +40,6 @@ static char SettingsPath[256];
 static int shm_fd = -1;
 static int is_host = 0;
 static int shm_size = sizeof(Settings);
-static int is_40xx = 0;
 
 #define JACK_STATE_PATH "/sys/module/snd_soc_sunxi_component_jack/parameters/jack_state" // TODO: doesn't change, always 0
 #define HDMI_STATE_PATH "/sys/class/switch/hdmi/cable.0/state" // TODO: can read value but system doesn't react to change
@@ -57,10 +56,6 @@ int getInt(char* path) {
 
 void InitSettings(void) {	
 	sprintf(SettingsPath, "%s/msettings.bin", getenv("USERDATA_PATH"));
-	
-	char* model = getenv("RGXX_MODEL");
-	char* rg40 = "RG40xxH";
-	is_40xx = (strncmp(rg40,model,strlen(rg40))==0);
 	
 	shm_fd = shm_open(SHM_KEY, O_RDWR | O_CREAT | O_EXCL, 0644); // see if it exists
 	if (shm_fd==-1 && errno==EEXIST) { // already exists
@@ -122,36 +117,18 @@ void SetBrightness(int value) {
 	if (settings->hdmi) return;
 	
 	int raw;
-	if (is_40xx) {
-		// TODO: revisit
-		switch (value) {
-			case  0: raw= 20; break;	//  0
-			case  1: raw= 30; break;	// 10
-			case  2: raw= 45; break;	// 15
-			case  3: raw= 60; break;	// 15
-			case  4: raw= 80; break;	// 20
-			case  5: raw=100; break;	// 20
-			case  6: raw=125; break;	// 25
-			case  7: raw=150; break;	// 25
-			case  8: raw=175; break;	// 25
-			case  9: raw=200; break;	// 25
-			case 10: raw=255; break;	// 55
-		}
-	}
-	else {
-		switch (value) {
-			case  0: raw=  4; break;	//  0
-			case  1: raw=  6; break;	//  2
-			case  2: raw= 10; break;	//  4
-			case  3: raw= 16; break;	//  6
-			case  4: raw= 32; break;	// 16
-			case  5: raw= 48; break;	// 16
-			case  6: raw= 64; break;	// 16
-			case  7: raw= 96; break;	// 32
-			case  8: raw=128; break;	// 32
-			case  9: raw=192; break;	// 64
-			case 10: raw=255; break;	// 64
-		}
+	switch (value) {
+		case  0: raw=  4; break;	//  0
+		case  1: raw=  6; break;	//  2
+		case  2: raw= 10; break;	//  4
+		case  3: raw= 16; break;	//  6
+		case  4: raw= 32; break;	// 16
+		case  5: raw= 48; break;	// 16
+		case  6: raw= 64; break;	// 16
+		case  7: raw= 96; break;	// 32
+		case  8: raw=128; break;	// 32
+		case  9: raw=192; break;	// 64
+		case 10: raw=255; break;	// 64
 	}
 	
 	SetRawBrightness(raw);
