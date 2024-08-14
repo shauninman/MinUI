@@ -17,6 +17,7 @@ libretro-common
 
 **/other/evtest
 **/other/sdl
+**/other/sdl2
 **/other/sdl12-compat
 **/other/unzip60
 **/other/DinguxCommander

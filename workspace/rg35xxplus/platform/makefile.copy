@@ -6,6 +6,7 @@ $(PLATFORM):
 	mkdir -p ./build/BASE/$@
 	cp ./workspace/$@/boot/output/dmenu.bin ./build/BASE/$@/
 	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
+	cp ./workspace/$@/other/sdl2/build/.libs/libSDL2-2.0.so.0.2800.5 ./build/SYSTEM/$@/lib/libSDL2-2.0.so.0
 	# move libs (copied from toolchain)
 	mv ./workspace/libSDL2_image-2.0.so.0 ./build/SYSTEM/$@/lib/
 	mv ./workspace/libSDL2_ttf-2.0.so.0 ./build/SYSTEM/$@/lib/
