@@ -132,6 +132,7 @@
 #define SDCARD_PATH "/storage/roms"
 #define MUTE_VOLUME_RAW 0
 #define CROP_OVERSCAN
+#define SAMPLES 400
 
 ///////////////////////////////
 
