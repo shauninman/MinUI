@@ -6,17 +6,19 @@ BASE
 - all: added Cycle Effect to Options > Shortcuts
 - all: added Save & Quit to Options > Shortcuts (thanks weakset)
 - rg40xxh: revised brightness ramp to match other rg_xx devices
+- rg_xx: updated SDL2 to reduce frame pacing issues
 - rg_xx+rgb30: reduced frequency and severity of audio underruns
 - tg5040: added support for 20240413 recovery firmware
 
 EXTRAS
 
-- rg_xx: added Apply Panel Fix.pak to reduce (eliminate?) judder and frame pacing issues
-- tg5040: updated Pokémon mini defaults (enabled Dot Matrix LCD Filter at cost of slightly reduced screen size, Video Scale 11x down to 10x)
+- rg_xx: added Apply Panel Fix.pak to reduce frame pacing issues
+- tg5040: updated Pokémon mini defaults
+- tg5040: added Remove Loading.pak (see EXTRAS README)
 
 For pak devs:
 
-- added syncsettings.elf to enforce MinUI brightness and volume to third-party apps (see PAKS.md)
+- all: added syncsettings.elf to enforce MinUI brightness and volume to third-party apps (see PAKS.md)
 
 ---
 
@@ -25,9 +27,6 @@ BUGS
 - 
 
 next
-	tg5040
-		trimui removed the hwserial containing TG5040 from /proc/cpuinfo 
-		
 	clean out this rat nest of a todo doc
 
 	h700
