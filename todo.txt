@@ -8,6 +8,7 @@ BASE
 - rg40xxh: revised brightness ramp to match other rg_xx devices
 - rg_xx: reduced (eliminated?) judder and frame pacing issues
 - rg_xx+rgb30: reduced frequency and severity of audio underruns
+- tg5040: added support for 20240413 recovery firmware
 
 EXTRAS
 

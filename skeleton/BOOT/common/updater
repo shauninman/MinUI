@@ -22,6 +22,11 @@ case $INFO in
 	;;
 esac
 
+# fallback for tg5040 20240413 recovery firmware
+if [ -z "$PLATFORM" ] && [ -f /usr/trimui/bin/runtrimui.sh ]; then
+	PLATFORM="tg5040"
+fi
+
 /mnt/SDCARD/.tmp_update/$PLATFORM.sh # &> /mnt/SDCARD/boot.txt
 
 # force shutdown so nothing can modify the SD card
