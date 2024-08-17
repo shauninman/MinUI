@@ -2646,18 +2646,20 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	
 	// debug
 	if (show_debug) {
+		int x = 2 + renderer.src_x;
+		int y = 2 + renderer.src_y;
 		char debug_text[128];
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, renderer.scale);
-		blitBitmapText(debug_text,2,2,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*renderer.scale,renderer.src_h*renderer.scale);
-		blitBitmapText(debug_text,-2,2,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%.01f/%.01f %i%%", fps_double, cpu_double, (int)use_double);
-		blitBitmapText(debug_text,2,-2,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
-		blitBitmapText(debug_text,-2,-2,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
 	}
 	
 	if (downsample) {
