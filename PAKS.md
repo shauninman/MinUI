@@ -81,6 +81,24 @@ to
 
 	bind More Sun = NONE:L3
 
+# Brightness and Volume
+
+Some binaries insist on resetting brightness (eg. DinguxCommander on the 40xxH stock firmware) or volume (eg. ppssppSDL everywhere) on every launch. To keep this in sync with MinUI's global settings there's syncsettings.elf. It waits one second then restores MinUI's current brightness and volume settings. In most cases you can just launch it as a daemon before launching the binary:
+
+	syncsettings.elf &
+	./DinguxCommander
+
+But if a binary takes more than one second to initialize you might need to just let it run in a loop the entire time the binary is running:
+
+	while :; do
+	    syncsettings.elf
+	done &
+	LOOP_PID=$!
+	
+	./PPSSPPSDL --pause-menu-exit "$ROM_PATH"
+	
+	kill $LOOP_PID
+
 # Caveats
 
 MinUI currently only supports the RGB565 pixel format and does not implement the OpenGL libretro APIs. It may be possible to use the stock firmware's retroarch instead of MinUI's minarch to run certain cores but that is left as an exercise for the reader.

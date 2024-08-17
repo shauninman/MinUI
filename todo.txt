@@ -6,29 +6,31 @@ BASE
 - all: added Cycle Effect to Options > Shortcuts
 - all: added Save & Quit to Options > Shortcuts (thanks weakset)
 - rg40xxh: revised brightness ramp to match other rg_xx devices
-- rg_xx: reduced (eliminated?) judder and frame pacing issues
 - rg_xx+rgb30: reduced frequency and severity of audio underruns
 - tg5040: added support for 20240413 recovery firmware
 
 EXTRAS
 
-- rg_xx: added Apply Panel Fix.pak to enable 60Hz refresh rate
+- rg_xx: added Apply Panel Fix.pak to reduce (eliminate?) judder and frame pacing issues
 - tg5040: updated Pokémon mini defaults (enabled Dot Matrix LCD Filter at cost of slightly reduced screen size, Video Scale 11x down to 10x)
+
+For pak devs:
+
+- added syncsettings.elf to enforce MinUI brightness and volume to third-party apps (see PAKS.md)
 
 ---
 
 BUGS
 
--
+- 
 
 next
-	h700+tg5040+my282
-		create syncsettings.elf
-	
+	tg5040
+		trimui removed the hwserial containing TG5040 from /proc/cpuinfo 
+		
+	clean out this rat nest of a todo doc
+
 	h700
-		apply panel fix
-			package dtc in the pak not bin
-			add show.elf messages
 		implement cpu speed (or figure out why it wasn't already implemented)
 		
 
@@ -36,7 +38,7 @@ next
 		https://github.com/TheGammaSqueeze/40xx-kernel-decomp/releases
 	
 	finish implementing screen_effect
-		ugh, unsupported devices need a way to hide the Cycle Effect shortcut...
+		unsupported devices need a way to hide the Cycle Effect shortcut...
 		try
 			if dst_w != src_w * scale stretch the effect?
 		issues
