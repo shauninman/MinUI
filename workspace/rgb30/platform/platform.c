@@ -189,12 +189,15 @@ int PLAT_shouldWake(void) {
 
 ///////////////////////////////
 
-#define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
+// based on rg35xxplus
 
 static struct VID_Context {
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
+	SDL_Texture* target;
+	SDL_Texture* effect;
+
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
 	
@@ -203,16 +206,28 @@ static struct VID_Context {
 	int width;
 	int height;
 	int pitch;
+	int sharpness;
 } vid;
-
 
 static int device_width;
 static int device_height;
 static int device_pitch;
 SDL_Surface* PLAT_initVideo(void) {
+	// LOG_info("PLAT_initVideo\n");
+	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
+	// SDL_version compiled;
+	// SDL_version linked;
+	// SDL_VERSION(&compiled);
+	// SDL_GetVersion(&linked);
+	// LOG_info("Compiled SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
+	// LOG_info("Linked SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+	//
+	// int num_displays = SDL_GetNumVideoDisplays();
+	// LOG_info("SDL_GetNumVideoDisplays(): %i\n", num_displays);
+	//
 	// LOG_info("Available video drivers:\n");
 	// for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
 	// 	LOG_info("- %s\n", SDL_GetVideoDriver(i));
@@ -234,55 +249,62 @@ SDL_Surface* PLAT_initVideo(void) {
 	// }
 	// SDL_GetCurrentDisplayMode(0, &mode);
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
-	//
-	// LOG_info("Availabel audio drivers:\n");
+
+	// LOG_info("Available audio drivers:\n");
 	// for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
 	// 	LOG_info("- %s\n", SDL_GetAudioDriver(i));
 	// }
-	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver()); // NOTE: hadn't been selected yet so will always be NULL!
+
+	// SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0"); // ignored?
 
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
-	if (getInt(HDMI_STATE_PATH)) {
-		w = HDMI_WIDTH;
-		h = HDMI_HEIGHT;
-		p = HDMI_PITCH;
-	}
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
+	LOG_info("window size: %ix%i\n", w,h);
 	
+	// SDL_DisplayMode mode;
 	// SDL_GetCurrentDisplayMode(0, &mode);
 	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
-	
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
-	puts("");
+	// SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
 	
-	int renderer_width,renderer_height;
-	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
+	// int renderer_width,renderer_height;
+	// SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
 	// LOG_info("output size: %ix%i\n", renderer_width, renderer_height);
-	if (renderer_width!=w) { // I think this can only be hdmi
-		float x_scale = (float)renderer_width / w;
-		float y_scale = (float)renderer_height / h;
-		SDL_SetWindowSize(vid.window, w / x_scale, h / y_scale);
-
-		SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
-		x_scale = (float)renderer_width / w;
-		y_scale = (float)renderer_height / h;
-		SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
-		
-		// for some reason we need to clear and present 
-		// after setting the window size or we'll miss
-		// the first frame
-		SDL_RenderClear(vid.renderer);
-		SDL_RenderPresent(vid.renderer);
-	}
+	// if (renderer_width!=w) { // I think this can only be hdmi
+	// 	float x_scale = (float)renderer_width / w;
+	// 	float y_scale = (float)renderer_height / h;
+	// 	SDL_SetWindowSize(vid.window, w / x_scale, h / y_scale);
+	//
+	// 	SDL_GetRendererOutputSize(vid.renderer, &renderer_width, &renderer_height);
+	// 	LOG_info("adjusted size: %ix%i\n", renderer_width, renderer_height);
+	// 	x_scale = (float)renderer_width / w;
+	// 	y_scale = (float)renderer_height / h;
+	// 	SDL_RenderSetScale(vid.renderer, x_scale,y_scale);
+	//
+	// 	// for some reason we need to clear and present
+	// 	// after setting the window size or we'll miss
+	// 	// the first frame
+	// 	SDL_RenderClear(vid.renderer);
+	// 	SDL_RenderPresent(vid.renderer);
+	// }
 	
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(vid.renderer, &info);
 	// LOG_info("Current render driver: %s\n", info.name);
 	
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1"); // linear
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
-	SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeLinear); // we always start at device size so use linear for better upscaling over hdmi
+	vid.target	= NULL; // only needed for non-native sizes
+	
+	// TODO: doesn't work here
+	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeLinear); // we always start at device size so use linear for better upscaling over hdmi
+	
+	// SDL_ScaleMode scale_mode;
+	// SDL_GetTextureScaleMode(vid.texture, &scale_mode);
+	// LOG_info("texture scale mode: %i\n", scale_mode);
 	
 	// int format;
 	// int access_;
@@ -298,6 +320,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	device_width	= w;
 	device_height	= h;
 	device_pitch	= p;
+	
+	vid.sharpness = SHARPNESS_SOFT;
 	
 	return vid.screen;
 }
@@ -315,10 +339,12 @@ void PLAT_quitVideo(void) {
 
 	SDL_FreeSurface(vid.screen);
 	SDL_FreeSurface(vid.buffer);
+	if (vid.target) SDL_DestroyTexture(vid.target);
+	if (vid.effect) SDL_DestroyTexture(vid.effect);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
-
+	
 	// system("cat /dev/zero > /dev/fb0");
 	SDL_Quit();
 }
@@ -332,28 +358,42 @@ void PLAT_clearAll(void) {
 }
 
 void PLAT_setVsync(int vsync) {
-	
+	// buh
 }
+
+static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4
 
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
-	LOG_info("resizeVideo(%i,%i,%i)\n",w,h,p);
+	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native
+	
+	if (w>=device_width && h>=device_height) hard_scale = 1;
+	else if (h>=160) hard_scale = 2; // limits gba and up to 2x (seems sufficient)
+	else hard_scale = 4;
+
+	LOG_info("resizeVideo(%i,%i,%i) hard_scale: %i crisp: %i\n",w,h,p, hard_scale,vid.sharpness==SHARPNESS_CRISP);
 
 	SDL_FreeSurface(vid.buffer);
 	SDL_DestroyTexture(vid.texture);
-	// PLAT_clearVideo(vid.screen);
+	if (vid.target) SDL_DestroyTexture(vid.target);
 	
+	SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, vid.sharpness==SHARPNESS_SOFT?"1":"0", SDL_HINT_OVERRIDE);
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
-	SDL_SetTextureScaleMode(vid.texture, w==device_width&&h==device_height?SDL_ScaleModeLinear:SDL_ScaleModeNearest);
 	
+	if (vid.sharpness==SHARPNESS_CRISP) {
+		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1", SDL_HINT_OVERRIDE);
+		vid.target = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, w * hard_scale,h * hard_scale);
+	}
+	else {
+		vid.target = NULL;
+	}
+
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
 
 	vid.width	= w;
 	vid.height	= h;
 	vid.pitch	= p;
-	
-	// vid.blit = NULL; // TODO: don't do this here!
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
@@ -368,14 +408,95 @@ void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
 void PLAT_setSharpness(int sharpness) {
-	// buh
+	if (vid.sharpness==sharpness) return;
+	int p = vid.pitch;
+	vid.pitch = 0;
+	vid.sharpness = sharpness;
+	resizeVideo(vid.width,vid.height,p);
+}
+
+static int effect_scale = 1;
+static int effect_type = EFFECT_NONE;
+static int next_scale = 1;
+static int next_effect = EFFECT_NONE;
+static void updateEffect(void) {
+	if (next_scale==effect_scale && next_effect==effect_type) return; // unchanged
+	
+	effect_scale = next_scale;
+	effect_type = next_effect;
+	
+	if (vid.effect) SDL_DestroyTexture(vid.effect);
+	if (effect_type==EFFECT_NONE) return;
+	
+	char* effect_path;
+	int opacity = 128; // 1 - 1/2 = 50%
+	if (effect_type==EFFECT_LINE) {
+		if (effect_scale<3) {
+			effect_path = RES_PATH "/line-2.png";
+		}
+		else if (effect_scale<4) {
+			effect_path = RES_PATH "/line-3.png";
+		}
+		else if (effect_scale<5) {
+			effect_path = RES_PATH "/line-4.png";
+		}
+		else if (effect_scale<6) {
+			effect_path = RES_PATH "/line-5.png";
+		}
+		else if (effect_scale<8) {
+			effect_path = RES_PATH "/line-6.png";
+		}
+		else {
+			effect_path = RES_PATH "/line-8.png";
+		}
+	}
+	else if (effect_type==EFFECT_GRID) {
+		if (effect_scale<3) {
+			effect_path = RES_PATH "/grid-2.png";
+			opacity = 64; // 1 - 3/4 = 25%
+		}
+		else if (effect_scale<4) {
+			effect_path = RES_PATH "/grid-3.png";
+			opacity = 112; // 1 - 5/9 = ~44%
+		}
+		else if (effect_scale<5) {
+			effect_path = RES_PATH "/grid-4.png";
+			opacity = 144; // 1 - 7/16 = ~56%
+		}
+		else if (effect_scale<6) {
+			effect_path = RES_PATH "/grid-5.png";
+			opacity = 160; // 1 - 9/25 = ~64%
+		}
+		else if (effect_scale<8) {
+			effect_path = RES_PATH "/grid-6.png";
+			opacity = 112; // 1 - 5/9 = ~44%
+		}
+		else if (effect_scale<11) {
+			effect_path = RES_PATH "/grid-8.png";
+			opacity = 144; // 1 - 7/16 = ~56%
+		}
+		else {
+			effect_path = RES_PATH "/grid-11.png";
+			opacity = 136; // 1 - 57/121 = ~52%
+		}
+	}
+	LOG_info("load effect: %s (opacity: %i)\n", effect_path, opacity);
+	SDL_Surface* tmp = IMG_Load(effect_path);
+	if (tmp) {
+		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
+		SDL_SetTextureAlphaMod(vid.effect, opacity);
+		SDL_FreeSurface(tmp);
+	}
+}
+void PLAT_setEffect(int effect) {
+	next_effect = effect;
 }
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	// LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
+	next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
@@ -385,91 +506,96 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
+// TODO: should we be using true_* instead of src_* below?
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	if (!vid.blit) resizeVideo(device_width,device_height,device_pitch); // !!!???
-	
-	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-	if (vid.blit) {
-		scale1x1_c16(
-			vid.blit->src,vid.buffer->pixels,
-			vid.blit->true_w,vid.blit->true_h,vid.blit->src_p,
-			vid.buffer->w,vid.buffer->h,vid.buffer->pitch
-		);
+	if (!vid.blit) {
+		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
+		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
+		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
+		SDL_RenderPresent(vid.renderer);
+		return;
 	}
-	else {
-		SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
-	}
-	SDL_UnlockTexture(vid.texture);
 	
-	SDL_Rect* src_rect = NULL;
-	SDL_Rect* dst_rect = NULL;
-	SDL_Rect src_r = {0};
-	SDL_Rect dst_r = {0};
-	if (vid.blit) {
-		src_r.x = vid.blit->src_x;
-		src_r.y = vid.blit->src_y;
-		src_r.w = vid.blit->src_w;
-		src_r.h = vid.blit->src_h;
-		src_rect = &src_r;
-		
-		if (vid.blit->aspect==0) { // native (or cropped?)
-			int w = vid.blit->src_w * vid.blit->scale;
-			int h = vid.blit->src_h * vid.blit->scale;
-			int x = (device_width - w) / 2;
-			int y = (device_height - h) / 2;
-						
-			dst_r.x = x;
-			dst_r.y = y;
-			dst_r.w = w;
-			dst_r.h = h;
-			dst_rect = &dst_r;
-		}
-		else if (vid.blit->aspect>0) { // aspect
-			int h = device_height;
-			int w = h * vid.blit->aspect;
-			if (w>device_width) {
-				double ratio = 1 / vid.blit->aspect;
-				w = device_width;
-				h = w * ratio;
-			}
-			int x = (device_width - w) / 2;
-			int y = (device_height - h) / 2;
+	// uint32_t then = SDL_GetTicks();
+	// SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch); // 1ms
+	// ((scaler_t)vid.blit->blit)(
+	// 	vid.blit->src,vid.buffer->pixels,
+	// 	// vid.blit->src_w,vid.blit->src_h,vid.blit->src_p,
+	// 	vid.blit->true_w,vid.blit->true_h,vid.blit->src_p, // TODO: fix to be confirmed, issue may not present on this platform
+	// 	vid.buffer->w,vid.buffer->h,vid.buffer->pitch
+	// ); // 1ms
+	// SDL_UnlockTexture(vid.texture); // 9ms
+	// LOG_info("SDL_LockTexture/blit/SDL_UnlockTexture blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
+	
+	// comparable, 1-2ms faster depending on size of framebuffer
+	// uint32_t then = SDL_GetTicks();
+	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
+	// LOG_info("SDL_UpdateTexture blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
+	
+	SDL_Texture* target = vid.texture;
+	int x = vid.blit->src_x;
+	int y = vid.blit->src_y;
+	int w = vid.blit->src_w;
+	int h = vid.blit->src_h;
+	if (vid.sharpness==SHARPNESS_CRISP) {
+		SDL_SetRenderTarget(vid.renderer,vid.target);
+		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
+		SDL_SetRenderTarget(vid.renderer,NULL);
+		x *= hard_scale;
+		y *= hard_scale;
+		w *= hard_scale;
+		h *= hard_scale;
+		target = vid.target;
+	}
+	
+	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
+	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
+	if (vid.blit->aspect==0) { // native or cropped
+		LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
 
-			dst_r.x = x;
-			dst_r.y = y;
-			dst_r.w = w;
-			dst_r.h = h;
-			dst_rect = &dst_r;
-		}
+		int w = vid.blit->src_w * vid.blit->scale;
+		int h = vid.blit->src_h * vid.blit->scale;
+		int x = (device_width - w) / 2;
+		int y = (device_height - h) / 2;
+		dst_rect->x = x;
+		dst_rect->y = y;
+		dst_rect->w = w;
+		dst_rect->h = h;
 		
-		/** /
-		LOG_info("true %ix%i\nsrc   %i,%i %ix%i dst   %i,%i %ix%i\nsrc_r %i,%i %ix%i dst_r %i,%i %ix%i\n",
-			vid.blit->true_w,
-			vid.blit->true_h,
-		
-			vid.blit->src_x,
-			vid.blit->src_y,
-			vid.blit->src_w,
-			vid.blit->src_h,
-		
-			vid.blit->dst_x,
-			vid.blit->dst_y,
-			vid.blit->dst_w,
-			vid.blit->dst_h,
-		
-			src_r.x,
-			src_r.y,
-			src_r.w,
-			src_r.h,
-		
-			dst_r.x,
-			dst_r.y,
-			dst_r.w,
-			dst_r.h
-		);/**/
+		LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
 	}
-	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
+	else if (vid.blit->aspect>0) { // aspect
+		int h = device_height;
+		int w = h * vid.blit->aspect;
+		if (w>device_width) {
+			double ratio = 1 / vid.blit->aspect;
+			w = device_width;
+			h = w * ratio;
+		}
+		int x = (device_width - w) / 2;
+		int y = (device_height - h) / 2;
+		// dst_rect = &(SDL_Rect){x,y,w,h};
+		dst_rect->x = x;
+		dst_rect->y = y;
+		dst_rect->w = w;
+		dst_rect->h = h;
+	}
+	
+	SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+	
+	updateEffect();
+	if (vid.effect) {
+		int ox,oy;
+		ox = effect_scale - (dst_rect->x % effect_scale);
+		oy = effect_scale - (dst_rect->y % effect_scale);
+		if (ox==effect_scale) ox = 0;
+		if (oy==effect_scale) oy = 0;
+		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){ox,oy,device_width,device_height});
+	}
+	
+	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
+	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
 	vid.blit = NULL;
 }
 

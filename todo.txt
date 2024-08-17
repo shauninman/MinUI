@@ -2,27 +2,68 @@ Changes
 
 BASE
 
-- all: map.txt now supports marking an entry as hidden (see README.txt)
-- all: fixed crasher when binding MENU+button in Options > Controls
-- my282: revised brightness ramp again
-- my282: reverted Powersave to single core
-- rg_xx: fixed Genesis/MegaDrive on ofw 1.1.5
+- all: added Line and Grid Screen Effects to Options > Frontend (not available on m17, gkdpixel, and trimuismart, too low res)
+- all: added Cycle Effect to Options > Shortcuts
+- all: added Save & Quit to Options > Shortcuts (thanks weakset)
+- rg40xxh: revised brightness ramp to match other rg_xx devices
+- rg_xx: reduced (eliminated?) judder and frame pacing issues
+- rg_xx+rgb30: reduced frequency and severity of audio underruns
 
 EXTRAS
 
-- my282: updated Bootlogo.pak for Miyoo firmware 0713
-- my282: updated Bootlogo.pak with checks to prevent bricking
-- rgb30: updated native pico8 paks with controller binding checks (thanks Ry!)
-- rg_xx: updated Enable SSH.pak to properly disable itself after use
+- rg_xx: added Apply Panel Fix.pak to enable 60Hz refresh rate
+- tg5040: updated Pokémon mini defaults (enabled Dot Matrix LCD Filter at cost of slightly reduced screen size, Video Scale 11x down to 10x)
 
 ---
 
-bugs
+BUGS
 
-- trying to bind an input to MENU+button crashes minarch (only really affects devices without L2/R2, eg. Trimui Smart)
+-
 
 next
+	h700+tg5040+my282
+		create syncsettings.elf
 	
+	h700
+		apply panel fix
+			package dtc in the pak not bin
+			add show.elf messages
+		implement cpu speed (or figure out why it wasn't already implemented)
+		
+
+	modded kernels for 40xxH and 35xxH
+		https://github.com/TheGammaSqueeze/40xx-kernel-decomp/releases
+	
+	finish implementing screen_effect
+		ugh, unsupported devices need a way to hide the Cycle Effect shortcut...
+		try
+			if dst_w != src_w * scale stretch the effect?
+		issues
+			weird screen rotation/black screens when cycling through effects on 282
+			random crashes/black screens when cycling through effects on tg5040
+		implement
+			copy my282 implementation to other sdl2 platforms
+				triple check on devices with rotated screens
+				+ rg35xxplus
+				+ rgb30
+				+ tg5040
+				+ v10
+				x m17 (too low res)
+			copy rg35xx implementation to other sdl1.2 platforms
+				does cycling effects still not work correctly?
+				+ miyoomini
+				+ rg35xx
+				x gkdpixel (too low res)
+				x trimuismart (too low res)
+			or move updateEffect() to GFX?
+		aspect/fullscreen scales are broken because of overscaling
+			maybe disable on non-native scales?
+			did legacy MinUI hide the option on non-native scales?
+				it didn't hide but it's just not available
+				maybe for initial release?
+				
+				
+	my282: add an updater script that automatically detects old versions of Bootlogo and Remove Loading paks and deletes them?
 
 	patch all versions of pcsx and picodrive
 		https://github.com/shauninman/MinUI/pull/14/files#diff-d76fedd6d41fe8dd9c6a7b6066bdb39e783e6c21af2fde85415dc83d88f984df
@@ -40,18 +81,20 @@ next
 		Thread Core
 			needs changes to support systems that change resolution (eg. PS)
 			doesn't seem to have any affect on a30 (mostly because the problems are hi res games and the copy from cpu to gpu)
+			disable and remove this feature entirely?
 
 		revisit bub181's core # vs freq ideas for other devices
 		
 		look into RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER for zero copy framebuffer
 			not sure it's really a zero copy because LockTexture has to copy the texture from the gpu to the cpu...
-		
-			GB: SDL_UnlockTexture blocked for 3ms (160,144) (TLOZ:LA)
-			PS: SDL_UnlockTexture blocked for 5ms (368,480) (TEKKEN3)
-			PS: SDL_UnlockTexture blocked for 8ms (512,480) (BR2)
-			PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
-			try using SDL_UpdateTexture instead of Lock/Unlock
-				might be saving 1-2ms
+			
+			times on a30's SDL
+				GB: SDL_UnlockTexture blocked for 3ms (160,144) (TLOZ:LA)
+				PS: SDL_UnlockTexture blocked for 5ms (368,480) (TEKKEN3)
+				PS: SDL_UnlockTexture blocked for 8ms (512,480) (BR2)
+				PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
+				try using SDL_UpdateTexture instead of Lock/Unlock
+					might be saving 1-2ms
 		
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 
@@ -64,7 +107,6 @@ next
 			quit doesn't work as expected on trimuismart
 			possibly because of absense of shutdown?
 	h700
-		can taskset be used to mitigate the audio issues
 		hijack boot earlier?
 			hangs boot
 			reflashing a fresh stock image takes too long to happily trial and error this
@@ -80,7 +122,7 @@ next
 			refried beans uses SDL2
 			no underruns in fceumm without threaded video...even with the sdl2 instead of default gl driver...
 			i tried copying muos libsdl2 to minui but I think I grabbed the 64bit version, is there a 32 bit version?
-				yes but it's built with a new version of glibc than stock
+				yes but it's built with a newer version of glibc than stock
 				so I'm back to having to build my own rootfs
 				or building sdl2 from muos with my toolchain
 		stock uses sdl2 fbdev_mali+alsa for retroarch
@@ -96,6 +138,33 @@ next
 		diff older version of stock that doesn't underrun so bad
 			compare with rg35xxplus (I don't remember having audio issues there)
 		the problem is the panel is being driven at 59fps
+			nope, fixed that with boot_package dtb patch and it still underruns
+				wtf
+			two things mitigate the effect of the problem
+				change SAMPLES to 400
+					makes underruns much less frequent and much smaller
+					because fceumm fills the buffer ~799 samples at a time
+					works
+					also bumped buffer to 8 seconds then reverted to original 5 seconds
+						see if improved underruns persists without or if that a component of the fix 
+				instead of zero filling on underrun fill with last frame values
+					makes the more regular 1-2 sample underruns almost unnoticeable
+			
+			is the batching logic responsible for lag somehow?
+				there's an SDL_Delay and a loop
+				but doubling BATCH_SIZE and switching to usleep(500)
+					didn't seem to help
+					SDL_Delay(1) actually delays for 1ms on this chip
+			tried renicing to -20, no help
+			played with taskset to no help
+			gba AoS judder persists even if audio is silenced
+			GFX_Flip blocks on tg5040 too, so many red herrings
+			I disabled audio entirely (didn't even initialize it) and the judder persisted
+			there's something rotten inside SDL_RenderPresent()
+				retry compiling sdl2
+					figure out where SDL2-2.30.4 with mali came from (knulli? rocknix?)
+					no good, this one works https://github.com/JohnnyonFlame/SDL-malifbdev-rot
+						solves judder
 		
 		rebuild using opengl?
 			based on steward-fu's work
@@ -103,10 +172,17 @@ next
 				https://steward-fu.github.io/website/handheld/rg28xx_cpp_es_texture.htm
 			
 			# add stock libs and includes to toolchain
+			# what was sysroot.tar.gz created from? just /usr on the device? probably
+			
+				tar -czf sysroot.tar.gz /usr/include /usr/lib /usr/lib32
+				
+			# will convert to xz in docker
+				
 			mv sysroot.tar.gz /opt
 			cd /opt
 			mkdir h700
 			tar -xvzf sysroot.tar.gz -C h700
+			rm sysroot.tar.gz
 			rsync -a --ignore-existing /opt/h700/ /opt/rg35xxplus-toolchain/usr/arm-buildroot-linux-gnueabihf/sysroot/
 
 			# build flags
@@ -115,15 +191,12 @@ next
 		tried building sdl2 myself it crashed and burned spectacularly
 		tried using taskset to bump priority but it already appears maxed
 		
+		
 
 	/tmp/noui
 		show poweroff on quit in minarch if present
 		tricky because of thread core option...
 
-	document map.txt
-		allow hiding files with map, eg. neogeo.bios .neogeo.bios
-			remove . files after sort?
-	
 	pretty sure nothing uses the various platform.h BUTTON_* macros (because SDLK_* mappings are so spotty on these devices)
 		pretty sure they all use CODE_* or JOY_* now
 

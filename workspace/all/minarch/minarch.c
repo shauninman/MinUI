@@ -52,6 +52,7 @@ enum {
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
 static int screen_sharpness = SHARPNESS_SOFT;
+static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
@@ -625,6 +626,12 @@ static char* scaling_labels[] = {
 #endif
 	NULL
 };
+static char* effect_labels[] = {
+	"None",
+	"Line",
+	"Grid",
+	NULL
+};
 static char* sharpness_labels[] = {
 	"Sharp",
 	"Crisp",
@@ -653,6 +660,7 @@ static char* max_ff_labels[] = {
 
 enum {
 	FE_OPT_SCALING,
+	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_OVERCLOCK,
@@ -668,6 +676,7 @@ enum {
 	SHORTCUT_RESET_GAME,
 	SHORTCUT_SAVE_QUIT,
 	SHORTCUT_CYCLE_SCALE,
+	SHORTCUT_CYCLE_EFFECT,
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
 	SHORTCUT_COUNT,
@@ -836,6 +845,16 @@ static struct Config {
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
+			[FE_OPT_EFFECT] = {
+				.key	= "minarch_screen_effect",
+				.name	= "Screen Effect",
+				.desc	= "Grid simulates an LCD grid.\nLine simulates CRT scanlines.\nEffects usually look best at native scaling.",
+				.default_value = 0,
+				.value = 0,
+				.count = 3,
+				.values = effect_labels,
+				.labels = effect_labels,
+			},
 			[FE_OPT_SHARPNESS] = {
 				.key	= "minarch_screen_sharpness",
 				.name	= "Screen Sharpness",
@@ -912,6 +931,7 @@ static struct Config {
 		[SHORTCUT_RESET_GAME]			= {"Reset Game",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_SAVE_QUIT]			= {"Save & Quit",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_CYCLE_SCALE]			= {"Cycle Scaling",		-1, BTN_ID_NONE, 0},
+		[SHORTCUT_CYCLE_EFFECT]			= {"Cycle Effect",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_TOGGLE_FF]			= {"Toggle FF",			-1, BTN_ID_NONE, 0},
 		[SHORTCUT_HOLD_FF]				= {"Hold FF",			-1, BTN_ID_NONE, 0},
 		{NULL}
@@ -957,7 +977,13 @@ static void Config_syncFrontend(char* key, int value) {
 		renderer.dst_p = 0;
 		i = FE_OPT_SCALING;
 	}
-	if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
+	else if (exactMatch(key,config.frontend.options[FE_OPT_EFFECT].key)) {
+		screen_effect = value;
+		GFX_setEffect(value);
+		renderer.dst_p = 0;
+		i = FE_OPT_EFFECT;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
 		screen_sharpness = value;
 		GFX_setSharpness(value);
 		renderer.dst_p = 0;
@@ -1609,6 +1635,11 @@ static void input_poll_callback(void) {
 						screen_scaling += 1;
 						if (screen_scaling>=SCALE_COUNT) screen_scaling -= SCALE_COUNT;
 						Config_syncFrontend(config.frontend.options[FE_OPT_SCALING].key, screen_scaling);
+						break;
+					case SHORTCUT_CYCLE_EFFECT:
+						screen_effect += 1;
+						if (screen_effect>=EFFECT_COUNT) screen_effect -= EFFECT_COUNT;
+						Config_syncFrontend(config.frontend.options[FE_OPT_EFFECT].key, screen_effect);
 						break;
 					default: break;
 				}
@@ -2671,6 +2702,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
+	
 	GFX_blitRenderer(&renderer);
 	
 	if (!thread_video) GFX_flip(screen);
@@ -4063,6 +4095,7 @@ static void Menu_loop(void) {
 	if (!HAS_POWER_BUTTON) PWR_enableSleep();
 	PWR_setCPUSpeed(CPU_SPEED_MENU); // set Hz directly
 	GFX_setVsync(VSYNC_STRICT);
+	GFX_setEffect(EFFECT_NONE);
 	
 	int rumble_strength = VIB_getStrength();
 	VIB_setStrength(0);
@@ -4367,6 +4400,7 @@ static void Menu_loop(void) {
 		if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
+		GFX_setEffect(screen_effect);
 		GFX_clear(screen);
 		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
 		
@@ -4614,6 +4648,7 @@ int main(int argc , char* argv[]) {
 				GFX_flip(screen);
 			}
 		}
+		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);
 	}
 	
 	Menu_quit();

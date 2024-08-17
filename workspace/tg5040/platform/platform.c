@@ -36,6 +36,7 @@ static struct VID_Context {
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
+	SDL_Texture* effect;
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
 	
@@ -167,11 +168,89 @@ void PLAT_setNearestNeighbor(int enabled) {
 void PLAT_setSharpness(int sharpness) {
 	// buh
 }
+static int effect_scale = 1;
+static int effect_type = EFFECT_NONE;
+static int next_scale = 1;
+static int next_effect = EFFECT_NONE;
+static void updateEffect(void) {
+	if (next_scale==effect_scale && next_effect==effect_type) return; // unchanged
+	
+	effect_scale = next_scale;
+	effect_type = next_effect;
+	
+	if (vid.effect) SDL_DestroyTexture(vid.effect);
+	if (effect_type==EFFECT_NONE) return;
+	
+	char* effect_path;
+	int opacity = 128; // 1 - 1/2 = 50%
+	if (effect_type==EFFECT_LINE) {
+		if (effect_scale<3) {
+			effect_path = RES_PATH "/line-2.png";
+		}
+		else if (effect_scale<4) {
+			effect_path = RES_PATH "/line-3.png";
+		}
+		else if (effect_scale<5) {
+			effect_path = RES_PATH "/line-4.png";
+		}
+		else if (effect_scale<6) {
+			effect_path = RES_PATH "/line-5.png";
+		}
+		else if (effect_scale<8) {
+			effect_path = RES_PATH "/line-6.png";
+		}
+		else {
+			effect_path = RES_PATH "/line-8.png";
+		}
+	}
+	else if (effect_type==EFFECT_GRID) {
+		if (effect_scale<3) {
+			effect_path = RES_PATH "/grid-2.png";
+			opacity = 64; // 1 - 3/4 = 25%
+		}
+		else if (effect_scale<4) {
+			effect_path = RES_PATH "/grid-3.png";
+			opacity = 112; // 1 - 5/9 = ~44%
+		}
+		else if (effect_scale<5) {
+			effect_path = RES_PATH "/grid-4.png";
+			opacity = 144; // 1 - 7/16 = ~56%
+		}
+		else if (effect_scale<6) {
+			effect_path = RES_PATH "/grid-5.png";
+			opacity = 160; // 1 - 9/25 = ~64%
+		}
+		else if (effect_scale<8) {
+			effect_path = RES_PATH "/grid-6.png";
+			opacity = 112; // 1 - 5/9 = ~44%
+		}
+		else if (effect_scale<11) {
+			effect_path = RES_PATH "/grid-8.png";
+			opacity = 144; // 1 - 7/16 = ~56%
+		}
+		else {
+			effect_path = RES_PATH "/grid-11.png";
+			opacity = 136; // 1 - 57/121 = ~52%
+		}
+	}
+	LOG_info("load effect: %s (opacity: %i)\n", effect_path, opacity);
+	SDL_Surface* tmp = IMG_Load(effect_path);
+	if (tmp) {
+		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
+		SDL_SetTextureAlphaMod(vid.effect, opacity);
+		SDL_FreeSurface(tmp);
+	}
+}
+void PLAT_setEffect(int effect) {
+	next_effect = effect;
+}
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
+	LOG_info("getScaler for scale: %i\n", renderer->scale);
+	next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
@@ -236,6 +315,12 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		}
 	}
 	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
+	
+	updateEffect();
+	if (vid.blit && vid.effect) {
+		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect_scale,dst_rect->y%effect_scale,FIXED_WIDTH,FIXED_HEIGHT});
+	}
+
 	SDL_RenderPresent(vid.renderer);
 	vid.blit = NULL;
 }

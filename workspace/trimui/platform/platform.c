@@ -100,6 +100,9 @@ void PLAT_setNearestNeighbor(int enabled) {
 void PLAT_setSharpness(int sharpness) {
 	// buh
 }
+void PLAT_setEffect(int effect) {
+	// buh
+}
 void PLAT_vsync(int remaining) {
 	// ioctl(vid.fb_fd, FBIO_WAITFORVSYNC, &_);
 	if (remaining>0) SDL_Delay(remaining);

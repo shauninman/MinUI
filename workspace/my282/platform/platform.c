@@ -166,6 +166,8 @@ static struct VID_Context {
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
 	SDL_Texture* target;
+	SDL_Texture* effect;
+
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
 	
@@ -176,7 +178,6 @@ static struct VID_Context {
 	int pitch;
 	int sharpness;
 } vid;
-
 
 static int device_width;
 static int device_height;
@@ -311,10 +312,11 @@ void PLAT_quitVideo(void) {
 	SDL_FreeSurface(vid.screen);
 	SDL_FreeSurface(vid.buffer);
 	if (vid.target) SDL_DestroyTexture(vid.target);
+	if (vid.effect) SDL_DestroyTexture(vid.effect);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
-
+	
 	// system("cat /dev/zero > /dev/fb0");
 	SDL_Quit();
 }
@@ -384,11 +386,89 @@ void PLAT_setSharpness(int sharpness) {
 	vid.sharpness = sharpness;
 	resizeVideo(vid.width,vid.height,p);
 }
+
+static int effect_scale = 1;
+static int effect_type = EFFECT_NONE;
+static int next_scale = 1;
+static int next_effect = EFFECT_NONE;
+static void updateEffect(void) {
+	if (next_scale==effect_scale && next_effect==effect_type) return; // unchanged
+	
+	effect_scale = next_scale;
+	effect_type = next_effect;
+	
+	if (vid.effect) SDL_DestroyTexture(vid.effect);
+	if (effect_type==EFFECT_NONE) return;
+	
+	char* effect_path;
+	int opacity = 128; // 1 - 1/2 = 50%
+	if (effect_type==EFFECT_LINE) {
+		if (effect_scale<3) {
+			effect_path = RES_PATH "/line-2.png";
+		}
+		else if (effect_scale<4) {
+			effect_path = RES_PATH "/line-3.png";
+		}
+		else if (effect_scale<5) {
+			effect_path = RES_PATH "/line-4.png";
+		}
+		else if (effect_scale<6) {
+			effect_path = RES_PATH "/line-5.png";
+		}
+		else if (effect_scale<8) {
+			effect_path = RES_PATH "/line-6.png";
+		}
+		else {
+			effect_path = RES_PATH "/line-8.png";
+		}
+	}
+	else if (effect_type==EFFECT_GRID) {
+		if (effect_scale<3) {
+			effect_path = RES_PATH "/grid-2.png";
+			opacity = 64; // 1 - 3/4 = 25%
+		}
+		else if (effect_scale<4) {
+			effect_path = RES_PATH "/grid-3.png";
+			opacity = 112; // 1 - 5/9 = ~44%
+		}
+		else if (effect_scale<5) {
+			effect_path = RES_PATH "/grid-4.png";
+			opacity = 144; // 1 - 7/16 = ~56%
+		}
+		else if (effect_scale<6) {
+			effect_path = RES_PATH "/grid-5.png";
+			opacity = 160; // 1 - 9/25 = ~64%
+		}
+		else if (effect_scale<8) {
+			effect_path = RES_PATH "/grid-6.png";
+			opacity = 112; // 1 - 5/9 = ~44%
+		}
+		else if (effect_scale<11) {
+			effect_path = RES_PATH "/grid-8.png";
+			opacity = 144; // 1 - 7/16 = ~56%
+		}
+		else {
+			effect_path = RES_PATH "/grid-11.png";
+			opacity = 136; // 1 - 57/121 = ~52%
+		}
+	}
+	LOG_info("load effect: %s (opacity: %i)\n", effect_path, opacity);
+	SDL_Surface* tmp = IMG_Load(effect_path);
+	if (tmp) {
+		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
+		SDL_SetTextureAlphaMod(vid.effect, opacity);
+		SDL_FreeSurface(tmp);
+	}
+}
+void PLAT_setEffect(int effect) {
+	next_effect = effect;
+}
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
+	next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
@@ -475,6 +555,17 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	ox = -oy;
 	if (rotate) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
 	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+	
+	updateEffect();
+	if (vid.effect) {
+		ox = effect_scale - (dst_rect->x % effect_scale);
+		oy = effect_scale - (dst_rect->y % effect_scale);
+		if (ox==effect_scale) ox = 0;
+		if (oy==effect_scale) oy = 0;
+		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){ox,oy,device_width,device_height});
+	}
+	
 	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
 	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);

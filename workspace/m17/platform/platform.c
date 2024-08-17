@@ -341,6 +341,10 @@ void PLAT_setSharpness(int sharpness) {
 	vid.sharpness = sharpness;
 	resizeVideo(vid.width,vid.height,p);
 }
+void PLAT_setEffect(int effect) {
+	// buh
+}
+
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
