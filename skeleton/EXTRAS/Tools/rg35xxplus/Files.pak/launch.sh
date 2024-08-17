@@ -9,6 +9,7 @@ if [ ! -d "$DIR" ]; then
 else
 	cd "$DIR"
 	HOME="$SDCARD_PATH"
+	syncsettings.elf &
 	./dinguxCommand_en.dge
 fi
 
