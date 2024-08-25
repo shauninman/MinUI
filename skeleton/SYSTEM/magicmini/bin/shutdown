@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ -n "$DATETIME_PATH" ]; then
+	echo `date +'%F %T'` > "$DATETIME_PATH"
+	sync
+fi
+
+cat /dev/zero > /dev/fb0
+shutdown now

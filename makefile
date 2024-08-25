@@ -4,7 +4,7 @@
 # it has to, otherwise we'd be running a docker in a docker and oof
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = miyoomini trimuismart rg35xx rg35xxplus tg5040 rgb30 m17 gkdpixel my282
+PLATFORMS = miyoomini trimuismart rg35xx rg35xxplus tg5040 rgb30 m17 gkdpixel my282 magicmini
 endif
 
 ###########################################################
@@ -199,6 +199,11 @@ gkdpixel:
 	# ----------------------------------------------------
 
 my282:
+	# ----------------------------------------------------
+	make common PLATFORM=$@
+	# ----------------------------------------------------
+
+magicmini:
 	# ----------------------------------------------------
 	make common PLATFORM=$@
 	# ----------------------------------------------------

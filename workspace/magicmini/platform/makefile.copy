@@ -1,0 +1,5 @@
+$(PLATFORM):
+	# $@
+	cp ./workspace/$@/other/351files/351Files ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/351files/res ./build/EXTRAS/Tools/$@/Files.pak/
+	

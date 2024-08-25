@@ -2,23 +2,15 @@ Changes
 
 BASE
 
-- all: added Line and Grid Screen Effects to Options > Frontend (not available on m17, gkdpixel, and trimuismart, too low res)
-- all: added Cycle Effect to Options > Shortcuts
-- all: added Save & Quit to Options > Shortcuts (thanks weakset)
-- rg40xxh: revised brightness ramp to match other rg_xx devices
-- rg_xx: updated SDL2 to reduce frame pacing issues
-- rg_xx+rgb30: reduced frequency and severity of audio underruns
-- tg5040: added support for 20240413 recovery firmware
+- magicmini: added initial support
 
 EXTRAS
 
-- rg_xx: added Apply Panel Fix.pak to reduce frame pacing issues
-- tg5040: updated Pokémon mini defaults
-- tg5040: added Remove Loading.pak (see EXTRAS README)
+- magicmini: added initial support
 
-For pak devs:
+NOTES
 
-- all: added syncsettings.elf to enforce MinUI brightness and volume to third-party apps (see PAKS.md)
+- magicmini: no performance tuning has been done yet
 
 ---
 
@@ -26,47 +18,43 @@ BUGS
 
 - 
 
+---
+
 next
 	clean out this rat nest of a todo doc
-
+	figureout Clock.pak timezone issue
+	
+	magicmini
+		get changes from SD card
+		
+		check SYSTEM.squashfs headphone-sense.sh for HP detection
+			not necessary except for separate volumes
+		add cpu boosts
+		reduce min brightness
+			might require kernel hacking
+		analog tuning
+			requires KERNEL patch
+		audio is choppy in places
+			even after 400 sample fix
+		
 	h700
 		implement cpu speed (or figure out why it wasn't already implemented)
+		Apply Panel Fix.pak hanging for some
 		
-
-	modded kernels for 40xxH and 35xxH
-		https://github.com/TheGammaSqueeze/40xx-kernel-decomp/releases
-	
-	finish implementing screen_effect
-		unsupported devices need a way to hide the Cycle Effect shortcut...
-		try
-			if dst_w != src_w * scale stretch the effect?
+	v10 over arkos
+		don't release until it boots from squashfs rootfs from a single FAT32 partition
+		commit toolchain
+		boot
+			replace /usr/bin/emulationstation.sh
+			replace /etc/fstab
+			replace /boot/logo.bmp
+			replace /boot/boot.ini
 		issues
-			weird screen rotation/black screens when cycling through effects on 282
-			random crashes/black screens when cycling through effects on tg5040
-		implement
-			copy my282 implementation to other sdl2 platforms
-				triple check on devices with rotated screens
-				+ rg35xxplus
-				+ rgb30
-				+ tg5040
-				+ v10
-				x m17 (too low res)
-			copy rg35xx implementation to other sdl1.2 platforms
-				does cycling effects still not work correctly?
-				+ miyoomini
-				+ rg35xx
-				x gkdpixel (too low res)
-				x trimuismart (too low res)
-			or move updateEffect() to GFX?
-		aspect/fullscreen scales are broken because of overscaling
-			maybe disable on non-native scales?
-			did legacy MinUI hide the option on non-native scales?
-				it didn't hide but it's just not available
-				maybe for initial release?
 				
-				
-	my282: add an updater script that automatically detects old versions of Bootlogo and Remove Loading paks and deletes them?
-
+	my282
+		ldd isn't working but this is
+			LD_TRACE_LOADED_OBJECTS=1 /lib/ld-2.23.so /mnt/SDCARD/.system/my282/bin/minarch.elf
+	
 	patch all versions of pcsx and picodrive
 		https://github.com/shauninman/MinUI/pull/14/files#diff-d76fedd6d41fe8dd9c6a7b6066bdb39e783e6c21af2fde85415dc83d88f984df
 		related https://discord.com/channels/741895796315914271/1232969624417730630/1263579750409179271
@@ -426,26 +414,6 @@ rg35xx
 		trimui smart has a similar issue now
 			the bootstrap folder updates /etc/main
 
-trimui
-	overclock
-		crashy
-	scaling
-	overlay
-	create core patches
-	
-	cores
-		picodrive
-			doesn't recover from quicksave reliably...
-		snes9x2005_plus 
-			no sound
-		snes9x2005
-			only running at ~45fps
-			frameskip of 1 is probably necessary but 2005 doesn't have that option
-			will need to patch
-		gpsp
-			ffiv requires manual frameskip of 1 to not chug on mode7-like bits
-
-	
 rg35xx/install and miyoomini/install have png/bmp versions of the same files
 	as do miyoomini/dat/ and rg35xx/ramdisk/
 

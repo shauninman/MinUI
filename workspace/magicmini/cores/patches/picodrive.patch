@@ -1,0 +1,22 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index a57a24c73b12bfe25a526c1fbc223b054b3a02fc..1a8a9054bd2577b481168824cf6cde935b3f2394 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -492,6 +492,17 @@ else ifeq ($(platform), miyoo)
+ 	HAVE_ARMv6 = 0
+ 	LOW_MEMORY = 1
+ 
++# RGB30
++else ifeq ($(platform), magicmini)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC = $(CROSS_COMPILE)gcc
++	AR = $(CROSS_COMPILE)ar
++	SHARED := -shared -nostdlib
++	fpic := -fPIC
++	LIBM :=
++	CFLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a -D__GCW0__
++	CFLAGS += -DFAMEC_NO_GOTOS
++
+ # Windows MSVC 2017 all architectures
+ else ifneq (,$(findstring windows_msvc2017,$(platform)))
+ 	NO_GCC := 1

@@ -1,0 +1,23 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index 07d5368a8e78a020813732239ec369d83e931ede..a1f7fefd144c9d0ead913fad350e660c73348991 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -288,6 +288,18 @@ else ifeq ($(platform), miyoo)
+ 	FLAGS += -fomit-frame-pointer -ffast-math -march=armv5te -mtune=arm926ej-s
+ 	FLAGS += -DFAST_ALIGNED_LSB_WORD_ACCESS -fno-unroll-loops
+ 
++# RGB30
++else ifeq ($(platform), magicmini)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC  = $(CROSS_COMPILE)gcc
++   	CXX = $(CROSS_COMPILE)g++
++   	AR  = $(CROSS_COMPILE)ar
++	fpic := -fPIC -nostdlib
++	SHARED := -shared -Wl,--version-script=link.T
++	LIBM :=
++	FLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a 
++	FLAGS += -DFAST_ALIGNED_LSB_WORD_ACCESS -fno-unroll-loops
++
+ # (armv7 a7, hard point, neon based) ### 
+ # NESC, SNESC, C64 mini 
+ else ifeq ($(platform), classic_armv7_a7)

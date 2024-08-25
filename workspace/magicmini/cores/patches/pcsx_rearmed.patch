@@ -1,0 +1,26 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index 831964f57dfd82c691e4a6707fbf8dea9a8989dc..32c2f38f419b7a3df5508304299d3b2ba544adf0 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -535,6 +535,21 @@ else ifeq ($(platform), miyoo)
+ 	DYNAREC = ari64
+ 	HAVE_NEON = 0
+ 
++# RGB30
++else ifeq ($(platform), magicmini)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   CFLAGS += -mtune=cortex-a55 -march=armv8-a+crc+simd
++   CFLAGS += -fomit-frame-pointer -ffast-math -fdata-sections -ffunction-sections -fsingle-precision-constant -flto -fPIC -ftree-vectorize
++   LDFLAGS += -flto -fPIC
++   OPTIMIZE += -Ofast -DNDEBUG=1
++   HAVE_NEON = 1
++   BUILTIN_GPU = neon
++   ARCH = arm64
++   DYNAREC = ari64
++
+ # Emscripten
+ else ifeq ($(platform), emscripten)
+    TARGET  := $(TARGET_NAME)_libretro_$(platform).bc

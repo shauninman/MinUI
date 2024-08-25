@@ -1,0 +1,18 @@
+640x480 bmp, rotated 90 degrees
+
+File format: Windows
+Flip row order: [x]
+
+Advanced Modes
+32 bit
+(•) X8 R8 G8 B8
+
+show with 
+
+	dd if=image.bmp of=/dev/fb0 bs=71 skip=1
+
+70 is the bitmap header (as saved by Photoshop)
++1 to address white (xxFFFFFF) shifting to teal (00FFFFxx)
+
+installing and updating bmp will be copied to SYSTEM.squashfs/usr/config/minui/
+boot.sh will become SYSTEM.squashfs/usr/bin/autostart.sh

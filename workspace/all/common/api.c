@@ -1163,6 +1163,7 @@ void PAD_setAnalog(int neg_id,int pos_id,int value,int repeat_at) {
 }
 
 void PAD_reset(void) {
+	// LOG_info("PAD_reset");
 	pad.just_pressed = BTN_NONE;
 	pad.is_pressed = BTN_NONE;
 	pad.just_released = BTN_NONE;

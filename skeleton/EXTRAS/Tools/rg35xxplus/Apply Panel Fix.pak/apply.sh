@@ -87,6 +87,10 @@ case $CF-$HT-$VT in
 	HT_OFFSET=-2 # 768
 	VT_OFFSET=-4 # 521
 	;;
+24-770-520) # Ry's 35xxSP
+	HT_OFFSET=-2 # 768
+	VT_OFFSET= 1 # 521
+	;;
 24-770-522) # 40xxH
 	HT_OFFSET=-2 # 768
 	VT_OFFSET=-1 # 521

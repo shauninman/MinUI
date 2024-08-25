@@ -1410,7 +1410,7 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 			item->value = Option_getValueIndex(item, def->default_value);
 			item->default_value = item->value;
 			
-			LOG_info("\tINIT %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
+			// LOG_info("\tINIT %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 		}
 	}
 	// fflush(stdout);
@@ -1511,7 +1511,7 @@ static Option* OptionList_getOption(OptionList* list, const char* key) {
 }
 static char* OptionList_getOptionValue(OptionList* list, const char* key) {
 	Option* item = OptionList_getOption(list, key);
-	if (item) LOG_info("\tGET %s (%s) = %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
+	// if (item) LOG_info("\tGET %s (%s) = %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 	
 	if (item) return item->values[item->value];
 	else LOG_warn("unknown option %s \n", key);
@@ -1522,7 +1522,7 @@ static void OptionList_setOptionRawValue(OptionList* list, const char* key, int 
 	if (item) {
 		item->value = value;
 		list->changed = 1;
-		LOG_info("\tRAW SET %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
+		// LOG_info("\tRAW SET %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 		// if (list->on_set) list->on_set(list, key);
 	}
 	else LOG_info("unknown option %s \n", key);

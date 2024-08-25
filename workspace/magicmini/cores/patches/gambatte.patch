@@ -1,0 +1,23 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index ffaba21e7a88f90786d818ab550b68acd05738bf..87309c332f50bb39abba853322f7637d3dc2192d 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -393,6 +393,18 @@ else ifeq ($(platform), retrofw)
+    CFLAGS += -fomit-frame-pointer -ffast-math -march=mips32 -mtune=mips32 -mhard-float
+    CXXFLAGS += $(CFLAGS)
+ 
++# RGB30
++else ifeq ($(platform), magicmini)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   fpic := -fPIC
++   SHARED := -shared -Wl,-version-script=$(version_script)
++   PLATFORM_DEFINES := -DDINGUX
++   CFLAGS += -fomit-frame-pointer -ffast-math -mtune=cortex-a55 -march=armv8.2-a 
++   CXXFLAGS += $(CFLAGS)
++
+ # MIYOO
+ else ifeq ($(platform), miyoo)
+    TARGET := $(TARGET_NAME)_libretro.so
