@@ -604,9 +604,11 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		// if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,NULL,SDL_FLIP_NONE);
 		// else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){0,0,device_width,device_height});
 	}
+	
 	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
 	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
+	
 	vid.blit = NULL;
 }
 
@@ -665,7 +667,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 }
 
 #define LED_PATH "/sys/class/leds/led1/brightness"
-#define BACKLIGHT_PATH "/sys/devices/platform/backlight/backlight/backlight/bl_power"
+#define BACKLIGHT_PATH "/sys/class/backlight/backlight/bl_power"
 
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
@@ -695,19 +697,27 @@ void PLAT_powerOff(void) {
 
 ///////////////////////////////
 
+#define CPU_PATH "/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed"
+#define GPU_PATH "/sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/governor"
+#define DMC_PATH "/sys/devices/platform/dmc/devfreq/dmc/governor"
 void PLAT_setCPUSpeed(int speed) {
-	// int freq = 0;
-	// int cpu  = 1;
-	// switch (speed) {
-	// 	case CPU_SPEED_MENU: 		freq =  576; cpu = 1; break;
-	// 	case CPU_SPEED_POWERSAVE:	freq = 1056; cpu = 1; break;
-	// 	case CPU_SPEED_NORMAL: 		freq = 1344; cpu = 2; break;
-	// 	case CPU_SPEED_PERFORMANCE: freq = 1512; cpu = 2; break;
-	// }
-	//
-	// char cmd[128];
-	// sprintf(cmd,"overclock.elf userspace %d %d 384 1080 0", cpu, freq);
-	// system(cmd);
+	int freq = 0;
+	switch (speed) {
+		case CPU_SPEED_MENU: 		freq =  600000; break;
+		case CPU_SPEED_POWERSAVE:	freq =  816000; break;
+		case CPU_SPEED_NORMAL: 		freq = 1416000; break;
+		case CPU_SPEED_PERFORMANCE: freq = 2016000; break;
+	}
+	
+	if (speed==CPU_SPEED_PERFORMANCE) {
+		putFile(GPU_PATH, "performance");
+		putFile(DMC_PATH, "performance");
+	}
+	else {
+		putFile(GPU_PATH, "simple_ondemand");
+		putFile(DMC_PATH, "dmc_ondemand");
+	}
+	putInt(CPU_PATH, freq); // userspace
 }
 
 // #define RUMBLE_PATH "/sys/devices/virtual/timed_output/vibrator/enable"

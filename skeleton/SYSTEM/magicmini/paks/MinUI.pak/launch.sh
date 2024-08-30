@@ -22,6 +22,13 @@ amixer cset name='Playback Path' SPK # or HP, seems to switch automatically
 
 cat /dev/zero > /dev/fb0
 
+export CPU_PATH=/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed
+export CPU_SPEED_PERF=1608000
+echo performance > /sys/devices/platform/ff400000.gpu/devfreq/ff400000.gpu/governor
+echo performance > /sys/devices/platform/dmc/devfreq/dmc/governor
+echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo $CPU_SPEED_PERF > $CPU_PATH
+
 #######################################
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
@@ -43,16 +50,16 @@ EXEC_PATH=/tmp/minui_exec
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH" && sync
 while [ -f "$EXEC_PATH" ]; do
-	# echo $CPU_SPEED_PERF > $CPU_PATH
+	echo $CPU_SPEED_PERF > $CPU_PATH
 	minui.elf &> $LOGS_PATH/minui.txt
 	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
+		echo $CPU_SPEED_PERF > $CPU_PATH
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
 		rm -f $NEXT_PATH
-		# echo $CPU_SPEED_PERF > $CPU_PATH
 		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
