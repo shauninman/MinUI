@@ -3,14 +3,11 @@ Changes
 BASE
 
 - magicmini: added initial support
+- rg_xx: added initial RG40xxV support (no changes necessary)
 
 EXTRAS
 
 - magicmini: added initial support
-
-NOTES
-
-- magicmini: no performance tuning has been done yet
 
 ---
 
@@ -22,24 +19,24 @@ BUGS
 
 next
 	clean out this rat nest of a todo doc
-	figureout Clock.pak timezone issue
+	figure out Clock.pak timezone issue
 	
 	magicmini
-		get changes from SD card
+		screen does not really turn off during sleep
+		update repo's readme
 		
-		check SYSTEM.squashfs headphone-sense.sh for HP detection
-			not necessary except for separate volumes
-		add cpu boosts
+		move amixer cset name='Playback Path' SPK to libmsettings
+		
 		reduce min brightness
 			might require kernel hacking
-		analog tuning
-			requires KERNEL patch
+			no luck yet
 		audio is choppy in places
 			even after 400 sample fix
 		
 	h700
 		implement cpu speed (or figure out why it wasn't already implemented)
 		Apply Panel Fix.pak hanging for some
+			bad dtb offset? check for 0xd00dfeed before extracting?
 		
 	v10 over arkos
 		don't release until it boots from squashfs rootfs from a single FAT32 partition

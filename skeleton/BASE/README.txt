@@ -34,7 +34,7 @@ MAGICX XU MINI M
 
 MinUI is meant to be used with a heavily modified stock SD card that goes into the left slot (labeled TF1/INT). Download and flash the latest version:
 
-	???
+	https://github.com/shauninman/Moss-magicmini/releases
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TF2/EXT).
 
