@@ -368,11 +368,11 @@
 		rockchip,low-temp-min-volt = <0xf4240>;
 		clocks = <0x02 0x01>;
 		rockchip,avs-scale = <0x01>;
-		rockchip,max-volt = <0x16e360>;
+		rockchip,max-volt = <0x186a00>;
 		rockchip,evb-irdrop = <0x7a120>;
 		nvmem-cells = <0x07 0x08>;
 		nvmem-cell-names = "cpu_leakage\0performance";
-		rockchip,bin-scaling-sel = <0x00 0x09 0x01 0x09>;
+		rockchip,bin-scaling-sel = <0x00 0x0a 0x01 0x0a>;
 		rockchip,pvtm-voltage-sel = <0x00 0xc350 0x00 0xc351 0xd2f0 0x01 0xd2f1 0xea60 0x02 0xea61 0x1869f 0x03>;
 		rockchip,pvtm-freq = <0x639c0>;
 		rockchip,pvtm-volt = <0xf4240>;
@@ -2655,16 +2655,6 @@
 			opp-microvolt-L1 = <0x124f80>;
 			opp-microvolt-L2 = <0x124f80>;
 			opp-microvolt-L3 = <0x124f80>;
-			status = "okay";
-		};
-
-		opp-1152000000 {
-			opp-hz = <0x00 0x44aa2000>;
-			opp-microvolt = <0x13d620>;
-			opp-microvolt-L0 = <0x13d620>;
-			opp-microvolt-L1 = <0x13d620>;
-			opp-microvolt-L2 = <0x13d620>;
-			opp-microvolt-L3 = <0x13d620>;
 			status = "okay";
 		};
 	};

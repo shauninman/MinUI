@@ -10,6 +10,7 @@ OLD_SUM=$(md5sum "$OLD_DTB" | awk '{ print $1 }')
 NEW_SUM=$(md5sum "$NEW_DTB" | awk '{ print $1 }')
 
 if [ "$OLD_SUM" != "$NEW_SUM" ]; then
+	echo "updating dtb"
 	mount -o remount,rw /flash
 	cp "$NEW_DTB" "$OLD_DTB"
 	mount -o remount,ro /flash
