@@ -15,6 +15,7 @@ endif
 REQUIRES_351FILES=other/351files
 
 all: readmes
+	cd install && make
 	
 early: $(REQUIRES_351FILES)
 	mkdir -p other

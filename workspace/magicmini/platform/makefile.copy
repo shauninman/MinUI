@@ -2,4 +2,7 @@ $(PLATFORM):
 	# $@
 	cp ./workspace/$@/other/351files/351Files ./build/EXTRAS/Tools/$@/Files.pak/
 	cp -r ./workspace/$@/other/351files/res ./build/EXTRAS/Tools/$@/Files.pak/
+	# update
+	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
+	cp ./workspace/$@/install/*.dtb ./build/SYSTEM/$@/dat/
 	
