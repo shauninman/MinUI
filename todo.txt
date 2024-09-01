@@ -2,12 +2,11 @@ Changes
 
 BASE
 
-- magicmini: added initial support
-- rg_xx: added initial RG40xxV support (no changes necessary)
+- 
 
 EXTRAS
 
-- magicmini: added initial support
+- 
 
 ---
 
@@ -20,10 +19,12 @@ BUGS
 next
 	clean out this rat nest of a todo doc
 	figure out Clock.pak timezone issue
+	add gamma to thank yous!
+	
 	
 	magicmini
 		screen does not really turn off during sleep
-		update repo's readme
+			it doesn't blank either
 		
 		move amixer cset name='Playback Path' SPK to libmsettings
 		

@@ -91,7 +91,7 @@ For devices without a dedicated MENU button
 	RGB30: use L3 or R3 for MENU
 	M17:   use + or - for MENU
 
-RGB30 / MIYOO MINI PLUS / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL / MIYOO A30
+RGB30 / MIYOO MINI PLUS / RG35XX (PLUS) / TRIMUI SMART PRO / GKD PIXEL / MIYOO A30 / MAGICX XU MINI M
   
   Brightness: MENU + VOLUME UP
                   or VOLUME DOWN
