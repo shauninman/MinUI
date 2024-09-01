@@ -1,6 +1,6 @@
 #!/bin/sh
 
-overclock.elf userspace 2 1344 384 1080 0
+overclock.elf performance 2 1200 384 1080 0
 
 DIR="$(dirname "$0")"
 cd "$DIR"
