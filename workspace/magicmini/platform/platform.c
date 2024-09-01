@@ -151,6 +151,8 @@ void PLAT_pollInput(void) {
 				else if (code==RAW_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
 				else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
 				else if (code==RAW_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+				else if (code==RAW_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
 				else if (code==RAW_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
 				else if (code==RAW_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
 				else if (code==RAW_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
@@ -163,8 +165,8 @@ void PLAT_pollInput(void) {
 			}
 			else if (type==EV_ABS) {
 				LOG_info("abs event: %i (%i)\n", code,value);
-					 if (code==RAW_LSX) { pad.laxis.x = -value; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_LSY) { pad.laxis.y = -value; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+					 if (code==RAW_LSX) { pad.laxis.x = value; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+				else if (code==RAW_LSY) { pad.laxis.y = value; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
 				else if (code==RAW_RSX) pad.raxis.x = value;
 				else if (code==RAW_RSY) pad.raxis.y = value;
 			}
@@ -666,7 +668,6 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// online = prefixMatch("up", status);
 }
 
-#define LED_PATH "/sys/class/leds/led1/brightness"
 #define BACKLIGHT_PATH "/sys/class/backlight/backlight/bl_power"
 
 void PLAT_enableBacklight(int enable) {
@@ -676,7 +677,7 @@ void PLAT_enableBacklight(int enable) {
 	}
 	else {
 		SetRawBrightness(0);
-		system("dd if=/dev/zero of=/dev/fb0");
+		system("dd if=/dev/zero of=/dev/fb0"); // does nothing...
 		putInt(BACKLIGHT_PATH, FB_BLANK_POWERDOWN);
 	}
 }
