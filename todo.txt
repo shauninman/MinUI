@@ -2,7 +2,7 @@ Changes
 
 BASE
 
-- 
+- magicmini: improve device compatibility (please [update Moss too](https://github.com/shauninman/Moss-magicmini/releases))
 
 EXTRAS
 
@@ -10,13 +10,10 @@ EXTRAS
 
 ---
 
-BUGS
-
-- 
-
----
-
 next
+	release MinUI+Moss update for magicmini
+	
+
 	clean out this rat nest of a todo doc
 	figure out Clock.pak timezone issue
 	add gamma to thank yous!

@@ -707,7 +707,7 @@ void PLAT_setCPUSpeed(int speed) {
 		case CPU_SPEED_MENU: 		freq =  600000; break;
 		case CPU_SPEED_POWERSAVE:	freq =  816000; break;
 		case CPU_SPEED_NORMAL: 		freq = 1416000; break;
-		case CPU_SPEED_PERFORMANCE: freq = 2016000; break;
+		case CPU_SPEED_PERFORMANCE: freq = 2016000; break; // not viable on lower binned chips
 	}
 	
 	if (speed==CPU_SPEED_PERFORMANCE) {
