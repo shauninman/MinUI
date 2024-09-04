@@ -204,7 +204,6 @@ static struct VID_Context {
 	SDL_Texture* texture;
 	SDL_Texture* target;
 	SDL_Texture* effect;
-	SDL_Texture* shade;
 
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
@@ -307,6 +306,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1"); // linear
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
+	SDL_SetTextureBlendMode(vid.texture, SDL_BLENDMODE_BLEND);
 	vid.target	= NULL; // only needed for non-native sizes
 	
 	// TODO: doesn't work here
@@ -333,11 +333,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	vid.sharpness = SHARPNESS_SOFT;
 	
-	SDL_Surface* tmp = SDL_CreateRGBSurface(SDL_SWSURFACE,FIXED_WIDTH,FIXED_HEIGHT,32,RGBA_MASK_8888);
-	SDL_FillRect(tmp, NULL, SDL_MapRGBA(tmp->format,0,0,0,0xff));
-	vid.shade = SDL_CreateTextureFromSurface(vid.renderer, tmp);
-	SDL_FreeSurface(tmp);
-	
 	return vid.screen;
 }
 
@@ -356,7 +351,6 @@ void PLAT_quitVideo(void) {
 	SDL_FreeSurface(vid.buffer);
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	if (vid.effect) SDL_DestroyTexture(vid.effect);
-	SDL_DestroyTexture(vid.shade);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
@@ -397,10 +391,12 @@ static void resizeVideo(int w, int h, int p) {
 	
 	SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, vid.sharpness==SHARPNESS_SOFT?"1":"0", SDL_HINT_OVERRIDE);
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
+	SDL_SetTextureBlendMode(vid.texture, SDL_BLENDMODE_BLEND);
 	
 	if (vid.sharpness==SHARPNESS_CRISP) {
 		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1", SDL_HINT_OVERRIDE);
 		vid.target = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, w * hard_scale,h * hard_scale);
+		SDL_SetTextureBlendMode(vid.target, SDL_BLENDMODE_BLEND);
 	}
 	else {
 		vid.target = NULL;
@@ -524,8 +520,9 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 
 // TODO: should we be using true_* instead of src_* below?
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	int brightness = GetBrightness();
-	if (brightness<5) SDL_SetTextureAlphaMod(vid.shade, 192 - (brightness*192)/5);
+	int alpha = GetBrightness();
+	if (alpha<5) alpha = 255 - (192 - (alpha * 192) / 5);
+	else alpha = 255;
 
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
@@ -533,10 +530,11 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		// SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
 		// SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
 		// SDL_UnlockTexture(vid.texture);
+		
+		SDL_SetTextureAlphaMod(vid.texture, alpha);
 		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,NULL,SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		
-		if (brightness<5) SDL_RenderCopy(vid.renderer, vid.shade, NULL,NULL);
 		SDL_RenderPresent(vid.renderer);
 		return;
 	}
@@ -562,6 +560,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	int h = vid.blit->src_h;
 	if (vid.sharpness==SHARPNESS_CRISP) {
 		SDL_SetRenderTarget(vid.renderer,vid.target);
+		SDL_SetTextureAlphaMod(vid.texture, 255);
 		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_SetRenderTarget(vid.renderer,NULL);
 		w *= hard_scale;
@@ -602,6 +601,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	int ox,oy;
 	oy = (device_width-device_height)/2;
 	ox = -oy;
+	SDL_SetTextureAlphaMod(target, alpha);
 	if (rotate) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
 	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 	
@@ -617,8 +617,6 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		// if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,NULL,SDL_FLIP_NONE);
 		// else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){0,0,device_width,device_height});
 	}
-	
-	if (brightness<5) SDL_RenderCopy(vid.renderer, vid.shade, NULL,NULL);
 	
 	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
