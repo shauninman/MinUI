@@ -2,11 +2,11 @@ Changes
 
 BASE
 
-- magicmini: improve device compatibility (please [update Moss too](https://github.com/shauninman/Moss-magicmini/releases))
+- magicmini: adjusted brightness ramp
 
 EXTRAS
 
-- 
+- magicmini: adjusted brightness ramp
 
 ---
 
@@ -27,7 +27,7 @@ next
 		
 		reduce min brightness
 			might require kernel hacking
-			no luck yet
+			added software stopgap
 		audio is choppy in places
 			even after 400 sample fix
 		

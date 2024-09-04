@@ -17,7 +17,6 @@ export PATH=$SYSTEM_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 
 export SDL_AUDIODRIVER=alsa
-
 amixer cset name='Playback Path' SPK # or HP, seems to switch automatically
 
 cat /dev/zero > /dev/fb0
