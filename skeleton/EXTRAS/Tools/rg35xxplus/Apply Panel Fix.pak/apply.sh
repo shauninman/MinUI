@@ -19,11 +19,27 @@ PATH=/tmp/bin:$PATH
 # const
 DT_NAME=device
 DEV_PATH=/dev/mmcblk0
-BOOT_OFFSET=$((16400 * 1024))
-DTB_OFFSET=$((BOOT_OFFSET+1161216))
-SIZE_OFFSET=$((DTB_OFFSET+4))
+# BOOT_OFFSET=$((16400 * 1024))
+# DTB_OFFSET=$((BOOT_OFFSET+1161216))
+DTB_OFFSET=17954816
+DTB_MAGIC=`xxd -s $DTB_OFFSET -l4 -ps $DEV_PATH`
+
+if [ "$DTB_MAGIC" != "d00dfeed" ]; then
+	echo "bad DTB_MAGIC at $DTB_OFFSET"
+	DTB_OFFSET=17971200 # alternate dtb location
+	DTB_MAGIC=`xxd -s $DTB_OFFSET -l4 -ps $DEV_PATH`
+	
+	if [ "$DTB_MAGIC" != "d00dfeed" ]; then
+		echo "bad DTB_MAGIC at $DTB_OFFSET"
+		killshow
+		show.elf "$DIR/res/fail.png" 2
+		echo "unable to decompile dtb, aborting"
+		exit 1
+	fi
+fi
 
 # var
+SIZE_OFFSET=$((DTB_OFFSET+4))
 DTB_SIZE=$((0x`xxd -s $SIZE_OFFSET -l 4 -ps $DEV_PATH`))
 
 dd if=$DEV_PATH of=$DT_NAME.dtb bs=1 skip=$DTB_OFFSET count=$DTB_SIZE 2>/dev/null # extract
@@ -94,6 +110,13 @@ case $CF-$HT-$VT in
 24-770-522) # 40xxH
 	HT_OFFSET=-2 # 768
 	VT_OFFSET=-1 # 521
+	;;
+25-728-568) # 35xxSP 1.0.6
+	# the numbers don't add up but 
+	# this is already hitting 60fps
+	# so fudge BL to exit early
+	echo "known good config"
+	BL=51
 	;;
 esac
 

@@ -7,6 +7,7 @@ BASE
 EXTRAS
 
 - magicmini: adjusted brightness ramp
+- rg_xx: updated Apply Panel Fix.pak to support additional variations
 
 ---
 
@@ -20,6 +21,8 @@ next
 	
 	
 	magicmini
+		check out silent hill (PS) for simple versus gaussian interpolation
+			supposedly awful on simple
 		screen does not really turn off during sleep
 			it doesn't blank either
 		
@@ -33,8 +36,6 @@ next
 		
 	h700
 		implement cpu speed (or figure out why it wasn't already implemented)
-		Apply Panel Fix.pak hanging for some
-			bad dtb offset? check for 0xd00dfeed before extracting?
 		
 	v10 over arkos
 		don't release until it boots from squashfs rootfs from a single FAT32 partition
