@@ -1,6 +1,6 @@
 # MinUI
 
-MinUI is a focused, custom launcher and libretro frontend for the Trimui Smart (and Pro), Miyoo Mini (and Plus) and A30, RGB30, M17, the MagicX XU Mini M, and the Anbernic RG*XX family.
+MinUI is a focused, custom launcher and libretro frontend for a variety of retro handhelds.
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 /> 
 
@@ -62,6 +62,31 @@ Extras:
 - TurboGrafx-16 (and TurboGrafx-CD)
 - Virtual Boy
 
+## Supported Devices
+
+| Device | Added | Status |
+| -- | -- | -- |
+| MagicX XU Mini M | MinUI-20240831-0 | Active | 
+| Anbernic RG40xxV | MinUI-20240831-0 | Maintained | 
+| Anbernic RG40xxH | MinUI-20240717-1 | Maintained |
+| Miyoo A30 | MinUI-20240705-0 | Maintained |
+| Anbernic RG35xxSP | MinUI-20240525-0 | Maintained |
+| Anbernic RG28xx | MinUI-20240429b-2 | Maintained |
+| GKD Pixel | MinUI-20240120b-1 | Maintained |
+| Anbernic RG35xxH | MinUI-20240120b-1 | Maintained |
+| Anbernic RG35xx Plus | MinUI-20240106b-0 | Maintained |
+| M17 | MinUI-20231126b-2 | Maintained |
+| Trimui Smart Pro | MinUI-20231111b-2 | Maintained |
+| Powkiddy RGB30 | MinUI-20231014b-1 | Maintained |
+| Anbernic RG35xx | MinUI-20230922b-2 | Maintained |
+| Miyoo Mini Plus | MinUI-20230922b-2 | Maintained |
+| Miyoo Mini | MinUI-20230922b-2 | Maintained |
+| Trimui Smart | MinUI-20230922b-2 | Maintained |
+
+> [!NOTE]
+> **Active** actively working on compatibility and improvements specific to this device
+> **Maintained** inheriting improvements to common functionality
+> **Retired** removed from repo, no longer updated or packaged with new releases
 
 ## Legacy versions
 
