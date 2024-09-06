@@ -230,6 +230,12 @@ To Steward, for maintaining exhaustive documentation on a plethora of devices:
 
 	https://steward-fu.github.io/website/
 
+To Gamma, for his efforts unlocking more performance on the MagicX XU Mini M (before we all realized its RG3562 was surreptitiously an RK3266).
+
+Check out his repos (including GammaOS):
+
+	https://github.com/TheGammaSqueeze/
+
 To BlackSeraph, for introducing me to chroot.
 
 Check out the GarlicOS repos:
