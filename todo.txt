@@ -12,12 +12,11 @@ EXTRAS
 ---
 
 next
-	release MinUI+Moss update for magicmini
+	cut a new Moss image with reduced brightness splash
+	add reduced clock speed dtb to Moss downloads
 	
-
 	clean out this rat nest of a todo doc
 	figure out Clock.pak timezone issue
-	add gamma to thank yous!
 	
 	
 	magicmini
@@ -25,9 +24,15 @@ next
 			supposedly awful on simple
 		screen does not really turn off during sleep
 			it doesn't blank either
+			it does if I manually set it to 4 with 351Files :thinking_face:
 		
 		move amixer cset name='Playback Path' SPK to libmsettings
-		
+			see rg35xx,rgb30,m17 for keymon poll examples
+			/sys/class/gpio/gpio86/value is meant to be 0 when headphones are connected (only at boot?)
+				but its always 1
+			so we can only detect headphone events not initial state
+				which makes separate speaker/headphone volumes useless RIP
+				
 		reduce min brightness
 			might require kernel hacking
 			added software stopgap

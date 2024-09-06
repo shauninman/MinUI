@@ -46,7 +46,7 @@ void getDisplayName(const char* in_name, char* out_name) {
 	// remove extension(s), eg. .p8.png
 	while ((tmp = strrchr(out_name, '.'))!=NULL) {
 		int len = strlen(tmp);
-		if (len>2 && len<=4) tmp[0] = '\0'; // 3 letter extension plus dot
+		if (len>2 && len<=5) tmp[0] = '\0'; // 1-4 letter extension plus dot (was 1-3, extended for .doom files)
 		else break;
 	}
 	
