@@ -84,9 +84,9 @@ Extras:
 | Trimui Smart | MinUI-20230922b-2 | Maintained |
 
 > [!NOTE]
-> **Active** actively working on compatibility and improvements specific to this device
-> **Maintained** inheriting improvements to common functionality
-> **Retired** removed from repo, no longer updated or packaged with new releases
+> **Active** actively working on compatibility and improvements specific to this device  
+> **Maintained** inheriting improvements to common functionality  
+> **Retired** removed from repo, no longer updated or packaged with new releases  
 
 ## Legacy versions
 
