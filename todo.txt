@@ -42,19 +42,6 @@ next
 	h700
 		implement cpu speed (or figure out why it wasn't already implemented)
 		
-	v10 over arkos/emuelec
-		this is so ill-conceived
-			portable user data on a bootable partition?
-			a recipe for disaster
-		rebuilt over emuelec
-			a single fat32 partition bootable and housing .system
-			but I haven't been able to resize that partition
-			doesn't work with 
-				Trimui Smart (doesn't read card)
-				M17 (doesn't boot at all)
-		don't release
-		commit toolchain
-				
 	my282
 		ldd isn't working but this is
 			LD_TRACE_LOADED_OBJECTS=1 /lib/ld-2.23.so /mnt/SDCARD/.system/my282/bin/minarch.elf
