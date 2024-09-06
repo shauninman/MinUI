@@ -42,15 +42,18 @@ next
 	h700
 		implement cpu speed (or figure out why it wasn't already implemented)
 		
-	v10 over arkos
-		don't release until it boots from squashfs rootfs from a single FAT32 partition
+	v10 over arkos/emuelec
+		this is so ill-conceived
+			portable user data on a bootable partition?
+			a recipe for disaster
+		rebuilt over emuelec
+			a single fat32 partition bootable and housing .system
+			but I haven't been able to resize that partition
+			doesn't work with 
+				Trimui Smart (doesn't read card)
+				M17 (doesn't boot at all)
+		don't release
 		commit toolchain
-		boot
-			replace /usr/bin/emulationstation.sh
-			replace /etc/fstab
-			replace /boot/logo.bmp
-			replace /boot/boot.ini
-		issues
 				
 	my282
 		ldd isn't working but this is
