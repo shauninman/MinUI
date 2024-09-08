@@ -11,15 +11,20 @@ EXTRAS
 ---
 
 next
-	cut a new Moss image with reduced brightness splash
-	add reduced clock speed dtb to Moss downloads
-	
-	clean out this rat nest of a todo doc
-	figure out Clock.pak timezone issue
-	
 	redo audio pipeline
 		I think fceumm has issues on more devices than not at this point
 		400 SAMPLES fix isn't a true fix, it just minimizes the side effect
+		I wonder if picarch's dynamic rate control would help here
+			that seems to be a frame pacing fix, not an audio fix
+		can I let SDL handle resampling (on newer hardware?)
+			pass NULL for received lets SDL resample invisibly (I think)
+			would that even help?
+		what about SDL_AudioStream? (added 2.0.7)
+			https://wiki.libsdl.org/SDL2/Tutorials-AudioStream
+
+	
+	clean out this rat nest of a todo doc
+	figure out Clock.pak timezone issue
 	
 	magicmini
 		check out silent hill (PS) for simple versus gaussian interpolation
