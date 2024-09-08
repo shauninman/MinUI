@@ -2,12 +2,11 @@ Changes
 
 BASE
 
-- magicmini: adjusted brightness ramp
+- 
 
 EXTRAS
 
-- magicmini: adjusted brightness ramp
-- rg_xx: updated Apply Panel Fix.pak to support additional variations
+- 
 
 ---
 
@@ -18,6 +17,9 @@ next
 	clean out this rat nest of a todo doc
 	figure out Clock.pak timezone issue
 	
+	redo audio pipeline
+		I think fceumm has issues on more devices than not at this point
+		400 SAMPLES fix isn't a true fix, it just minimizes the side effect
 	
 	magicmini
 		check out silent hill (PS) for simple versus gaussian interpolation
@@ -236,18 +238,19 @@ next
 		
 		collections can't handle accented characters (eg. é) in path/rom name...
 			wait, why can recents.txt but not collections.txt?
-			because one is written by the device so its using device native accented chars
+			because one is written by the device so it's using device native accented chars
 		update stored rom path logic to only require TAG and not full folder name? (would simplify Collection authoring?)
 		add make fetch to get all external sources before build?
 		add Developer.pak
 			only for devices with adb or ssh
 			
-		rewrite Shortcuts section of readme by device not the tangle mess it currently is
+		rewrite Shortcuts section of readme by device not the tangled mess it currently is
 			maybe do the same for all?
 			break out platforms into completely separate installers/updaters?
 				will require revisiting unzipping system
 				will need to inject not replace
 					but then how to handle removing deleted files?
+					seems like this is what currently happens on some (all?) platforms
 		look into mednafen/beetle ngp core (neopop?)
 			beetle-ngp-libretro
 			this ran at about 1 frame per 10 seconds...on rgb30
@@ -256,9 +259,6 @@ next
 			runs at 1fps
 			possibly because minarch forces 60fps but this handheld runs at 75?
 			
-		draw debug to core framebufer before scaling
-			using pixel instead of default font so it will fit on things like PKM and GB*
-		
 	tg5040
 		create PSP.pak and NDS.pak and document how to setup by copying assets from stock?
 			
@@ -313,17 +313,14 @@ next
 			an additional two lines for each AP?
 			then try them in order?
 			
-		volume buttons sometimes get stuck
-			haven't figured out how to reproduce reliably but I've had it happen kinda frequently
-			just experienced on the smart so it's probably something in keymon
 		figure out why power suspends the device after MOSS install
 			it appears to reboot but it only stops suspending after a manual reboot
 			fewt has a fix?
 				https://github.com/JustEnoughLinuxOS/distribution/pull/2195/files#diff-719d790f2d3c1d5a0884ae9eb69fb77956fcaaae235282acb6e6817339f35105
 
-	moss
-		build lib32 to try to fix snes9x save state compatibility
-			first attempt did not go well :sweat_smile:
+		moss
+			build lib32 to try to fix snes9x save state compatibility
+				first attempt did not go well :sweat_smile:
 		
 	trimui: scaling (see DE test)
 		
@@ -331,7 +328,6 @@ known issues
 	all: race core (NGP/C.pak) doesn't restore audio state correctly
 	rgb30: light crackling in some cores (eg. fceumm and snes9x2005_plus)
 	trimui: hw scaling isn't implemented yet
-	nano: says it can bind MENU+button for shortcuts, it can't
 
 all
 	minarch
@@ -360,9 +356,10 @@ all
 		alt tag is getting truncated, should be added after truncation
 	add a "res" (or "many"?) folder 
 		for install/update and charging gfx?
-	show
-	say
-	confirm
+	standard
+		show
+		say
+		confirm
 
 smart
 	cores
@@ -431,7 +428,3 @@ replace
 with
 	git clone --depth 1 --branch branch repo
 note: doesn't work with commits only branches
-
----
-
-https://discord.com/invite/p4uRmCd
