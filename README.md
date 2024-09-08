@@ -66,22 +66,22 @@ Extras:
 
 | Device | Added | Status |
 | -- | -- | -- |
-| MagicX XU Mini M | MinUI-20240831-0 | Active | 
-| Anbernic RG40xxV | MinUI-20240831-0 | Maintained | 
-| Anbernic RG40xxH | MinUI-20240717-1 | Maintained |
-| Miyoo A30 | MinUI-20240705-0 | Maintained |
-| Anbernic RG35xxSP | MinUI-20240525-0 | Maintained |
 | Anbernic RG28xx | MinUI-20240429b-2 | Maintained |
-| GKD Pixel | MinUI-20240120b-1 | Maintained |
-| Anbernic RG35xxH | MinUI-20240120b-1 | Maintained |
-| Anbernic RG35xx Plus | MinUI-20240106b-0 | Maintained |
-| M17 | MinUI-20231126b-2 | Maintained |
-| Trimui Smart Pro | MinUI-20231111b-2 | Maintained |
-| Powkiddy RGB30 | MinUI-20231014b-1 | Maintained |
 | Anbernic RG35xx | MinUI-20230922b-2 | Maintained |
-| Miyoo Mini Plus | MinUI-20230922b-2 | Maintained |
+| Anbernic RG35xx Plus | MinUI-20240106b-0 | Maintained |
+| Anbernic RG35xxH | MinUI-20240120b-1 | Maintained |
+| Anbernic RG35xxSP | MinUI-20240525-0 | Maintained |
+| Anbernic RG40xxH | MinUI-20240717-1 | Maintained |
+| Anbernic RG40xxV | MinUI-20240831-0 | Maintained | 
+| GKD Pixel | MinUI-20240120b-1 | Maintained |
+| M17 | MinUI-20231126b-2 | Maintained |
+| MagicX XU Mini M | MinUI-20240831-0 | Active | 
+| Miyoo A30 | MinUI-20240705-0 | Maintained |
 | Miyoo Mini | MinUI-20230922b-2 | Maintained |
+| Miyoo Mini Plus | MinUI-20230922b-2 | Maintained |
+| Powkiddy RGB30 | MinUI-20231014b-1 | Maintained |
 | Trimui Smart | MinUI-20230922b-2 | Maintained |
+| Trimui Smart Pro | MinUI-20231111b-2 | Maintained |
 
 > [!NOTE]
 > **Active** actively working on compatibility and improvements specific to this device  
