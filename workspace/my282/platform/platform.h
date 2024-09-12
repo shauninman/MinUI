@@ -7,9 +7,6 @@
 
 #include "sdl.h"
 
-#define PAD_poll PLAT_pollInput
-#define PAD_wake PLAT_shouldWake
-
 ///////////////////////////////
 
 #define	BUTTON_UP		BUTTON_NA

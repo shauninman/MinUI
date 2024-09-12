@@ -11,6 +11,13 @@ EXTRAS
 ---
 
 next
+	my282
+		reduce menu clock speed to 1200?
+			"improved stability for some devices"
+		
+	mgba (at least on the mm+) doesn't like zipped roms
+		try to reproduce on something with adb or ssh
+	
 	redo audio pipeline
 		I think fceumm has issues on more devices than not at this point
 		400 SAMPLES fix isn't a true fix, it just minimizes the side effect
@@ -21,6 +28,8 @@ next
 			would that even help?
 		what about SDL_AudioStream? (added 2.0.7)
 			https://wiki.libsdl.org/SDL2/Tutorials-AudioStream
+			what if the changes to make audio stream public
+			in SDL2 is what introduced the issue? :sweat_smile:
 
 	
 	clean out this rat nest of a todo doc
@@ -52,11 +61,7 @@ next
 	my282
 		ldd isn't working but this is
 			LD_TRACE_LOADED_OBJECTS=1 /lib/ld-2.23.so /mnt/SDCARD/.system/my282/bin/minarch.elf
-	
-	patch all versions of pcsx and picodrive
-		https://github.com/shauninman/MinUI/pull/14/files#diff-d76fedd6d41fe8dd9c6a7b6066bdb39e783e6c21af2fde85415dc83d88f984df
-		related https://discord.com/channels/741895796315914271/1232969624417730630/1263579750409179271
-	
+		
 	emu pak detection isn't working when two folders are combined
 		eg. SFC and SUPA folder but no SUPA.pak still shows games from SUPA
 	switch rgxx-line to /bin/bash to use &> instead of the grody construction I can never remember the syntax for

@@ -1164,7 +1164,7 @@ void PAD_reset(void) {
 	pad.just_released = BTN_NONE;
 	pad.just_repeated = BTN_NONE;
 }
-void PAD_poll_SDL(void) {
+FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 	// reset transient state
 	pad.just_pressed = BTN_NONE;
 	pad.just_released = BTN_NONE;
@@ -1317,7 +1317,7 @@ void PAD_poll_SDL(void) {
 		}
 	}
 }
-int PAD_wake_SDL(void) {
+FALLBACK_IMPLEMENTATION int PLAT_shouldWake(void) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type==SDL_KEYUP) {

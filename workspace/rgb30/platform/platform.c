@@ -20,18 +20,6 @@
 
 ///////////////////////////////
 
-// static SDL_Joystick *joystick;
-// void PLAT_initInput(void) {
-// 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
-// 	joystick = SDL_JoystickOpen(0);
-// }
-// void PLAT_quitInput(void) {
-// 	SDL_JoystickClose(joystick);
-// 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-// }
-
-///////////////////////////////
-
 #define RAW_UP		544
 #define RAW_DOWN	545
 #define RAW_LEFT	546

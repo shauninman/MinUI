@@ -47,6 +47,10 @@ void LOG_note(int level, const char* fmt, ...);
 
 ///////////////////////////////
 
+#define FALLBACK_IMPLEMENTATION __attribute__((weak)) // used if platform doesn't provide an implementation
+
+///////////////////////////////
+
 extern uint32_t RGB_WHITE;
 extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
@@ -221,13 +225,8 @@ extern PAD_Context pad;
 
 #define PAD_init PLAT_initInput
 #define PAD_quit PLAT_quitInput
-
-#ifndef PAD_poll
-#define PAD_poll PAD_poll_SDL
-#define PAD_wake PAD_wake_SDL
-void PAD_poll_SDL(void);
-int PAD_wake_SDL(void);
-#endif
+#define PAD_poll PLAT_pollInput
+#define PAD_wake PLAT_shouldWake
 
 void PAD_setAnalog(int neg, int pos, int value, int repeat_at); // internal
 
