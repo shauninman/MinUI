@@ -11,6 +11,8 @@ EXTRAS
 ---
 
 next
+	add tg3040 (Trimui Brick) support
+	
 	test input on
 		m17
 		magicmini

@@ -1,4 +1,4 @@
-// tg5040
+// macos
 #include <stdio.h>
 #include <stdlib.h>
 // #include <linux/fb.h>
@@ -93,7 +93,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
-	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
+	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w/3,h/3, SDL_WINDOW_SHOWN);
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	
 	// SDL_RendererInfo info;

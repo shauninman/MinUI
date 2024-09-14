@@ -2,7 +2,7 @@ This is not a full version of MinUI for macOS. It's a dummy platform to allow us
 
 BUILD MINUI
 -----------
-cd all/minui
+cd workspace/all/minui
 mkdir -p build/macos
 
 gcc minui.c -o build/macos/minui -I. -I../common/ -I../../macos/platform/ -I/opt/homebrew/include -L/opt/homebrew/lib ../common/scaler.c ../common/utils.c ../common/api.c ../../macos/platform/platform.c -fomit-frame-pointer -DPLATFORM=\"macos\" -DUSE_SDL2 -Ofast -std=gnu99 -ldl -flto -lSDL2 -lSDL2_image -lSDL2_ttf -lpthread -lm -lz -fsanitize=address -fno-common -Wno-tautological-constant-out-of-range-compare -Wno-asm-operand-widths && build/macos/minui
