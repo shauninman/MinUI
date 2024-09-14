@@ -2826,6 +2826,7 @@ void Core_load(void) {
 	game_info.path = game.tmp_path[0]?game.tmp_path:game.path;
 	game_info.data = game.data;
 	game_info.size = game.size;
+	LOG_info("game path: %s (%i)\n", game_info.path, game.size);
 	
 	core.load_game(&game_info);
 	

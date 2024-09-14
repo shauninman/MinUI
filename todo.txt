@@ -2,7 +2,7 @@ Changes
 
 BASE
 
-- 
+- my282: improved stability for some devices
 
 EXTRAS
 
@@ -11,12 +11,19 @@ EXTRAS
 ---
 
 next
-	my282
-		reduce menu clock speed to 1200?
-			"improved stability for some devices"
+	test input on
+		m17
+		magicmini
+		my282
+		rg35xxplus
+		rgb30
 		
 	mgba (at least on the mm+) doesn't like zipped roms
 		try to reproduce on something with adb or ssh
+		couldn't reproduce on
+			trimuismart
+			my282
+		I guess maybe tmpfs is just super slow on miyoomini?
 	
 	redo audio pipeline
 		I think fceumm has issues on more devices than not at this point

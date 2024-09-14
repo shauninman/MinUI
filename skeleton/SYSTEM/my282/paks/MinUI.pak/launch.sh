@@ -18,8 +18,13 @@ export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 
 #######################################
 
+reclock()
+{
+	overclock.elf userspace 2 1344 384 1080 0
+}
+
 echo 0 > /sys/class/leds/led1/brightness
-overclock.elf userspace 2 1512 384 1080 0
+reclock
 
 killall -9 tee
 rm -f "$SDCARD_PATH/update.log"
@@ -52,7 +57,7 @@ NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH" && sync
 while [ -f "$EXEC_PATH" ]; do
 	minui.elf > $LOGS_PATH/minui.txt 2>&1
-	overclock.elf userspace 2 1512 384 1080 0
+	reclock
 	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
 	
@@ -60,7 +65,7 @@ while [ -f "$EXEC_PATH" ]; do
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
 		rm -f $NEXT_PATH
-		overclock.elf userspace 2 1512 384 1080 0
+		reclock
 		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
