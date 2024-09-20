@@ -3,6 +3,7 @@ Changes
 BASE
 
 - my282: improved stability for some devices
+- gkdpixel: fixed debug hud crasher
 
 EXTRAS
 
