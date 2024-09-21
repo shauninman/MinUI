@@ -13,24 +13,34 @@ EXTRAS
 ---
 
 next
+	standard show/say/confirm.elf?
+		sdl2 implementations require a delay arg 
+		because they clear the framebuffer on exit
+		so we can't use show + sleep or + confirm
+		
+		trimui's await_input makes it kind of like 
+		a confirm.elf which I don't see in modern
+		MinUI...was that in MiniUI maybe? yes
+
+		rg35xxplus		sdl2	show.elf image.png delay
+		trimuismart		sdl		show.elf image.png
+		miyoomini		fb0		show.elf image.png
+		trimui			sdl		show.elf image await_input
+		tg5040/tg3040	sdl2	show.elf image.png delay (uses window surface as screen)
+		rgb30			sdl2	show.elf image.png delay (uses window surface as screen)
+		rg35xxplus		sdl2	show.elf image.png delay
+	
+	magicmini has no intel toolchain
+	
 	is Developer.pak supposed to be in the tg5040 extras?
 		I didn't think I released that since it's mostly useless to others
-		and even to me know that everything is working...
+		and even to me now that everything is built out and working...
 		
 	slow buildroot evtest
 		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084
 	
-	standard show.elf
-	
 	add tg3040 (Trimui Brick) support
 	
-	test input on
-		m17
-		magicmini
-		my282
-		rg35xxplus
-		rgb30
-		
 	mgba (at least on the mm+) doesn't like zipped roms
 		try to reproduce on something with adb or ssh
 		couldn't reproduce on

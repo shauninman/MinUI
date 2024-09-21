@@ -1,3 +1,4 @@
+// rg35xxplus
 #include <stdio.h>
 #include <unistd.h>
 #include <SDL2/SDL.h>
@@ -13,7 +14,7 @@
 
 int main(int argc , char* argv[]) {
 	if (argc<2) {
-		puts("Usage: show image.png delay");
+		puts("Usage: show.elf image.png delay");
 		return 0;
 	}
 	

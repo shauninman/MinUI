@@ -1,3 +1,4 @@
+// trimuismart
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
@@ -11,7 +12,7 @@
 
 int main(int argc , char* argv[]) {
 	if (argc<2) {
-		puts("Usage: show image.png");
+		puts("Usage: show.elf image.png");
 		return 0;
 	}
 	

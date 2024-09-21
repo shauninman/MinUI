@@ -1,3 +1,4 @@
+// trimui
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +8,7 @@
 
 int main(int argc , char* argv[]) {
 	if (argc<2) {
-		puts("Usage: show image [1]");
+		puts("Usage: show.elf image [1]");
 		return 0;
 	}
 	
