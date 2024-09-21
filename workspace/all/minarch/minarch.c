@@ -4030,23 +4030,25 @@ static void Menu_loadState(void) {
 
 	Menu_updateState();
 	
-	if (menu.save_exists && menu.total_discs) {
-		char slot_disc_name[256];
-		getFile(menu.txt_path, slot_disc_name, 256);
+	if (menu.save_exists) {
+		if (menu.total_discs) {
+			char slot_disc_name[256];
+			getFile(menu.txt_path, slot_disc_name, 256);
 		
-		char slot_disc_path[256];
-		if (slot_disc_name[0]=='/') strcpy(slot_disc_path, slot_disc_name);
-		else sprintf(slot_disc_path, "%s%s", menu.base_path, slot_disc_name);
+			char slot_disc_path[256];
+			if (slot_disc_name[0]=='/') strcpy(slot_disc_path, slot_disc_name);
+			else sprintf(slot_disc_path, "%s%s", menu.base_path, slot_disc_name);
 		
-		char* disc_path = menu.disc_paths[menu.disc];
-		if (!exactMatch(slot_disc_path, disc_path)) {
-			Game_changeDisc(slot_disc_path);
+			char* disc_path = menu.disc_paths[menu.disc];
+			if (!exactMatch(slot_disc_path, disc_path)) {
+				Game_changeDisc(slot_disc_path);
+			}
 		}
-	}
 	
-	state_slot = menu.slot;
-	putInt(menu.slot_path, menu.slot);
-	State_read();
+		state_slot = menu.slot;
+		putInt(menu.slot_path, menu.slot);
+		State_read();
+	}
 }
 
 static char* getAlias(char* path, char* alias) {

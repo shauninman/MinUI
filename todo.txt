@@ -2,8 +2,9 @@ Changes
 
 BASE
 
+- all: fixed resume issue after loading empty slot
 - my282: improved stability for some devices
-- gkdpixel: fixed debug hud crasher
+- gkdpixel: fixed debug hud crash
 
 EXTRAS
 
