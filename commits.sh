@@ -97,5 +97,11 @@ bump() {
 	echo CORES
 	list ./workspace/rg35xx/cores/src # just copied from normal rg35xx
 	bump
+	
+	tell MAGICMINI
+	show ./workspace/magicmini/other/351files
+	echo CORES
+	list ./workspace/magicmini/cores/src
+	bump
 
 } | sed 's/\n/ /g'

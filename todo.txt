@@ -13,6 +13,15 @@ EXTRAS
 ---
 
 next
+	is Developer.pak supposed to be in the tg5040 extras?
+		I didn't think I released that since it's mostly useless to others
+		and even to me know that everything is working...
+		
+	slow buildroot evtest
+		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084
+	
+	standard show.elf
+	
 	add tg3040 (Trimui Brick) support
 	
 	test input on
@@ -30,7 +39,7 @@ next
 		I guess maybe tmpfs is just super slow on miyoomini?
 	
 	redo audio pipeline
-		I think fceumm has issues on more devices than not at this point
+		I think fceumm has issues on more devices than not at this point (thanks h700)
 		400 SAMPLES fix isn't a true fix, it just minimizes the side effect
 		I wonder if picarch's dynamic rate control would help here
 			that seems to be a frame pacing fix, not an audio fix
@@ -57,7 +66,7 @@ next
 			see rg35xx,rgb30,m17 for keymon poll examples
 			/sys/class/gpio/gpio86/value is meant to be 0 when headphones are connected (only at boot?)
 				but its always 1
-			so we can only detect headphone events not initial state
+			so we can only detect headphone change events not initial state
 				which makes separate speaker/headphone volumes useless RIP
 				
 		reduce min brightness
@@ -75,8 +84,6 @@ next
 		
 	emu pak detection isn't working when two folders are combined
 		eg. SFC and SUPA folder but no SUPA.pak still shows games from SUPA
-	switch rgxx-line to /bin/bash to use &> instead of the grody construction I can never remember the syntax for
-		it works!
 	all
 		look into how many cores support 8888
 			this might be a bottleneck (if it's having to go 8888 to 565 and back to 8888 for every pixel, every frame)
@@ -99,6 +106,7 @@ next
 				PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
 				try using SDL_UpdateTexture instead of Lock/Unlock
 					might be saving 1-2ms
+				could this slowness be related to ram speed? (DMC?)
 		
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 
