@@ -1,8 +1,0 @@
-#!/bin/sh
-
-# NOTE: doesn't actually shutdown because we have a physical power switch
-
-if [ -n "$DATETIME_PATH" ]; then
-	echo `date +'%F %T'` > "$DATETIME_PATH"
-	sync
-fi

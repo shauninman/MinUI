@@ -4,9 +4,6 @@
 
 INFO=`cat /proc/cpuinfo 2> /dev/null`
 case $INFO in
-*"Allwinner"*)
-	PLATFORM="trimui"
-	;;
 *"sun8i"*)
 	if [ -d /usr/miyoo ]; then
 		PLATFORM="my282"

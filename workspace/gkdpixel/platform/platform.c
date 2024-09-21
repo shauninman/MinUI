@@ -1,4 +1,4 @@
-// trimui
+// gkdpixel
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>

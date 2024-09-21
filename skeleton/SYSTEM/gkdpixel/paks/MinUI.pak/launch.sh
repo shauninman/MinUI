@@ -25,7 +25,7 @@ killall -9 key_daemon
 
 #######################################
 
-export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:/usr/trimui/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:$LD_LIBRARY_PATH
 export PATH=$SYSTEM_PATH/bin:$PATH
 
 keymon.elf &

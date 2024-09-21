@@ -57,13 +57,6 @@ bump() {
 	list ./workspace/trimuismart/cores/src
 	bump
 	
-	# tell TRIMUI
-	# show ./workspace/trimui/other/DinguxCommander
-	# show ./workspace/trimui/other/sdl
-	# echo CORES
-	# list ./workspace/trimui/cores/src
-	# bump
-
 	tell RGB30
 	show ./workspace/rgb30/other/DinguxCommander
 	echo CORES

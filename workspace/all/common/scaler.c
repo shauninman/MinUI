@@ -24,7 +24,7 @@
 static void dummy(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {}
 
 // 
-// C scalers for Trimui Model S
+// C scalers for Trimui Model S and GKD Pixel
 //
 void scale1x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32_t sh, uint32_t sp, uint32_t dw, uint32_t dh, uint32_t dp) {
 	if (!sw||!sh) return;

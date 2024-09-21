@@ -29,7 +29,17 @@ next
 		tg5040/tg3040	sdl2	show.elf image.png delay (uses window surface as screen)
 		rgb30			sdl2	show.elf image.png delay (uses window surface as screen)
 		rg35xxplus		sdl2	show.elf image.png delay
+		
+		show.elf <image path> <delay>
+			all official uses of show.elf are used to display 
+			text probably better handled by confirm.elf
 	
+		show.elf <image_path or message> <delay or type>
+			(default) 	A confirms, B cancels (both CANCEL and OKAY buttons drawn)
+			<delay>		nothing confirms or cancels, quits after <delay> (no buttons drawn)
+			only 		only A confirms, none cancel (only OKAY button drawn)
+			wait		nothing confirms or cancels, must be killed (no buttons drawn)
+		
 	magicmini has no intel toolchain
 	
 	is Developer.pak supposed to be in the tg5040 extras?
@@ -360,13 +370,10 @@ next
 		moss
 			build lib32 to try to fix snes9x save state compatibility
 				first attempt did not go well :sweat_smile:
-		
-	trimui: scaling (see DE test)
-		
+				
 known issues
 	all: race core (NGP/C.pak) doesn't restore audio state correctly
 	rgb30: light crackling in some cores (eg. fceumm and snes9x2005_plus)
-	trimui: hw scaling isn't implemented yet
 
 all
 	minarch
