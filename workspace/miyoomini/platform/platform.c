@@ -280,7 +280,7 @@ static int effect_type = EFFECT_NONE;
 void PLAT_setSharpness(int sharpness) {
 	// force effect to reload
 	// on scaling change
-	next_effect = effect_type;
+	if (effect_type>=EFFECT_NONE) next_effect = effect_type;
 	effect_type = -1;
 }
 

@@ -3,6 +3,7 @@ Changes
 BASE
 
 - all: fixed resume issue after loading empty slot
+- rg35xx+miyoomini: fixed Screen Effect initialization
 - my282: improved stability for some devices
 - gkdpixel: fixed debug hud crash
 
