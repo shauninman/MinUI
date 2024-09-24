@@ -3,6 +3,13 @@
 # NOTE: this runs on the host system (eg. macOS) not in a docker image
 # it has to, otherwise we'd be running a docker in a docker and oof
 
+# prevent accidentally triggering a full build with invalid calls
+ifneq (,$(PLATFORM))
+ifeq (,$(MAKECMDGOALS))
+$(error found PLATFORM arg but no target, did you mean "make PLATFORM=$(PLATFORM) shell"?)
+endif
+endif
+
 ifeq (,$(PLATFORMS))
 PLATFORMS = miyoomini trimuismart rg35xx rg35xxplus tg5040 rgb30 m17 gkdpixel my282 magicmini
 endif
