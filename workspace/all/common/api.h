@@ -251,7 +251,7 @@ void VIB_setStrength(int strength);
 	
 ///////////////////////////////
 
-#define BRIGHTNESS_BUTTON_LABEL "+ -" // ew
+#define BRIGHTNESS_VOLUME_BUTTON_LABEL "+ -" // ew
 
 typedef void (*PWR_callback_t)(void);
 void PWR_init(void);
