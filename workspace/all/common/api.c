@@ -587,7 +587,7 @@ int GFX_getButtonWidth(char* hint, char* button) {
 	int button_width = 0;
 	int width;
 	
-	int special_case = !strcmp(button,BRIGHTNESS_BUTTON_LABEL); // TODO: oof
+	int special_case = !strcmp(button,BRIGHTNESS_VOLUME_BUTTON_LABEL); // TODO: oof
 	
 	if (strlen(button)==1) {
 		button_width += SCALE1(BUTTON_SIZE);
@@ -607,7 +607,7 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 	SDL_Surface* text;
 	int ox = 0;
 	
-	int special_case = !strcmp(button,BRIGHTNESS_BUTTON_LABEL); // TODO: oof
+	int special_case = !strcmp(button,BRIGHTNESS_VOLUME_BUTTON_LABEL); // TODO: oof
 	
 	// button
 	if (strlen(button)==1) {
@@ -777,8 +777,8 @@ void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
 		else GFX_blitButtonGroup((char*[]){ "START","BRIGHTNESS",  NULL }, 0, dst, 0);
 	}
 	else {
-		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, 0, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, 0, dst, 0);
+		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_VOLUME_BUTTON_LABEL,"BRIGHTNESS",  NULL }, 0, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ BRIGHTNESS_VOLUME_BUTTON_LABEL,"VOLUME",  NULL }, 0, dst, 0);
 	}
 	
 }
