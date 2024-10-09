@@ -318,6 +318,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	
 	updateEffect();
 	if (vid.blit && vid.effect) {
+		if (!dst_rect) dst_rect = &dst_r;
 		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect_scale,dst_rect->y%effect_scale,FIXED_WIDTH,FIXED_HEIGHT});
 	}
 
