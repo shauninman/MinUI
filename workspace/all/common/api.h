@@ -155,6 +155,7 @@ int GFX_hdmiChanged(void);
 
 void GFX_startFrame(void);
 void GFX_flip(SDL_Surface* screen);
+#define GFX_supportsOverscan PLAT_supportsOverscan // (void)
 void GFX_sync(void); // call this to maintain 60fps when not calling GFX_flip() this frame
 void GFX_quit(void);
 
@@ -306,6 +307,7 @@ void PLAT_vsync(int remaining);
 scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
+int PLAT_supportsOverscan(void);
 
 SDL_Surface* PLAT_initOverlay(void);
 void PLAT_quitOverlay(void);

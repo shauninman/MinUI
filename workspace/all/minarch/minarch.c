@@ -39,15 +39,9 @@ enum {
 	SCALE_NATIVE,
 	SCALE_ASPECT,
 	SCALE_FULLSCREEN,
-#ifdef CROP_OVERSCAN
 	SCALE_CROPPED,
-#endif
 	SCALE_COUNT,
 };
-
-#ifndef CROP_OVERSCAN
-	int SCALE_CROPPED = -1;
-#endif
 
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
@@ -62,9 +56,10 @@ static int has_custom_controllers = 0;
 static int gamepad_type = 0; // index in gamepad_labels/gamepad_values
 static int downsample = 0; // set to 1 to convert from 8888 to 565
 
-static int DEVICE_WIDTH = FIXED_WIDTH;
-static int DEVICE_HEIGHT = FIXED_HEIGHT;
-static int DEVICE_PITCH = FIXED_PITCH;
+// these are no longer constants as of the RG CubeXX (even though they look like it)
+static int DEVICE_WIDTH = 0; // FIXED_WIDTH;
+static int DEVICE_HEIGHT = 0; // FIXED_HEIGHT;
+static int DEVICE_PITCH = 0; // FIXED_PITCH;
 
 GFX_Renderer renderer;
 
@@ -621,9 +616,7 @@ static char* scaling_labels[] = {
 	"Native",
 	"Aspect",
 	"Fullscreen",
-#ifdef CROP_OVERSCAN
 	"Cropped",
-#endif
 	NULL
 };
 static char* effect_labels[] = {
@@ -817,6 +810,19 @@ enum {
 	CONFIG_GAME,
 };
 
+static inline char* getScreenScalingDesc(void) {
+	if (GFX_supportsOverscan()) {
+		return "Native uses integer scaling. Aspect uses core\nreported aspect ratio. Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.";
+	}
+	else {
+		return "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nFullscreen has non-squarepixels.";
+	}
+}
+static inline int getScreenScalingCount(void) {
+	return GFX_supportsOverscan() ? 4 : 3;
+}
+	
+
 static struct Config {
 	char* system_cfg; // system.cfg based on system limitations
 	char* default_cfg; // pak.cfg based on platform limitations
@@ -834,14 +840,10 @@ static struct Config {
 			[FE_OPT_SCALING] = {
 				.key	= "minarch_screen_scaling", 
 				.name	= "Screen Scaling",
-#ifdef CROP_OVERSCAN
-				.desc	= "Native uses integer scaling. Aspect uses core\nreported aspect ratio. Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.",
-#else
-				.desc	= "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nFullscreen has non-squarepixels.",
-#endif
+				.desc	= NULL, // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
-				.count = SCALE_COUNT,
+				.count = 3, // will call getScreenScalingCount()
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
@@ -1183,6 +1185,14 @@ static void Config_readControlsString(char* cfg) {
 }
 static void Config_load(void) {
 	LOG_info("Config_load\n");
+	
+	// update for crop overscan support
+	Option* scaling_option = &config.frontend.options[FE_OPT_SCALING];
+	scaling_option->desc = getScreenScalingDesc();
+	scaling_option->count = getScreenScalingCount();
+	if (!GFX_supportsOverscan()) {
+		scaling_labels[3] = NULL;
+	}
 	
 	char* system_path = SYSTEM_PATH "/system.cfg";
 	if (exists(system_path)) config.system_cfg = allocFile(system_path);
@@ -1633,7 +1643,8 @@ static void input_poll_callback(void) {
 						break;
 					case SHORTCUT_CYCLE_SCALE:
 						screen_scaling += 1;
-						if (screen_scaling>=SCALE_COUNT) screen_scaling -= SCALE_COUNT;
+						int count = config.frontend.options[FE_OPT_SCALING].count;
+						if (screen_scaling>=count) screen_scaling -= count;
 						Config_syncFrontend(config.frontend.options[FE_OPT_SCALING].key, screen_scaling);
 						break;
 					case SHORTCUT_CYCLE_EFFECT:
@@ -4555,9 +4566,9 @@ int main(int argc , char* argv[]) {
 
 	screen = GFX_init(MODE_MENU);
 	PAD_init();
-	DEVICE_WIDTH = screen->w; // yea or nay?
-	DEVICE_HEIGHT = screen->h; // yea or nay?
-	DEVICE_PITCH = screen->pitch; // yea or nay?
+	DEVICE_WIDTH = screen->w;
+	DEVICE_HEIGHT = screen->h;
+	DEVICE_PITCH = screen->pitch;
 	// LOG_info("DEVICE_SIZE: %ix%i (%i)\n", DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	
 	VIB_init();

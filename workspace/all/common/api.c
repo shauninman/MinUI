@@ -221,6 +221,8 @@ void GFX_sync(void) {
 	}
 }
 
+FALLBACK_IMPLEMENTATION int PLAT_supportsOverscan(void) { return 0; }
+
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding) {
 	int text_width;
 	strcpy(out_name, in_name);

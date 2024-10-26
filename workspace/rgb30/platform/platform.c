@@ -587,6 +587,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	vid.blit = NULL;
 }
 
+int PLAT_supportsOverscan(void) { return 1; }
+
 ///////////////////////////////
 
 // TODO: 
