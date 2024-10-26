@@ -183,3 +183,6 @@ void SetHDMI(int value) {
 	if (value) SetRawVolume(100); // max
 	else SetVolume(GetVolume()); // restore
 }
+
+int GetMute(void) { return 0; }
+void SetMute(int value) {}

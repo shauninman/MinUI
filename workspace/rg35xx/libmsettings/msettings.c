@@ -158,3 +158,6 @@ int GetHDMI(void) {
 void SetHDMI(int value) {
 	// buh
 }
+
+int GetMute(void) { return 0; }
+void SetMute(int value) {}

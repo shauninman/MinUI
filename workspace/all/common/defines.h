@@ -113,6 +113,10 @@
 #define JOY_MENU_ALT JOY_NA
 #endif
 
+#ifndef JOY_MENU_ALT2
+#define JOY_MENU_ALT2 JOY_NA
+#endif
+
 #ifndef AXIS_L2
 #define AXIS_L2	AXIS_NA
 #define AXIS_R2	AXIS_NA

@@ -162,3 +162,6 @@ void SetJack(int value) {
 
 int GetHDMI(void) {	return 0; }
 void SetHDMI(int value) { /* buh */ }
+
+int GetMute(void) { return 0; }
+void SetMute(int value) {}

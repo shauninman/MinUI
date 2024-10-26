@@ -1069,7 +1069,8 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	}
 	LOG_info("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
 #endif	
-
+	
+	memset(&snd, 0, sizeof(struct SND_Context));
 	snd.frame_rate = frame_rate;
 
 	SDL_AudioSpec spec_in;
@@ -1226,6 +1227,7 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 			else if (joy==JOY_SELECT)	{ btn = BTN_SELECT; 		id = BTN_ID_SELECT; }
 			else if (joy==JOY_MENU)		{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
 			else if (joy==JOY_MENU_ALT) { btn = BTN_MENU; 			id = BTN_ID_MENU; }
+			else if (joy==JOY_MENU_ALT2){ btn = BTN_MENU; 			id = BTN_ID_MENU; }
 			else if (joy==JOY_L1)		{ btn = BTN_L1; 			id = BTN_ID_L1; }
 			else if (joy==JOY_L2)		{ btn = BTN_L2; 			id = BTN_ID_L2; }
 			else if (joy==JOY_R1)		{ btn = BTN_R1; 			id = BTN_ID_R1; }
@@ -1477,6 +1479,8 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	static uint32_t setting_shown_at = 0; // timestamp when settings started being shown
 	static uint32_t power_pressed_at = 0; // timestamp when power button was just pressed
 	static uint32_t mod_unpressed_at = 0; // timestamp of last time settings modifier key was NOT down
+	static uint32_t was_muted = -1;
+	if (was_muted==-1) was_muted = GetMute();
 	
 	static int was_charging = -1;
 	if (was_charging==-1) was_charging = pwr.is_charging;
@@ -1551,6 +1555,13 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		else {
 			show_setting = 2;
 		}
+	}
+	
+	int muted = GetMute();
+	if (muted!=was_muted) {
+		was_muted = muted;
+		show_setting = 2;
+		setting_shown_at = now;
 	}
 	
 	if (show_setting) dirty = 1; // shm is slow or keymon is catching input on the next frame
