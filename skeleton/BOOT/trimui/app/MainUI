@@ -5,7 +5,7 @@
 SDCARD_PATH=/mnt/SDCARD
 cd "$SDCARD_PATH/trimui/app"
 
-# smart pro
+# smart pro/brick
 if [ -f /usr/trimui/bin/runtrimui.sh ] && [ ! -f /usr/trimui/bin/runtrimui-original.sh ]; then
 	mv /usr/trimui/bin/runtrimui.sh /usr/trimui/bin/runtrimui-original.sh
 	cp ./runtrimui.sh /usr/trimui/bin/
