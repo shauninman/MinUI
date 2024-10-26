@@ -40,7 +40,7 @@ fi
 
 # var
 SIZE_OFFSET=$((DTB_OFFSET+4))
-DTB_SIZE=$((0x`xxd -s $SIZE_OFFSET -l 4 -ps $DEV_PATH`))
+DTB_SIZE=$((0x`xxd -s $SIZE_OFFSET -l4 -ps $DEV_PATH`))
 
 dd if=$DEV_PATH of=$DT_NAME.dtb bs=1 skip=$DTB_OFFSET count=$DTB_SIZE 2>/dev/null # extract
 dtc -I dtb -O dts -o $DT_NAME.dts $DT_NAME.dtb 2>/dev/null # decompile
@@ -84,6 +84,7 @@ echo "    CF HT  VT  (BL)"
 echo "IN  $CF-$HT-$VT ($BL)"
 
 # match to known (incorrect) values
+CF_OFFSET=0
 HT_OFFSET=0
 VT_OFFSET=0
 case $CF-$HT-$VT in
@@ -118,11 +119,15 @@ case $CF-$HT-$VT in
 	echo "known good config"
 	BL=51
 	;;
+36-812-756) # CubeXX
+	CF_OFFSET=1 # 37
+	;;
 esac
 
 # update values or bail
-BL_OFFSET=$((HT_OFFSET+VT_OFFSET))
+BL_OFFSET=$((CF_OFFSET+HT_OFFSET+VT_OFFSET))
 if [ $BL_OFFSET -ne 0 ]; then
+	CF=$((CF+CF_OFFSET))
 	HT=$((HT+HT_OFFSET))
 	VT=$((VT+VT_OFFSET))
 	BL=$((BL-BL_OFFSET))
@@ -143,6 +148,7 @@ echo "OUT $CF-$HT-$VT ($BL)"
 # dupe and inject updated values
 MOD_PATH=$DT_NAME-mod.dts
 cp $DT_NAME.dts $MOD_PATH
+sed -i "s/\(lcd_dclk_freq = <\)0x[0-9A-Fa-f]\+/\1$CF/" "$MOD_PATH"
 sed -i "s/\(lcd_ht = <\)0x[0-9A-Fa-f]\+/\1$HT/" "$MOD_PATH"
 sed -i "s/\(lcd_vt = <\)0x[0-9A-Fa-f]\+/\1$VT/" "$MOD_PATH"
 sed -i "s/\(lcd_backlight = <\)0x[0-9A-Fa-f]\+/\1$BL/" "$MOD_PATH"
