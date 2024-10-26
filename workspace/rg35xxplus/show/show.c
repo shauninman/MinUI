@@ -4,11 +4,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#define FIXED_WIDTH		640
-#define FIXED_HEIGHT	480
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)
-#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
 
 #define RGBA_MASK_565	0xF800, 0x07E0, 0x001F, 0x0000
 
@@ -27,15 +24,18 @@ int main(int argc , char* argv[]) {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
-	int w = FIXED_WIDTH;
-	int h = FIXED_HEIGHT;
-	int p = FIXED_PITCH;
+	int w = 0;
+	int h = 0;
+	int p = 0;
 	SDL_Window* window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	
 	int rotate = 0;
 	SDL_DisplayMode mode;
 	SDL_GetCurrentDisplayMode(0, &mode);
 	if (mode.h>mode.w) rotate = 3;
+	w = mode.w;
+	h = mode.h;
+	p = mode.w * FIXED_BPP;
 	
 	SDL_Renderer* renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
