@@ -126,7 +126,6 @@
 
 #define SDCARD_PATH "/Users/shauninman/Projects/Personal/MinUI/workspace/macos/FAKESD"
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
-// #define CROP_OVERSCAN
 
 ///////////////////////////////
 

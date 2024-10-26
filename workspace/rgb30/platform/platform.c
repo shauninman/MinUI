@@ -539,7 +539,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
 	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
 	if (vid.blit->aspect==0) { // native or cropped
-		LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
+		// LOG_info("src_rect %i,%i %ix%i\n",src_									rect->x,src_rect->y,src_rect->w,src_rect->h);
 
 		int w = vid.blit->src_w * vid.blit->scale;
 		int h = vid.blit->src_h * vid.blit->scale;
@@ -550,7 +550,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		dst_rect->w = w;
 		dst_rect->h = h;
 		
-		LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
+		// LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
 	}
 	else if (vid.blit->aspect>0) { // aspect
 		int h = device_height;
