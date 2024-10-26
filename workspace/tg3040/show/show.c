@@ -22,8 +22,8 @@ int main(int argc , char* argv[]) {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
-	int w = 1280;
-	int h = 720;
+	int w = 1024;
+	int h = 768;
 	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	puts("");
 	
