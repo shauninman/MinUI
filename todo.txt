@@ -2,16 +2,32 @@ Changes
 
 BASE
 
-- all: fixed resume issue after loading empty slot
-- rg35xx+miyoomini: fixed Screen Effect initialization
-- my282: improved stability for some devices
-- gkdpixel: fixed debug hud crash
+- tg3040: added initial Trimui Brick support
+- tg5040 + tg3040: FN switch now toggles volume/rumble mute
+- tg5040: fixed fullscreen/screen effect combination crash
 
 EXTRAS
 
-- 
+- tg3040: added initial Trimui Brick support
 
 ---
+
+tg3040
+	check brightness curve
+	has dpad hatswitch issue with default SDL2 input
+	clock has gmt issue
+	randomly get black screen when exiting menu after changing screen effect
+		mali driver not freeing memory?
+rpmini
+	evaluating batocera and rocknix as a base
+	requires ota update to enable booting direct
+		might also enable installing linux to emmc
+	currently seeing scaling artifacts (variable width pixel columns/rows) when blitting 1:1
+		suspect it's the sytem level rotation
+		hoping it's not the physical pixels in the panel
+		causes grid effects to look terrible
+		see rpmini/tmp/sdltest
+			not going to work on this anymore until it can be resolved
 
 next
 	standard show/say/confirm.elf?
@@ -49,8 +65,6 @@ next
 		
 	slow buildroot evtest
 		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084
-	
-	add tg3040 (Trimui Brick) support
 	
 	mgba (at least on the mm+) doesn't like zipped roms
 		try to reproduce on something with adb or ssh
