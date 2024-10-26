@@ -23,6 +23,7 @@
 #define CODE_MENU		316
 #define CODE_PLUS		115
 #define CODE_MINUS		114
+#define CODE_MUTE		1
 #define CODE_JACK		2
 
 // keymon and api might need different codes
@@ -77,9 +78,16 @@ int main (int argc, char *argv[]) {
 			while(read(input, &ev, sizeof(ev))==sizeof(ev)) {
 				if (ignore) continue;
 				val = ev.value;
-				if (ev.type==EV_SW && ev.code==CODE_JACK) {
+				if (ev.type==EV_SW) {
+					printf("switch: %i\n", ev.code);
+					if (ev.code==CODE_JACK) {
 					printf("jack: %i\n", val);
 					SetJack(val);
+				}
+					else if (ev.code==CODE_MUTE) {
+						printf("mute: %i\n", val);
+						SetMute(val);
+					}
 				}
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
 				printf("code: %i (%i)\n", ev.code, val); fflush(stdout);

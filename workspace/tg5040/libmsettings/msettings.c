@@ -15,13 +15,14 @@
 
 ///////////////////////////////////////
 
-#define SETTINGS_VERSION 2
+#define SETTINGS_VERSION 3
 typedef struct Settings {
 	int version; // future proofing
 	int brightness;
 	int headphones;
 	int speaker;
-	int unused[3]; // for future use
+	int mute;
+	int unused[2]; // for future use
 	// NOTE: doesn't really need to be persisted but still needs to be shared
 	int jack; 
 } Settings;
@@ -30,6 +31,7 @@ static Settings DefaultSettings = {
 	.brightness = 2,
 	.headphones = 4,
 	.speaker = 8,
+	.mute = 0,
 	.jack = 0,
 };
 static Settings* settings;
@@ -85,6 +87,7 @@ void InitSettings(void) {
 		// these shouldn't be persisted
 		// settings->jack = 0;
 		// settings->hdmi = 0;
+		settings->mute = 0;
 	}
 	// printf("brightness: %i\nspeaker: %i \n", settings->brightness, settings->speaker);
 	 
@@ -134,9 +137,11 @@ void SetBrightness(int value) {
 }
 
 int GetVolume(void) { // 0-20
+	if (settings->mute) return 0;
 	return settings->jack ? settings->headphones : settings->speaker;
 }
 void SetVolume(int value) { // 0-20
+	if (settings->mute) return SetRawVolume(0);
 	// if (settings->hdmi) return;
 	
 	if (settings->jack) settings->headphones = value;
@@ -163,6 +168,7 @@ void SetRawBrightness(int val) { // 0 - 255
 }
 void SetRawVolume(int val) { // 0 or 96 - 160
 	printf("SetRawVolume(%i)\n", val); fflush(stdout);
+	if (settings->mute) val = 0;
 	
 	char cmd[256];
 	sprintf(cmd, "amixer sset 'DAC volume' %i &> /dev/null", val);
@@ -217,4 +223,12 @@ void SetHDMI(int value) {
 	// settings->hdmi = value;
 	// if (value) SetRawVolume(100); // max
 	// else SetVolume(GetVolume()); // restore
+}
+int GetMute(void) {
+	return settings->mute;
+}
+void SetMute(int value) {
+	settings->mute = value;
+	if (settings->mute) SetRawVolume(0);
+	else SetVolume(GetVolume());
 }

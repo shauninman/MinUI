@@ -418,7 +418,7 @@ void PLAT_setCPUSpeed(int speed) {
 
 #define RUMBLE_PATH "/sys/class/gpio/gpio227/value"
 void PLAT_setRumble(int strength) {
-	putInt(RUMBLE_PATH, strength?1:0);
+	putInt(RUMBLE_PATH, (strength && !GetMute())?1:0);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
