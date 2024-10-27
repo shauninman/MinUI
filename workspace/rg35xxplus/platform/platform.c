@@ -19,6 +19,8 @@
 
 #include "scaler.h"
 
+int is_cubexx = 0;
+
 ///////////////////////////////
 
 #define RAW_UP		103
@@ -256,6 +258,8 @@ static int device_pitch;
 static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
+	
+	is_cubexx = exactMatch("RGcubexx", getenv("RGXX_MODEL"));
 	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
@@ -563,29 +567,36 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	// LOG_info("blit blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
 	
 	SDL_Texture* target = vid.texture;
+	int x = vid.blit->src_x;
+	int y = vid.blit->src_y;
 	int w = vid.blit->src_w;
 	int h = vid.blit->src_h;
 	if (vid.sharpness==SHARPNESS_CRISP) {
 		SDL_SetRenderTarget(vid.renderer,vid.target);
 		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_SetRenderTarget(vid.renderer,NULL);
+		x *= hard_scale;
+		y *= hard_scale;
 		w *= hard_scale;
 		h *= hard_scale;
 		target = vid.target;
 	}
 	
-	SDL_Rect* src_rect = &(SDL_Rect){0,0,w,h};
+	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
 	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
 	if (vid.blit->aspect==0) { // native or cropped
+		// LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
+
 		int w = vid.blit->src_w * vid.blit->scale;
 		int h = vid.blit->src_h * vid.blit->scale;
 		int x = (device_width - w) / 2;
 		int y = (device_height - h) / 2;
-		// dst_rect = &(SDL_Rect){x,y,w,h};
 		dst_rect->x = x;
 		dst_rect->y = y;
 		dst_rect->w = w;
 		dst_rect->h = h;
+		
+		// LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
 	}
 	else if (vid.blit->aspect>0) { // aspect
 		int h = device_height;
@@ -619,11 +630,14 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){ox,oy,device_width,device_height});
 	}
+	
 	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
 	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
 	vid.blit = NULL;
 }
+
+int PLAT_supportsOverscan(void) { return is_cubexx; }
 
 ///////////////////////////////
 
@@ -731,6 +745,8 @@ char* PLAT_getModel(void) {
 	// firmware "strings /mnt/vendor/bin/dmenu.bin | grep ^20"
 	char* _model = getenv("RGXX_MODEL");
 	if (_model!=NULL) {
+		if (exactMatch(_model,"RGcubexx")) _model = "RG CubeXX";
+		
 		sprintf(model, "Anbernic %s", _model);
 		char* tmp = strrchr(model, '_');
 		if (tmp) *tmp = '\0';

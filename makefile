@@ -121,9 +121,16 @@ special:
 
 tidy:
 	# ----------------------------------------------------
-	# remove systems we're not ready to support yet
-	
-	# TODO: tmp, figure out a cleaner way to do this
+	# copy rg40xxcube from rg35xxplus
+	-cp -Rn ./build/SYSTEM/rg35xxplus/ ./build/SYSTEM/rg40xxcube/
+	-cp -Rn ./build/EXTRAS/Emus/rg35xxplus/ ./build/EXTRAS/Emus/rg40xxcube/
+	-cp -Rn ./build/EXTRAS/Tools/rg35xxplus/ ./build/EXTRAS/Tools/rg40xxcube/
+	# then patch the binaries
+	LC_ALL=C find ./build/SYSTEM/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
+	LC_ALL=C find ./build/EXTRAS/Emus/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
+	LC_ALL=C find ./build/EXTRAS/Tools/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +	
+
+	# remove various detritus
 	rm -rf ./build/EXTRAS/Tools/tg5040/Developer.pak
 
 package: tidy

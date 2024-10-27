@@ -60,7 +60,7 @@ MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware.
 
 Copy "/rg35xx/dmenu.bin" (just the file) to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
-RG35XX PLUS / RG35XX H / RG35XX 2024 / RG28XX / RG35XXSP / RG40XXH
+RG35XX PLUS / RG35XX H / RG35XX 2024 / RG28XX / RG35XXSP / RG40XXH / RGCUBEXX
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it. (Note that the PLUS/H/2024/SP stock TF1 is not compatible with the 28XX/40XXH and vice versa.)
 

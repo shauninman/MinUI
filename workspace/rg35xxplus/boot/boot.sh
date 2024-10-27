@@ -2,10 +2,23 @@
 
 TF1_PATH=/mnt/mmc # TF1/NO NAME partition
 TF2_PATH=/mnt/sdcard # TF2
+
+rm $TF1_PATH/log.txt
+touch $TF1_PATH/log.txt
+
+PLATFORM="rg35xxplus"
+RGXX_MODEL=`strings /mnt/vendor/bin/dmenu.bin | grep ^RG`
+if [ "$RGXX_MODEL" = "RGcubexx" ]; then
+	echo "detected RG CubeXX" >> $TF1_PATH/log.txt
+	PLATFORM="rg40xxcube"
+else
+	echo "detected non-square XX device" >> $TF1_PATH/log.txt
+fi
+
 FLAG_PATH=$TF1_PATH/.minstalled
 SDCARD_PATH=$TF1_PATH
 SYSTEM_DIR=/.system
-SYSTEM_FRAG=$SYSTEM_DIR/rg35xxplus
+SYSTEM_FRAG=$SYSTEM_DIR/$PLATFORM
 UPDATE_FRAG=/MinUI.zip
 SYSTEM_PATH=${SDCARD_PATH}${SYSTEM_FRAG}
 UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
@@ -13,9 +26,6 @@ UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
 # rm /mnt/sdcard
 # mkdir -p /mnt/sdcard
 # poweroff
-
-rm $TF1_PATH/log.txt
-touch $TF1_PATH/log.txt
 
 if [ -h $TF2_PATH ] && [ "$TF2_PATH" -ef "$TF1_PATH" ]; then
 	echo "deleting old TF2 -> TF1 symlink" >> $TF1_PATH/log.txt
@@ -61,6 +71,10 @@ if [ -f $UPDATE_PATH ]; then
 		echo "rotated framebuffer" >> $TF1_PATH/log.txt
 		;;
 	esac
+	
+	if [ "$RGXX_MODEL" = "RGcubexx" ]; then
+		SUFFIX="-s"
+	fi
 	
 	if [ ! -d $SYSTEM_PATH ]; then
 		ACTION=installing

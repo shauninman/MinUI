@@ -5,12 +5,18 @@ BASE
 - tg3040: added initial Trimui Brick support
 - tg5040 + tg3040: FN switch now toggles volume/rumble mute
 - tg5040: fixed fullscreen/screen effect combination crash
+- rgcubexx: added initial RG CubeXX support
+	
 
 EXTRAS
 
 - tg3040: added initial Trimui Brick support
+- rgcubexx: added initial RG CubeXX support
 
 ---
+
+rgcubexx
+	readme
 
 tg3040
 	check brightness curve
