@@ -19,9 +19,15 @@ rgcubexx
 	-
 
 tg3040
-	autoresume doesn't detect mute switch?
-	check brightness curve
+	mute switch is polled at 1fps in trimui_inputd
+		you can feel that latency
+		should keymon poll /sys/class/gpio/gpio243/value directly?
+		
 	might have dpad hatswitch issue with default SDL2 input
+		confirmed :sob:
+		can't find dtb, hopefully this isn't a custom (closed source) driver issue
+		reported to trimui
+		
 	clock has gmt issue
 	randomly get black screen when exiting menu after changing screen effect
 		mali driver not freeing memory?

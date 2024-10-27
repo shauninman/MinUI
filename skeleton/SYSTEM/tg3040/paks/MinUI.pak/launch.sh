@@ -48,10 +48,6 @@ echo -n 0 > /sys/class/gpio/gpio227/value
 echo 243 > /sys/class/gpio/export
 echo -n in > /sys/class/gpio/gpio243/direction
 
-export LD_LIBRARY_PATH=/usr/trimui/lib
-cd /usr/trimui/bin
-./trimui_inputd &
-
 #######################################
 
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:/usr/trimui/lib:$LD_LIBRARY_PATH
@@ -59,6 +55,11 @@ export PATH=$SYSTEM_PATH/bin:/usr/trimui/bin:$PATH
 
 # leds_off
 echo 0 > /sys/class/led_anim/max_scale
+echo 0 > /sys/class/led_anim/max_scale_lr
+echo 0 > /sys/class/led_anim/max_scale_f1f2
+
+# start stock gpio input daemon
+trimui_inputd &
 
 echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
