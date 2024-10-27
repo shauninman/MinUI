@@ -1206,8 +1206,10 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 			else if (code==CODE_MENU_ALT)	{ btn = BTN_MENU; 			id = BTN_ID_MENU; }
 			else if (code==CODE_L1)			{ btn = BTN_L1; 			id = BTN_ID_L1; }
 			else if (code==CODE_L2)			{ btn = BTN_L2; 			id = BTN_ID_L2; }
+			else if (code==CODE_L3)			{ btn = BTN_L3; 			id = BTN_ID_L3; }
 			else if (code==CODE_R1)			{ btn = BTN_R1; 			id = BTN_ID_R1; }
 			else if (code==CODE_R2)			{ btn = BTN_R2; 			id = BTN_ID_R2; }
+			else if (code==CODE_R3)			{ btn = BTN_R3; 			id = BTN_ID_R3; }
 			else if (code==CODE_PLUS)		{ btn = BTN_PLUS; 			id = BTN_ID_PLUS; }
 			else if (code==CODE_MINUS)		{ btn = BTN_MINUS; 			id = BTN_ID_MINUS; }
 			else if (code==CODE_POWER)		{ btn = BTN_POWER; 			id = BTN_ID_POWER; }
@@ -1232,8 +1234,10 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 			else if (joy==JOY_MENU_ALT2){ btn = BTN_MENU; 			id = BTN_ID_MENU; }
 			else if (joy==JOY_L1)		{ btn = BTN_L1; 			id = BTN_ID_L1; }
 			else if (joy==JOY_L2)		{ btn = BTN_L2; 			id = BTN_ID_L2; }
+			else if (joy==JOY_L3)		{ btn = BTN_L3; 			id = BTN_ID_L3; }
 			else if (joy==JOY_R1)		{ btn = BTN_R1; 			id = BTN_ID_R1; }
 			else if (joy==JOY_R2)		{ btn = BTN_R2; 			id = BTN_ID_R2; }
+			else if (joy==JOY_R3)		{ btn = BTN_R3; 			id = BTN_ID_R3; }
 			else if (joy==JOY_PLUS)		{ btn = BTN_PLUS; 			id = BTN_ID_PLUS; }
 			else if (joy==JOY_MINUS)	{ btn = BTN_MINUS; 			id = BTN_ID_MINUS; }
 			else if (joy==JOY_POWER)	{ btn = BTN_POWER; 			id = BTN_ID_POWER; }

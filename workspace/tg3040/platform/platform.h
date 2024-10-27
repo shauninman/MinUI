@@ -70,8 +70,8 @@
 #define JOY_LEFT		JOY_NA
 #define JOY_RIGHT		JOY_NA
 
-#define JOY_SELECT		9
-#define JOY_START		10
+#define JOY_SELECT		6
+#define JOY_START		7
 
 // TODO: these ended up swapped in the first public release of stock :sob:
 #define JOY_A			1
@@ -83,12 +83,10 @@
 #define JOY_R1			5
 #define JOY_L2			JOY_NA
 #define JOY_R2			JOY_NA
-#define JOY_L3			JOY_NA
-#define JOY_R3			JOY_NA
+#define JOY_L3			9
+#define JOY_R3			10
 
 #define JOY_MENU		8
-#define JOY_MENU_ALT	7
-#define JOY_MENU_ALT2	6
 #define JOY_POWER		102
 #define JOY_PLUS		14
 #define JOY_MINUS		13

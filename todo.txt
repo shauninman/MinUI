@@ -16,11 +16,12 @@ EXTRAS
 ---
 
 rgcubexx
-	readme
+	-
 
 tg3040
+	autoresume doesn't detect mute switch?
 	check brightness curve
-	has dpad hatswitch issue with default SDL2 input
+	might have dpad hatswitch issue with default SDL2 input
 	clock has gmt issue
 	randomly get black screen when exiting menu after changing screen effect
 		mali driver not freeing memory?
