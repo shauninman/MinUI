@@ -815,7 +815,7 @@ static inline char* getScreenScalingDesc(void) {
 		return "Native uses integer scaling. Aspect uses core\nreported aspect ratio. Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.";
 	}
 	else {
-		return "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nFullscreen has non-squarepixels.";
+		return "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nFullscreen has non-square pixels.";
 	}
 }
 static inline int getScreenScalingCount(void) {
