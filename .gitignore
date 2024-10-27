@@ -16,6 +16,7 @@ libretro-common
 **/squashfs/output
 
 **/other/evtest
+**/other/jstest
 **/other/dtc
 **/other/sdl
 **/other/sdl2
