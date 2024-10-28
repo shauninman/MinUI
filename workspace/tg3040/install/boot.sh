@@ -15,8 +15,12 @@ if [ -f "$UPDATE_PATH" ]; then
 	export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
 	export PATH=/usr/trimui/bin:$PATH
 
+	# leds_off
+	echo 0 > /sys/class/led_anim/max_scale
+	echo 0 > /sys/class/led_anim/max_scale_lr
+	echo 0 > /sys/class/led_anim/max_scale_f1f2
+
 	cd $(dirname "$0")/$PLATFORM
-	./leds_off
 	if [ -d "$SYSTEM_PATH" ]; then
 		./show.elf ./updating.png
 	else
