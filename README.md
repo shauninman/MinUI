@@ -73,13 +73,15 @@ Extras:
 | Anbernic RG35xxSP | MinUI-20240525-0 | Maintained |
 | Anbernic RG40xxH | MinUI-20240717-1 | Maintained |
 | Anbernic RG40xxV | MinUI-20240831-0 | Maintained | 
+| Anbernic RG CubeXX | MinUI-202401028-0 | Active | 
 | GKD Pixel | MinUI-20240120b-1 | Maintained |
 | M17 | MinUI-20231126b-2 | Maintained |
-| MagicX XU Mini M | MinUI-20240831-0 | Active | 
+| MagicX XU Mini M | MinUI-20240831-0 | Maintained | 
 | Miyoo A30 | MinUI-20240705-0 | Maintained |
 | Miyoo Mini | MinUI-20230922b-2 | Maintained |
 | Miyoo Mini Plus | MinUI-20230922b-2 | Maintained |
 | Powkiddy RGB30 | MinUI-20231014b-1 | Maintained |
+| Trimui Brick | MinUI-20241028-0 | Active |
 | Trimui Smart | MinUI-20230922b-2 | Maintained |
 | Trimui Smart Pro | MinUI-20231111b-2 | Maintained |
 
