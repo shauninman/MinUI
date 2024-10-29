@@ -2,16 +2,12 @@ Changes
 
 BASE
 
-- rgcubexx: added initial RG CubeXX support
-- tg3040: added initial Trimui Brick support
-- tg5040 + tg3040: FN switch now toggles volume/rumble mute
-- tg5040: fixed fullscreen/screen effect combination crash
+- tg3040: fixed led install/update/sleep behaviour on 20241020 ofw
 	
 
 EXTRAS
 
-- rgcubexx: added initial RG CubeXX support
-- tg3040: added initial Trimui Brick support
+-
 
 ---
 
@@ -24,7 +20,6 @@ rgcubexx
 		and unzip
 
 tg3040
-	leds don't turn off during install/update
 	mute switch is polled at 1fps in trimui_inputd
 		you can feel that latency
 		should keymon poll /sys/class/gpio/gpio243/value directly?

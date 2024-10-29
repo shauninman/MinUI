@@ -375,15 +375,21 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
-#define LED_PATH "/sys/class/led_anim/max_scale"
+#define LED_PATH1 "/sys/class/led_anim/max_scale"
+#define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
+#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		SetBrightness(GetBrightness());
-		putInt(LED_PATH,0);
+		putInt(LED_PATH1,0);
+		// putInt(LED_PATH2,0);
+		putInt(LED_PATH3,0);
 	}
 	else {
 		SetRawBrightness(0);
-		putInt(LED_PATH,52); // 52 seems to be the max brightness
+		putInt(LED_PATH1,60);
+		// putInt(LED_PATH2,60);
+		putInt(LED_PATH3,60);
 	}
 }
 
