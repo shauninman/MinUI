@@ -7,7 +7,7 @@ BASE
 
 EXTRAS
 
--
+- tg3040: updated Bootlogo.pak for 20241101 ofw
 
 ---
 
@@ -20,6 +20,11 @@ rgcubexx
 		and unzip
 
 tg3040
+	redo Bootlogo.pak
+		done
+		can similar tactics be employed on other devices?
+			eg. smart pro?
+	
 	mute switch is polled at 1fps in trimui_inputd
 		you can feel that latency
 		should keymon poll /sys/class/gpio/gpio243/value directly?
