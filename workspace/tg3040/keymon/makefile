@@ -7,7 +7,7 @@ endif
 TARGET = keymon
 
 CC = $(CROSS_COMPILE)gcc
-CFLAGS	= -Os -lmsettings -lrt -ldl -Wl,--gc-sections -s
+CFLAGS	= -Os -lmsettings -lpthread -lrt -ldl -Wl,--gc-sections -s
 CFLAGS  += -I. -I../../all/common -I../platform/ -DPLATFORM=\"$(UNION_PLATFORM)\"
 
 all:

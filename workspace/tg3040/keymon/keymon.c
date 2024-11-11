@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <linux/input.h>
+#include <pthread.h>
 
 #include <msettings.h>
 
@@ -35,13 +36,45 @@
 #define PRESSED		1
 #define REPEAT		2
 
+#define MUTE_STATE_PATH "/sys/class/gpio/gpio243/value"
 
 #define INPUT_COUNT 4
 static int inputs[INPUT_COUNT] = {};
 static struct input_event ev;
 
+static int getInt(char* path) {
+	int i = 0;
+	FILE *file = fopen(path, "r");
+	if (file!=NULL) {
+		fscanf(file, "%i", &i);
+		fclose(file);
+	}
+	return i;
+}
+
+static pthread_t mute_pt;
+static void* watchMute(void *arg) {
+	int is_muted,was_muted;
+	
+	is_muted = was_muted = getInt(MUTE_STATE_PATH);
+	SetMute(is_muted);
+	
+	while(1) {
+		usleep(200000); // 5 times per second
+		
+		is_muted = getInt(MUTE_STATE_PATH);
+		if (was_muted!=is_muted) {
+			was_muted = is_muted;
+			SetMute(is_muted);
+		}
+	}
+	
+	return 0;
+}
+
 int main (int argc, char *argv[]) {
 	InitSettings();
+	pthread_create(&mute_pt, NULL, &watchMute, NULL);
 	
 	char path[32];
 	for (int i=0; i<INPUT_COUNT; i++) {
