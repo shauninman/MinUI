@@ -2,6 +2,8 @@ Changes
 
 BASE
 
+- tg3040: increase mute switch poll rate
+- tg3040: revised brightness ramp
 - tg3040+tg5040: fixed screen effect-related crashes
 - tg3040: fixed led install/update/sleep behaviour on 20241020 ofw
 	
@@ -12,6 +14,16 @@ EXTRAS
 
 ---
 
+it's time to retire some supported devices
+	devices running SDL1.2
+		gkdpixel
+		trimuismart
+		rg35xx (non-h700)
+		miyoomini (and plus)
+	devices that have been superceded
+		rgb30
+	finish updating README (don't forget BASE readme!)
+
 gambatte
 	can I write the lightest palette value to /tmp so I can use it for gridlines for GB?
 	
@@ -19,6 +31,7 @@ rgcubexx
 	test native pico8
 		sdl2 is missing haptic support
 		and unzip
+		sigh
 
 tg3040
 	update toolchain's SDL2 headers to 2.30.8?
@@ -31,17 +44,10 @@ tg3040
 		can similar tactics be employed on other devices?
 			eg. smart pro?
 	
-	might have dpad hatswitch issue with default SDL2 input
-		confirmed :sob:
-		can't find dtb, hopefully this isn't a custom (closed source) driver issue
-		reported to trimui
-			they are working on a fix
-			I have an updated trimui_inputd that is mostly fixed
-				it's just spamming release events now (but SDL2 seems to be filtering the noise)
-		fixed with latest firmware
-			still need to evtest it
-		
 	clock has gmt issue
+		I think I fixed this but the change will affect all platforms 
+		so I may need to update MinUI.pak/launch.sh across the board
+		
 rpmini
 	evaluating batocera and rocknix as a base
 	requires ota update to enable booting direct
