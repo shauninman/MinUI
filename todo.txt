@@ -2,15 +2,15 @@ Changes
 
 BASE
 
-- tg3040: increase mute switch poll rate
-- tg3040: revised brightness ramp
+- tg3040+tg5040: improved mute switch responsiveness
 - tg3040+tg5040: fixed screen effect-related crashes
+- tg3040: revised brightness ramp
 - tg3040: fixed led install/update/sleep behaviour on 20241020 ofw
 	
 
 EXTRAS
 
-- tg3040: updated Bootlogo.pak for 20241101 ofw
+- tg3040+tg5040: updated Bootlogo.pak
 
 ---
 
