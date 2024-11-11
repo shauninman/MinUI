@@ -51,6 +51,13 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
+	SDL_version compiled;
+	SDL_version linked;
+	SDL_VERSION(&compiled);
+	SDL_GetVersion(&linked);
+	LOG_info("Compiled SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
+	LOG_info("Linked SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+	
 	LOG_info("Available video drivers:\n");
 	for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
 		LOG_info("- %s\n", SDL_GetVideoDriver(i));
@@ -168,63 +175,74 @@ void PLAT_setNearestNeighbor(int enabled) {
 void PLAT_setSharpness(int sharpness) {
 	// buh
 }
-static int effect_scale = 1;
-static int effect_type = EFFECT_NONE;
-static int next_scale = 1;
-static int next_effect = EFFECT_NONE;
+
+static struct FX_Context {
+	int scale;
+	int type;
+	int next_scale;
+	int next_type;
+	int live_type;
+} effect = {
+	.scale = 1,
+	.next_scale = 1,
+	.type = EFFECT_NONE,
+	.next_type = EFFECT_NONE,
+	.live_type = EFFECT_NONE,
+};
 static void updateEffect(void) {
-	if (next_scale==effect_scale && next_effect==effect_type) return; // unchanged
+	if (effect.next_scale==effect.scale && effect.next_type==effect.type) return; // unchanged
 	
-	effect_scale = next_scale;
-	effect_type = next_effect;
+	int live_scale = effect.scale;
+	effect.scale = effect.next_scale;
+	effect.type = effect.next_type;
 	
-	if (vid.effect) SDL_DestroyTexture(vid.effect);
-	if (effect_type==EFFECT_NONE) return;
+	if (effect.type==EFFECT_NONE) return; // disabled
+	if (effect.type==effect.live_type && effect.scale==live_scale) return; // already loaded
 	
 	char* effect_path;
 	int opacity = 128; // 1 - 1/2 = 50%
-	if (effect_type==EFFECT_LINE) {
-		if (effect_scale<3) {
+	if (effect.type==EFFECT_LINE) {
+		if (effect.scale<3) {
 			effect_path = RES_PATH "/line-2.png";
 		}
-		else if (effect_scale<4) {
+		else if (effect.scale<4) {
 			effect_path = RES_PATH "/line-3.png";
 		}
-		else if (effect_scale<5) {
+		else if (effect.scale<5) {
 			effect_path = RES_PATH "/line-4.png";
 		}
-		else if (effect_scale<6) {
+		else if (effect.scale<6) {
 			effect_path = RES_PATH "/line-5.png";
 		}
-		else if (effect_scale<8) {
+		else if (effect.scale<8) {
 			effect_path = RES_PATH "/line-6.png";
 		}
 		else {
 			effect_path = RES_PATH "/line-8.png";
 		}
 	}
-	else if (effect_type==EFFECT_GRID) {
-		if (effect_scale<3) {
+	else if (effect.type==EFFECT_GRID) {
+		if (effect.scale<3) {
 			effect_path = RES_PATH "/grid-2.png";
 			opacity = 64; // 1 - 3/4 = 25%
 		}
-		else if (effect_scale<4) {
+		else if (effect.scale<4) {
 			effect_path = RES_PATH "/grid-3.png";
 			opacity = 112; // 1 - 5/9 = ~44%
 		}
-		else if (effect_scale<5) {
+		else if (effect.scale<5) {
 			effect_path = RES_PATH "/grid-4.png";
 			opacity = 144; // 1 - 7/16 = ~56%
 		}
-		else if (effect_scale<6) {
+		else if (effect.scale<6) {
 			effect_path = RES_PATH "/grid-5.png";
 			opacity = 160; // 1 - 9/25 = ~64%
 		}
-		else if (effect_scale<8) {
+		else if (effect.scale<8) {
 			effect_path = RES_PATH "/grid-6.png";
 			opacity = 112; // 1 - 5/9 = ~44%
 		}
-		else if (effect_scale<11) {
+		else if (effect.scale<11) {
 			effect_path = RES_PATH "/grid-8.png";
 			opacity = 144; // 1 - 7/16 = ~56%
 		}
@@ -233,16 +251,19 @@ static void updateEffect(void) {
 			opacity = 136; // 1 - 57/121 = ~52%
 		}
 	}
-	LOG_info("load effect: %s (opacity: %i)\n", effect_path, opacity);
+	
+	LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	SDL_Surface* tmp = IMG_Load(effect_path);
 	if (tmp) {
+		if (vid.effect) SDL_DestroyTexture(vid.effect);
 		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
 		SDL_SetTextureAlphaMod(vid.effect, opacity);
 		SDL_FreeSurface(tmp);
+		effect.live_type = effect.type;
 	}
 }
-void PLAT_setEffect(int effect) {
-	next_effect = effect;
+void PLAT_setEffect(int next_type) {
+	effect.next_type = next_type;
 }
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
@@ -250,7 +271,7 @@ void PLAT_vsync(int remaining) {
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 	LOG_info("getScaler for scale: %i\n", renderer->scale);
-	next_scale = renderer->scale;
+	effect.next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
@@ -317,9 +338,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
 	
 	updateEffect();
-	if (vid.blit && vid.effect) {
+	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
 		if (!dst_rect) dst_rect = &dst_r;
-		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect_scale,dst_rect->y%effect_scale,FIXED_WIDTH,FIXED_HEIGHT});
+		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect.scale,dst_rect->y%effect.scale,FIXED_WIDTH,FIXED_HEIGHT});
 	}
 
 	SDL_RenderPresent(vid.renderer);

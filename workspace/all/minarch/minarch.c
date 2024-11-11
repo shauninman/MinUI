@@ -4064,7 +4064,7 @@ static void Menu_loadState(void) {
 }
 
 static char* getAlias(char* path, char* alias) {
-	LOG_info("alias path: %s\n", path);
+	// LOG_info("alias path: %s\n", path);
 	char* tmp;
 	char map_path[256];
 	strcpy(map_path, path);
@@ -4072,11 +4072,11 @@ static char* getAlias(char* path, char* alias) {
 	if (tmp) {
 		tmp += 1;
 		strcpy(tmp, "map.txt");
-		LOG_info("map_path: %s\n", map_path);
+		// LOG_info("map_path: %s\n", map_path);
 	}
 	char* file_name = strrchr(path,'/');
 	if (file_name) file_name += 1;
-	LOG_info("file_name: %s\n", file_name);
+	// LOG_info("file_name: %s\n", file_name);
 	
 	if (exists(map_path)) {
 		FILE* file = fopen(map_path, "r");

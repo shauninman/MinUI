@@ -2,6 +2,7 @@ Changes
 
 BASE
 
+- tg3040+tg5040: fixed screen effect-related crashes
 - tg3040: fixed led install/update/sleep behaviour on 20241020 ofw
 	
 
@@ -20,6 +21,32 @@ rgcubexx
 		and unzip
 
 tg3040
+	update toolchain's SDL2 headers to 2.30.8?
+	
+	randomly get black screen when exiting menu
+		could it be caused by renderer.src being a pointer to the video callback's data buffer?
+			there is no guarantee that buffer will persist beyond the call to the video callback
+			maybe luck has just finally run out?
+			maybe not
+				I tried doing a copy when entering the menu and using that for the backing and such
+					it worked like using it directly and crashed similarly
+		changing screen effect might make it more frequent
+			I can't seem to trigger it with screen effect set to none
+		mali driver not freeing memory?
+		sometimes it segfaults (after/in resizeVideo?)
+		others there's this in the log (after/in updateEffect?):
+			corrupted size vs. prev_size
+			malloc(): memory corruption (fast)
+			Aborted
+		what if I kept around the textures (since they'll all be the same size?)
+		seen it segfault inside TTF_RenderUTF8_Blended with known good input values
+		
+		I think I need to rewrite updateEffect() to 
+			1. create a single reusable max sized texture and load the effect into it
+			2. only load when it changes
+			3. track none (used for menus) separate from actual effects
+				so I can temporarily disable an effect (for menus) without having to free and re-alloc it when opening/closing the menu
+
 	redo Bootlogo.pak
 		done
 		can similar tactics be employed on other devices?
