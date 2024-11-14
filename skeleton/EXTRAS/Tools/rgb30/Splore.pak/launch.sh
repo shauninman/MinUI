@@ -1,38 +1,31 @@
 #!/bin/sh
 
-HOME=$USERDATA_PATH/splore
-mkdir -p $HOME
-
-# cleanup beta puke
-if [ -d $USERDATA_PATH/carts ]; then
-	cd $USERDATA_PATH
-	mv activity_log.txt $HOME
-	mv backup $HOME
-	mv bbs $HOME
-	mv carts $HOME
-	mv cdata $HOME
-	mv config.txt $HOME
-	mv cstore $HOME
-	mv log.txt $HOME
-	mv plates $HOME
-	mv plates $HOME
-	mv sdl_controllers.txt $HOME
-fi
-
 DIR="$(dirname "$0")"
+PICO8_DIR="$DIR/pico-8"
+PLUS_DIR="/mnt/sdcard/Tools/rg35xxplus/Splore.pak/pico-8"
+CUBE_DIR="/mnt/sdcard/Tools/rg40xxcube/Splore.pak/pico-8"
+RGB30_DIR="/mnt/sdcard/Tools/rgb30/Splore.pak/pico-8"
+
+launch_splore() {
+	./pico8_64 -splore -joystick 0 -root_path "/mnt/sdcard/Roms/Pico-8 (P8-NATIVE)"
+}
+
 cd "$DIR"
 
-if [ ! -d ./pico-8 ]; then
+if [ ! -d "$PICO8_DIR" ]; then
 	PICO8_ZIP=$(ls -1 ./pico-8*raspi.zip 2>/dev/null | head -n 1)
 	if [[ ! -z "$PICO8_ZIP" && -f "$PICO8_ZIP" ]]; then
 		show.elf "$DIR/extracting.png" 60 &
 		unzip -o "$PICO8_ZIP" -d ./
 		cp ./sdl_controllers.txt ./pico-8
 		killall -s KILL show.elf
-	else
+	elif [ ! -d "$PLUS_DIR" ] && [ ! -d "$CUBE_DIR" ]; then
 		show.elf "$DIR/missing.png" 4
 		exit
 	fi
+# add sdl controller file if not present in pico-8 folder
+elif [ ! -f "$PICO8_DIR/sdl_controllers.txt" ]; then
+	cp "$DIR/sdl_controllers.txt" "$PICO8_DIR";
 fi
 
 # ensure correct sdl controller file is in place
@@ -41,4 +34,13 @@ if [ "$?" -eq 1 ]; then
 	cp ./sdl_controllers.txt ./pico-8;
 fi
 
-cd ./pico-8 && ./pico8_64 -splore -pixel_perfect 1 -joystick 0
+# try launching from various locations the P8 files might live
+if [ -f "$PLUS_DIR/pico8_64" ]; then
+	cd "$PLUS_DIR" && launch_splore
+elif [ -f "$CUBE_DIR/pico8_64" ]; then
+	cd "$CUBE_DIR" && launch_splore
+elif [ -f "$RGB30_DIR/pico8_64" ]; then
+	cd "$RGB30_DIR" && launch_splore
+else
+	show.elf "$DIR/missing.png" 4
+fi

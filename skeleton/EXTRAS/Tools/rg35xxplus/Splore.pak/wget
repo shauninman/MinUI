@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl -L -k "$1" -q -o "$4" > /mnt/sdcard/Tools/rg35xxplus/Splore.pak/wget.log 2>&1

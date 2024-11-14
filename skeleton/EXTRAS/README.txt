@@ -28,9 +28,17 @@ MGBA: gba_bios.bin
  SGB: sgb.bios
 
 ----------------------------------------
-Native PICO-8 and Splore.pak (RGB30-only)
+Native PICO-8 and Splore.pak (RGB30, RG35XXPlus, RG35XXH, RG28XX, RG35XXSP, RG40XXH, RG40XXV, and RGCubeXX only)
 
-Download the official PICO-8 fantasy console for the Raspberry Pi from https://lexaloffle.itch.io/pico-8 (If you've bought a bundle on itch.io any time in the last few years you might already have a copy in your library https://itch.io/my-collections) At the time of writing, the file is named "pico-8_0.2.5g_raspi.zip". Copy that zip file into "/Tools/rgb30/Splore.pak/". Copy "/Emus/rgb30/P8-NATIVE.pak", "/Tools/rgb30/Splore.pak", and "/Tools/rgb30/Wi-Fi.pak" to your SD card. (You need the Wi-Fi.pak to download PICO-8 games in Splore.pak.)
+Download the official PICO-8 fantasy console for the Raspberry Pi from https://lexaloffle.itch.io/pico-8 (If you've bought a bundle on itch.io any time in the last few years you might already have a copy in your library https://itch.io/my-collections) At the time of writing, the file is named "pico-8_0.2.6b_raspi.zip".
+
+RGB30: Copy that zip file into "/Tools/rgb30/Splore.pak/". Copy "/Emus/rgb30/P8-NATIVE.pak", "/Tools/rgb30/Splore.pak", and "/Tools/rgb30/Wi-Fi.pak" to your SD card.
+
+RG CubeXX": Extract the contents of that zip file to "/Tools/rg40xxcube/Splore.pak/pico-8". Copy "/Emus/rg40xxcube/P8-NATIVE.pak", "/Tools/rg40xxcube/Splore.pak", and "/Tools/rg40xxcube/Wi-Fi.pak" to your SD card.
+
+All others: Extract the contents of that zip file to "/Tools/rg40xxcube/Splore.pak/pico-8". Copy "/Emus/rg35xxplus/P8-NATIVE.pak", "/Tools/rg35xxplus/Splore.pak", and "/Tools/rg35xxplus/Wi-Fi.pak" to your SD card. 
+
+(You need the Wi-Fi.pak to download PICO-8 games in Splore.pak.)
 
 Place carts you would like to play with native PICO-8 in "/Roms/Pico-8 (P8-NATIVE)/".
 
@@ -41,14 +49,14 @@ To exit Splore.pak, press start. In-game select "EXIT TO SPLORE". With a cart se
 Please note that Splore.pak and P8-NATIVE.pak don't/can't implement MinUI's uniform features like the in-game menu (including save states), faux sleep, and quicksave/auto-resume.
 
 ----------------------------------------
-Wi-Fi.pak (RGB30-only)
+Wi-Fi.pak (RGB30, RG35XXPlus, RG35XXH, RG28XX, RG35XXSP, RG40XXH, RG40XXV, and RGCubeXX only)
 
 Open "wifi.txt" in a plain text editor and enter your network name and password on two separate lines and save, eg.
 
   minui
   lessismore
 
-Copy "Wi-Fi.pak" to "/Tools/rgb30/" on your SD card. The first time you open the pak (or any time you change the contents of "wifi.txt") it will update the network name and password then connect. Subsequent launches will toggle wi-fi on and off. Wi-fi will drain the battery so it's best to only enable it when you plan to use it and disable it when you're done. Your Wi-fi state persists across reboots.
+Copy "Wi-Fi.pak" to "/Tools/rgb30/", "/Tools/rg40xxcube/", or "/Tools/rg35xxplus/" on your SD card, depending on your device. The first time you open the pak (or any time you change the contents of "wifi.txt") it will update the network name and password then connect. Subsequent launches will toggle wi-fi on and off. Wi-fi will drain the battery so it's best to only enable it when you plan to use it and disable it when you're done. Your Wi-fi state persists across reboots.
 
 ----------------------------------------
 Remove Loading.pak (Miyoo A30-only)

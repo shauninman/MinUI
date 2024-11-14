@@ -1,0 +1,1 @@
+1900d60b010000000100000000010000,Deeplay-keys,a:b0,b:b1,x:b3,y:b2,back:b6,start:b7,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,rightx:a0,righty:a1,lefttrigger:b10,righttrigger:b11,crc:0bd6,platform:Linux
