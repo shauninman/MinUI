@@ -28,8 +28,11 @@ fi
 export LD_LIBRARY_PATH="$DIR:$LD_LIBRARY_PATH"
 export PATH="$DIR:$PATH"
 
-# try launching from various locations the P8 files might live
-if [ -f "$PLUS_DIR/pico8_dyn" ]; then
+# try launching from various locations the P8 files might live,
+# starting with the current platform
+if [ -f "$PICO8_DIR/pico8_dyn" ]; then
+	cd "$PICO8_DIR" && launch_splore
+elif [ -f "$PLUS_DIR/pico8_dyn" ]; then
 	cd "$PLUS_DIR" && launch_splore
 elif [ -f "$CUBE_DIR/pico8_dyn" ]; then
 	cd "$CUBE_DIR" && launch_splore
