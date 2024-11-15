@@ -14,7 +14,6 @@ WIFI_PASS=${WIFI[1]}
 RES_PATH="$(dirname "$0")/res"
 
 toggle_wifi() {
-    local wifi_status
     wifi_status=$(nmcli radio wifi)
 		
     if [ "$wifi_status" = "disabled" ]; then
