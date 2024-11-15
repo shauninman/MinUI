@@ -34,7 +34,7 @@ toggle_wifi() {
 
     else ### if [ "$wifi_status" != "disabled" ]; then
 
-        current_ssid=$(nmcli -t -f ACTIVE,SSID device wifi | grep '^*' | cut -d: -f2)
+        current_ssid=$(nmcli -t -f ACTIVE,SSID device wifi | grep "yes:" | cut -d: -f2)
 
         if [ "$current_ssid" = "$WIFI_NAME" ]; then
             echo "Already connected to $WIFI_NAME. Disconnecting and turning off Wi-Fi..."
