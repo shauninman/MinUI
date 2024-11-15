@@ -29,10 +29,10 @@ export LD_LIBRARY_PATH="$DIR:$LD_LIBRARY_PATH"
 export PATH="$DIR:$PATH"
 
 # try launching from various locations the P8 files might live
-if [ -f "$PLUS_DIR/pico8_dyn" ]; then
-	cd "$PLUS_DIR" && launch_cart "$1"
-elif [ -f "$CUBE_DIR/pico8_dyn" ]; then
+if [ -f "$CUBE_DIR/pico8_dyn" ]; then
 	cd "$CUBE_DIR" && launch_cart "$1"
+elif [ -f "$PLUS_DIR/pico8_dyn" ]; then
+	cd "$PLUS_DIR" && launch_cart "$1"
 elif [ -f "$RGB30_DIR/pico8_dyn" ]; then
 	cd "$RGB30_DIR" && launch_cart "$1"
 else
