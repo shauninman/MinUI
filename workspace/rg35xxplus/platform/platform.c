@@ -183,10 +183,10 @@ void PLAT_pollInput(void) {
 						}
 					}
 				}
-				else if (code==RAW_LSX) { pad.laxis.x = ((float)value / 4096) * 32767; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_LSY) { pad.laxis.y = ((float)value / 4096) * 32767; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_RSX) pad.raxis.x = ((float)value / 4096) * 32767;
-				else if (code==RAW_RSY) pad.raxis.y = ((float)value / 4096) * 32767;
+				else if (code==RAW_LSX) { pad.laxis.x = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+				else if (code==RAW_LSY) { pad.laxis.y = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+				else if (code==RAW_RSX) pad.raxis.x = (value * 32767) / 4096;
+				else if (code==RAW_RSY) pad.raxis.y = (value * 32767) / 4096;
 				
 				btn = BTN_NONE; // already handled, force continue
 			}
@@ -233,6 +233,7 @@ int PLAT_shouldWake(void) {
 
 // based on rgb30 + tg5040 + m17
 #define HDMI_STATE_PATH "/sys/class/switch/hdmi/cable.0/state" // TODO: can detect but doesn't update automatically
+#define BLANK_PATH "/sys/class/graphics/fb0/blank"
 
 static struct VID_Context {
 	SDL_Window* window;
@@ -260,9 +261,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
 	
 	is_cubexx = exactMatch("RGcubexx", getenv("RGXX_MODEL"));
-	
-	SDL_InitSubSystem(SDL_INIT_VIDEO);
-	SDL_ShowCursor(0);
 	
 	// SDL_version compiled;
 	// SDL_version linked;
@@ -301,11 +299,38 @@ SDL_Surface* PLAT_initVideo(void) {
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
-	if (getInt(HDMI_STATE_PATH)) {
+	if (getInt(HDMI_STATE_PATH)) { // can't use getHDMI() from settings because it hasn't be initialized yet
 		w = HDMI_WIDTH;
 		h = HDMI_HEIGHT;
 		p = HDMI_PITCH;
 	}
+	
+	// TODO: only do onchange
+	if (getInt(HDMI_STATE_PATH)) {
+		putInt(BLANK_PATH, FB_BLANK_POWERDOWN);
+		system("cd /sys/kernel/debug/dispdbg; echo disp0 > name; echo switch > command; echo '4 10 0 0 0x4 0x101 0 0 0 8' > param; echo 1 > start;");
+		
+		char cmd[512];
+		sprintf(cmd, "/usr/lib/initramfs-tools/bin/busybox fbset -fb /dev/fb0 -g %i %i %i %i 32", w,h,w,h*2);
+		system(cmd);
+		putInt(BLANK_PATH, FB_BLANK_UNBLANK);
+		
+		setenv("AUDIODEV", "hw:2,0", 1);
+	}
+	else {
+		putInt(BLANK_PATH, FB_BLANK_POWERDOWN);
+		system("cd /sys/kernel/debug/dispdbg; echo disp0 > name; echo switch > command; echo '1 0' > param; echo 1 > start;");
+		char cmd[512];
+		sprintf(cmd, "/usr/lib/initramfs-tools/bin/busybox fbset -fb /dev/fb0 -g %i %i %i %i 32", w,h,w,h*2);
+		system(cmd);
+		putInt(BLANK_PATH, FB_BLANK_UNBLANK);
+		
+		// setenv("AUDIODEV", "hw:0,0", 1); // not necessary
+	}
+	
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
+	SDL_ShowCursor(0);
+	
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	// LOG_info("window size: %ix%i\n", w,h);
 	
@@ -688,7 +713,6 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
-#define BLANK_PATH "/sys/class/graphics/fb0/blank"
 #define LED_PATH "/sys/class/power_supply/axp2202-battery/work_led"
 void PLAT_enableBacklight(int enable) {
 	if (enable) {

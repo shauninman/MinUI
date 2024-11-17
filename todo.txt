@@ -2,15 +2,12 @@ Changes
 
 BASE
 
-- tg3040+tg5040: improved mute switch responsiveness
-- tg3040+tg5040: fixed screen effect-related crashes
-- tg3040: revised brightness ramp
-- tg3040: fixed led install/update/sleep behaviour on 20241020 ofw
+- rg_xx: fixed analog stick diagonals
 	
 
 EXTRAS
 
-- tg3040+tg5040: updated Bootlogo.pak
+- 
 
 ---
 
@@ -26,13 +23,13 @@ it's time to retire some supported devices
 
 gambatte
 	can I write the lightest palette value to /tmp so I can use it for gridlines for GB?
-	
-rgcubexx
-	test native pico8
-		sdl2 is missing haptic support
-		and unzip
-		sigh
 
+rg_xx
+	hdmi out
+		+ video
+		+ audio
+		- hot swapping
+		
 tg3040
 	update toolchain's SDL2 headers to 2.30.8?
 		non-aarch64 platforms are already using Trimui's provided (mostly updated) SDL2
@@ -42,17 +39,19 @@ tg3040
 	clock has gmt issue
 		I think I fixed this but the change will affect all platforms 
 		so I may need to update MinUI.pak/launch.sh across the board
+			and test test test
 		
 rpmini
+	dead in the water waiting for upstream fixes
 	evaluating batocera and rocknix as a base
 	requires ota update to enable booting direct
 		might also enable installing linux to emmc
 	currently seeing scaling artifacts (variable width pixel columns/rows) when blitting 1:1
+		causes grid effects to look terrible
 		suspect it's the sytem level rotation
 		hoping it's not the physical pixels in the panel
-		causes grid effects to look terrible
 		see rpmini/tmp/sdltest
-			not going to work on this anymore until it can be resolved
+			not going to work on this anymore until kernel fix is released
 
 next
 	standard show/say/confirm.elf?
