@@ -39,11 +39,6 @@ tg3040
 		I can `./configure && make install` the smart pro's version (at least on tg5040, need to test with tg3040)
 		need to add  -L/usr/local/lib/ to platform/makefile.env to use that version
 
-	redo Bootlogo.pak
-		done
-		can similar tactics be employed on other devices?
-			eg. smart pro?
-	
 	clock has gmt issue
 		I think I fixed this but the change will affect all platforms 
 		so I may need to update MinUI.pak/launch.sh across the board

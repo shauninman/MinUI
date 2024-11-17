@@ -183,10 +183,10 @@ void PLAT_pollInput(void) {
 						}
 					}
 				}
-				else if (code==RAW_LSX) { pad.laxis.x = (value / 4096) * 32767; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_LSY) { pad.laxis.y = (value / 4096) * 32767; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_RSX) pad.raxis.x = (value / 4096) * 32767;
-				else if (code==RAW_RSY) pad.raxis.y = (value / 4096) * 32767;
+				else if (code==RAW_LSX) { pad.laxis.x = ((float)value / 4096) * 32767; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+				else if (code==RAW_LSY) { pad.laxis.y = ((float)value / 4096) * 32767; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+				else if (code==RAW_RSX) pad.raxis.x = ((float)value / 4096) * 32767;
+				else if (code==RAW_RSY) pad.raxis.y = ((float)value / 4096) * 32767;
 				
 				btn = BTN_NONE; // already handled, force continue
 			}

@@ -1116,6 +1116,7 @@ PAD_Context pad;
 
 #define AXIS_DEADZONE 0x4000
 void PAD_setAnalog(int neg_id,int pos_id,int value,int repeat_at) {
+	// LOG_info("neg %i pos %i value %i\n", neg_id, pos_id, value);
 	int neg = 1 << neg_id;
 	int pos = 1 << pos_id;	
 	if (value>AXIS_DEADZONE) { // pressing

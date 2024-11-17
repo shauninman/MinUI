@@ -123,10 +123,10 @@ void PLAT_pollInput(void) {
 			}
 			else if (type==EV_ABS) {
 				// LOG_info("axis: %i (%i)\n",code,value);
-				// else if (code==RAW_LSX) pad.laxis.x = (value / 4096) * 32767;
-				// else if (code==RAW_LSY) pad.laxis.y = (value / 4096) * 32767;
-				// else if (code==RAW_RSX) pad.raxis.x = (value / 4096) * 32767;
-				// else if (code==RAW_RSY) pad.raxis.y = (value / 4096) * 32767;
+				// else if (code==RAW_LSX) pad.laxis.x = ((float)value / 4096) * 32767;
+				// else if (code==RAW_LSY) pad.laxis.y = ((float)value / 4096) * 32767;
+				// else if (code==RAW_RSX) pad.raxis.x = ((float)value / 4096) * 32767;
+				// else if (code==RAW_RSY) pad.raxis.y = ((float)value / 4096) * 32767;
 				
 				btn = BTN_NONE; // already handled, force continue
 			}
