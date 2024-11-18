@@ -67,8 +67,15 @@ int is_cubexx = 0;
 #define USB_R2		313
 #define USB_R3		318
 
+#define USB_LSY		1
+#define USB_LSX		0
+#define USB_RSY		5
+#define USB_RSX		2
+
 #define USB_MENU1	USB_L3
 #define USB_MENU2	USB_R3
+
+
 
 #define INPUT_COUNT 3
 static int inputs[INPUT_COUNT];
@@ -220,10 +227,18 @@ void PLAT_pollInput(void) {
 						}
 					}
 				}
-				else if (code==RAW_LSX) { pad.laxis.x = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_LSY) { pad.laxis.y = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
-				else if (code==RAW_RSX) pad.raxis.x = (value * 32767) / 4096;
-				else if (code==RAW_RSY) pad.raxis.y = (value * 32767) / 4096;
+				else if (i==2) {
+						 if (code==USB_LSX) { pad.laxis.x = ((value-128) * 32767) / 128; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+					else if (code==USB_LSY) { pad.laxis.y = ((value-128) * 32767) / 128; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+					else if (code==USB_RSX) pad.raxis.x = ((value-128) * 32767) / 128;
+					else if (code==USB_RSY) pad.raxis.y = ((value-128) * 32767) / 128;
+				}
+				else {
+						 if (code==RAW_LSX) { pad.laxis.x = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+					else if (code==RAW_LSY) { pad.laxis.y = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+					else if (code==RAW_RSX) pad.raxis.x = (value * 32767) / 4096;
+					else if (code==RAW_RSY) pad.raxis.y = (value * 32767) / 4096;
+				}
 				
 				btn = BTN_NONE; // already handled, force continue
 			}
