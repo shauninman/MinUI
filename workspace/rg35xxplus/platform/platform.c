@@ -53,7 +53,24 @@ int is_cubexx = 0;
 #define RAW_MENU1	RAW_L3
 #define RAW_MENU2	RAW_R3
 
-#define INPUT_COUNT 2
+#define USB_A		305
+#define USB_B		304
+#define USB_X		308
+#define USB_Y		307
+#define USB_START	315
+#define USB_SELECT	314
+#define USB_MENU	316
+#define USB_L1		310
+#define USB_L2		312
+#define USB_L3		317
+#define USB_R1		311
+#define USB_R2		313
+#define USB_R3		318
+
+#define USB_MENU1	USB_L3
+#define USB_MENU2	USB_R3
+
+#define INPUT_COUNT 3
 static int inputs[INPUT_COUNT];
 
 #define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
@@ -74,6 +91,7 @@ int PLAT_lidChanged(int* state) {
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	inputs[2] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC); // usb controller?
 	check_lid = exists(LID_PATH);
 }
 void PLAT_quitInput(void) {
@@ -128,28 +146,47 @@ void PLAT_pollInput(void) {
 			
 				pressed = value;
 				// LOG_info("key event: %i (%i)\n", code,pressed);
-					 if (code==RAW_UP) 		{ btn = BTN_DPAD_UP; 	id = BTN_ID_DPAD_UP; }
-	 			else if (code==RAW_DOWN)	{ btn = BTN_DPAD_DOWN; 	id = BTN_ID_DPAD_DOWN; }
-				else if (code==RAW_LEFT)	{ btn = BTN_DPAD_LEFT; 	id = BTN_ID_DPAD_LEFT; }
-				else if (code==RAW_RIGHT)	{ btn = BTN_DPAD_RIGHT; id = BTN_ID_DPAD_RIGHT; }
-				else if (code==RAW_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
-				else if (code==RAW_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
-				else if (code==RAW_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
-				else if (code==RAW_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
-				else if (code==RAW_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
-				else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-				else if (code==RAW_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==RAW_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==RAW_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-				else if (code==RAW_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
-				else if (code==RAW_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
-				else if (code==RAW_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
-				else if (code==RAW_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
-				else if (code==RAW_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
-				else if (code==RAW_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
-				else if (code==RAW_PLUS)	{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
-				else if (code==RAW_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
-				else if (code==RAW_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+				if (i==2) {
+						 if (code==USB_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
+					else if (code==USB_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
+					else if (code==USB_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
+					else if (code==USB_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
+					else if (code==USB_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
+					else if (code==USB_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+					else if (code==USB_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+					else if (code==USB_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+					else if (code==USB_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+					else if (code==USB_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
+					else if (code==USB_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
+					else if (code==USB_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
+					else if (code==USB_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
+					else if (code==USB_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+					else if (code==USB_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
+				}
+				else {
+						 if (code==RAW_UP) 		{ btn = BTN_DPAD_UP; 	id = BTN_ID_DPAD_UP; }
+		 			else if (code==RAW_DOWN)	{ btn = BTN_DPAD_DOWN; 	id = BTN_ID_DPAD_DOWN; }
+					else if (code==RAW_LEFT)	{ btn = BTN_DPAD_LEFT; 	id = BTN_ID_DPAD_LEFT; }
+					else if (code==RAW_RIGHT)	{ btn = BTN_DPAD_RIGHT; id = BTN_ID_DPAD_RIGHT; }
+					else if (code==RAW_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
+					else if (code==RAW_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
+					else if (code==RAW_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
+					else if (code==RAW_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
+					else if (code==RAW_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
+					else if (code==RAW_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+					else if (code==RAW_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+					else if (code==RAW_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+					else if (code==RAW_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+					else if (code==RAW_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
+					else if (code==RAW_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
+					else if (code==RAW_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
+					else if (code==RAW_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
+					else if (code==RAW_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+					else if (code==RAW_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
+					else if (code==RAW_PLUS)	{ btn = BTN_PLUS; 		id = BTN_ID_PLUS; }
+					else if (code==RAW_MINUS)	{ btn = BTN_MINUS; 		id = BTN_ID_MINUS; }
+					else if (code==RAW_POWER)	{ btn = BTN_POWER; 		id = BTN_ID_POWER; }
+				}
 			}
 			else if (type==EV_ABS) {
 				// LOG_info("abs event: %i (%i)\n", code,value);
