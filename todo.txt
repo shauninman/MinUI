@@ -3,13 +3,17 @@ Changes
 BASE
 
 - rg_xx: fixed analog stick diagonals
-	
+- rg_xx: added initial HDMI out support
+- rg_xx: added initial support for RG P01/SN30 Pro
 
 EXTRAS
 
 - 
 
 ---
+
+minput
+	seems to be designed top,left aligned for 640x480
 
 it's time to retire some supported devices
 	devices running SDL1.2
@@ -25,10 +29,13 @@ gambatte
 	can I write the lightest palette value to /tmp so I can use it for gridlines for GB?
 
 rg_xx
-	hdmi out
-		+ video
-		+ audio
-		- hot swapping
+	hdmi
+		- adjust max rows and padding when hdmi
+			640x480 values don't jive with 1280x720
+		- don't sleep on lid close on hdmi
+		- disable sleep on hdmi entirely?
+	usb controller
+		look into SDL2 controller API
 		
 tg3040
 	update toolchain's SDL2 headers to 2.30.8?
@@ -165,7 +172,7 @@ next
 				PS: SDL_UnlockTexture blocked for 11ms (640,480) (CMR2)
 				try using SDL_UpdateTexture instead of Lock/Unlock
 					might be saving 1-2ms
-				could this slowness be related to ram speed? (DMC?)
+				could this slowness be related to vram speed? (DMC?)
 		
 		update all cores
 			call out breaking changes (gpsp save states) in release notes 

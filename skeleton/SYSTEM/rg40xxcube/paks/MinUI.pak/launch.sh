@@ -10,6 +10,7 @@ export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
 export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
 export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt"
+export HDMI_EXPORT_PATH="/tmp/hdmi_export.sh"
 
 #######################################
 
@@ -47,17 +48,28 @@ init.elf # > $LOGS_PATH/init.txt 2>&1
 
 #######################################
 
+hdmimon.sh & # > $LOGS_PATH/hdmimon.txt 2>&1 &
+
+HDMI_STATE_PATH="/sys/class/switch/hdmi/cable.0/state"
+HAS_HDMI=$(cat "$HDMI_STATE_PATH")
+if [ "$HAS_HDMI" = "1" ]; then
+	sleep 3
+fi
+
+#######################################
+
 EXEC_PATH="/tmp/minui_exec"
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH" && sync
 while [ -f "$EXEC_PATH" ]; do
+	. $HDMI_EXPORT_PATH
 	minui.elf > $LOGS_PATH/minui.txt 2>&1
 	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
 	
 	if [ -f $NEXT_PATH ]; then
-		CMD=`cat $NEXT_PATH`
-		eval $CMD
+		. $HDMI_EXPORT_PATH
+		. $NEXT_PATH
 		rm -f $NEXT_PATH
 		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync

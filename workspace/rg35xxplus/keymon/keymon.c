@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <linux/input.h>
+#include <pthread.h>
 
 #include <msettings.h>
 
@@ -33,8 +34,41 @@
 static int	input_fd = 0;
 static struct input_event ev;
 
+static pthread_t hdmi_pt;
+#define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
+
+int getInt(char* path) {
+	int i = 0;
+	FILE *file = fopen(path, "r");
+	if (file!=NULL) {
+		fscanf(file, "%i", &i);
+		fclose(file);
+	}
+	return i;
+}
+
+static void* watchHDMI(void *arg) {
+	int has_hdmi,had_hdmi;
+	
+	has_hdmi = had_hdmi = getInt(HDMI_STATE_PATH);
+	SetHDMI(has_hdmi);
+	
+	while(1) {
+		sleep(1);
+		
+		has_hdmi = getInt(HDMI_STATE_PATH);
+		if (had_hdmi!=has_hdmi) {
+			had_hdmi = has_hdmi;
+			SetHDMI(has_hdmi);
+		}
+	}
+	
+	return 0;
+}
+
 int main (int argc, char *argv[]) {
 	InitSettings();
+	pthread_create(&hdmi_pt, NULL, &watchHDMI, NULL);
 	
 	input_fd = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	

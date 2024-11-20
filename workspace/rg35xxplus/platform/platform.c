@@ -357,29 +357,6 @@ SDL_Surface* PLAT_initVideo(void) {
 		p = HDMI_PITCH;
 	}
 	
-	// TODO: only do onchange
-	if (getInt(HDMI_STATE_PATH)) {
-		putInt(BLANK_PATH, FB_BLANK_POWERDOWN);
-		system("cd /sys/kernel/debug/dispdbg; echo disp0 > name; echo switch > command; echo '4 10 0 0 0x4 0x101 0 0 0 8' > param; echo 1 > start;");
-		
-		char cmd[512];
-		sprintf(cmd, "/usr/lib/initramfs-tools/bin/busybox fbset -fb /dev/fb0 -g %i %i %i %i 32", w,h,w,h*2);
-		system(cmd);
-		putInt(BLANK_PATH, FB_BLANK_UNBLANK);
-		
-		setenv("AUDIODEV", "hw:2,0", 1);
-	}
-	else {
-		putInt(BLANK_PATH, FB_BLANK_POWERDOWN);
-		system("cd /sys/kernel/debug/dispdbg; echo disp0 > name; echo switch > command; echo '1 0' > param; echo 1 > start;");
-		char cmd[512];
-		sprintf(cmd, "/usr/lib/initramfs-tools/bin/busybox fbset -fb /dev/fb0 -g %i %i %i %i 32", w,h,w,h*2);
-		system(cmd);
-		putInt(BLANK_PATH, FB_BLANK_UNBLANK);
-		
-		// setenv("AUDIODEV", "hw:0,0", 1); // not necessary
-	}
-	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
@@ -628,12 +605,26 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
-// TODO: should we be using true_* instead of src_* below?
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
+	
+	// handle HDMI change
+	// static int had_hdmi = -1;
+	int has_hdmi = GetHDMI();
+	// if (had_hdmi==-1) had_hdmi = has_hdmi;
+	// if (has_hdmi!=had_hdmi) {
+	// 	LOG_info("switching to/from hdmi %i\n", has_hdmi);
+	// 	device_width = has_hdmi ? HDMI_WIDTH : FIXED_WIDTH;
+	// 	device_height = has_hdmi ? HDMI_HEIGHT : FIXED_HEIGHT;
+	// 	device_pitch = has_hdmi ? HDMI_PITCH : FIXED_PITCH;
+	// 	SDL_SetWindowSize(vid.window, device_width,device_height);
+	// 	SDL_RenderSetLogicalSize(vid.renderer, device_width,device_height);
+	// 	had_hdmi = has_hdmi;
+	// }
+	
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
 		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
-		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		if (rotate && !has_hdmi) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_RenderPresent(vid.renderer);
 		return;
@@ -695,7 +686,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	int ox,oy;
 	oy = (device_width-device_height)/2;
 	ox = -oy;
-	if (rotate) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
+	if (rotate && !has_hdmi) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
 	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 	
 	updateEffect();
@@ -704,7 +695,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		oy = effect_scale - (dst_rect->y % effect_scale);
 		if (ox==effect_scale) ox = 0;
 		if (oy==effect_scale) oy = 0;
-		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		if (rotate && !has_hdmi) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){ox,oy,device_width,device_height});
 	}
 	
@@ -809,6 +800,7 @@ void PLAT_setCPUSpeed(int speed) {
 #define RUMBLE_PATH "/sys/class/power_supply/axp2202-battery/moto"
 
 void PLAT_setRumble(int strength) {
+	if (GetHDMI()) return; // assume we're using a controller?
 	putInt(RUMBLE_PATH, strength?1:0);
 }
 

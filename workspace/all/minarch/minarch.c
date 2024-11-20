@@ -2070,6 +2070,24 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 
 ///////////////////////////////
 
+static void hdmimon(void) {
+	// handle HDMI change
+	static int had_hdmi = -1;
+	int has_hdmi = GetHDMI();
+	if (had_hdmi==-1) had_hdmi = has_hdmi;
+	if (has_hdmi!=had_hdmi) {
+		had_hdmi = has_hdmi;
+
+		LOG_info("restarting after HDMI change...\n");
+		Menu_beforeSleep();
+		sleep(4);
+		show_menu = 0;
+		quit = 1;
+	}
+}
+
+///////////////////////////////
+
 // TODO: this is a dumb API
 SDL_Surface* digits;
 #define DIGIT_WIDTH 9
@@ -3064,6 +3082,8 @@ static int Menu_message(char* message, char** pairs) {
 			dirty = 0;
 		}
 		else GFX_sync();
+		
+		hdmimon();
 	}
 	GFX_setMode(MODE_MENU);
 	return MENU_CALLBACK_NOP; // TODO: this should probably be an arg
@@ -3232,6 +3252,7 @@ int OptionControls_bind(MenuList* list, int i) {
 			}
 		}
 		GFX_sync();
+		hdmimon();
 	}
 	return MENU_CALLBACK_NEXT_ITEM;
 }
@@ -3344,6 +3365,7 @@ static int OptionShortcuts_bind(MenuList* list, int i) {
 			}
 		}
 		GFX_sync();
+		hdmimon();
 	}
 	return MENU_CALLBACK_NEXT_ITEM;
 }
@@ -3843,6 +3865,7 @@ static int Menu_options(MenuList* list) {
 			dirty = 0;
 		}
 		else GFX_sync();
+		hdmimon();
 	}
 	
 	// GFX_clearAll();
@@ -4415,6 +4438,7 @@ static void Menu_loop(void) {
 			dirty = 0;
 		}
 		else GFX_sync();
+		hdmimon();
 	}
 	
 	SDL_FreeSurface(preview);
@@ -4677,6 +4701,8 @@ int main(int argc , char* argv[]) {
 			}
 		}
 		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);
+		
+		hdmimon();
 	}
 	
 	Menu_quit();
