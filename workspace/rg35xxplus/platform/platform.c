@@ -700,19 +700,7 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	
-	// handle HDMI change
-	// static int had_hdmi = -1;
-	int has_hdmi = GetHDMI();
-	// if (had_hdmi==-1) had_hdmi = has_hdmi;
-	// if (has_hdmi!=had_hdmi) {
-	// 	LOG_info("switching to/from hdmi %i\n", has_hdmi);
-	// 	device_width = has_hdmi ? HDMI_WIDTH : FIXED_WIDTH;
-	// 	device_height = has_hdmi ? HDMI_HEIGHT : FIXED_HEIGHT;
-	// 	device_pitch = has_hdmi ? HDMI_PITCH : FIXED_PITCH;
-	// 	SDL_SetWindowSize(vid.window, device_width,device_height);
-	// 	SDL_RenderSetLogicalSize(vid.renderer, device_width,device_height);
-	// 	had_hdmi = has_hdmi;
-	// }
+	int has_hdmi = GetHDMI(); // use settings instead of getInt(HDMI_STATE_PATH)
 	
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
