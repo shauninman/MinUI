@@ -1,3 +1,4 @@
+#define _GNU_SOURCE // for strcasestr
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,9 @@ int exactMatch(char* str1, char* str2) {
 	int len1 = strlen(str1);
 	if (len1!=strlen(str2)) return 0;
 	return (strncmp(str1,str2,len1)==0);
+}
+int containsString(char* haystack, char* needle) {
+	return strcasestr(haystack, needle) != NULL;
 }
 int hide(char* file_name) {
 	return file_name[0]=='.' || suffixMatch(".disabled", file_name) || exactMatch("map.txt", file_name);

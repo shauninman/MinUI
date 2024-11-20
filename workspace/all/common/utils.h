@@ -6,6 +6,7 @@
 int prefixMatch(char* pre, char* str);
 int suffixMatch(char* suf, char* str);
 int exactMatch(char* str1, char* str2);
+int containsString(char* haystack, char* needle);
 int hide(char* file_name);
 
 void getDisplayName(const char* in_name, char* out_name);

@@ -53,32 +53,60 @@ int is_cubexx = 0;
 #define RAW_MENU1	RAW_L3
 #define RAW_MENU2	RAW_R3
 
-#define USB_A		305
-#define USB_B		304
-#define USB_X		308
-#define USB_Y		307
-#define USB_START	315
-#define USB_SELECT	314
-#define USB_MENU	316
-#define USB_L1		310
-#define USB_L2		312
-#define USB_L3		317
-#define USB_R1		311
-#define USB_R2		313
-#define USB_R3		318
+// TODO: thanks I hate it
+// RG P01
+#define RGP01_A			305
+#define RGP01_B			304
+#define RGP01_X			308
+#define RGP01_Y			307
+#define RGP01_START		315
+#define RGP01_SELECT	314
+#define RGP01_MENU		316
+#define RGP01_L1		310
+#define RGP01_L2		312
+#define RGP01_L3		317
+#define RGP01_R1		311
+#define RGP01_R2		313
+#define RGP01_R3		318
+#define RGP01_LSY		1
+#define RGP01_LSX		0
+#define RGP01_RSY		5
+#define RGP01_RSX		2
+#define RGP01_MENU1		RGP01_L3
+#define RGP01_MENU2		RGP01_R3
 
-#define USB_LSY		1
-#define USB_LSX		0
-#define USB_RSY		5
-#define USB_RSX		2
+// X-box (8BitDo SN30 Pro)
+#define XBOX_A		305
+#define XBOX_B		304
+#define XBOX_X		308
+#define XBOX_Y		307
+#define XBOX_START	315
+#define XBOX_SELECT	314
+#define XBOX_MENU	316
+#define XBOX_L1		310
+#define XBOX_L2		2
+#define XBOX_L3		317
+#define XBOX_R1		311
+#define XBOX_R2		5
+#define XBOX_R3		318
+#define XBOX_LSY	1
+#define XBOX_LSX	0
+#define XBOX_RSY	4
+#define XBOX_RSX	3
+#define XBOX_MENU1	XBOX_L3
+#define XBOX_MENU2	XBOX_R3
 
-#define USB_MENU1	USB_L3
-#define USB_MENU2	USB_R3
-
-
+typedef enum GamepadType {
+	kGamepadTypeUnknown,
+	kGamepadTypeRGP01,
+	kGamepadTypeXbox,
+} GamepadType;
 
 #define INPUT_COUNT 3
 static int inputs[INPUT_COUNT];
+
+#define kPadIndex 2
+static GamepadType pad_type = kGamepadTypeUnknown;
 
 #define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
 static int check_lid = 0;
@@ -95,10 +123,45 @@ int PLAT_lidChanged(int* state) {
 	return 0;
 }
 
+static void checkForGamepad(void) {
+	uint32_t now = SDL_GetTicks();
+	static uint32_t last_check = 0;
+	if (last_check==0 || now-last_check>2000) {
+		last_check = now;
+		int connected = exists("/dev/input/event3");
+		if (inputs[kPadIndex]<0 && connected) {
+			LOG_info("Connecting gamepad: ");
+			char pad_name[256];
+			getFile("/sys/class/input/event3/device/name", pad_name, 256);
+			if (containsString(pad_name,"Anbernic")) {
+				LOG_info("P01\n");
+				pad_type = kGamepadTypeRGP01;
+			}
+			else if (containsString(pad_name, "Microsoft")) {
+				LOG_info("Xbox\n");
+				pad_type = kGamepadTypeXbox;
+			}
+			else {
+				LOG_info("Unknown\n");
+				pad_type = kGamepadTypeUnknown;
+			}
+			
+			inputs[kPadIndex] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+		}
+		else if (inputs[kPadIndex]>=0 && !connected) {
+			LOG_info("Gamepad disconnected\n");
+			close(inputs[kPadIndex]);
+			inputs[kPadIndex] = -1;
+			pad_type = kGamepadTypeUnknown;
+		}
+	}
+}
+
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-	inputs[2] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC); // usb controller?
+	inputs[kPadIndex] = -1; 
+	checkForGamepad();
 	check_lid = exists(LID_PATH);
 }
 void PLAT_quitInput(void) {
@@ -132,11 +195,14 @@ void PLAT_pollInput(void) {
 		}
 	}
 	
+	checkForGamepad();
+	
 	// the actual poll
 	int input;
 	static struct input_event event;
 	for (int i=0; i<INPUT_COUNT; i++) {
 		input = inputs[i];
+		if (input<0) continue;
 		while (read(input, &event, sizeof(event))==sizeof(event)) {
 			if (event.type!=EV_KEY && event.type!=EV_ABS) continue;
 
@@ -153,22 +219,39 @@ void PLAT_pollInput(void) {
 			
 				pressed = value;
 				// LOG_info("key event: %i (%i)\n", code,pressed);
-				if (i==2) {
-						 if (code==USB_A)		{ btn = BTN_A; 			id = BTN_ID_A; }
-					else if (code==USB_B)		{ btn = BTN_B; 			id = BTN_ID_B; }
-					else if (code==USB_X)		{ btn = BTN_X; 			id = BTN_ID_X; }
-					else if (code==USB_Y)		{ btn = BTN_Y; 			id = BTN_ID_Y; }
-					else if (code==USB_START)	{ btn = BTN_START; 		id = BTN_ID_START; }
-					else if (code==USB_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
-					else if (code==USB_MENU)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-					else if (code==USB_MENU1)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-					else if (code==USB_MENU2)	{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
-					else if (code==USB_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
-					else if (code==USB_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
-					else if (code==USB_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
-					else if (code==USB_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
-					else if (code==USB_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
-					else if (code==USB_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
+				if (i==kPadIndex) {
+					if (pad_type==kGamepadTypeRGP01) {
+							 if (code==RGP01_A)			{ btn = BTN_A; 			id = BTN_ID_A; }
+						else if (code==RGP01_B)			{ btn = BTN_B; 			id = BTN_ID_B; }
+						else if (code==RGP01_X)			{ btn = BTN_X; 			id = BTN_ID_X; }
+						else if (code==RGP01_Y)			{ btn = BTN_Y; 			id = BTN_ID_Y; }
+						else if (code==RGP01_START)		{ btn = BTN_START; 		id = BTN_ID_START; }
+						else if (code==RGP01_SELECT)	{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+						else if (code==RGP01_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+						else if (code==RGP01_MENU1)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+						else if (code==RGP01_MENU2)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+						else if (code==RGP01_L1)		{ btn = BTN_L1; 		id = BTN_ID_L1; }
+						else if (code==RGP01_L2)		{ btn = BTN_L2; 		id = BTN_ID_L2; }
+						else if (code==RGP01_L3)		{ btn = BTN_L3; 		id = BTN_ID_L3; }
+						else if (code==RGP01_R1)		{ btn = BTN_R1; 		id = BTN_ID_R1; }
+						else if (code==RGP01_R2)		{ btn = BTN_R2; 		id = BTN_ID_R2; }
+						else if (code==RGP01_R3)		{ btn = BTN_R3; 		id = BTN_ID_R3; }
+					}
+					else if (pad_type==kGamepadTypeXbox) {
+							 if (code==XBOX_A)			{ btn = BTN_A; 			id = BTN_ID_A; }
+						else if (code==XBOX_B)			{ btn = BTN_B; 			id = BTN_ID_B; }
+						else if (code==XBOX_X)			{ btn = BTN_X; 			id = BTN_ID_X; }
+						else if (code==XBOX_Y)			{ btn = BTN_Y; 			id = BTN_ID_Y; }
+						else if (code==XBOX_START)		{ btn = BTN_START; 		id = BTN_ID_START; }
+						else if (code==XBOX_SELECT)		{ btn = BTN_SELECT; 	id = BTN_ID_SELECT; }
+						else if (code==XBOX_MENU)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+						else if (code==XBOX_MENU1)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+						else if (code==XBOX_MENU2)		{ btn = BTN_MENU; 		id = BTN_ID_MENU; }
+						else if (code==XBOX_L1)			{ btn = BTN_L1; 		id = BTN_ID_L1; }
+						else if (code==XBOX_L3)			{ btn = BTN_L3; 		id = BTN_ID_L3; }
+						else if (code==XBOX_R1)			{ btn = BTN_R1; 		id = BTN_ID_R1; }
+						else if (code==XBOX_R3)			{ btn = BTN_R3; 		id = BTN_ID_R3; }
+					}
 				}
 				else {
 						 if (code==RAW_UP) 		{ btn = BTN_DPAD_UP; 	id = BTN_ID_DPAD_UP; }
@@ -226,12 +309,24 @@ void PLAT_pollInput(void) {
 							pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
 						}
 					}
+					
+					btn = BTN_NONE; // already handled, force continue
 				}
-				else if (i==2) {
-						 if (code==USB_LSX) { pad.laxis.x = ((value-128) * 32767) / 128; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
-					else if (code==USB_LSY) { pad.laxis.y = ((value-128) * 32767) / 128; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
-					else if (code==USB_RSX) pad.raxis.x = ((value-128) * 32767) / 128;
-					else if (code==USB_RSY) pad.raxis.y = ((value-128) * 32767) / 128;
+				else if (i==kPadIndex) {
+					if (pad_type==kGamepadTypeRGP01) {
+							 if (code==RGP01_LSX) { pad.laxis.x = ((value-128) * 32767) / 128; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+						else if (code==RGP01_LSY) { pad.laxis.y = ((value-128) * 32767) / 128; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+						else if (code==RGP01_RSX) pad.raxis.x = ((value-128) * 32767) / 128;
+						else if (code==RGP01_RSY) pad.raxis.y = ((value-128) * 32767) / 128;
+					}
+					else if (pad_type==kGamepadTypeXbox) {
+							 if (code==XBOX_LSX) { pad.laxis.x = value; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
+						else if (code==XBOX_LSY) { pad.laxis.y = value; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
+						else if (code==XBOX_RSX) pad.raxis.x = value;
+						else if (code==XBOX_RSY) pad.raxis.y = value;
+						else if (code==XBOX_L2) { pressed = value>0; btn = BTN_L2; id = BTN_ID_L2; }
+						else if (code==XBOX_R2) { pressed = value>0; btn = BTN_R2; id = BTN_ID_R2; }
+					}
 				}
 				else {
 						 if (code==RAW_LSX) { pad.laxis.x = (value * 32767) / 4096; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
@@ -239,8 +334,6 @@ void PLAT_pollInput(void) {
 					else if (code==RAW_RSX) pad.raxis.x = (value * 32767) / 4096;
 					else if (code==RAW_RSY) pad.raxis.y = (value * 32767) / 4096;
 				}
-				
-				btn = BTN_NONE; // already handled, force continue
 			}
 			
 			if (btn==BTN_NONE) continue;
