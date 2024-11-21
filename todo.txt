@@ -4,7 +4,7 @@ BASE
 
 - rg_xx: fixed analog stick diagonals
 - rg_xx: added initial HDMI out support
-- rg_xx: added initial support for RG P01/SN30 Pro
+- rg_xx: added initial support for RG P01/SN30 Pro (wired or dongle)
 
 EXTRAS
 
@@ -35,8 +35,13 @@ rg_xx
 		- don't sleep on lid close on hdmi
 		- disable sleep on hdmi entirely?
 	usb controller
+		stock supports bluetooth right? how?
+			enabling bluetooth via stock breaks wifi on MinUI
 		look into SDL2 controller API
-		
+
+tg5040
+	native scale with line effect has scaling issuesz
+	
 tg3040
 	update toolchain's SDL2 headers to 2.30.8?
 		non-aarch64 platforms are already using Trimui's provided (mostly updated) SDL2

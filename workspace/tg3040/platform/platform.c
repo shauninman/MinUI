@@ -237,6 +237,7 @@ static void updateEffect(void) {
 		else if (effect.scale<6) {
 			effect_path = RES_PATH "/grid-5.png";
 			opacity = 160; // 1 - 9/25 = ~64%
+			// opacity = 96; // TODO: tmp, for white grid
 		}
 		else if (effect.scale<8) {
 			effect_path = RES_PATH "/grid-6.png";
@@ -340,7 +341,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	updateEffect();
 	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
 		if (!dst_rect) dst_rect = &dst_r;
-		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect.scale,dst_rect->y%effect.scale,FIXED_WIDTH,FIXED_HEIGHT});
+		// SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect.scale,dst_rect->y%effect.scale,FIXED_WIDTH,FIXED_HEIGHT});
+		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,dst_rect->w,dst_rect->h}, dst_rect);
 	}
 
 	SDL_RenderPresent(vid.renderer);
