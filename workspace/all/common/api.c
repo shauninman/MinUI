@@ -1674,7 +1674,7 @@ void PWR_enableAutosleep(void) {
 	pwr.can_autosleep = 1;
 }
 int PWR_preventAutosleep(void) {
-	return pwr.is_charging || !pwr.can_autosleep;
+	return pwr.is_charging || !pwr.can_autosleep || GetHDMI();
 }
 
 // updated by PWR_updateBatteryStatus()
