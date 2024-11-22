@@ -20,6 +20,7 @@
 #include "scaler.h"
 
 int is_cubexx = 0;
+int on_hdmi = 0;
 
 ///////////////////////////////
 
@@ -448,6 +449,7 @@ SDL_Surface* PLAT_initVideo(void) {
 		w = HDMI_WIDTH;
 		h = HDMI_HEIGHT;
 		p = HDMI_PITCH;
+		on_hdmi = 1;
 	}
 	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -700,12 +702,12 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	
-	int has_hdmi = GetHDMI(); // use settings instead of getInt(HDMI_STATE_PATH)
+	on_hdmi = GetHDMI(); // use settings instead of getInt(HDMI_STATE_PATH)
 	
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
 		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
-		if (rotate && !has_hdmi) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		if (rotate && !on_hdmi) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_RenderPresent(vid.renderer);
 		return;
@@ -767,7 +769,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	int ox,oy;
 	oy = (device_width-device_height)/2;
 	ox = -oy;
-	if (rotate && !has_hdmi) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
+	if (rotate && !on_hdmi) SDL_RenderCopyEx(vid.renderer,target,src_rect,&(SDL_Rect){ox+dst_rect->x,oy+dst_rect->y,dst_rect->w,dst_rect->h},rotate*90,NULL,SDL_FLIP_NONE);
 	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 	
 	updateEffect();
@@ -776,7 +778,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		oy = effect_scale - (dst_rect->y % effect_scale);
 		if (ox==effect_scale) ox = 0;
 		if (oy==effect_scale) oy = 0;
-		if (rotate && !has_hdmi) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		if (rotate && !on_hdmi) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){ox,oy,device_width,device_height});
 	}
 	

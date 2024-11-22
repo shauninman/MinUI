@@ -102,6 +102,7 @@
 ///////////////////////////////
 
 extern int is_cubexx;
+extern int on_hdmi;
 
 #define FIXED_SCALE 	2
 #define FIXED_WIDTH		(is_cubexx?720:640)
@@ -124,8 +125,8 @@ extern int is_cubexx;
 
 ///////////////////////////////
 
-#define MAIN_ROW_COUNT (is_cubexx?8:6)
-#define PADDING (is_cubexx?40:10)
+#define MAIN_ROW_COUNT (is_cubexx||on_hdmi?8:6)
+#define PADDING (is_cubexx||on_hdmi?40:10)
 
 ///////////////////////////////
 

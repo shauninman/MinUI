@@ -2,6 +2,7 @@ Changes
 
 BASE
 
+- tg_040: fixed screen effect native scaling issue
 - rg_xx: fixed analog stick diagonals
 - rg_xx: added initial HDMI out support
 - rg_xx: added initial support for RG P01/SN30 Pro (wired or dongle)
@@ -29,19 +30,11 @@ gambatte
 	can I write the lightest palette value to /tmp so I can use it for gridlines for GB?
 
 rg_xx
-	hdmi
-		- adjust max rows and padding when hdmi
-			640x480 values don't jive with 1280x720
-		- don't sleep on lid close on hdmi
-		- disable sleep on hdmi entirely?
 	usb controller
+		look into SDL2 controller API
 		stock supports bluetooth right? how?
 			enabling bluetooth via stock breaks wifi on MinUI
-		look into SDL2 controller API
 
-tg5040
-	native scale with line effect has scaling issuesz
-	
 tg3040
 	update toolchain's SDL2 headers to 2.30.8?
 		non-aarch64 platforms are already using Trimui's provided (mostly updated) SDL2
