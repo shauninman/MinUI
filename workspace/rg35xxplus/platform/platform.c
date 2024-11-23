@@ -1,4 +1,4 @@
-// rgb30
+// rg35xxplus
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -564,7 +564,7 @@ static void resizeVideo(int w, int h, int p) {
 	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native
 	
 	if (w>=device_width && h>=device_height) hard_scale = 1;
-	else if (h>=160) hard_scale = 2; // limits gba and up to 2x (seems sufficient)
+	else if (h>=160) hard_scale = 2; // limits gba and up to 2x (seems sufficient for 640x480)
 	else hard_scale = 4;
 
 	LOG_info("resizeVideo(%i,%i,%i) hard_scale: %i crisp: %i\n",w,h,p, hard_scale,vid.sharpness==SHARPNESS_CRISP);

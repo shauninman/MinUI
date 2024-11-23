@@ -1,4 +1,4 @@
-// tg5040
+// tg3040
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -36,6 +36,7 @@ static struct VID_Context {
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
+	SDL_Texture* target;
 	SDL_Texture* effect;
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
@@ -45,7 +46,12 @@ static struct VID_Context {
 	int width;
 	int height;
 	int pitch;
+	int sharpness;
 } vid;
+
+static int device_width;
+static int device_height;
+static int device_pitch;
 
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -92,6 +98,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
+	vid.target	= NULL; // only needed for non-native sizes
+	
 	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
 	
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
@@ -99,6 +107,12 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.width	= w;
 	vid.height	= h;
 	vid.pitch	= p;
+	
+	device_width	= w;
+	device_height	= h;
+	device_pitch	= p;
+	
+	vid.sharpness = SHARPNESS_SOFT;
 	
 	return vid.screen;
 }
@@ -122,6 +136,8 @@ void PLAT_quitVideo(void) {
 
 	SDL_FreeSurface(vid.screen);
 	SDL_FreeSurface(vid.buffer);
+	if (vid.target) SDL_DestroyTexture(vid.target);
+	if (vid.effect) SDL_DestroyTexture(vid.effect);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
@@ -142,18 +158,34 @@ void PLAT_setVsync(int vsync) {
 	
 }
 
+static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4
+
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
-	LOG_info("resizeVideo(%i,%i,%i)\n",w,h,p);
+	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native
+	
+	if (w>=device_width && h>=device_height) hard_scale = 1;
+	// else if (h>=160) hard_scale = 2; // limits gba and up to 2x (seems sufficient for 640x480)
+	else hard_scale = 4;
+
+	LOG_info("resizeVideo(%i,%i,%i) hard_scale: %i crisp: %i\n",w,h,p, hard_scale,vid.sharpness==SHARPNESS_CRISP);
 
 	SDL_FreeSurface(vid.buffer);
 	SDL_DestroyTexture(vid.texture);
-	// PLAT_clearVideo(vid.screen);
+	if (vid.target) SDL_DestroyTexture(vid.target);
 	
+	SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, vid.sharpness==SHARPNESS_SOFT?"1":"0", SDL_HINT_OVERRIDE);
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
-	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
 	
+	if (vid.sharpness==SHARPNESS_CRISP) {
+		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1", SDL_HINT_OVERRIDE);
+		vid.target = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, w * hard_scale,h * hard_scale);
+	}
+	else {
+		vid.target = NULL;
+	}
+
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
 
 	vid.width	= w;
@@ -167,13 +199,17 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 }
 
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
-	
+	// buh
 }
 void PLAT_setNearestNeighbor(int enabled) {
 	// always enabled?
 }
 void PLAT_setSharpness(int sharpness) {
-	// buh
+	if (vid.sharpness==sharpness) return;
+	int p = vid.pitch;
+	vid.pitch = 0;
+	vid.sharpness = sharpness;
+	resizeVideo(vid.width,vid.height,p);
 }
 
 static struct FX_Context {
@@ -271,7 +307,7 @@ void PLAT_vsync(int remaining) {
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	LOG_info("getScaler for scale: %i\n", renderer->scale);
+	// LOG_info("getScaler for scale: %i\n", renderer->scale);
 	effect.next_scale = renderer->scale;
 	return scale1x1_c16;
 }
@@ -280,72 +316,80 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
 	SDL_RenderClear(vid.renderer);
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
-	scale1x1_c16(
-		renderer->src,renderer->dst,
-		renderer->true_w,renderer->true_h,renderer->src_p,
-		vid.screen->w,vid.screen->h,vid.screen->pitch // fixed in this implementation
-		// renderer->dst_w,renderer->dst_h,renderer->dst_p
-	);
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	if (!vid.blit) resizeVideo(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH); // !!!???
 	
-	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-	SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
-	SDL_UnlockTexture(vid.texture);
-	
-	SDL_Rect* src_rect = NULL;
-	SDL_Rect* dst_rect = NULL;
-	SDL_Rect src_r = {0};
-	SDL_Rect dst_r = {0};
-	if (vid.blit) {
-		src_r.x = vid.blit->src_x;
-		src_r.y = vid.blit->src_y;
-		src_r.w = vid.blit->src_w;
-		src_r.h = vid.blit->src_h;
-		src_rect = &src_r;
-		
-		if (vid.blit->aspect==0) { // native (or cropped?)
-			int w = vid.blit->src_w * vid.blit->scale;
-			int h = vid.blit->src_h * vid.blit->scale;
-			int x = (FIXED_WIDTH - w) / 2;
-			int y = (FIXED_HEIGHT - h) / 2;
-						
-			dst_r.x = x;
-			dst_r.y = y;
-			dst_r.w = w;
-			dst_r.h = h;
-			dst_rect = &dst_r;
-		}
-		else if (vid.blit->aspect>0) { // aspect
-			int h = FIXED_HEIGHT;
-			int w = h * vid.blit->aspect;
-			if (w>FIXED_WIDTH) {
-				double ratio = 1 / vid.blit->aspect;
-				w = FIXED_WIDTH;
-				h = w * ratio;
-			}
-			int x = (FIXED_WIDTH - w) / 2;
-			int y = (FIXED_HEIGHT - h) / 2;
-
-			dst_r.x = x;
-			dst_r.y = y;
-			dst_r.w = w;
-			dst_r.h = h;
-			dst_rect = &dst_r;
-		}
+	if (!vid.blit) {
+		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
+		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
+		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
+		SDL_RenderPresent(vid.renderer);
+		return;
 	}
-	SDL_RenderCopy(vid.renderer, vid.texture, src_rect, dst_rect);
+	
+	// uint32_t then = SDL_GetTicks();
+	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
+	// LOG_info("blit blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
+	
+	SDL_Texture* target = vid.texture;
+	int x = vid.blit->src_x;
+	int y = vid.blit->src_y;
+	int w = vid.blit->src_w;
+	int h = vid.blit->src_h;
+	if (vid.sharpness==SHARPNESS_CRISP) {
+		SDL_SetRenderTarget(vid.renderer,vid.target);
+		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
+		SDL_SetRenderTarget(vid.renderer,NULL);
+		x *= hard_scale;
+		y *= hard_scale;
+		w *= hard_scale;
+		h *= hard_scale;
+		target = vid.target;
+	}
+	
+	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
+	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
+	if (vid.blit->aspect==0) { // native or cropped
+		// LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
+
+		int w = vid.blit->src_w * vid.blit->scale;
+		int h = vid.blit->src_h * vid.blit->scale;
+		int x = (device_width - w) / 2;
+		int y = (device_height - h) / 2;
+		dst_rect->x = x;
+		dst_rect->y = y;
+		dst_rect->w = w;
+		dst_rect->h = h;
+		
+		// LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
+	}
+	else if (vid.blit->aspect>0) { // aspect
+		int h = device_height;
+		int w = h * vid.blit->aspect;
+		if (w>device_width) {
+			double ratio = 1 / vid.blit->aspect;
+			w = device_width;
+			h = w * ratio;
+		}
+		int x = (device_width - w) / 2;
+		int y = (device_height - h) / 2;
+		// dst_rect = &(SDL_Rect){x,y,w,h};
+		dst_rect->x = x;
+		dst_rect->y = y;
+		dst_rect->w = w;
+		dst_rect->h = h;
+	}
+	
+	SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 	
 	updateEffect();
 	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
-		if (!dst_rect) dst_rect = &dst_r;
-		// SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT},&(SDL_Rect){dst_rect->x%effect.scale,dst_rect->y%effect.scale,FIXED_WIDTH,FIXED_HEIGHT});
 		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,dst_rect->w,dst_rect->h}, dst_rect);
-	}
-
+	}	
+	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
+	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
 	vid.blit = NULL;
 }
 
