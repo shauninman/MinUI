@@ -111,6 +111,10 @@ TRIMUI SMART / M17
   Sleep: MENU (twice)
   Wake: MENU
 
+TRIMUI SMART PRO / TRIMUI BRICK
+
+  Mute: FN switch (volume and rumble)
+
 ----------------------------------------
 Quicksave & auto-resume
 
