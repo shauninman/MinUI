@@ -2,6 +2,8 @@ Changes
 
 BASE
 
+- all: fixed native scale sharpness override
+- tg3040: fixed screen brightness on wake
 - tg_040: added screen sharpness option
 - tg_040: fixed screen effect native scaling issue
 - rg_xx: fixed analog stick diagonals

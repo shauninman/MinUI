@@ -447,6 +447,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 #define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
+		SetRawBrightness(8);
 		SetBrightness(GetBrightness());
 		putInt(LED_PATH1,0);
 		// putInt(LED_PATH2,0);
