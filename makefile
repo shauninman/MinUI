@@ -24,6 +24,7 @@ RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
+
 .PHONY: build
 
 export MAKEFLAGS=--no-print-directory
@@ -110,7 +111,6 @@ done:
 	say "done" 2>/dev/null || true
 
 special:
-	# ----------------------------------------------------
 	# setup miyoomini/trimui family .tmp_update in BOOT
 	mv ./build/BOOT/common ./build/BOOT/.tmp_update
 	mv ./build/BOOT/miyoo ./build/BASE/
@@ -158,63 +158,10 @@ package: tidy
 	cd ./build/EXTRAS && zip -r ../../releases/$(RELEASE_NAME)-extras.zip Bios Emus Roms Saves Tools README.txt
 	echo "$(RELEASE_NAME)" > ./build/latest.txt
 	
-
 ###########################################################
 
-# TODO: make this a template like the cores makefile?
-
-rg35xx:
+.DEFAULT:
 	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-rg35xxplus:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-miyoomini:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-trimuismart:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-rgb30:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-tg5040:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-m17:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-gkdpixel:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-my282:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-magicmini:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
-tg3040:
-	# ----------------------------------------------------
-	make common PLATFORM=$@
-	# ----------------------------------------------------
-
+	# $@
+	@echo "$(PLATFORMS)" | grep -q "\b$@\b" && (make common PLATFORM=$@) || (exit 1)
+	
