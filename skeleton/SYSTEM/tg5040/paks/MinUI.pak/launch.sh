@@ -83,16 +83,6 @@ keymon.elf & # &> $SDCARD_PATH/keymon.txt &
 
 #######################################
 
-# init datetime
-if [ -f "$DATETIME_PATH" ]; then
-	DATETIME=`cat "$DATETIME_PATH"`
-	date +'%F %T' -s "$DATETIME"
-	DATETIME=`date +'%s'`
-	date -u -s "@$DATETIME"
-fi
-
-#######################################
-
 AUTO_PATH=$USERDATA_PATH/auto.sh
 if [ -f "$AUTO_PATH" ]; then
 	"$AUTO_PATH"

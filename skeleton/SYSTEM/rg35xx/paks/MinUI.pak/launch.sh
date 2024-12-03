@@ -45,7 +45,6 @@ if [ -f "$AUTO_PATH" ]; then
 fi
 
 cd $(dirname "$0")
-# ./batmon.sh &> /mnt/sdcard/batmon.txt &
 
 #######################################
 

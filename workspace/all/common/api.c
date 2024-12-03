@@ -1690,8 +1690,6 @@ int PWR_getBattery(void) { // 10-100 in 10-20% fragments
 // TODO: tmp? move to individual platforms or allow overriding like PAD_poll/PAD_wake?
 int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	char cmd[512];
-	sprintf(cmd, "date -u -s '%d-%d-%d %d:%d:%d'; hwclock --utc -w", y,m,d,h,i,s);
+	sprintf(cmd, "date -s '%d-%d-%d %d:%d:%d'; hwclock --utc -w", y,m,d,h,i,s);
 	system(cmd);
 }
-
-

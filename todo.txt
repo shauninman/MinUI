@@ -2,11 +2,11 @@ Changes
 
 BASE
 
-- 
+- tg_040: fixed rtc bug in MinUI.pak
 
 EXTRAS
 
-- 
+- tg_040: fixed rtc bug in Clock.pak
 
 ---
 
@@ -33,28 +33,8 @@ rg_xx
 			enabling bluetooth via stock breaks wifi on MinUI
 
 tg3040
-	update toolchain's SDL2 headers to 2.30.8?
-		non-aarch64 platforms are already using Trimui's provided (mostly updated) SDL2
-		I can `./configure && make install` the smart pro's version (at least on tg5040, need to test with tg3040)
-		need to add  -L/usr/local/lib/ to platform/makefile.env to use that version
-
-	clock has gmt issue
-		I think I fixed this but the change will affect all platforms 
-		so I may need to update MinUI.pak/launch.sh across the board
-			and test test test
+	- 
 		
-rpmini
-	dead in the water waiting for upstream fixes
-	evaluating batocera and rocknix as a base
-	requires ota update to enable booting direct
-		might also enable installing linux to emmc
-	currently seeing scaling artifacts (variable width pixel columns/rows) when blitting 1:1
-		causes grid effects to look terrible
-		suspect it's the sytem level rotation
-		hoping it's not the physical pixels in the panel
-		see rpmini/tmp/sdltest
-			not going to work on this anymore until kernel fix is released
-
 next
 	standard show/say/confirm.elf?
 		sdl2 implementations require a delay arg 
@@ -398,6 +378,7 @@ next
 		force aspect over hdmi? (or at least disable cropped?)
 	
 	rgb30
+		reboots with time offset by timezone offset
 		does jack detection work?
 		could wifi support more than one access point?
 			an additional two lines for each AP?
@@ -411,6 +392,18 @@ next
 		moss
 			build lib32 to try to fix snes9x save state compatibility
 				first attempt did not go well :sweat_smile:
+
+rpmini
+	dead in the water waiting for upstream fixes
+	evaluating batocera and rocknix as a base
+	requires ota update to enable booting direct
+		might also enable installing linux to emmc
+	currently seeing scaling artifacts (variable width pixel columns/rows) when blitting 1:1
+		causes grid effects to look terrible
+		suspect it's the sytem level rotation
+		hoping it's not the physical pixels in the panel
+		see rpmini/tmp/sdltest
+			not going to work on this anymore until kernel fix is released
 				
 known issues
 	all: race core (NGP/C.pak) doesn't restore audio state correctly

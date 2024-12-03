@@ -35,7 +35,7 @@ shell:
 	make -f makefile.toolchain PLATFORM=$(PLATFORM)
 
 name: 
-	echo $(RELEASE_NAME)
+	@echo $(RELEASE_NAME)
 
 build:
 	# ----------------------------------------------------
