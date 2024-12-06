@@ -1,4 +1,4 @@
-MinUI is a minimal launcher for the Trimui Smart (and Pro), the Miyoo Mini (and Plus) and A30, the Powkiddy RGB30, the M17, the MagicX XU Mini M, and the Anbernic RG*XX family--all from the same SD card. Why? Why not?
+MinUI is a minimal launcher for the Trimui Smart (and Pro) and Brick, the Miyoo Mini (and Plus) and A30, the Powkiddy RGB30, the M17, the MagicX XU Mini M, and the Anbernic RG*XX family--all from the same SD card. Why? Why not?
 
 Source:
 https://github.com/shauninman/minui
@@ -38,7 +38,7 @@ MinUI is meant to be used with a heavily modified stock SD card that goes into t
 
 Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TF2/EXT).
 
-TRIMUI SMART / TRIMUI SMART PRO
+TRIMUI SMART / TRIMUI SMART PRO / TRIMUI BRICK
 
 Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
