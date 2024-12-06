@@ -427,63 +427,94 @@ void PLAT_setSharpness(int sharpness) {
 	vid.sharpness = sharpness;
 	resizeVideo(vid.width,vid.height,p);
 }
-static int effect_scale = 1;
-static int effect_type = EFFECT_NONE;
-static int next_scale = 1;
-static int next_effect = EFFECT_NONE;
+
+static struct FX_Context {
+	int scale;
+	int type;
+	int color;
+	int next_scale;
+	int next_type;
+	int next_color;
+	int live_type;
+	int opacity;
+} effect = {
+	.scale = 1,
+	.next_scale = 1,
+	.type = EFFECT_NONE,
+	.next_type = EFFECT_NONE,
+	.live_type = EFFECT_NONE,
+	.color = 0,
+	.next_color = 0,
+};
+static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b) {
+    // Extract the red component (5 bits)
+    uint8_t red = (rgb565 >> 11) & 0x1F;
+    // Extract the green component (6 bits)
+    uint8_t green = (rgb565 >> 5) & 0x3F;
+    // Extract the blue component (5 bits)
+    uint8_t blue = rgb565 & 0x1F;
+
+    // Scale the values to 8-bit range
+    *r = (red << 3) | (red >> 2);
+    *g = (green << 2) | (green >> 4);
+    *b = (blue << 3) | (blue >> 2);
+}
 static void updateEffect(void) {
-	if (next_scale==effect_scale && next_effect==effect_type) return; // unchanged
+	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	
-	effect_scale = next_scale;
-	effect_type = next_effect;
+	int live_scale = effect.scale;
+	int live_color = effect.color;
+	effect.scale = effect.next_scale;
+	effect.type = effect.next_type;
+	effect.color = effect.next_color;
 	
-	if (vid.effect) SDL_DestroyTexture(vid.effect);
-	if (effect_type==EFFECT_NONE) return;
+	if (effect.type==EFFECT_NONE) return; // disabled
+	if (effect.type==effect.live_type && effect.scale==live_scale && effect.color==live_color) return; // already loaded
 	
 	char* effect_path;
 	int opacity = 128; // 1 - 1/2 = 50%
-	if (effect_type==EFFECT_LINE) {
-		if (effect_scale<3) {
+	if (effect.type==EFFECT_LINE) {
+		if (effect.scale<3) {
 			effect_path = RES_PATH "/line-2.png";
 		}
-		else if (effect_scale<4) {
+		else if (effect.scale<4) {
 			effect_path = RES_PATH "/line-3.png";
 		}
-		else if (effect_scale<5) {
+		else if (effect.scale<5) {
 			effect_path = RES_PATH "/line-4.png";
 		}
-		else if (effect_scale<6) {
+		else if (effect.scale<6) {
 			effect_path = RES_PATH "/line-5.png";
 		}
-		else if (effect_scale<8) {
+		else if (effect.scale<8) {
 			effect_path = RES_PATH "/line-6.png";
 		}
 		else {
 			effect_path = RES_PATH "/line-8.png";
 		}
 	}
-	else if (effect_type==EFFECT_GRID) {
-		if (effect_scale<3) {
+	else if (effect.type==EFFECT_GRID) {
+		if (effect.scale<3) {
 			effect_path = RES_PATH "/grid-2.png";
 			opacity = 64; // 1 - 3/4 = 25%
 		}
-		else if (effect_scale<4) {
+		else if (effect.scale<4) {
 			effect_path = RES_PATH "/grid-3.png";
 			opacity = 112; // 1 - 5/9 = ~44%
 		}
-		else if (effect_scale<5) {
+		else if (effect.scale<5) {
 			effect_path = RES_PATH "/grid-4.png";
 			opacity = 144; // 1 - 7/16 = ~56%
 		}
-		else if (effect_scale<6) {
+		else if (effect.scale<6) {
 			effect_path = RES_PATH "/grid-5.png";
 			opacity = 160; // 1 - 9/25 = ~64%
 		}
-		else if (effect_scale<8) {
+		else if (effect.scale<8) {
 			effect_path = RES_PATH "/grid-6.png";
 			opacity = 112; // 1 - 5/9 = ~44%
 		}
-		else if (effect_scale<11) {
+		else if (effect.scale<11) {
 			effect_path = RES_PATH "/grid-8.png";
 			opacity = 144; // 1 - 7/16 = ~56%
 		}
@@ -492,23 +523,54 @@ static void updateEffect(void) {
 			opacity = 136; // 1 - 57/121 = ~52%
 		}
 	}
-	LOG_info("load effect: %s (opacity: %i)\n", effect_path, opacity);
+	
+	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	SDL_Surface* tmp = IMG_Load(effect_path);
 	if (tmp) {
+		if (effect.type==EFFECT_GRID) {
+			if (effect.color) {
+				// LOG_info("dmg color grid...\n");
+			
+				uint8_t r,g,b;
+				rgb565_to_rgb888(effect.color,&r,&g,&b);
+				// LOG_info("rgb %i,%i,%i\n",r,g,b);
+				
+				uint32_t* pixels = (uint32_t*)tmp->pixels;
+				int width = tmp->w;
+				int height = tmp->h;
+				for (int y = 0; y < height; ++y) {
+				    for (int x = 0; x < width; ++x) {
+				        uint32_t pixel = pixels[y * width + x];
+				        uint8_t _,a;
+				        SDL_GetRGBA(pixel, tmp->format, &_, &_, &_, &a);
+				        if (a) pixels[y * width + x] = SDL_MapRGBA(tmp->format, r,g,b, a);
+				    }
+				}
+			}
+		}
+		
+		if (vid.effect) SDL_DestroyTexture(vid.effect);
 		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
+		SDL_SetTextureBlendMode(vid.effect, SDL_BLENDMODE_BLEND);
+		effect.opacity = opacity;
 		SDL_SetTextureAlphaMod(vid.effect, opacity);
 		SDL_FreeSurface(tmp);
+		effect.live_type = effect.type;
 	}
 }
-void PLAT_setEffect(int effect) {
-	next_effect = effect;
+void PLAT_setEffect(int next_type) {
+	effect.next_type = next_type;
+}
+void PLAT_setEffectColor(int next_color) {
+	effect.next_color = next_color;
 }
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	next_scale = renderer->scale;
+	// LOG_info("getScaler for scale: %i\n", renderer->scale);
+	effect.next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
@@ -518,7 +580,9 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
-// TODO: should we be using true_* instead of src_* below?
+static uint8_t combine_alpha(uint8_t a, uint8_t b) {
+    return (a * b + 255) / 255;
+}
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	int alpha = GetBrightness();
 	if (alpha<5) alpha = 255 - (192 - (alpha * 192) / 5);
@@ -527,35 +591,20 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
 		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
-		// SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-		// SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
-		// SDL_UnlockTexture(vid.texture);
-		
 		SDL_SetTextureAlphaMod(vid.texture, alpha);
 		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,NULL,SDL_FLIP_NONE);
 		else SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
-		
 		SDL_RenderPresent(vid.renderer);
 		return;
 	}
 	
 	// uint32_t then = SDL_GetTicks();
-	// SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch); // 1ms
-	// ((scaler_t)vid.blit->blit)(
-	// 	vid.blit->src,vid.buffer->pixels,
-	// 	// vid.blit->src_w,vid.blit->src_h,vid.blit->src_p,
-	// 	vid.blit->true_w,vid.blit->true_h,vid.blit->src_p, // TODO: fix to be confirmed, issue may not present on this platform
-	// 	vid.buffer->w,vid.buffer->h,vid.buffer->pitch
-	// ); // 1ms
-	// SDL_UnlockTexture(vid.texture); // 9ms
-	// LOG_info("SDL_LockTexture/blit/SDL_UnlockTexture blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
-	
-	// comparable, 1-2ms faster depending on size of framebuffer
-	// uint32_t then = SDL_GetTicks();
 	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
-	// LOG_info("SDL_UpdateTexture blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
+	// LOG_info("blit blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
 	
 	SDL_Texture* target = vid.texture;
+	int x = vid.blit->src_x;
+	int y = vid.blit->src_y;
 	int w = vid.blit->src_w;
 	int h = vid.blit->src_h;
 	if (vid.sharpness==SHARPNESS_CRISP) {
@@ -563,23 +612,28 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		SDL_SetTextureAlphaMod(vid.texture, 255);
 		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		SDL_SetRenderTarget(vid.renderer,NULL);
+		x *= hard_scale;
+		y *= hard_scale;
 		w *= hard_scale;
 		h *= hard_scale;
 		target = vid.target;
 	}
 	
-	SDL_Rect* src_rect = &(SDL_Rect){0,0,w,h};
+	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
 	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
 	if (vid.blit->aspect==0) { // native or cropped
+		// LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
+
 		int w = vid.blit->src_w * vid.blit->scale;
 		int h = vid.blit->src_h * vid.blit->scale;
 		int x = (device_width - w) / 2;
 		int y = (device_height - h) / 2;
-		// dst_rect = &(SDL_Rect){x,y,w,h};
 		dst_rect->x = x;
 		dst_rect->y = y;
 		dst_rect->w = w;
 		dst_rect->h = h;
+		
+		// LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
 	}
 	else if (vid.blit->aspect>0) { // aspect
 		int h = device_height;
@@ -606,22 +660,21 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	else SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 	
 	updateEffect();
-	if (vid.effect) {
-		ox = effect_scale - (dst_rect->x % effect_scale);
-		oy = effect_scale - (dst_rect->y % effect_scale);
-		if (ox==effect_scale) ox = 0;
-		if (oy==effect_scale) oy = 0;
-		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
-		else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){ox,oy,device_width,device_height});
-		
-		// if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,&(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){0,device_width,device_width,device_height},rotate*90,NULL,SDL_FLIP_NONE);
-		// else SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,device_width,device_height},&(SDL_Rect){0,0,device_width,device_height});
+	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
+		ox = effect.scale - (dst_rect->x % effect.scale);
+		oy = effect.scale - (dst_rect->y % effect.scale);
+		if (ox==effect.scale) ox = 0;
+		if (oy==effect.scale) oy = 0;
+		int opacity = combine_alpha(alpha, effect.opacity);
+		// LOG_info("alpha: %i opacity: %i combined: %i\n percent: %f", alpha, effect.opacity, opacity, (float)opacity/255);
+		SDL_SetTextureAlphaMod(vid.effect, opacity);
+		if (rotate) SDL_RenderCopyEx(vid.renderer,vid.effect,dst_rect,&(SDL_Rect){oy,ox+device_width,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		else SDL_RenderCopy(vid.renderer, vid.effect, dst_rect,dst_rect);
 	}
 	
 	// uint32_t then = SDL_GetTicks();
 	SDL_RenderPresent(vid.renderer);
 	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
-	
 	vid.blit = NULL;
 }
 

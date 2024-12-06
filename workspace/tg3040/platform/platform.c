@@ -163,7 +163,7 @@ static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
-	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native
+	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native, is this true?
 	
 	if (w>=device_width && h>=device_height) hard_scale = 1;
 	// else if (h>=160) hard_scale = 2; // limits gba and up to 2x (seems sufficient for 640x480)
@@ -215,8 +215,10 @@ void PLAT_setSharpness(int sharpness) {
 static struct FX_Context {
 	int scale;
 	int type;
+	int color;
 	int next_scale;
 	int next_type;
+	int next_color;
 	int live_type;
 } effect = {
 	.scale = 1,
@@ -224,16 +226,33 @@ static struct FX_Context {
 	.type = EFFECT_NONE,
 	.next_type = EFFECT_NONE,
 	.live_type = EFFECT_NONE,
+	.color = 0,
+	.next_color = 0,
 };
+static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b) {
+    // Extract the red component (5 bits)
+    uint8_t red = (rgb565 >> 11) & 0x1F;
+    // Extract the green component (6 bits)
+    uint8_t green = (rgb565 >> 5) & 0x3F;
+    // Extract the blue component (5 bits)
+    uint8_t blue = rgb565 & 0x1F;
+
+    // Scale the values to 8-bit range
+    *r = (red << 3) | (red >> 2);
+    *g = (green << 2) | (green >> 4);
+    *b = (blue << 3) | (blue >> 2);
+}
 static void updateEffect(void) {
-	if (effect.next_scale==effect.scale && effect.next_type==effect.type) return; // unchanged
+	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	
 	int live_scale = effect.scale;
+	int live_color = effect.color;
 	effect.scale = effect.next_scale;
 	effect.type = effect.next_type;
+	effect.color = effect.next_color;
 	
 	if (effect.type==EFFECT_NONE) return; // disabled
-	if (effect.type==effect.live_type && effect.scale==live_scale) return; // already loaded
+	if (effect.type==effect.live_type && effect.scale==live_scale && effect.color==live_color) return; // already loaded
 	
 	char* effect_path;
 	int opacity = 128; // 1 - 1/2 = 50%
@@ -289,9 +308,33 @@ static void updateEffect(void) {
 		}
 	}
 	
-	LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
+	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	SDL_Surface* tmp = IMG_Load(effect_path);
 	if (tmp) {
+		if (effect.type==EFFECT_GRID) {
+			if (effect.color) {
+				// LOG_info("dmg color grid...\n");
+			
+				uint8_t r,g,b;
+				rgb565_to_rgb888(effect.color,&r,&g,&b);
+				// LOG_info("rgb %i,%i,%i\n",r,g,b); 
+			
+				uint32_t* pixels = (uint32_t*)tmp->pixels;
+				int width = tmp->w;
+				int height = tmp->h;
+				for (int y = 0; y < height; ++y) {
+				    for (int x = 0; x < width; ++x) {
+				        uint32_t pixel = pixels[y * width + x];
+				        uint8_t _,a;
+				        SDL_GetRGBA(pixel, tmp->format, &_, &_, &_, &a);
+				        if (a) pixels[y * width + x] = SDL_MapRGBA(tmp->format, r,g,b, a);
+				    }
+				}
+				
+				// if (r==247 && g==243 & b==247) opacity = 64;
+			}
+		}
+
 		if (vid.effect) SDL_DestroyTexture(vid.effect);
 		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
 		SDL_SetTextureAlphaMod(vid.effect, opacity);
@@ -301,6 +344,9 @@ static void updateEffect(void) {
 }
 void PLAT_setEffect(int next_type) {
 	effect.next_type = next_type;
+}
+void PLAT_setEffectColor(int next_color) {
+	effect.next_color = next_color;
 }
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);

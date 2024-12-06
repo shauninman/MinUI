@@ -1326,6 +1326,34 @@ static void Config_restore(void) {
 }
 
 ///////////////////////////////
+static struct Special {
+	int palette_updated;
+} special;
+static void Special_updatedDMGPalette(int frames) {
+	// LOG_info("Special_updatedDMGPalette(%i)\n", frames);
+	special.palette_updated = frames; // must wait a few frames
+}
+static void Special_refreshDMGPalette(void) {
+	special.palette_updated -= 1;
+	if (special.palette_updated>0) return;
+	
+	int rgb = getInt("/tmp/dmg_grid_color");
+	GFX_setEffectColor(rgb);
+}
+static void Special_init(void) {
+	if (special.palette_updated>1) special.palette_updated = 1;
+	// else if (exactMatch((char*)core.tag, "GBC"))  {
+	// 	putInt("/tmp/dmg_grid_color",0xF79E);
+	// 	special.palette_updated = 1;
+	// }
+}
+static void Special_render(void) {
+	if (special.palette_updated) Special_refreshDMGPalette();
+}
+static void Special_quit(void) {
+	system("rm /tmp/dmg_grid_color > /dev/null");
+}
+///////////////////////////////
 
 static  int Option_getValueIndex(Option* item, const char* value) {
 	if (!value) return 0;
@@ -1537,6 +1565,8 @@ static void OptionList_setOptionRawValue(OptionList* list, const char* key, int 
 		list->changed = 1;
 		// LOG_info("\tRAW SET %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 		// if (list->on_set) list->on_set(list, key);
+
+		if (exactMatch((char*)core.tag, "GB") && containsString(item->key, "palette")) Special_updatedDMGPalette(3); // from options
 	}
 	else LOG_info("unknown option %s \n", key);
 }
@@ -1545,8 +1575,10 @@ static void OptionList_setOptionValue(OptionList* list, const char* key, const c
 	if (item) {
 		Option_setValue(item, value);
 		list->changed = 1;
-		LOG_info("\tSET %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
+		// LOG_info("\tSET %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 		// if (list->on_set) list->on_set(list, key);
+		
+		if (exactMatch((char*)core.tag, "GB") && containsString(item->key, "palette")) Special_updatedDMGPalette(2); // from core
 	}
 	else LOG_info("unknown option %s \n", key);
 }
@@ -2682,6 +2714,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 }
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
+	
+	Special_render();
 	
 	// static int tmp_frameskip = 0;
 	// if ((tmp_frameskip++)%2) return;
@@ -4652,6 +4686,8 @@ int main(int argc , char* argv[]) {
 	GFX_clearAll();
 	GFX_flip(screen);
 	
+	Special_init(); // after config
+	
 	sec_start = SDL_GetTicks();
 	while (!quit) {
 		GFX_startFrame();
@@ -4721,6 +4757,8 @@ finish:
 	
 	Config_quit();
 	
+	Special_quit();
+
 	MSG_quit();
 	PWR_quit();
 	VIB_quit();

@@ -3,13 +3,32 @@ Changes
 BASE
 
 - tg_040: fixed rtc bug in MinUI.pak
+- all: GB.pak now uses the first/lightest palette color for the Grid effect (SDL2 only) 
 
 EXTRAS
 
 - tg_040: fixed rtc bug in Clock.pak
+- all: Super Game Boy borders are now optional
 
 ---
 
+gambatte
+	light grid that matches palette
+	proof of concept added to tg5040 with patch for gambatte core
+		added patch
+		need to rebuild all gambatte cores (manually because building cores is disabled locally)
+		need to copy effect color changes to other sdl2 platforms
+			+ magicmini (took longer than expected because of faux-brightness)
+			+ my282
+			+ rg28xx (rotation/resolution is same as my282 but the math isn't adding up here?! fffffuuuuuu)
+			+ rgb30?
+	people are already asking for more
+		light grid for gbc (looks awful)
+		someone will ask for the same for ngp/ngpc
+	this is really entering shader territory...
+		started dabbling in OpenGL and shaders
+		hit a wall
+	
 minput
 	seems to be designed top,left aligned for 640x480
 
@@ -22,9 +41,6 @@ it's time to retire some supported devices
 	devices that have been superceded
 		rgb30
 	finish updating README (don't forget BASE readme!)
-
-gambatte
-	can I write the lightest palette value to /tmp so I can use it for gridlines for GB?
 
 rg_xx
 	usb controller
