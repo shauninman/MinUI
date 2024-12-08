@@ -14,23 +14,26 @@ EXTRAS
 
 ---
 
+backup my emerald saves! (smart pro?)
+help the kids backup their gba saves! (m17s)
+
 core upgrades
-	change in cores/makefile
-		beetle-pce-fast to mednafen_pce_fast
-		beetle-vb to mednafen_vb
-		requires changes patch name too
-			see tg5040
 	check cores/makefile for frozen HASHes
 	- gkdpixel
 		- fake-08
+			not available
 		- fceumm
 		- gambatte
 		- gpsp
+			no patch required
 		- mednafen_pce_fast
 		- mednafen_supafaust
+			not available
 		- mednafen_vb
+			not available
 		- mgba
 		- pcsx_rearmed
+			required patching
 		- picodrive
 		- pokemini
 		- race
@@ -40,6 +43,7 @@ core upgrades
 		- fceumm
 		- gambatte
 		- gpsp
+			patch was broken
 		- mednafen_pce_fast
 		- mednafen_supafaust
 		- mednafen_vb
@@ -54,6 +58,7 @@ core upgrades
 		- fceumm
 		- gambatte
 		- gpsp
+			patch was broken
 		- mednafen_pce_fast
 		- mednafen_supafaust
 		- mednafen_vb
@@ -68,6 +73,7 @@ core upgrades
 		- fceumm
 		- gambatte
 		- gpsp
+			patch was broken
 		- mednafen_pce_fast
 		- mednafen_supafaust
 		- mednafen_vb
@@ -78,26 +84,29 @@ core upgrades
 		- race
 		- snes9x2005_plus
 	+ my282 (rg35xx)
-	- rg35xx
-		- fake-08
-		- fceumm
+	+ rg35xx
+		+ fake-08
+		+ fceumm
 		+ gambatte
-		- gpsp
-		- mednafen_pce_fast
-		- mednafen_supafaust
-		- mednafen_vb
-		- mgba
+		+ gpsp
+			breaks save state compat (expected)
+			patch was broken
+		+ mednafen_pce_fast
+		+ mednafen_supafaust
+		+ mednafen_vb
+		+ mgba
 		+ pcsx_rearmed
-		- picodrive
-		- pokemini
-		- race
-		- snes9x2005_plus
+		+ picodrive
+		+ pokemini
+		+ race
+		+ snes9x2005_plus
 	+ rg35xxplus (rg35xx)
 	- rgb30
 		- fake-08
 		- fceumm
 		- gambatte
 		- gpsp
+			patch was broken
 		- mednafen_pce_fast
 		- mednafen_supafaust
 		- mednafen_vb
@@ -108,7 +117,7 @@ core upgrades
 		- race
 		- snes9x2005_plus
 	+ tg3040 (tg5040)
-	- tg5040
+	+ tg5040
 		+ fake-08
 		+ fceumm
 		+ gambatte
@@ -125,38 +134,24 @@ core upgrades
 		+ race
 			doesn't fix audio resume bug
 		+ snes9x2005_plus
-	- trimuismart
-		- fake-08
-		- fceumm
-		- gambatte
-		- gpsp
-		- mednafen_pce_fast
-		- mednafen_supafaust
-		- mednafen_vb
-		- mgba
-		- pcsx_rearmed
-		- picodrive
-		- pokemini
-		- race
-		- snes9x2005_plus
+	+ trimuismart
+		+ fake-08
+		+ fceumm
+		+ gambatte
+		+ gpsp
+			breaks save state compat (expected)
+			patch was broken
+		+ mednafen_pce_fast
+		+ mednafen_supafaust
+		+ mednafen_vb
+		+ mgba
+		+ pcsx_rearmed
+		+ picodrive
+		+ pokemini
+		+ race
+		+ snes9x2005_plus
 
-gambatte
-	light grid that matches palette
-	proof of concept added to tg5040 with patch for gambatte core
-		added patch
-		need to rebuild all gambatte cores (manually because building cores is disabled locally)
-		need to copy effect color changes to other sdl2 platforms
-			+ magicmini (took longer than expected because of faux-brightness)
-			+ my282
-			+ rg28xx (rotation/resolution is same as my282 but the math isn't adding up here?! fffffuuuuuu)
-			+ rgb30?
-	people are already asking for more
-		light grid for gbc (looks awful)
-		someone will ask for the same for ngp/ngpc
-	this is really entering shader territory...
-		started dabbling in OpenGL and shaders
-		hit a wall
-	
+
 minput
 	seems to be designed top,left aligned for 640x480
 

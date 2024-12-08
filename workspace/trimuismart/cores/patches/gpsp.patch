@@ -1,12 +1,12 @@
 diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
-index 032e95b5a42ebe0dafb2746ac66f07d35583485c..933810b9e0255c501c668db55f5f3c883c45f529 100644
+index dc4b60dec7f70a153dbc2eb849cd5acfc90f9d4d..09339c7bf819559d5e570b592ac8ab9c50566fba 100644
 --- forkSrcPrefix/Makefile
 +++ forkDstPrefix/Makefile
-@@ -482,6 +482,23 @@ else ifeq ($(platform), miyoo)
+@@ -498,6 +498,22 @@ else ifeq ($(platform), miyoo)
  	HAVE_DYNAREC := 1
  	CPU_ARCH := arm
- 
-+# MIYOOMINI
+ 	
++# TRIMUISMART
 +else ifeq ($(platform), trimuismart)
 +	TARGET := $(TARGET_NAME)_libretro.so
 +	CC = $(CROSS_COMPILE)gcc
@@ -21,8 +21,7 @@ index 032e95b5a42ebe0dafb2746ac66f07d35583485c..933810b9e0255c501c668db55f5f3c88
 +	BUILTIN_GPU = neon
 +	CPU_ARCH := arm
 +	MMAP_JIT_CACHE = 1
-+	HAVE_DYNAREC = 1
-+
- # Windows
- else
- 	TARGET := $(TARGET_NAME)_libretro.dll
++	HAVE_DYNAREC = 1	
+ 
+ else ifeq ($(platform), miyoomini)
+ 	TARGET := $(TARGET_NAME)_plus_libretro.so

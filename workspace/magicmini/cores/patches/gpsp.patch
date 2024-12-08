@@ -1,11 +1,11 @@
 diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
-index 063e5f4d51518fe706c5ee1d8f3a11980c3bc1f9..93db36d0fa5bcd810cc8275e49fd0adfe2fb9247 100644
+index dc4b60dec7f70a153dbc2eb849cd5acfc90f9d4d..89f8f4ce13348c134d5c3bced1dc5259964fb647 100644
 --- forkSrcPrefix/Makefile
 +++ forkDstPrefix/Makefile
-@@ -482,6 +482,19 @@ else ifeq ($(platform), miyoo)
+@@ -498,6 +498,18 @@ else ifeq ($(platform), miyoo)
  	HAVE_DYNAREC := 1
  	CPU_ARCH := arm
- 
+ 	
 +else ifeq ($(platform), magicmini)
 +  TARGET := $(TARGET_NAME)_libretro.so
 +  CC  = $(CROSS_COMPILE)gcc
@@ -18,7 +18,6 @@ index 063e5f4d51518fe706c5ee1d8f3a11980c3bc1f9..93db36d0fa5bcd810cc8275e49fd0adf
 +  HAVE_DYNAREC := 1
 +  MMAP_JIT_CACHE = 1
 +  CPU_ARCH := arm64
-+
- # Windows
- else
- 	TARGET := $(TARGET_NAME)_libretro.dll
+ 
+ else ifeq ($(platform), miyoomini)
+ 	TARGET := $(TARGET_NAME)_plus_libretro.so

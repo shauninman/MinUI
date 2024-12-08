@@ -1,10 +1,10 @@
 diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
-index 032e95b5a42ebe0dafb2746ac66f07d35583485c..a10ec8ffeeee3131406290740c44e0916b983565 100644
+index dc4b60dec7f70a153dbc2eb849cd5acfc90f9d4d..918054035afe9a37bb24540d9a6ac3cc2f699dbb 100644
 --- forkSrcPrefix/Makefile
 +++ forkDstPrefix/Makefile
-@@ -482,6 +482,25 @@ else ifeq ($(platform), miyoo)
- 	HAVE_DYNAREC := 1
- 	CPU_ARCH := arm
+@@ -524,6 +524,25 @@ else ifeq ($(platform), miyoomini)
+ 	ARCH = arm
+ 	BUILTIN_GPU = neon
  
 +# RG35XX
 +else ifeq ($(platform), rg35xx)
