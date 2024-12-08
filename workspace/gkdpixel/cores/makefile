@@ -1,5 +1,4 @@
-CORES = gambatte gpsp fceumm picodrive snes9x2005_plus
-CORES+= pcsx_rearmed
+CORES = gambatte gpsp fceumm picodrive snes9x2005_plus pcsx_rearmed
 CORES+= mednafen_pce_fast pokemini race mgba
 # CORES+= mednafen_supafaust mednafen_vb fake-08
 
@@ -28,10 +27,7 @@ gambatte_REPO = https://github.com/libretro/gambatte-libretro
 
 mednafen_supafaust_REPO = https://github.com/libretro/supafaust
 
-# TODO: no luck with this
-# pcsx_rearmed_REPO = https://github.com/pcercuei/pcsx_rearmed
 pcsx_rearmed_MAKEFILE = Makefile.libretro
-# pcsx_rearmed_HASH = update-lightrec-20231214
 
 picodrive_REPO = https://github.com/irixxxx/picodrive
 picodrive_MAKEFILE = Makefile.libretro

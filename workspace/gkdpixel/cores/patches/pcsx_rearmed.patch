@@ -1,8 +1,8 @@
 diff --git a/Makefile.libretro b/Makefile.libretro
-index 1169d89..0746529 100644
+index 7ea7add..b0318a7 100644
 --- a/Makefile.libretro
 +++ b/Makefile.libretro
-@@ -530,6 +530,19 @@ else ifneq (,$(findstring armv,$(platform)))
+@@ -596,6 +596,19 @@ else ifneq (,$(findstring armv,$(platform)))
  	ARCH = arm
  	DYNAREC = ari64
  
@@ -23,10 +23,10 @@ index 1169d89..0746529 100644
  	TARGET := $(TARGET_NAME)_libretro.so
  	fpic := -fPIC
 diff --git a/deps/lightrec/lightrec-private.h b/deps/lightrec/lightrec-private.h
-index 0df9f93..1174f6c 100644
+index 5e047aa..e369723 100644
 --- a/deps/lightrec/lightrec-private.h
 +++ b/deps/lightrec/lightrec-private.h
-@@ -56,11 +56,11 @@
+@@ -57,11 +57,11 @@
  #define SET_DEFAULT_ELM(table, value) [0] = NULL
  #endif
  
@@ -42,3 +42,25 @@ index 0df9f93..1174f6c 100644
  
  #define container_of(ptr, type, member) \
  	((type *)((void *)(ptr) - offsetof(type, member)))
+diff --git a/frontend/libretro-rthreads.c b/frontend/libretro-rthreads.c
+index 90067b1..142254e 100644
+--- a/frontend/libretro-rthreads.c
++++ b/frontend/libretro-rthreads.c
+@@ -86,7 +86,8 @@ sthread_t *pcsxr_sthread_create(void (*thread_func)(void *),
+ 	h->id = (pthread_t)ctr_thread;
+ #else
+ 	h = sthread_create(thread_func, NULL);
+- #if defined(__GLIBC__) || \
++ #ifndef _DINGUX
++   #if defined(__GLIBC__) || \
+     (defined(__ANDROID_API__) && __ANDROID_API__ >= 26)
+ 	if (h && (unsigned int)type < (unsigned int)PCSXRT_COUNT)
+ 	{
+@@ -95,6 +96,7 @@ sthread_t *pcsxr_sthread_create(void (*thread_func)(void *),
+ 		};
+ 		pthread_setname_np(h->id, pcsxr_tnames[type]);
+ 	}
++   #endif
+  #endif
+ #endif
+ 	return h;
