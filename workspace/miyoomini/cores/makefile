@@ -1,5 +1,5 @@
 CORES = fceumm gambatte gpsp pcsx_rearmed picodrive snes9x2005_plus
-CORES+= beetle-pce-fast beetle-vb fake-08 mednafen_supafaust mgba pokemini race
+CORES+= mednafen_pce_fast mednafen_vb fake-08 mednafen_supafaust mgba pokemini race
 
 ###############################
 
@@ -11,11 +11,8 @@ CORES+= beetle-pce-fast beetle-vb fake-08 mednafen_supafaust mgba pokemini race
 # *_MAKEFILE=
 # *_BUILD_PATH=
 
-beetle-pce-fast_REPO = https://github.com/libretro/beetle-pce-fast-libretro
-beetle-pce-fast_CORE = mednafen_pce_fast_libretro.so
-
-beetle-vb_REPO = https://github.com/libretro/beetle-vb-libretro
-beetle-vb_CORE = mednafen_vb_libretro.so
+mednafen_pce_fast_REPO = https://github.com/libretro/beetle-pce-fast-libretro
+mednafen_vb_REPO = https://github.com/libretro/beetle-vb-libretro
 
 fake-08_REPO = https://github.com/jtothebell/fake-08
 fake-08_CORE = fake08_libretro.so
