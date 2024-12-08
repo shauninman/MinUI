@@ -13,7 +13,7 @@ endif
 # overrides shared by all cores
 
 # commits after this one break save states (as of 20231025)
-gpsp_HASH = 1d1c719
+# gpsp_HASH = 1d1c719
 
 ###############################
 
