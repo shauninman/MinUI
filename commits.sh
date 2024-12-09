@@ -4,11 +4,12 @@ show() {
 	pushd "$1" >> /dev/null
 	HASH=$(git rev-parse --short=8 HEAD)
 	NAME=$(basename $PWD)
+	DATE=$(git log -1 --pretty='%ad' --date=format:'%Y-%m-%d')
 	REPO=$(git config --get remote.origin.url)
 	REPO=$(sed -E "s,(^git@github.com:)|(^https?://github.com/)|(.git$)|(/$),,g" <<<"$REPO")
 	popd >> /dev/null
 
-	printf '%-24s%-10s%s\n' $NAME $HASH $REPO
+	printf '%-24s%-10s%-12s%s\n' $NAME $HASH $DATE $REPO
 }
 list() {
 	pushd "$1" >> /dev/null
@@ -68,6 +69,12 @@ bump() {
 	echo CORES
 	list ./workspace/tg5040/cores/src
 	bump
+	
+	tell TG3040 # just copied from normal rg35xx
+	show ./workspace/tg5040/other/unzip60
+	echo CORES
+	list ./workspace/tg5040/cores/src
+	bump
 
 	tell M17
 	echo CORES
@@ -96,5 +103,8 @@ bump() {
 	echo CORES
 	list ./workspace/magicmini/cores/src
 	bump
-
+	
+	tell CHECK
+	echo https://github.com/USER/REPO/compare/HASH...HEAD
+	bump
 } | sed 's/\n/ /g'
