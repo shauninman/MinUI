@@ -4,6 +4,8 @@ NOTE
 
 The gpsp core (default Game Boy Advance) was updated a while ago (Sept 5, 2023 #1d1c719) in a way that breaks backwards compatiblity with save states created with earlier versions. I held out on updating hoping they would fix this but I can't freeze this core forever. Please be sure to make in-game saves for any in-progress games so that you can resume without losing any progress after updating to the latest version of MinUI. If you've already updated MinUI you can downgrade by installing a previous update, make in-game saves, then update to the latest version again.
 
+I also implemented an additional libretro api in minarch to fix corrupted graphics when resuming save states in fbneo-based third-party paks. This breaks backwards compatiblity with existing save states.
+
 BASE
 
 - all: updated all cores (see NOTE above)

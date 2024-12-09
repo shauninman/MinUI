@@ -1973,6 +1973,19 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		break;
 	}
 	
+	case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE: {
+		// fixes fbneo save state graphics corruption
+		// puts("RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE");
+		int *out_p = (int *)data;
+		if (out_p) {
+			int out = 0;
+			out |= (1 << 0);
+			out |= (1 << 1);
+			*out_p = out;
+		}
+		break;
+	}
+	
 	// RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS (42 | RETRO_ENVIRONMENT_EXPERIMENTAL)
 	// RETRO_ENVIRONMENT_GET_VFS_INTERFACE (45 | RETRO_ENVIRONMENT_EXPERIMENTAL)
 	// RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE (47 | RETRO_ENVIRONMENT_EXPERIMENTAL)
