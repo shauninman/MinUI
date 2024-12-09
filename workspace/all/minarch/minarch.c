@@ -1979,8 +1979,8 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		int *out_p = (int *)data;
 		if (out_p) {
 			int out = 0;
-			out |= (1 << 0);
-			out |= (1 << 1);
+			out |= RETRO_AV_ENABLE_VIDEO;
+			out |= RETRO_AV_ENABLE_AUDIO;
 			*out_p = out;
 		}
 		break;
