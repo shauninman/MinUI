@@ -9,7 +9,7 @@ show() {
 	REPO=$(sed -E "s,(^git@github.com:)|(^https?://github.com/)|(.git$)|(/$),,g" <<<"$REPO")
 	popd >> /dev/null
 
-	printf '%-24s%-10s%-12s%s\n' $NAME $HASH $DATE $REPO
+	printf '\055 %-24s%-10s%-12s%s\n' $NAME $HASH $DATE $REPO
 }
 list() {
 	pushd "$1" >> /dev/null
@@ -18,15 +18,28 @@ list() {
 	done
 	popd >> /dev/null
 }
-tell() {
-	printf '%s\n--------\n' $1
+rule() {
+	echo '----------------------------------------------------------------'	
 }
+tell() {
+	echo $1
+	rule
+}
+
+cores() {
+	echo CORES
+	list ./workspace/$1/cores/src
+	bump
+}
+
 bump() {
 	printf '\n'
 }
 
 {
-	tell MINUI
+	# tell MINUI
+	printf '%-24s%-10s%-12s%s\n' MINUI HASH DATE USER/REPO
+	rule
 	show ./
 	bump
 	
@@ -40,69 +53,53 @@ bump() {
 	
 	tell RG35XX
 	show ./workspace/rg35xx/other/DinguxCommander
-	echo CORES
-	list ./workspace/rg35xx/cores/src
-	bump
+	show ./workspace/rg35xx/other/evtest
+	cores rg35xx
 	
 	tell MIYOOMINI
 	show ./workspace/miyoomini/other/DinguxCommander
 	show ./workspace/miyoomini/other/sdl
-	echo CORES
-	list ./workspace/miyoomini/cores/src
-	bump
+	cores miyoomini
 	
 	tell TRIMUISMART
 	show ./workspace/trimuismart/other/DinguxCommander
 	show ./workspace/trimuismart/other/unzip60
-	echo CORES
-	list ./workspace/trimuismart/cores/src
-	bump
+	cores trimuismart
 	
 	tell RGB30
 	show ./workspace/rgb30/other/DinguxCommander
-	echo CORES
-	list ./workspace/rgb30/cores/src
-	bump
+	cores rgb30
 
 	tell TG5040
+	show ./workspace/tg5040/other/evtest
+	show ./workspace/tg5040/other/jstest
 	show ./workspace/tg5040/other/unzip60
-	echo CORES
-	list ./workspace/tg5040/cores/src
-	bump
+	cores tg5040
 	
-	tell TG3040 # just copied from normal rg35xx
+	tell TG3040 # just copied from tg5040
 	show ./workspace/tg5040/other/unzip60
-	echo CORES
-	list ./workspace/tg5040/cores/src
-	bump
+	cores tg5040
 
 	tell M17
-	echo CORES
-	list ./workspace/m17/cores/src
-	bump
+	cores m17
 	
 	tell RG35XXPLUS
+	show ./workspace/rg35xxplus/other/dtc
+	show ./workspace/rg35xxplus/other/fbset
+	show ./workspace/rg35xxplus/other/sdl2
 	show ./workspace/rg35xxplus/other/unzip60
-	echo CORES
-	list ./workspace/rg35xx/cores/src # just copied from normal rg35xx
-	bump
+	cores rg35xx # just copied from normal rg35xx
 	
 	tell GKDPIXEL
-	echo CORES
-	list ./workspace/gkdpixel/cores/src
-	bump
+	cores gkdpixel
 	
 	tell MY282
 	show ./workspace/my282/other/unzip60
-	echo CORES
-	list ./workspace/rg35xx/cores/src # just copied from normal rg35xx
-	bump
+	cores rg35xx # just copied from normal rg35xx
 	
 	tell MAGICMINI
 	show ./workspace/magicmini/other/351files
-	echo CORES
-	list ./workspace/magicmini/cores/src
-	bump
+	cores magicmini
 	
 	tell CHECK
 	echo https://github.com/USER/REPO/compare/HASH...HEAD

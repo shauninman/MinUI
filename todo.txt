@@ -2,7 +2,7 @@ Changes
 
 NOTE
 
-The gpsp core (default Game Boy Advance) was updated a while ago (Sept 5, 2023 #1d1c719) in a way that breaks backwards compatiblity with save states created with earlier versions. I held out on updating hoping they would fix this but I can't freeze this core forever. Please be sure to make in-game saves for any in-progress games so that you can resume without losing any progress after updating to the latest version of MinUI. If you've already updated MinUI you can downgrade by installing a previous update, make in-game saves, then update to the latest version again.
+The gpsp core (default Game Boy Advance emulator in MinUI) was updated a while ago (Sept 7, 2023 #2352adc) in a way that broke backwards compatiblity with save states created by earlier versions. I held out on updating, hoping they would fix this eventually but it's been over a year now, so I've decided to finally jump to the current version. Please be sure to make in-game saves for any in-progress Game Boy Advance games so that you can continue without losing any progress after updating to the latest version of MinUI. If you've already updated MinUI, you can downgrade by installing a previous update, make your in-game saves, then update to the latest version again.
 
 I also implemented an additional libretro api in minarch to fix corrupted graphics when resuming save states in fbneo-based third-party paks. This breaks backwards compatiblity with existing save states.
 
@@ -17,153 +17,21 @@ EXTRAS
 
 ---
 
-help the kids backup their gba saves! (m17s)
-
-core upgrades
-	check cores/makefile for frozen HASHes
-	- gkdpixel
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			no patch required
-		+ mednafen_pce_fast
-		+ mgba
-		+ pcsx_rearmed
-			required reverting to previous commit
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-	+ m17
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ mednafen_pce_fast
-		+ mednafen_supafaust
-		+ mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-	+ magicmini
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ mednafen_pce_fast
-		+ mednafen_supafaust
-		+ mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-	+ miyoomini
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ mednafen_pce_fast
-		+ mednafen_supafaust
-		+ mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-	+ my282 (rg35xx)
-	+ rg35xx
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ mednafen_pce_fast
-		+ mednafen_supafaust
-		+ mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-	+ rg35xxplus (rg35xx)
-	+ rgb30
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ mednafen_pce_fast
-		+ mednafen_supafaust
-		+ mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-	+ tg3040 (tg5040)
-	+ tg5040
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ beetle-pce-fast/mednafen_pce_fast
-		+ mednafen_supafaust
-		+ beetle-vb/mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-			doesn't fix audio resume bug
-		+ snes9x2005_plus
-	+ trimuismart
-		+ fake-08
-		+ fceumm
-		+ gambatte
-		+ gpsp
-			breaks save state compat (expected)
-			patch was broken
-		+ mednafen_pce_fast
-		+ mednafen_supafaust
-		+ mednafen_vb
-		+ mgba
-		+ pcsx_rearmed
-		+ picodrive
-		+ pokemini
-		+ race
-		+ snes9x2005_plus
-
+help the kids backup their gba saves! (m17)
 
 minput
 	seems to be designed top,left aligned for 640x480
 
 it's time to retire some supported devices
-	devices running SDL1.2
-		gkdpixel
+	devices running SDL1.2 or sub-480
+		gkdpixel (no longer manufactured)
 		trimuismart
 		rg35xx (non-h700)
 		miyoomini (and plus)
+		m17 (moving kids to 400xxH)
 	devices that have been superceded
-		rgb30
+		rgb30 (cubexx)
+		
 	finish updating README (don't forget BASE readme!)
 
 rg_xx
@@ -174,7 +42,11 @@ rg_xx
 
 tg3040
 	- 
-		
+
+screen scaling + screen effect
+	aspect + grid on cubexx has grid alignment issues
+		probably due to blindly overscaling when integer would suffice
+
 next
 	standard show/say/confirm.elf?
 		sdl2 implementations require a delay arg 
@@ -204,6 +76,8 @@ next
 			wait		nothing confirms or cancels, must be killed (no buttons drawn)
 		
 	magicmini has no intel toolchain
+	
+	
 	
 	is Developer.pak supposed to be in the tg5040 extras?
 		I didn't think I released that since it's mostly useless to others
@@ -289,12 +163,11 @@ next
 					might be saving 1-2ms
 				could this slowness be related to vram speed? (DMC?)
 		
-		update all cores
-			call out breaking changes (gpsp save states) in release notes 
 		add Clear Recently Played.pak, copy to all platforms
 			maybe include confirmation?
 			requires show.elf
 		enable SELECT/START+L/R for volume/brightness
+			will be required for rg34xx
 		limit option name replacements based on core lib name
 		noui
 			quit doesn't work as expected on trimuismart
