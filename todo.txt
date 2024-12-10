@@ -17,8 +17,6 @@ EXTRAS
 
 ---
 
-help the kids backup their gba saves! (m17)
-
 minput
 	seems to be designed top,left aligned for 640x480
 

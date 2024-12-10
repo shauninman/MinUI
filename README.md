@@ -75,7 +75,7 @@ Extras:
 | Anbernic RG40xxV | MinUI-20240831-0 | Maintained | 
 | Anbernic RG CubeXX | MinUI-202401028-0 | Active | 
 | GKD Pixel | MinUI-20240120b-1 | Deprecated |
-| M17 | MinUI-20231126b-2 | Maintained |
+| M17 | MinUI-20231126b-2 | Deprecated |
 | MagicX XU Mini M | MinUI-20240831-0 | Maintained | 
 | Miyoo A30 | MinUI-20240705-0 | Maintained |
 | Miyoo Mini | MinUI-20230922b-2 | Deprecated |
