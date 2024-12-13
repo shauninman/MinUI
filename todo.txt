@@ -17,20 +17,26 @@ EXTRAS
 
 ---
 
-minput
-	seems to be designed top,left aligned for 640x480
-
 it's time to retire some supported devices
 	devices running SDL1.2 or sub-480
-		gkdpixel (no longer manufactured)
+		gkdpixel (no longer manufactured?)
 		trimuismart
-		rg35xx (non-h700)
+		rg35xx (og)
 		miyoomini (and plus)
-		m17 (moving kids to 400xxH)
+		m17
 	devices that have been superceded
-		rgb30 (cubexx)
+		rgb30 (by cubexx)
+		magicmini (by own zero28?)
 		
 	finish updating README (don't forget BASE readme!)
+
+rg34xx
+	enable SELECT/START+L/R for volume/brightness
+	or not, the volume wheel might be digital
+	video says 64bit system, why is MinUI using 32bit libraries then?
+	
+minput
+	seems to be designed top,left aligned for 640x480
 
 rg_xx
 	usb controller
@@ -76,11 +82,6 @@ next
 	magicmini has no intel toolchain
 	
 	
-	
-	is Developer.pak supposed to be in the tg5040 extras?
-		I didn't think I released that since it's mostly useless to others
-		and even to me now that everything is built out and working...
-		
 	slow buildroot evtest
 		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084
 	
@@ -164,8 +165,6 @@ next
 		add Clear Recently Played.pak, copy to all platforms
 			maybe include confirmation?
 			requires show.elf
-		enable SELECT/START+L/R for volume/brightness
-			will be required for rg34xx
 		limit option name replacements based on core lib name
 		noui
 			quit doesn't work as expected on trimuismart
@@ -427,8 +426,6 @@ all
 		prevent binding same MENU+button to control and shortcut at same time
 			reset the newer input to None and show a message, ideal something like:
 				MENU+<button> is already bound to (<name> shortcut|<name> control)
-	clock
-		factor in timezone offset?
 	simple progress animation for installing/updating
 		launch as a daemon with &
 		draws in a corner
