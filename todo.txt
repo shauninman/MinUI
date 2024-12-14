@@ -1,19 +1,13 @@
 Changes
 
-NOTE
-
-The gpsp core (default Game Boy Advance emulator in MinUI) was updated a while ago (Sept 7, 2023 #2352adc) in a way that broke backwards compatiblity with save states created by earlier versions. I held out on updating, hoping they would fix this eventually but it's been over a year now, so I've decided to finally jump to the current version. Please be sure to make in-game saves for any in-progress Game Boy Advance games so that you can continue without losing any progress after updating to the latest version of MinUI. If you've already updated MinUI, you can downgrade by installing a previous update, make your in-game saves, then update to the latest version again.
-
-I also implemented an additional libretro api in minarch to fix corrupted graphics when resuming save states in fbneo-based third-party paks. This breaks backwards compatiblity with existing save states.
 
 BASE
 
-- all: updated all cores (see NOTE above)
-- gkdpixel: updated pcsx_rearmed core was incompatible with firmware, left on previous version
+- 
 
 EXTRAS
 
-- all: updated all cores (see NOTE above)
+- 
 
 ---
 
@@ -49,6 +43,7 @@ tg3040
 
 screen scaling + screen effect
 	aspect + grid on cubexx has grid alignment issues
+		even if aspect equals integer
 		probably due to blindly overscaling when integer would suffice
 
 next
