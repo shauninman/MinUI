@@ -38,7 +38,7 @@ bump() {
 
 {
 	# tell MINUI
-	printf '%-24s%-10s%-12s%s\n' MINUI HASH DATE USER/REPO
+	printf '%-26s%-10s%-12s%s\n' MINUI HASH DATE USER/REPO
 	rule
 	show ./
 	bump
