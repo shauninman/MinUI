@@ -1351,7 +1351,7 @@ static void Special_render(void) {
 	if (special.palette_updated) Special_refreshDMGPalette();
 }
 static void Special_quit(void) {
-	system("rm /tmp/dmg_grid_color > /dev/null");
+	system("rm -f /tmp/dmg_grid_color");
 }
 ///////////////////////////////
 
@@ -1849,7 +1849,6 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		if (out) {
 			*out = core.bios_dir;
 		}
-		
 		break;
 	}
 	case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: { /* 10 */
@@ -4653,7 +4652,7 @@ int main(int argc , char* argv[]) {
 	// Overrides_init();
 	
 	Core_open(core_path, tag_name);
-	Game_open(rom_path);
+	Game_open(rom_path); // nes tries to load gamegenie setting before this returns ffs
 	if (!game.is_open) goto finish;
 	
 	simple_mode = exists(SIMPLE_MODE_PATH);
