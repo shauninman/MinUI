@@ -1,0 +1,3 @@
+#!/bin/sh
+# generates unnecessary errors when missing
+exit 0
