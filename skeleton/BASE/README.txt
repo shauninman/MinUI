@@ -140,9 +140,9 @@ Bios file names are case-sensitive:
   GBC: gbc_bios.bin
    MD: bios_CD_E.bin
        bios_CD_J.bin
-	   bios_CD_U.bin
+       bios_CD_U.bin
    PS: psxonpsp660.bin
-	
+
 ----------------------------------------
 Disc-based games
 
@@ -186,9 +186,9 @@ Display names
 
 Certain (unsupported arcade) cores require roms to use arcane file names. You can override the display name used throughout MinUI by creating a map.txt in the same folder as the files you want to rename. One line per file, `rom.ext` followed by a single tab followed by `Display Name`. You can hide a file by adding a `.` at the beginning of the display name. eg.
 	
-	neogeo.zip	.Neo Geo Bios
-	mslug.zip	Metal Slug
-	sf2.zip	Street Fighter II
+  neogeo.zip	.Neo Geo Bios
+  mslug.zip	Metal Slug
+  sf2.zip	Street Fighter II
 
 ----------------------------------------
 Simple mode
@@ -198,7 +198,7 @@ Not simple enough for you (or maybe your kids)? MinUI has a simple mode that hid
 ----------------------------------------
 Advanced
 
-MinUI can automatically run a user-authored shell script on boot. Just place a file named "auto.sh" in "/.userdata/<DEVICE>/".
+MinUI can automatically run a user-authored shell script on boot. Just place a file named "auto.sh" in "/.userdata/<DEVICE>/". If you're on Windows, make sure your text editor uses Unix line-endings (eg. `\n`), these devices usually choke on Windows line-endings (eg. `\r\n`).
 
 ----------------------------------------
 Thanks
