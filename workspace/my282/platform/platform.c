@@ -317,7 +317,7 @@ void PLAT_quitVideo(void) {
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
 	
-	// system("cat /dev/zero > /dev/fb0");
+	// system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	SDL_Quit();
 }
 

@@ -143,7 +143,7 @@ void PLAT_quitVideo(void) {
 	SDL_DestroyWindow(vid.window);
 
 	SDL_Quit();
-	system("cat /dev/zero > /dev/fb0");
+	system("cat /dev/zero > /dev/fb0 2>/dev/null");
 }
 
 void PLAT_clearVideo(SDL_Surface* screen) {
@@ -510,7 +510,7 @@ void PLAT_powerOff(void) {
 	PWR_quit();
 	GFX_quit();
 	
-	system("cat /dev/zero > /dev/fb0");
+	system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	system("poweroff");
 	while (1) pause(); // lolwat
 }
