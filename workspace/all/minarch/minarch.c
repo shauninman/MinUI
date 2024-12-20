@@ -939,12 +939,12 @@ static struct Config {
 		{NULL}
 	},
 };
-static int Config_getValue(char* cfg, const char* key, char* out_value, int* lock) {
+static int Config_getValue(char* cfg, const char* key, char* out_value, int* lock) { // gets value from string
 	char* tmp = cfg;
 	while ((tmp = strstr(tmp, key))) {
 		if (lock!=NULL && tmp>cfg && *(tmp-1)=='-') *lock = 1; // prefixed with a `-` means lock
 		tmp += strlen(key);
-		if (!strncmp(tmp, " = ", 3)) break;
+		if (!strncmp(tmp, " = ", 3)) break; // matched
 	};
 	if (!tmp) return 0;
 	tmp += 3;
@@ -1027,6 +1027,7 @@ enum {
 static void Config_getPath(char* filename, int override) {
 	if (override) sprintf(filename, "%s/%s.cfg", core.config_dir, game.name);
 	else sprintf(filename, "%s/minarch.cfg", core.config_dir);
+	// LOG_info("Config_getPath %s\n", filename);
 }
 static void Config_init(void) {
 	if (!config.default_cfg || config.initialized) return;
@@ -4658,7 +4659,7 @@ int main(int argc , char* argv[]) {
 	simple_mode = exists(SIMPLE_MODE_PATH);
 	
 	// restore options
-	Config_load();
+	Config_load(); // before init?
 	Config_init();
 	Config_readOptions(); // cores with boot logo option (eg. gb) need to load options early
 	setOverclock(overclock);

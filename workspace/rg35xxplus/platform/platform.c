@@ -20,6 +20,7 @@
 #include "scaler.h"
 
 int is_cubexx = 0;
+int is_rg34xx = 0;
 int on_hdmi = 0;
 
 ///////////////////////////////
@@ -406,7 +407,9 @@ static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
 	
-	is_cubexx = exactMatch("RGcubexx", getenv("RGXX_MODEL"));
+	char* model = getenv("RGXX_MODEL");
+	is_cubexx = exactMatch("RGcubexx", model);
+	is_rg34xx = exactMatch("RG34xx", model);
 	
 	// SDL_version compiled;
 	// SDL_version linked;

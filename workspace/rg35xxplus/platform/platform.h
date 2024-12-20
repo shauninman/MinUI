@@ -102,10 +102,11 @@
 ///////////////////////////////
 
 extern int is_cubexx;
+extern int is_rg34xx;
 extern int on_hdmi;
 
 #define FIXED_SCALE 	2
-#define FIXED_WIDTH		(is_cubexx?720:640)
+#define FIXED_WIDTH		(is_cubexx?720:(is_rg34xx?720:640))
 #define FIXED_HEIGHT	(is_cubexx?720:480)
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)

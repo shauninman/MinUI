@@ -11,6 +11,9 @@ RGXX_MODEL=`strings /mnt/vendor/bin/dmenu.bin | grep ^RG`
 if [ "$RGXX_MODEL" = "RGcubexx" ]; then
 	echo "detected RG CubeXX" >> $TF1_PATH/log.txt
 	PLATFORM="rg40xxcube"
+elif [ "$RGXX_MODEL" = "RG34xx" ]; then
+	echo "detected RG34xx" >> $TF1_PATH/log.txt
+	PLATFORM="rg34xxwide"
 else
 	echo "detected non-square XX device" >> $TF1_PATH/log.txt
 fi
@@ -74,6 +77,8 @@ if [ -f $UPDATE_PATH ]; then
 	
 	if [ "$RGXX_MODEL" = "RGcubexx" ]; then
 		SUFFIX="-s"
+	elif [ "$RGXX_MODEL" = "RG34xx" ]; then
+		SUFFIX="-w"
 	fi
 	
 	if [ ! -d $SYSTEM_PATH ]; then

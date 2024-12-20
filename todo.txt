@@ -3,13 +3,68 @@ Changes
 
 BASE
 
-- 
+- rg34xxwide: initial support for RG34xx
 
 EXTRAS
 
-- 
+- rg34xxwide: initial support for RG34xx
 
 ---
+
+minarch
+	per output device configs
+		move cubexx and 34xx back into rg35xxplus
+			combine tg3040 and tg5040?
+		set default configs for all rg35xxplus devices
+		options with a _wide or _cube suffix only apply that value to that device
+		also enables support for _hdmi only option values
+		press X to mark it as unique to the current device, and X again to 
+		eg. GBA common value for rg35xxplus would be
+			minarch_screen_scaling = Aspect
+		to override that for the 34xx it would be
+			minarch_screen_scaling-wide = Native
+		so in memory options would have two values
+			the common value shared by "unmarked" devices
+			an override for the current device (possibly nil)
+		when loading configs it ignores all but the common and the current device
+		so press a button (X? Y?) on an option to mark it for the current device
+			then when you save the (hidden) common value is written to thenormal option name
+			and a second suffixed option is written for the current device's value
+		per device defaults (including hdmi) could be authored this way
+		should tags/markers be shorthand like wide, square, and hdmi, etc
+			or more descriptive like 720x480, 720x720, and 1280x720, etc?
+		there's a wrinkle
+			if you change a value before marking it
+				the changed value will be saved for both default and device
+			what about if
+				Option->value is the active value
+				Option->common_value is the loaded common value
+				Option->device_value is the loaded device value
+				Option->is_device is an int boolean indicating whether value is device_value (1) or common_value (0)
+				common_value or device_value is set to value on save based on is_device
+					and device_value is set to -1 if !is_device
+					saving writes common_value (with no suffix) and device_value (with suffix) if is_device!=0
+					value (the active one) is never actually written
+				we load value like we normally would first
+					then set common_value to value
+					then we try to load device_value
+					if device_value>-1 then we also assign it to value
+						and set is_device to 1
+				and common_value and device_value are only updated on save
+				how does this interact with default_value?
+			MinUI.pak/launch.sh will define DEVICE
+				minarch can use getenv("DEVICE");
+					which can be left undefined if the device should use the common PLATFORM defaults
+		hdmimon.sh will need to note the original DEVICE value and change it to "hdmi" when on hdmi and back when not
+		another wrinkle
+			because we don't load settings for other devices
+			if we save those other devices settings get wiped out...
+
+can I use shared memory to start an SDL OpenGL context 
+	to avoid having to spin up and break down everything on each launch?
+
+all
+	create a nop setterm file in /.system/<device>/bin to silence errors from system() calls
 
 it's time to retire some supported devices
 	devices running SDL1.2 or sub-480
@@ -21,25 +76,62 @@ it's time to retire some supported devices
 	devices that have been superceded
 		rgb30 (by cubexx)
 		magicmini (by own zero28?)
+	what would this look like if I nuked 32bit archs?
+		h700 has 64bit libs right?
 		
 	finish updating README (don't forget BASE readme!)
 
 rg34xx
-	enable SELECT/START+L/R for volume/brightness
-	or not, the volume wheel might be digital
-	video says 64bit system, why is MinUI using 32bit libraries then?
+	power button is kinda wonky
+		definitely wonky
+		doesn't always turn off
+		just had it turn off when I tried to wake it from sleep
+			like it got stuck depressed?
+			I've had the screen turn back on after showing the powering off message in menu
+
 	
 minput
 	seems to be designed top,left aligned for 640x480
 
+h700
+	video says 64bit system, why is MinUI using 32bit libraries then?
+	create new 64bit toolchain?
+	based on debian bullseye? (base on the magic mini toolchain or old tg5040?)
+
+my282
+	proper way to kill wifi might be
+		/etc/rc.d/S20network down
+		doesn't seem to be working (on brick)
+
 rg_xx
+	convert rg35xxplus to rg40xxcube
+	
+		LC_ALL=C sed -i '' 's/rg35xxplus/rg40xxcube/g' minui.elf
+	
 	usb controller
 		look into SDL2 controller API
 		stock supports bluetooth right? how?
 			enabling bluetooth via stock breaks wifi on MinUI
+	
+	gamma's panel fix values (still 120)
+		CK = 54
+		HT = 840
+		VT = 536
 
-tg3040
-	- 
+tg_040
+	overclocking during unzipping update had no effect...
+	properly disable wifi/bluetooth on boot (this will break ten's wifi pack without updates)
+		rfkill block bluetooth
+		rfkill block wifi
+		killall udhcpc
+	enable it
+		rfkill unblock wifi
+		/etc/init.d/wpa_supplicant start
+		udhcpc -i wlan0
+	disable it
+		/etc/init.d/wpa_supplicant stop
+		rfkill block wifi
+		killall udhcpc
 
 screen scaling + screen effect
 	aspect + grid on cubexx has grid alignment issues
@@ -74,8 +166,16 @@ next
 			only 		only A confirms, none cancel (only OKAY button drawn)
 			wait		nothing confirms or cancels, must be killed (no buttons drawn)
 		
+		there's an issue with this
+			show.elf used during install/update
+				my282
+				miyoomini
+				tg3040
+				tg5040
+				trimuismart
+			where fonts and bunled libs aren't available yet
+		
 	magicmini has no intel toolchain
-	
 	
 	slow buildroot evtest
 		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084

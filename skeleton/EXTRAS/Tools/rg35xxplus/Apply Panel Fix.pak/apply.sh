@@ -122,6 +122,10 @@ case $CF-$HT-$VT in
 36-812-756) # CubeXX
 	CF_OFFSET=1 # 37
 	;;
+26-820-536) # 34xx
+	HT_OFFSET=-7 # 813
+	VT_OFFSET=-3 # 533
+	;;
 esac
 
 # update values or bail

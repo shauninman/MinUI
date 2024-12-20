@@ -130,6 +130,15 @@ tidy:
 	LC_ALL=C find ./build/EXTRAS/Emus/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
 	LC_ALL=C find ./build/EXTRAS/Tools/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +	
 
+	# copy rg34xxwide from rg35xxplus
+	-cp -Rn ./build/SYSTEM/rg35xxplus/ ./build/SYSTEM/rg34xxwide/
+	-cp -Rn ./build/EXTRAS/Emus/rg35xxplus/ ./build/EXTRAS/Emus/rg34xxwide/
+	-cp -Rn ./build/EXTRAS/Tools/rg35xxplus/ ./build/EXTRAS/Tools/rg34xxwide/
+	# then patch the binaries
+	LC_ALL=C find ./build/SYSTEM/rg34xxwide/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg34xxwide/g' {} +
+	LC_ALL=C find ./build/EXTRAS/Emus/rg34xxwide/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg34xxwide/g' {} +
+	LC_ALL=C find ./build/EXTRAS/Tools/rg34xxwide/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg34xxwide/g' {} +	
+
 	# remove various detritus
 	rm -rf ./build/EXTRAS/Tools/tg5040/Developer.pak
 
