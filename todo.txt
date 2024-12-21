@@ -59,6 +59,46 @@ minarch
 		another wrinkle
 			because we don't load settings for other devices
 			if we save those other devices settings get wiped out...
+		okay, am I over thinking this?
+			instead of having device-specific options in a common config file
+			can I just have device-specific config files?
+				default.cfg/minarch.cfg contain the common options
+				default-<DEVICE>.cfg/minarch-<DEVICE>.cfg duplicates the common options with device-specific changes
+				don't forget <GAME>-<DEVICE>.cfg!
+				don't forget system-<DEVICE>.cfg!
+			it's like having a separate PLATFORM folder in .userdata
+				but without having to compile (or patch) separate binaries in .system
+			okay so system and default configs we'll need to check for DEVICE version
+				but minarch and <GAME> configs will always use DEVICE version (if set) 
+					since they are user created on device
+					and you can't not create a device version if DEVICE is set
+			this is working, need to test on h700 devices
+				cube
+					copy all .cfg from rg40xxcube to -cube.cfg in rg35xxplus
+					delete rg40xxcube .system folder
+				wide
+					copy all .cfg from rg34xxwide to -gba.cfg in rg35xxplus
+					delete rg34xxwide .system folder
+				hdmi
+					update hdmimon.sh per above
+			work through the update procedure
+				if cube .system folder exists
+					consolidate cube back into plus
+					by copying any cube .userdata .cfg to plus as -cube.cfg
+				delete cube .system folder
+				reboot (to use updated dmenu.bin and launch into plus folder instead of cube)
+			last remaining issue
+				update launches with old dmenu.bin
+				which is going to look to rg40xxcube/bin/install.sh to finish the installation
+					that won't exist
+					but if it does (because I include it in the zip)
+					then that block will always run and unnecessarily reboot the device
+					figured it out
+			but now gbc is running like shit on the cubexx
+				the issue is the panel patch!
+				gamma has a fix https://github.com/TheGammaSqueeze/rgxx_boot_package_mods/tree/rgcubexx
+					but the change is so extreme my patching method can't handle it
+					(because of the simple way I fudge the checksum...)
 
 can I use shared memory to start an SDL OpenGL context 
 	to avoid having to spin up and break down everything on each launch?

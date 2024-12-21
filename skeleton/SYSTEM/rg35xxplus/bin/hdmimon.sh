@@ -43,6 +43,7 @@ enable_hdmi() {
 	echo 0 > $BLANK_PATH
 	
 	echo "export AUDIODEV='hw:2,0'" > $HDMI_EXPORT_PATH
+	echo "export DEVICE=hdmi" >> $HDMI_EXPORT_PATH
 }
 
 disable_hdmi() {
@@ -63,6 +64,11 @@ disable_hdmi() {
 	echo 0 > $BLANK_PATH
 	
 	echo "unset AUDIODEV" > $HDMI_EXPORT_PATH
+	if [ -n "$DEVICE" ]; then
+		echo "export DEVICE=$DEVICE" >> $HDMI_EXPORT_PATH
+	else
+		echo "unset DEVICE" >> $HDMI_EXPORT_PATH
+	fi
 }
 
 HDMI_STATE_PATH="/sys/class/switch/hdmi/cable.0/state"

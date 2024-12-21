@@ -121,23 +121,9 @@ special:
 
 tidy:
 	# ----------------------------------------------------
-	# copy rg40xxcube from rg35xxplus
-	-cp -Rn ./build/SYSTEM/rg35xxplus/ ./build/SYSTEM/rg40xxcube/
-	-cp -Rn ./build/EXTRAS/Emus/rg35xxplus/ ./build/EXTRAS/Emus/rg40xxcube/
-	-cp -Rn ./build/EXTRAS/Tools/rg35xxplus/ ./build/EXTRAS/Tools/rg40xxcube/
-	# then patch the binaries
-	LC_ALL=C find ./build/SYSTEM/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
-	LC_ALL=C find ./build/EXTRAS/Emus/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +
-	LC_ALL=C find ./build/EXTRAS/Tools/rg40xxcube/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg40xxcube/g' {} +	
-
-	# copy rg34xxwide from rg35xxplus
-	-cp -Rn ./build/SYSTEM/rg35xxplus/ ./build/SYSTEM/rg34xxwide/
-	-cp -Rn ./build/EXTRAS/Emus/rg35xxplus/ ./build/EXTRAS/Emus/rg34xxwide/
-	-cp -Rn ./build/EXTRAS/Tools/rg35xxplus/ ./build/EXTRAS/Tools/rg34xxwide/
-	# then patch the binaries
-	LC_ALL=C find ./build/SYSTEM/rg34xxwide/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg34xxwide/g' {} +
-	LC_ALL=C find ./build/EXTRAS/Emus/rg34xxwide/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg34xxwide/g' {} +
-	LC_ALL=C find ./build/EXTRAS/Tools/rg34xxwide/ -type f -name "*.elf" -exec sed -i '' 's/rg35xxplus/rg34xxwide/g' {} +	
+	# copy update from rg35xxplus to old rg40xxcube bin so old cards update properly
+	mkdir -p ./build/SYSTEM/rg40xxcube/bin/
+	cp ./build/SYSTEM/rg35xxplus/bin/install.sh ./build/SYSTEM/rg40xxcube/bin/
 
 	# remove various detritus
 	rm -rf ./build/EXTRAS/Tools/tg5040/Developer.pak

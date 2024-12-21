@@ -6,22 +6,12 @@ TF2_PATH=/mnt/sdcard # TF2
 rm $TF1_PATH/log.txt
 touch $TF1_PATH/log.txt
 
-PLATFORM="rg35xxplus"
 RGXX_MODEL=`strings /mnt/vendor/bin/dmenu.bin | grep ^RG`
-if [ "$RGXX_MODEL" = "RGcubexx" ]; then
-	echo "detected RG CubeXX" >> $TF1_PATH/log.txt
-	PLATFORM="rg40xxcube"
-elif [ "$RGXX_MODEL" = "RG34xx" ]; then
-	echo "detected RG34xx" >> $TF1_PATH/log.txt
-	PLATFORM="rg34xxwide"
-else
-	echo "detected non-square XX device" >> $TF1_PATH/log.txt
-fi
 
 FLAG_PATH=$TF1_PATH/.minstalled
 SDCARD_PATH=$TF1_PATH
 SYSTEM_DIR=/.system
-SYSTEM_FRAG=$SYSTEM_DIR/$PLATFORM
+SYSTEM_FRAG=$SYSTEM_DIR/rg35xxplus
 UPDATE_FRAG=/MinUI.zip
 SYSTEM_PATH=${SDCARD_PATH}${SYSTEM_FRAG}
 UPDATE_PATH=${SDCARD_PATH}${UPDATE_FRAG}
@@ -115,12 +105,13 @@ if [ -f $UPDATE_PATH ]; then
 	/tmp/unzip -o $UPDATE_PATH -d $SDCARD_PATH >> $TF1_PATH/log.txt
 	rm -f $UPDATE_PATH
 
-	ls -la $SDCARD_PATH >> $TF1_PATH/log.txt
+	# ls -la $SDCARD_PATH >> $TF1_PATH/log.txt
 	
 	# cd /tmp
 	# rm data installing updating bootlogo.bmp installing-r updating-r bootlogo-r.bmp unzip
 
 	# the updated system finishes the install/update
+	echo "finishing update..." >> $TF1_PATH/log.txt
 	$SYSTEM_PATH/bin/install.sh >> $TF1_PATH/log.txt
 fi
 
