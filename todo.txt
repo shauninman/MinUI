@@ -3,11 +3,14 @@ Changes
 
 BASE
 
-- rg34xxwide: initial support for RG34xx
+- rg35xxplus: added initial support for RG34xx
+- rg35xxplus: merged RG CubeXX into rg35xxplus
+- rg35xxplus: added independent settings for HDMI
 
 EXTRAS
 
-- rg34xxwide: initial support for RG34xx
+- rg35xxplus: initial support for RG34xx
+- rg40xxcube: removed (merged into rg35xxplus)
 
 ---
 
