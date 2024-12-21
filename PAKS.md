@@ -6,7 +6,7 @@ There are two kinds of paks, emulators and tools. Emulator paks live in the Emus
 
 Paks are platform specific. Inside the Emus and Tools folders you will find (or need to create) platform folders. Some platform folders are named after the target device (eg. "rgb30" for the Powkiddy RGB30), others use the device's internal name (eg. "tg5040" for the Trimui Smart Pro), other use an arbitrary shortname (eg. "trimui" for the Trimui Model S), all are completely lowercase. See the extras bundle for up-to-date supported platform folder names.
 
-Some platforms have multiple devices with unique qualities. MinUI differentiates these devices with the `DEVICE` envar. eg. the "rg35xxplus" platform has two unique devices "cube" for the RG CubeXX, and "wide" for the RG34xx. It also supports "hdmi" for when outputting to HDMI. A pak can choose to use or ignore this envar.
+Some platforms have multiple devices with unique qualities. MinUI differentiates these devices from the base platform with the `DEVICE` envar. eg. the "rg35xxplus" platform has two unique devices "cube" for the RG CubeXX, and "wide" for the RG34xx. It also supports "hdmi" for when outputting to HDMI. A pak can choose to use or ignore this envar.
 
 # The types of emulator pak
 
