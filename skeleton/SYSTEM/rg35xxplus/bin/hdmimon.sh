@@ -29,7 +29,7 @@ enable_hdmi() {
 	echo 'enabling HDMI'
 	
 	echo 4 > $BLANK_PATH
-	cat /dev/zero > /dev/fb0
+	cat /dev/zero > /dev/fb0 2>/dev/null
 	
 	echo disp0 > $DISP_PATH/name
 	echo switch > $DISP_PATH/command
@@ -49,7 +49,7 @@ disable_hdmi() {
 	echo 'disabling HDMI'
 	
 	echo 4 > $BLANK_PATH
-	cat /dev/zero > /dev/fb0
+	cat /dev/zero > /dev/fb0 2>/dev/null
 	
 	echo disp0 > $DISP_PATH/name
 	echo switch > $DISP_PATH/command
