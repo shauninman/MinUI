@@ -106,6 +106,7 @@ static struct PWR_Context {
 	int can_autosleep;
 	int requested_sleep;
 	int requested_wake;
+	int resume_tick;
 	
 	pthread_t battery_pt;
 	int is_charging;
@@ -1345,6 +1346,29 @@ FALLBACK_IMPLEMENTATION int PLAT_shouldWake(void) {
 	}
 	return 0;
 }
+FALLBACK_IMPLEMENTATION int PLAT_supportsDeepSleep(void) { return 0; }
+FALLBACK_IMPLEMENTATION int PLAT_deepSleep(void) {
+	const char *state_path = "/sys/power/state";
+
+	int state_fd = open(state_path, O_WRONLY);
+	if (state_fd < 0) {
+		LOG_error("failed to open %s: %d\n", state_path, errno);
+		return -1;
+	}
+
+	LOG_info("suspending to RAM\n");
+	int ret = write(state_fd, "mem", 3);
+	if (ret < 0) {
+		// Can fail shortly after resuming with EBUSY
+		LOG_error("failed to set power state: %d\n", errno);
+		close(state_fd);
+		return -1;
+	}
+
+	LOG_info("returned from suspend\n");
+	close(state_fd);
+	return 0;
+}
 
 int PAD_anyJustPressed(void)	{ return pad.just_pressed!=BTN_NONE; }
 int PAD_anyPressed(void)		{ return pad.is_pressed!=BTN_NONE; }
@@ -1450,6 +1474,7 @@ void PWR_init(void) {
 	
 	pwr.requested_sleep = 0;
 	pwr.requested_wake = 0;
+	pwr.resume_tick = 0;
 	
 	pwr.should_warn = 0;
 	pwr.charge = PWR_LOW_CHARGE;
@@ -1512,7 +1537,12 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	}
 	
 	if (PAD_justPressed(BTN_POWER)) {
-		power_pressed_at = now;
+		if (now - pwr.resume_tick < 1000) {
+			LOG_debug("ignoring spurious power button press (just resumed)\n");
+			power_pressed_at = 0;
+		} else {
+			power_pressed_at = now;
+		}
 	}
 	
 	#define SLEEP_DELAY 30000 // 30 seconds
@@ -1521,11 +1551,15 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	if (
 		pwr.requested_sleep || // hardware requested sleep
 		now-last_input_at>=SLEEP_DELAY || // autosleep
-		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP)) // manual sleep
+		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP) && power_pressed_at) // manual sleep
 	) {
 		pwr.requested_sleep = 0;
 		if (before_sleep) before_sleep();
-		PWR_fauxSleep();
+		if (PLAT_supportsDeepSleep()) {
+			PWR_deepSleep();
+		} else {
+			PWR_fauxSleep();
+		}
 		if (after_sleep) after_sleep();
 		
 		last_input_at = now = SDL_GetTicks();
@@ -1660,12 +1694,26 @@ static void PWR_waitForWake(void) {
 	return;
 }
 void PWR_fauxSleep(void) {
+	LOG_info("Entering faux sleep\n");
+
 	GFX_clear(gfx.screen);
 	PAD_reset();
 	PWR_enterSleep();
 	PWR_waitForWake();
 	PWR_exitSleep();
 	PAD_reset();
+}
+void PWR_deepSleep(void) {
+	LOG_info("Entering deep sleep\n");
+
+	GFX_clear(gfx.screen);
+	PAD_reset();
+	PWR_enterSleep();
+	PLAT_deepSleep();
+	PWR_exitSleep();
+	PAD_reset();
+
+	pwr.resume_tick = SDL_GetTicks();
 }
 
 void PWR_disableAutosleep(void) {
