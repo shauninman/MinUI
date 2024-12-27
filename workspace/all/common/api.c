@@ -1555,11 +1555,7 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	) {
 		pwr.requested_sleep = 0;
 		if (before_sleep) before_sleep();
-		if (PLAT_supportsDeepSleep()) {
-			PWR_deepSleep();
-		} else {
-			PWR_fauxSleep();
-		}
+		PWR_sleep();
 		if (after_sleep) after_sleep();
 		
 		last_input_at = now = SDL_GetTicks();
@@ -1685,31 +1681,29 @@ static void PWR_waitForWake(void) {
 			break;
 		}
 		SDL_Delay(200);
-		if (pwr.can_poweroff && SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
-			if (pwr.is_charging) sleep_ticks += 60000; // check again in a minute
-			else PWR_powerOff();
+		if (SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
+			if (pwr.is_charging) {
+				sleep_ticks += 60000; // check again in a minute
+				continue;
+			}
+			if (PLAT_supportsDeepSleep() && PLAT_deepSleep() == 0) {
+				return;
+			}
+			if (pwr.can_poweroff) {
+				PWR_powerOff();
+			}
 		}
 	}
 	
 	return;
 }
-void PWR_fauxSleep(void) {
-	LOG_info("Entering faux sleep\n");
+void PWR_sleep(void) {
+	LOG_info("Entering hybrid sleep\n");
 
 	GFX_clear(gfx.screen);
 	PAD_reset();
 	PWR_enterSleep();
 	PWR_waitForWake();
-	PWR_exitSleep();
-	PAD_reset();
-}
-void PWR_deepSleep(void) {
-	LOG_info("Entering deep sleep\n");
-
-	GFX_clear(gfx.screen);
-	PAD_reset();
-	PWR_enterSleep();
-	PLAT_deepSleep();
 	PWR_exitSleep();
 	PAD_reset();
 
