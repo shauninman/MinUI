@@ -1686,7 +1686,7 @@ static void PWR_waitForWake(void) {
 				sleep_ticks += 60000; // check again in a minute
 				continue;
 			}
-			if (PLAT_supportsDeepSleep() && PLAT_deepSleep() == 0) {
+			if (PLAT_supportsDeepSleep() && PWR_deepSleep() == 0) {
 				return;
 			}
 			if (pwr.can_poweroff) {
@@ -1708,6 +1708,29 @@ void PWR_sleep(void) {
 	PAD_reset();
 
 	pwr.resume_tick = SDL_GetTicks();
+}
+
+int PWR_deepSleep(void) {
+	// Run `${BIN_PATH}/suspend` if it exists, then fall back
+	// to the PLAT_deepSleep implementation.
+	//
+	// We assume the suspend executable exits after a full
+	// suspend/resume cycle.
+	char *suspend_path = BIN_PATH "/suspend";
+	if (exists(suspend_path)) {
+		LOG_info("suspending using platform suspend executable\n");
+
+		int ret = system(suspend_path);
+		if (ret < 0) {
+			LOG_error("failed to launch suspend executable: %d\n", errno);
+			return -1;
+		}
+
+		LOG_info("suspend executable exited with %d\n", ret);
+		return ret == 0 ? 0 : -1;
+	}
+
+	return PLAT_deepSleep();
 }
 
 void PWR_disableAutosleep(void) {

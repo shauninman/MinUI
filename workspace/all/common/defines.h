@@ -18,6 +18,7 @@
 #define USERDATA_PATH SDCARD_PATH "/.userdata/" PLATFORM
 #define SHARED_USERDATA_PATH SDCARD_PATH "/.userdata/shared"
 #define PAKS_PATH SYSTEM_PATH "/paks"
+#define BIN_PATH SYSTEM_PATH "/bin"
 #define RECENT_PATH SHARED_USERDATA_PATH "/.minui/recent.txt"
 #define SIMPLE_MODE_PATH SHARED_USERDATA_PATH "/enable-simple-mode"
 #define AUTO_RESUME_PATH SHARED_USERDATA_PATH "/.minui/auto_resume.txt"
