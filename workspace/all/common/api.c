@@ -1675,6 +1675,7 @@ static void PWR_exitSleep(void) {
 
 static void PWR_waitForWake(void) {
 	uint32_t sleep_ticks = SDL_GetTicks();
+	int deep_sleep_attempts = 0;
 	while (!PAD_wake()) {
 		if (pwr.requested_wake) {
 			pwr.requested_wake = 0;
@@ -1686,8 +1687,18 @@ static void PWR_waitForWake(void) {
 				sleep_ticks += 60000; // check again in a minute
 				continue;
 			}
-			if (PLAT_supportsDeepSleep() && PWR_deepSleep() == 0) {
-				return;
+			if (PLAT_supportsDeepSleep()) {
+				int ret = PWR_deepSleep();
+				if (ret == 0) {
+					return;
+				} else if (deep_sleep_attempts < 3) {
+					LOG_warn("failed to enter deep sleep - retrying in 5 seconds\n");
+					sleep_ticks += 5000;
+					deep_sleep_attempts++;
+					continue;
+				} else {
+					LOG_warn("failed to enter deep sleep - powering off\n");
+				}
 			}
 			if (pwr.can_poweroff) {
 				PWR_powerOff();
