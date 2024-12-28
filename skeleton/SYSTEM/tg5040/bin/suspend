@@ -6,8 +6,14 @@ wpa_running=
 hciattach_running=
 bluetoothd_running=
 
+asound_state_dir=/tmp/asound-suspend
+
 before() {
 	>&2 echo "Preparing for suspend..."
+
+	>&2 echo "Saving mixer state..."
+	mkdir -p "$asound_state_dir"
+	alsactl --file "$asound_state_dir/asound.state.pre" store || true
 
 	if pgrep wpa_supplicant; then
 		wpa_running=1
@@ -34,6 +40,10 @@ before() {
 
 after() {
 	>&2 echo "Resumed from suspend."
+
+	>&2 echo "Restoring mixer state..."
+	alsactl --file "$asound_state_dir/asound.state.post" store || true
+	alsactl --file "$asound_state_dir/asound.state.pre" restore || true
 
 	>&2 echo "Unblocking wireless..."
 	echo 1 >/sys/class/rfkill/rfkill0/state || true
