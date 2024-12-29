@@ -27,7 +27,9 @@ if [ -f "$UPDATE_PATH" ]; then
 	rm -f "$UPDATE_PATH"
 	
 	# the updated system finishes the install/update
-	# $SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/install.txt
+	if [ -f $SYSTEM_PATH/$PLATFORM/bin/install.sh ]; then
+		$SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/log.txt
+	fi
 fi
 
 LAUNCH_PATH="$SYSTEM_PATH/$PLATFORM/paks/MinUI.pak/launch.sh"
