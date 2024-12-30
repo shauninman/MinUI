@@ -1385,10 +1385,9 @@ int main (int argc, char *argv[]) {
 			g_scroll.scrolling = 0; 
 			g_scroll.scrollStart = now;
 			g_scroll.lastMove = now;
-			// <-- ADDED: reset pause
+			// reset pause
 			g_pauseStart = 0;
 			g_isPausing = 0;
-			// <-- END ADDED
 		}
 
 		if (show_version) {
@@ -1587,7 +1586,6 @@ int main (int argc, char *argv[]) {
 				// reset pausing if we leave the item
 				g_isPausing = 0;
 				g_pauseStart = 0;
-				// END ADDED
 			}
 		}
 
