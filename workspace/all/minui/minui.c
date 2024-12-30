@@ -1322,6 +1322,9 @@ static int getTextWidth(TTF_Font* font, const char* text) {
 
 ///////////////////////////////////////
 
+static unsigned long g_pauseStart = 0;
+static int g_isPausing = 0;
+
 int main (int argc, char *argv[]) {
 	// LOG_info("time from launch to:\n");
 	// unsigned long main_begin = SDL_GetTicks();
@@ -1382,6 +1385,10 @@ int main (int argc, char *argv[]) {
 			g_scroll.scrolling = 0; 
 			g_scroll.scrollStart = now;
 			g_scroll.lastMove = now;
+			// <-- ADDED: reset pause
+			g_pauseStart = 0;
+			g_isPausing = 0;
+			// <-- END ADDED
 		}
 
 		if (show_version) {
@@ -1528,28 +1535,46 @@ int main (int argc, char *argv[]) {
 			int needs_scroll = (text_w > available_width);
 			
 			if (!show_version && needs_scroll) {
-				if (g_scroll.scrolling == 0) {
+				// If we are currently pausing at edge, handle that
+				if (g_isPausing) {
+					if ((now - g_pauseStart) < SCROLL_DELAY) {
+						// keep offset still
+						dirty = 1; 
+					} else {
+						// done pausing
+						g_isPausing = 0;
+						// direction stays whichever was set after clamp
+					}
+				}
+				else if (g_scroll.scrolling == 0) {
 					if ((now - g_scroll.scrollStart) >= SCROLL_DELAY) {
-						g_scroll.scrolling = 2; // active
+						g_scroll.scrolling = 2; 
 						g_scroll.lastMove = now;
 					}
 				}
 				else if (g_scroll.scrolling == 2) {
-					if ((now - g_scroll.lastMove) > SCROLL_INTERVAL) {
-						// move offset
+					if ((now - g_scroll.lastMove) > SCROLL_INTERVAL && !g_isPausing) {
 						g_scroll.scrollOffset += g_scroll.scrollDirection;
 						g_scroll.lastMove = now;
+						dirty = 1; 
 						
-						dirty = 1; // we changed scroll offset, so force re-render
+						// +1 to avoid cutting off end
+						int edgePos = (text_w - available_width + 1);
 						
 						// bounce logic
-						if (g_scroll.scrollOffset >= (text_w - available_width)) {
-							g_scroll.scrollOffset = text_w - available_width;
+						if (g_scroll.scrollOffset >= edgePos) {
+							g_scroll.scrollOffset = edgePos;
 							g_scroll.scrollDirection = -1;
+							// begin a pause
+							g_isPausing = 1;
+							g_pauseStart = now;
 						}
 						else if (g_scroll.scrollOffset <= 0) {
 							g_scroll.scrollOffset = 0;
 							g_scroll.scrollDirection = 1;
+							// begin a pause
+							g_isPausing = 1;
+							g_pauseStart = now;
 						}
 					}
 				}
@@ -1559,6 +1584,10 @@ int main (int argc, char *argv[]) {
 				g_scroll.scrolling = 0;
 				g_scroll.scrollStart = now;
 				g_scroll.lastMove = now;
+				// reset pausing if we leave the item
+				g_isPausing = 0;
+				g_pauseStart = 0;
+				// END ADDED
 			}
 		}
 
@@ -1711,7 +1740,7 @@ int main (int argc, char *argv[]) {
 
 							// clamp offset
 							if (text_w < clip_w) offset = 0;
-							else if (offset > (text_w - clip_w)) offset = text_w - clip_w;
+							else if (offset > (text_w - clip_w + 1)) offset = text_w - clip_w + 1; // <-- ADDED +1
 							if (offset < 0) offset = 0;
 
 							SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font.large, raw_text, text_color);
