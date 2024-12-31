@@ -120,6 +120,10 @@ static struct PWR_Context {
 static int _;
 
 SDL_Surface* GFX_init(int mode) {
+	// TODO: this doesn't really belong here...
+	// tried adding to PWR_init() but that was no good (not sure why)
+	PLAT_initLid();
+	
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
 	gfx.mode = mode;
@@ -1113,6 +1117,16 @@ void SND_quit(void) { // plat_sound_finish
 
 ///////////////////////////////
 
+LID_Context lid = {
+	.has_lid = 0,
+	.is_open = 1,
+};
+
+FALLBACK_IMPLEMENTATION void PLAT_initLid(void) {  }
+FALLBACK_IMPLEMENTATION int PLAT_lidChanged(int* state) { return 0; }
+
+///////////////////////////////
+
 PAD_Context pad;
 
 #define AXIS_DEADZONE 0x4000
@@ -1326,19 +1340,29 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 			pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
 		}
 	}
+	
+	if (lid.has_lid && PLAT_lidChanged(NULL)) pad.just_released |= BTN_SLEEP;
 }
 FALLBACK_IMPLEMENTATION int PLAT_shouldWake(void) {
+	int lid_open = 1; // assume open by default
+	if (lid.has_lid && PLAT_lidChanged(&lid_open) && lid_open) return 1;
+	
+	
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type==SDL_KEYUP) {
 			uint8_t code = event.key.keysym.scancode;
 			if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && (code==CODE_MENU || code==CODE_MENU_ALT))) {
+				// ignore input while lid is closed
+				if (lid.has_lid && !lid.is_open) return 0;  // do it here so we eat the input
 				return 1;
 			}
 		}
 		else if (event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
 			if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && (joy==JOY_MENU || joy==JOY_MENU_ALT))) {
+				// ignore input while lid is closed
+				if (lid.has_lid && !lid.is_open) return 0;  // do it here so we eat the input
 				return 1;
 			}
 		} 
