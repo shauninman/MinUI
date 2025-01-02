@@ -94,7 +94,8 @@ void InitSettings(void) {
 	system("amixer sset 'Headphone' 0"); // 100%
 	system("amixer sset 'digital volume' 0"); // 100%
 	system("amixer sset 'Soft Volume Master' 255"); // 100%
-	// volume is set with 'DAC volume'
+	system("amixer sset 'DAC Swap' Off"); // Fix L/R channels
+	// volume is set with 'digital volume'
 	
 	SetVolume(GetVolume());
 	SetBrightness(GetBrightness());
@@ -148,7 +149,6 @@ void SetVolume(int value) { // 0-20
 	else settings->speaker = value;
 
 	int raw = value * 5;
-	if (raw>0) raw = 96 + (64 * raw) / 100;
 	SetRawVolume(raw);
 	SaveSettings();
 }
@@ -166,14 +166,19 @@ void SetRawBrightness(int val) { // 0 - 255
 		close(fd);
 	}
 }
-void SetRawVolume(int val) { // 0 or 96 - 160
+void SetRawVolume(int val) { // 0-100
 	printf("SetRawVolume(%i)\n", val); fflush(stdout);
 	if (settings->mute) val = 0;
 	
+	// Note: 'digital volume' mapping is reversed
 	char cmd[256];
-	sprintf(cmd, "amixer sset 'DAC volume' %i &> /dev/null", val);
+	sprintf(cmd, "amixer sset 'digital volume' -M %i%% &> /dev/null", 100-val);
 	system(cmd);
-	
+
+	// Setting just 'digital volume' to 0 still plays audio quietly. Also set DAC volume to 0
+	if (val == 0) system("amixer sset 'DAC volume' 0 &> /dev/null");
+	else system("amixer sset 'DAC volume' 160 &> /dev/null"); // 160=0dB=max for 'DAC volume'
+
 	// TODO: unfortunately doing it this way creating a linker nightmare
 	// struct mixer *mixer = mixer_open(0);
 	// struct mixer_ctl *ctl;
