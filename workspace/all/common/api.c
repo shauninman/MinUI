@@ -953,6 +953,7 @@ static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // pla
 	
 	int16_t *out = (int16_t *)stream;
 	len /= (sizeof(int16_t) * 2);
+	// int full_len = len;
 	
 	// if (snd.frame_out!=snd.frame_in) LOG_info("%8i consuming samples (%i frames)\n", ms(), len);
 	
@@ -970,7 +971,7 @@ static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // pla
 	
 	int zero = len>0 && len==SAMPLES;
 	if (zero) return (void)memset(out,0,len*(sizeof(int16_t) * 2));
-	// else if (len>=5) LOG_info("%8i BUFFER UNDERRUN (%i frames)\n", ms(), len);
+	// else if (len>=5) LOG_info("%8i BUFFER UNDERRUN (%i/%i frames)\n", ms(), len,full_len);
 
 	int16_t *in = out-1;
 	while (len>0) {
@@ -982,6 +983,9 @@ static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // pla
 static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 	snd.frame_count = snd.buffer_seconds * snd.sample_rate_in / snd.frame_rate;
 	if (snd.frame_count==0) return;
+	
+	// LOG_info("frame_count: %i (%i * %i / %f)\n", snd.frame_count, snd.buffer_seconds, snd.sample_rate_in, snd.frame_rate);
+	// snd.frame_count *= 2; // no help
 	
 	SDL_LockAudio();
 	
@@ -1717,4 +1721,5 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	char cmd[512];
 	sprintf(cmd, "date -s '%d-%d-%d %d:%d:%d'; hwclock --utc -w", y,m,d,h,i,s);
 	system(cmd);
+	return 0; // why does this return an int?
 }
