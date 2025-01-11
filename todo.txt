@@ -2,17 +2,16 @@ Changes
 
 BASE
 
-- zero28: initial MagicX Mini Zero 28
-- my355: initial Miyoo Flip support
-- all: Collections folder now supports a map.txt file
+- 
 
 EXTRAS
 
-- zero28: initial MagicX Mini Zero 28
-- my355: initial Miyoo Flip support
-- my282: added Files.pak
+- 
 
 ---
+
+tg_040
+	merge these already
 
 boot
 	another potential way to identify devices
@@ -25,7 +24,6 @@ all
 		turned on if necessary.
 
 zero28
-	prepare new MOSS-zero28 image before release
 	see if we can un-hardcode screensize in sdl2-mali
 	
 my355
