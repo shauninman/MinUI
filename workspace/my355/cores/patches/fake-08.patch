@@ -1,0 +1,34 @@
+diff --git forkSrcPrefix/platform/libretro/libretro.cpp forkDstPrefix/platform/libretro/libretro.cpp
+index d95ccb6cab52abfe7620ff84dd5cbb450bafe750..24687335ad410096aa48f29e13dcb479171a06fc 100644
+--- forkSrcPrefix/platform/libretro/libretro.cpp
++++ forkDstPrefix/platform/libretro/libretro.cpp
+@@ -636,6 +636,7 @@ EXPORT bool retro_load_game(struct retro_game_info const *info)
+     else {
+         _vm->QueueCartChange(info->path);
+     }
++	_vm->UpdateAndDraw();
+ 
+     return true;
+ }
+diff --git forkSrcPrefix/platform/libretro/Makefile forkDstPrefix/platform/libretro/Makefile
+index be0f1b46bb3ab10be4a9f896f5e8841dd630b35b..f6b4d892627ec2a81b01ddb4da7f0c7a8022221f 100644
+--- forkSrcPrefix/platform/libretro/Makefile
++++ forkDstPrefix/platform/libretro/Makefile
+@@ -123,7 +123,16 @@ else ifeq ($(platform), miyoomini)
+    CXXFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7ve -D_NEED_FULL_PATH_
+    fpic := -fPIC
+    SHARED := -shared -Wl,--version-script=link.T
+-
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   STRIP = $(CROSS_COMPILE)strip
++   CXXFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++   fpic := -fPIC
++   SHARED := -shared -Wl,--version-script=link.T
+ else ifeq ($(platform), gcw0)
+    TARGET := $(TARGET_NAME)_libretro_gcw0.so
+    CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc

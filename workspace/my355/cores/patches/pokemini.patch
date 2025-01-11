@@ -1,0 +1,27 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index ef2f9e7d1c6041bea8e2c8a61cdd363ed73a7482..ada8785f566af89cc77f5ab2dd9e670b0a998545 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -504,6 +504,22 @@ else ifeq ($(platform), retrofw)
+ 	CFLAGS += -ffast-math -fomit-frame-pointer -march=mips32 -mtune=mips32 -mhard-float
+ 	CFLAGS += -DDINGUX
+ 
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC = $(CROSS_COMPILE)gcc
++	CXX = $(CROSS_COMPILE)g++
++	AR = $(CROSS_COMPILE)ar
++	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
++	fpic := -fPIC
++	CFLAGS += -DARM
++	CFLAGS += $(PTHREAD_FLAGS)
++	CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++	CFLAGS += -ffast-math -fomit-frame-pointer
++	CFLAGS += -DDINGUX
++	HAVE_NEON = 1
++	ARCH = arm64
++
+ else ifeq ($(platform), msvc)
+ 	OBJOUT = -Fo
+ 

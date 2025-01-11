@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ -n "$DATETIME_PATH" ]; then
+	echo `date +'%F %T'` > "$DATETIME_PATH"
+	sync
+fi
+
+cat /dev/zero > /dev/fb0
+poweroff
+
+while :; do
+	sleep 5
+done
+
+# echo s > /proc/sysrq-trigger
+# echo u > /proc/sysrq-trigger
+# echo o > /proc/sysrq-trigger

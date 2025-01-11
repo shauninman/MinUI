@@ -1,0 +1,36 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index 07d5368a8e78a020813732239ec369d83e931ede..009f13b8e61c634de4cb83e97785a10b83b4322d 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -288,6 +288,31 @@ else ifeq ($(platform), miyoo)
+ 	FLAGS += -fomit-frame-pointer -ffast-math -march=armv5te -mtune=arm926ej-s
+ 	FLAGS += -DFAST_ALIGNED_LSB_WORD_ACCESS -fno-unroll-loops
+ 
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC = $(CROSS_COMPILE)gcc
++	CXX = $(CROSS_COMPILE)g++
++	AR = $(CROSS_COMPILE)ar
++	SHARED := -shared -Wl,--version-script=link.T
++	LIBM :=
++	CFLAGS += -Ofast \
++	-flto=4 -fwhole-program -fuse-linker-plugin \
++	-fdata-sections -ffunction-sections -Wl,--gc-sections \
++	-fno-stack-protector -fno-ident -fomit-frame-pointer \
++	-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
++	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
++	-fmerge-all-constants -fno-math-errno
++	CFLAGS += -fPIC
++	CFLAGS += -DLSB_FIRST -DFAST_ALIGNED_LSB_WORD_ACCESS -DRIGHTSHIFT_IS_SAR
++	CFLAGS += -std=c99 -fomit-frame-pointer -ffast-math
++	CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++	LDFLAGS += -flto
++	OPTIMIZE += -Ofast -DNDEBUG=1
++	ifeq (,$(DEBUG))
++		LDFLAGS += -s
++	endif
++
+ # (armv7 a7, hard point, neon based) ### 
+ # NESC, SNESC, C64 mini 
+ else ifeq ($(platform), classic_armv7_a7)

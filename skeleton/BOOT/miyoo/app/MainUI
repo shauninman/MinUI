@@ -4,6 +4,9 @@ cd $(dirname "$0")
 
 INFO=`cat /proc/cpuinfo 2> /dev/null`
 case $INFO in
+*"0xd05"*)
+	./my355.sh
+	;;
 *"sun8i"*)
 	./my282.sh
 	;;

@@ -67,6 +67,7 @@ Extras:
 | Device | Added | Status |
 | -- | -- | -- |
 | Anbernic RG28xx | MinUI-20240429b-2 | Maintained |
+| Anbernic RG34xx | MinUI-20241227-0 | Maintained |
 | Anbernic RG35xx | MinUI-20230922b-2 | Deprecated |
 | Anbernic RG35xx Plus | MinUI-20240106b-0 | Maintained |
 | Anbernic RG35xxH | MinUI-20240120b-1 | Maintained |
@@ -76,8 +77,10 @@ Extras:
 | Anbernic RG CubeXX | MinUI-202401028-0 | Active | 
 | GKD Pixel | MinUI-20240120b-1 | Deprecated |
 | M17 | MinUI-20231126b-2 | Deprecated |
-| MagicX XU Mini M | MinUI-20240831-0 | Maintained | 
+| MagicX XU Mini M | MinUI-20240831-0 | Deprecated | 
+| MagicX Mini Zero 28 | MinUI-202501xx-0 | Active |
 | Miyoo A30 | MinUI-20240705-0 | Maintained |
+| Miyoo Flip | MinUI-202501xx-0 | Active |
 | Miyoo Mini | MinUI-20230922b-2 | Deprecated |
 | Miyoo Mini Plus | MinUI-20230922b-2 | Deprecated |
 | Powkiddy RGB30 | MinUI-20231014b-1 | Deprecated |

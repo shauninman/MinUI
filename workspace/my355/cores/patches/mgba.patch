@@ -1,0 +1,31 @@
+diff --git forkSrcPrefix/Makefile.libretro forkDstPrefix/Makefile.libretro
+index 108148f4579f4727146e5b8c1e05ef7382654208..35e6399147a4ef75947ecb2ad4a94f0820ef24d0 100644
+--- forkSrcPrefix/Makefile.libretro
++++ forkDstPrefix/Makefile.libretro
+@@ -417,6 +417,26 @@ else ifeq ($(platform), miyoo)
+    CFLAGS += -fno-common -ftree-vectorize -funswitch-loops
+    DEFINES += -std=c99
+ 
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   SHARED := -shared -Wl,--version-script=link.T
++   fpic := -fPIC
++   PLATFORM_DEFINES += -D_GNU_SOURCE -DHAVE_STRTOF_L -DHAVE_LOCALE
++   CFLAGS += -fomit-frame-pointer -ffast-math
++   CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++   CFLAGS += -fno-common -ftree-vectorize -funswitch-loops
++   HAVE_NEON = 1
++   ARCH = arm64
++   BUILTIN_GPU = neon
++   CPU_ARCH := arm
++   MMAP_JIT_CACHE = 1
++   HAVE_DYNAREC = 1
++   DEFINES += -std=c99
++
+ # Windows
+ else
+    TARGET := $(TARGET_NAME)_libretro.dll
