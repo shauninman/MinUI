@@ -135,7 +135,7 @@
 ///////////////////////////////
 
 #define SDCARD_PATH "/mnt/SDCARD"
-#define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
+#define MUTE_VOLUME_RAW 0
 
 ///////////////////////////////
 

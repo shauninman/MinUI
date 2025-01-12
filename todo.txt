@@ -12,6 +12,12 @@ EXTRAS
 
 tg_040
 	merge these already
+	haha I've already forgotten how I did this for the h700 devices
+	winkles
+		install/update graphics
+		brightness ramps
+		volume buttons
+		stick gpios
 
 boot
 	another potential way to identify devices
@@ -30,7 +36,7 @@ my355
 	undone
 		+ headphone jack
 			- mute is static noise (same on stock)
-			- see pull request re: brick volume
+			- so left at 0 volume instead
 		+ rumble
 			- feels awful
 		- hdmi
