@@ -1297,12 +1297,41 @@ static void Menu_quit(void) {
 
 ///////////////////////////////////////
 
+static struct {
+    int itemIndex;            // which item is selected
+    int scrollOffset;         // current horizontal offset
+    int scrollDirection;      // 1 = moving right, -1 = moving left
+    int scrolling;            // 0 = not needed, 1 = waiting, 2 = active
+    unsigned long scrollStart;// time item was selected
+    unsigned long lastMove;   // last time offset changed
+} g_scroll = { -1, 0, 1, 0, 0, 0 };
+
+// The number of milliseconds we wait before scrolling begins.
+#define SCROLL_DELAY    800
+// How fast to scroll horizontally (pixels per tick).
+#define SCROLL_SPEED    50 
+// The minimum time (ms) between offset increments.
+#define SCROLL_INTERVAL 30 
+
+static int getTextWidth(TTF_Font* font, const char* text) {
+    if (!text || !*text) return 0;
+    int w = 0;
+    int h = 0;
+    TTF_SizeUTF8(font, text, &w, &h);
+    return w;
+}
+
+///////////////////////////////////////
+
+static unsigned long g_pauseStart = 0;
+static int g_isPausing = 0;
+
 int main (int argc, char *argv[]) {
-	// LOG_info("time from launch to:\n");
-	// unsigned long main_begin = SDL_GetTicks();
-	// unsigned long first_draw = 0;
-	
-	if (autoResume()) return 0; // nothing to do
+    // LOG_info("time from launch to:\n");
+    // unsigned long main_begin = SDL_GetTicks();
+    // unsigned long first_draw = 0;
+    
+    if (autoResume()) return 0; // nothing to do
 	
 	simple_mode = exists(SIMPLE_MODE_PATH);
 
@@ -1310,31 +1339,31 @@ int main (int argc, char *argv[]) {
 	InitSettings();
 	
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
-	// LOG_info("- graphics init: %lu\n", SDL_GetTicks() - main_begin);
+    // LOG_info("- graphics init: %lu\n", SDL_GetTicks() - main_begin);
 	
 	PAD_init();
-	// LOG_info("- input init: %lu\n", SDL_GetTicks() - main_begin);
+    // LOG_info("- input init: %lu\n", SDL_GetTicks() - main_begin);
 	
 	PWR_init();
 	if (!HAS_POWER_BUTTON && !simple_mode) PWR_disableSleep();
-	// LOG_info("- power init: %lu\n", SDL_GetTicks() - main_begin);
+    // LOG_info("- power init: %lu\n", SDL_GetTicks() - main_begin);
 	
 	SDL_Surface* version = NULL;
 	
 	Menu_init();
-	// LOG_info("- menu init: %lu\n", SDL_GetTicks() - main_begin);
+    // LOG_info("- menu init: %lu\n", SDL_GetTicks() - main_begin);
 	
-	// now that (most of) the heavy lifting is done, take a load off
+    // now that (most of) the heavy lifting is done, take a load off
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 	GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
 	int dirty = 1;
 	int show_version = 0;
-	int show_setting = 0; // 1=brightness,2=volume
+    int show_setting = 0; // 1=brightness,2=volume
 	int was_online = PLAT_isOnline();
 	
-	// LOG_info("- loop start: %lu\n", SDL_GetTicks() - main_begin);
+    // LOG_info("- loop start: %lu\n", SDL_GetTicks() - main_begin);
 	while (!quit) {
 		GFX_startFrame();
 		unsigned long now = SDL_GetTicks();
@@ -1350,6 +1379,18 @@ int main (int argc, char *argv[]) {
 		if (was_online!=is_online) dirty = 1;
 		was_online = is_online;
 		
+		if (selected != g_scroll.itemIndex) {
+			g_scroll.itemIndex = selected;
+			g_scroll.scrollOffset = 0;
+			g_scroll.scrollDirection = 1; 
+			g_scroll.scrolling = 0; 
+			g_scroll.scrollStart = now;
+			g_scroll.lastMove = now;
+            // reset pause
+			g_pauseStart = 0;
+			g_isPausing = 0;
+		}
+
 		if (show_version) {
 			if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
 				show_version = 0;
@@ -1366,7 +1407,7 @@ int main (int argc, char *argv[]) {
 			else if (total>0) {
 				if (PAD_justRepeated(BTN_UP)) {
 					if (selected==0 && !PAD_justPressed(BTN_UP)) {
-						// stop at top
+                        // stop at top
 					}
 					else {
 						selected -= 1;
@@ -1384,7 +1425,7 @@ int main (int argc, char *argv[]) {
 				}
 				else if (PAD_justRepeated(BTN_DOWN)) {
 					if (selected==total-1 && !PAD_justPressed(BTN_DOWN)) {
-						// stop at bottom
+                        // stop at bottom
 					}
 					else {
 						selected += 1;
@@ -1428,7 +1469,7 @@ int main (int argc, char *argv[]) {
 				}
 			}
 		
-			if (PAD_justRepeated(BTN_L1) && !PAD_isPressed(BTN_R1) && !PWR_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
+            if (PAD_justRepeated(BTN_L1) && !PAD_isPressed(BTN_R1) && !PWR_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha-1;
 				if (i>=0) {
@@ -1441,7 +1482,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-			else if (PAD_justRepeated(BTN_R1) && !PAD_isPressed(BTN_L1) && !PWR_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
+            else if (PAD_justRepeated(BTN_R1) && !PAD_isPressed(BTN_L1) && !PWR_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha+1;
 				if (i<top->alphas->count) {
@@ -1478,11 +1519,81 @@ int main (int argc, char *argv[]) {
 				closeDirectory();
 				total = top->entries->count;
 				dirty = 1;
-				// can_resume = 0;
+                // can_resume = 0;
 				if (total>0) readyResume(top->entries->items[top->selected]);
 			}
 		}
 		
+		if (total > 0 && top->selected >= 0 && top->selected < total) {
+			Entry* e = top->entries->items[top->selected];
+			char* name = e->unique ? e->unique : e->name;
+			
+			// simple thumbnail support might reduce available_width, etc.
+			int available_width = screen->w - SCALE1(PADDING*2); 
+			
+			int clip_w = available_width - SCALE1(BUTTON_PADDING*2);
+			if (clip_w < 1) clip_w = 1;
+
+			int text_w = getTextWidth(font.large, name);
+
+			int needs_scroll = (text_w >= clip_w); 
+			
+			if (!show_version && needs_scroll) {
+				// If we are currently pausing at edge, handle that
+				if (g_isPausing) {
+					if ((now - g_pauseStart) < SCROLL_DELAY) {
+						// keep offset still
+						dirty = 1; 
+					} else {
+						// done pausing
+						g_isPausing = 0;
+						// direction stays whichever was set after clamp
+					}
+				}
+				else if (g_scroll.scrolling == 0) {
+					if ((now - g_scroll.scrollStart) >= SCROLL_DELAY) {
+						g_scroll.scrolling = 2; 
+						g_scroll.lastMove = now;
+					}
+				}
+				else if (g_scroll.scrolling == 2) {
+					if ((now - g_scroll.lastMove) > SCROLL_INTERVAL && !g_isPausing) {
+						g_scroll.scrollOffset += g_scroll.scrollDirection;
+						g_scroll.lastMove = now;
+						dirty = 1; 
+						
+						int edgePos = text_w - clip_w; 
+						if (edgePos < 0) edgePos = 0;
+
+						// bounce logic
+						if (g_scroll.scrollOffset >= edgePos) {
+							g_scroll.scrollOffset = edgePos;
+							g_scroll.scrollDirection = -1;
+							// begin a pause
+							g_isPausing = 1;
+							g_pauseStart = now;
+						}
+						else if (g_scroll.scrollOffset <= 0) {
+							g_scroll.scrollOffset = 0;
+							g_scroll.scrollDirection = 1;
+							// begin a pause
+							g_isPausing = 1;
+							g_pauseStart = now;
+						}
+					}
+				}
+			} else {
+				g_scroll.scrollOffset = 0;
+				g_scroll.scrollDirection = 1;
+				g_scroll.scrolling = 0;
+				g_scroll.scrollStart = now;
+				g_scroll.lastMove = now;
+				// reset pausing if we leave the item
+				g_isPausing = 0;
+				g_pauseStart = 0;
+			}
+		}
+
 		if (dirty) {
 			GFX_clear(screen);
 			
@@ -1527,10 +1638,15 @@ int main (int argc, char *argv[]) {
 					
 					char *tmp,*commit;
 					commit = strrchr(release, '\n');
-					commit[0] = '\0';
-					commit = strrchr(release, '\n')+1;
+					if(commit) commit[0] = '\0';
+					commit = strrchr(release, '\n');
+					char* commit_text = NULL;
+					if(commit) {
+						commit[0] = '\0';
+						commit_text = commit + 1;
+					}
 					tmp = strchr(release, '\n');
-					tmp[0] = '\0';
+					if(tmp) tmp[0] = '\0';
 					
 					// TODO: not sure if I want bare PLAT_* calls here
 					char* extra_key = "Model";
@@ -1539,7 +1655,7 @@ int main (int argc, char *argv[]) {
 					SDL_Surface* release_txt = TTF_RenderUTF8_Blended(font.large, "Release", COLOR_DARK_TEXT);
 					SDL_Surface* version_txt = TTF_RenderUTF8_Blended(font.large, release, COLOR_WHITE);
 					SDL_Surface* commit_txt = TTF_RenderUTF8_Blended(font.large, "Commit", COLOR_DARK_TEXT);
-					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.large, commit, COLOR_WHITE);
+					SDL_Surface* hash_txt = TTF_RenderUTF8_Blended(font.large, commit_text ? commit_text : "???", COLOR_WHITE);
 					
 					SDL_Surface* key_txt = TTF_RenderUTF8_Blended(font.large, extra_key, COLOR_DARK_TEXT);
 					SDL_Surface* val_txt = TTF_RenderUTF8_Blended(font.large, extra_val, COLOR_WHITE);
@@ -1549,7 +1665,7 @@ int main (int argc, char *argv[]) {
 					
 					if (release_txt->w>l_width) l_width = release_txt->w;
 					if (commit_txt->w>l_width) l_width = commit_txt->w;
-					if (key_txt->w>l_width) l_width = commit_txt->w;
+					if (key_txt->w>l_width) l_width = key_txt->w;
 
 					if (version_txt->w>r_width) r_width = version_txt->w;
 					if (hash_txt->w>r_width) r_width = hash_txt->w;
@@ -1578,72 +1694,100 @@ int main (int argc, char *argv[]) {
 				}
 				SDL_BlitSurface(version, NULL, screen, &(SDL_Rect){(screen->w-version->w)/2,(screen->h-version->h)/2});
 				
-				// buttons (duped and trimmed from below)
+                // buttons (duped and trimmed from below)
 				if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
 				else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, 0, screen, 0);
 				
 				GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, 0, screen, 1);
 			}
 			else {
-				// list
+                // list
 				if (total>0) {
 					int selected_row = top->selected - top->start;
 					for (int i=top->start,j=0; i<top->end; i++,j++) {
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
 						char* entry_unique = entry->unique;
-						int available_width = (had_thumb && j!=selected_row ? ox : screen->w) - SCALE1(PADDING * 2);
-						if (i==top->start && !(had_thumb && j!=selected_row)) available_width -= ow; // 
-					
+						
+						// figure out how much horizontal space we have for text
+						int available_width = (had_thumb && j!=selected_row ? ox : screen->w) 
+						                     - SCALE1(PADDING * 2);
+						if (i==top->start && !(had_thumb && j!=selected_row)) {
+							available_width -= ow; 
+						}
+						
 						SDL_Color text_color = COLOR_WHITE;
-					
+						
 						trimSortingMeta(&entry_name);
-					
-						char display_name[256];
-						int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
-						int max_width = MIN(available_width, text_width);
-						if (j==selected_row) {
+						
+						int highlight = (i == top->selected);
+						if (highlight) {
+							// draw the pill
 							GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)),
-								max_width,
+								SCALE1(PADDING + (j * PILL_SIZE)),
+								available_width,
 								SCALE1(PILL_SIZE)
 							});
 							text_color = COLOR_BLACK;
 						}
-						else if (entry->unique) {
-							trimSortingMeta(&entry_unique);
-							char unique_name[256];
-							GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
 						
-							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
-							SDL_BlitSurface(text, &(SDL_Rect){
-								0,
-								0,
-								max_width-SCALE1(BUTTON_PADDING*2),
-								text->h
-							}, screen, &(SDL_Rect){
-								SCALE1(PADDING+BUTTON_PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)+4)
-							});
-						
-							GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+                        // NEW SCROLL RENDERING FOR SELECTED ITEM
+						if (highlight) {
+							// Render the entire text surface, then blit only what fits
+							char* raw_text = (entry_unique ? entry_unique : entry_name);
+							int text_w = getTextWidth(font.large, raw_text);
+							int offset = g_scroll.scrollOffset;
+							int clip_w = available_width - SCALE1(BUTTON_PADDING*2);
+							if (clip_w < 1) clip_w = 1; 
+							
+                            // clamp offset
+							if (text_w < clip_w) offset = 0;
+							else if (offset > text_w - clip_w) offset = text_w - clip_w;
+							if (offset < 0) offset = 0;
+
+							SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font.large, raw_text, text_color);
+							if (textSurface) {
+								SDL_Rect src = { offset, 0, (Uint16)clip_w, (Uint16)textSurface->h };
+								SDL_Rect dst = {
+									SCALE1(PADDING + BUTTON_PADDING),
+									SCALE1(PADDING + (j * PILL_SIZE) + 4),
+									src.w, src.h
+								};
+								SDL_BlitSurface(textSurface, &src, screen, &dst);
+								SDL_FreeSurface(textSurface);
+							}
 						}
-						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
-						SDL_BlitSurface(text, &(SDL_Rect){
-							0,
-							0,
-							max_width-SCALE1(BUTTON_PADDING*2),
-							text->h
-						}, screen, &(SDL_Rect){
-							SCALE1(PADDING+BUTTON_PADDING),
-							SCALE1(PADDING+(j*PILL_SIZE)+4)
-						});
-						SDL_FreeSurface(text);
+						else {
+                            // OLD TRUNCATE RENDERING FOR UNSELECTED ITEM
+							char display_name[256];
+							char* raw_text = (entry_unique ? entry_unique : entry_name);
+							
+							int text_width = GFX_truncateText(
+								font.large, 
+								raw_text, 
+								display_name, 
+								available_width, 
+								SCALE1(BUTTON_PADDING*2)
+							);
+							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
+							
+							int max_width = (text_width < available_width) 
+							                ? text_width 
+							                : available_width;
+							SDL_Rect dst = {
+								SCALE1(PADDING + BUTTON_PADDING),
+								SCALE1(PADDING + (j * PILL_SIZE) + 4),
+								max_width,
+								text->h
+							};
+							SDL_BlitSurface(text, NULL, screen, &dst);
+							SDL_FreeSurface(text);
+						}
 					}
 				}
 				else {
-					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
+                    // TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
 					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
 			
@@ -1675,12 +1819,12 @@ int main (int argc, char *argv[]) {
 		}
 		else GFX_sync();
 		
-		// if (!first_draw) {
-		// 	first_draw = SDL_GetTicks();
-		// 	LOG_info("- first draw: %lu\n", first_draw - main_begin);
-		// }
-		
-		// handle HDMI change
+        // if (!first_draw) {
+        // 	first_draw = SDL_GetTicks();
+        // 	LOG_info("- first draw: %lu\n", first_draw - main_begin);
+        // }
+        
+        // handle HDMI change
 		static int had_hdmi = -1;
 		int has_hdmi = GetHDMI();
 		if (had_hdmi==-1) had_hdmi = has_hdmi;
@@ -1689,7 +1833,7 @@ int main (int argc, char *argv[]) {
 
 			Entry* entry = top->entries->items[top->selected];
 			LOG_info("restarting after HDMI change... (%s)\n", entry->path);
-			saveLast(entry->path); // NOTE: doesn't work in Recents (by design)
+            saveLast(entry->path); // NOTE: doesn't work in Recents (by design)
 			sleep(4);
 			quit = 1;
 		}
