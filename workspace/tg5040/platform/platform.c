@@ -18,6 +18,8 @@
 
 #include "scaler.h"
 
+int is_brick = 0;
+
 ///////////////////////////////
 
 static SDL_Joystick *joystick;
@@ -54,6 +56,10 @@ static int device_height;
 static int device_pitch;
 
 SDL_Surface* PLAT_initVideo(void) {
+	char* device = getenv("DEVICE");
+	is_brick = exactMatch("brick", device);
+	// LOG_info("DEVICE: %s is_brick: %i\n", device, is_brick);
+	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
@@ -488,15 +494,22 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
-#define LED_PATH "/sys/class/led_anim/max_scale"
+#define LED_PATH1 "/sys/class/led_anim/max_scale"
+#define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
+#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
+		if (is_brick) SetRawBrightness(8);
 		SetBrightness(GetBrightness());
-		putInt(LED_PATH,0);
+		putInt(LED_PATH1,0);
+		if (is_brick) putInt(LED_PATH2,0);
+		if (is_brick) putInt(LED_PATH3,0);
 	}
 	else {
 		SetRawBrightness(0);
-		putInt(LED_PATH,52); // 52 seems to be the max brightness
+		putInt(LED_PATH1,60);
+		if (is_brick) putInt(LED_PATH2,60);
+		if (is_brick) putInt(LED_PATH3,60);
 	}
 }
 
@@ -539,6 +552,8 @@ int PLAT_pickSampleRate(int requested, int max) {
 }
 
 char* PLAT_getModel(void) {
+	char* model = getenv("TRIMUI_MODEL");
+	if (model) return model;
 	return "Trimui Smart Pro";
 }
 

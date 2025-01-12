@@ -21,7 +21,9 @@
 #define BRIGHTNESS_MIN 	0
 #define BRIGHTNESS_MAX 	10
 
-#define CODE_MENU		316
+#define CODE_MENU0		314
+#define CODE_MENU1		315
+#define CODE_MENU2		316
 #define CODE_PLUS		115
 #define CODE_MINUS		114
 #define CODE_MUTE		1
@@ -125,7 +127,9 @@ int main (int argc, char *argv[]) {
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
 				printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
 				switch (ev.code) {
-					case CODE_MENU:
+					case CODE_MENU0:
+					case CODE_MENU1:
+					case CODE_MENU2:
 						menu_pressed = val;
 					break;
 					break;

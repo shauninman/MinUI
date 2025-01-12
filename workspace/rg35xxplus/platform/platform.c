@@ -407,7 +407,7 @@ static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
 	
-	char* model = getenv("RGXX_MODEL");
+	char* model = getenv("RGXX_MODEL"); // TODO: use device?
 	is_cubexx = exactMatch("RGcubexx", model);
 	is_rg34xx = exactMatch("RG34xx", model);
 	

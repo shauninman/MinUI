@@ -14,10 +14,16 @@ tg_040
 	merge these already
 	haha I've already forgotten how I did this for the h700 devices
 	winkles
-		install/update graphics
-		brightness ramps
-		volume buttons
-		stick gpios
+		+ scale
+		+ brightness ramps
+		+ volume buttons
+		+ stick gpios
+		+ show.elf calls (because of scale difference)
+			+ install/update
+			+ bootlogo
+			+ remove loading
+		- post update step (brick will check for tg3040/bin/install.sh)
+			it might not because that wasn't enabled for Trimui devices in older versions of MinUI...
 
 boot
 	another potential way to identify devices

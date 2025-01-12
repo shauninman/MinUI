@@ -1,3 +1,4 @@
+// tg5040
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -56,8 +57,19 @@ int getInt(char* path) {
 	}
 	return i;
 }
+int exactMatch(char* str1, char* str2) {
+	if (!str1 || !str2) return 0; // NULL isn't safe here
+	int len1 = strlen(str1);
+	if (len1!=strlen(str2)) return 0;
+	return (strncmp(str1,str2,len1)==0);
+}
+
+static int is_brick = 0;
 
 void InitSettings(void) {	
+	char* device = getenv("DEVICE");
+	is_brick = exactMatch("brick", device);
+	
 	sprintf(SettingsPath, "%s/msettings.bin", getenv("USERDATA_PATH"));
 	
 	shm_fd = shm_open(SHM_KEY, O_RDWR | O_CREAT | O_EXCL, 0644); // see if it exists
@@ -119,18 +131,35 @@ int GetBrightness(void) { // 0-10
 void SetBrightness(int value) {
 	
 	int raw;
-	switch (value) {
-		case 0: raw=4; break; 		//  0
-		case 1: raw=6; break; 		//  2
-		case 2: raw=10; break; 		//  4
-		case 3: raw=16; break; 		//  6
-		case 4: raw=32; break;		// 16
-		case 5: raw=48; break;		// 16
-		case 6: raw=64; break;		// 16
-		case 7: raw=96; break;		// 32
-		case 8: raw=128; break;		// 32
-		case 9: raw=192; break;		// 64
-		case 10: raw=255; break;	// 64
+	if (is_brick) {
+		switch (value) {
+			case 0: raw=1; break; 		// 0
+			case 1: raw=8; break; 		// 8
+			case 2: raw=16; break; 		// 8
+			case 3: raw=32; break; 		// 16
+			case 4: raw=48; break;		// 16
+			case 5: raw=72; break;		// 24
+			case 6: raw=96; break;		// 24
+			case 7: raw=128; break;		// 32
+			case 8: raw=160; break;		// 32
+			case 9: raw=192; break;		// 32
+			case 10: raw=255; break;	// 64
+		}
+	}
+	else {
+		switch (value) {
+			case 0: raw=4; break; 		//  0
+			case 1: raw=6; break; 		//  2
+			case 2: raw=10; break; 		//  4
+			case 3: raw=16; break; 		//  6
+			case 4: raw=32; break;		// 16
+			case 5: raw=48; break;		// 16
+			case 6: raw=64; break;		// 16
+			case 7: raw=96; break;		// 32
+			case 8: raw=128; break;		// 32
+			case 9: raw=192; break;		// 64
+			case 10: raw=255; break;	// 64
+		}
 	}
 	SetRawBrightness(raw);
 	settings->brightness = value;

@@ -9,6 +9,12 @@
 
 ///////////////////////////////
 
+extern int is_cubexx;
+extern int is_rg34xx;
+extern int on_hdmi;
+
+///////////////////////////////
+
 #define	BUTTON_UP		BUTTON_NA
 #define	BUTTON_DOWN		BUTTON_NA
 #define	BUTTON_LEFT		BUTTON_NA
@@ -100,10 +106,6 @@
 #define BTN_MOD_MINUS 		BTN_MINUS
 
 ///////////////////////////////
-
-extern int is_cubexx;
-extern int is_rg34xx;
-extern int on_hdmi;
 
 #define FIXED_SCALE 	2
 #define FIXED_WIDTH		(is_cubexx?720:(is_rg34xx?720:640))

@@ -11,7 +11,7 @@ endif
 endif
 
 ifeq (,$(PLATFORMS))
-PLATFORMS = miyoomini trimuismart rg35xx rg35xxplus my355 tg5040 tg3040 zero28 rgb30 m17 gkdpixel my282 magicmini
+PLATFORMS = miyoomini trimuismart rg35xx rg35xxplus my355 tg5040 zero28 rgb30 m17 gkdpixel my282 magicmini
 endif
 
 ###########################################################
@@ -126,12 +126,15 @@ special:
 
 tidy:
 	# ----------------------------------------------------
-	# copy update from rg35xxplus to old rg40xxcube bin so old cards update properly
+	# copy update from merged platform to old pre-merge platform bin so old cards update properly
+ifneq (,$(findstring rg35xxplus, $(PLATFORMS)))
 	mkdir -p ./build/SYSTEM/rg40xxcube/bin/
 	cp ./build/SYSTEM/rg35xxplus/bin/install.sh ./build/SYSTEM/rg40xxcube/bin/
-
-	# remove various detritus
-	rm -rf ./build/EXTRAS/Tools/tg5040/Developer.pak
+endif
+ifneq (,$(findstring tg5040, $(PLATFORMS)))
+	mkdir -p ./build/SYSTEM/tg3040/paks/MinUI.pak/
+	cp ./build/SYSTEM/tg5040/bin/install.sh ./build/SYSTEM/tg3040/paks/MinUI.pak/launch.sh
+endif
 
 package: tidy
 	# ----------------------------------------------------
