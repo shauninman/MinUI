@@ -23,8 +23,13 @@ libretro-common
 **/other/sdl12-compat
 **/other/unzip60
 **/other/DinguxCommander
+**/other/DinguxCommander-sdl2
 **/other/351files
 **/other/fbset
+**/other/mkbootimg
+**/other/rsce-go
+bl_enable
+bl_disable
 
 **/tmp
 

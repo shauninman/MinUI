@@ -1,0 +1,16 @@
+$(PLATFORM):
+	# $@
+	cp ./workspace/$@/show/show.elf ./build/SYSTEM/$@/bin
+	# installer
+	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
+	mkdir -p ./build/BOOT/common/$@/
+	cp ./workspace/$@/install/boot.sh ./build/BOOT/common/$@.sh
+	cp ./workspace/$@/show/show.elf ./build/BOOT/common/$@/
+	cp ./workspace/$@/install/*.png ./build/BOOT/common/$@/
+	# extras
+	cp ./workspace/$@/other/DinguxCommander-sdl2/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/DinguxCommander-sdl2/res ./build/EXTRAS/Tools/$@/Files.pak/
+	mkdir -p ./build/EXTRAS/Tools/$@/Bootlogo.pak/payload/bin/
+	cp ./workspace/$@/other/mkbootimg/mkbootimg ./build/EXTRAS/Tools/$@/Bootlogo.pak/payload/bin/
+	cp ./workspace/$@/other/mkbootimg/unpackbootimg ./build/EXTRAS/Tools/$@/Bootlogo.pak/payload/bin/
+	cp ./workspace/$@/other/rsce-go/rsce_tool ./build/EXTRAS/Tools/$@/Bootlogo.pak/payload/bin/

@@ -7,8 +7,10 @@ $(PLATFORM):
 	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
 	mkdir -p ./build/BOOT/common/$@/
 	cp ./workspace/$@/install/boot.sh ./build/BOOT/common/$@.sh
-	cp ./workspace/$@/install/*.png ./build/BOOT/common/$@/
 	cp ./workspace/$@/show/show.elf ./build/BOOT/common/$@/
+	cp ./workspace/$@/install/*.png ./build/BOOT/common/$@/
 	cp ./workspace/$@/other/unzip60/unzip ./build/BOOT/common/$@/
 	#extras
 	cp -r ./workspace/$@/other/squashfs/output/* ./build/EXTRAS/Tools/$@/Remove\ Loading.pak/
+	cp ./workspace/$@/other/DinguxCommander-sdl2/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/DinguxCommander-sdl2/res ./build/EXTRAS/Tools/$@/Files.pak/

@@ -1,24 +1,52 @@
 Changes
 
-
 BASE
 
-- rg35xxplus: added initial support for RG34xx
-- rg35xxplus: merged RG CubeXX into rg35xxplus
-- rg35xxplus: added independent settings for HDMI
+- 
 
 EXTRAS
 
-- rg35xxplus: initial support for RG34xx
-- rg40xxcube: removed (merged into rg35xxplus)
+- 
 
 ---
 
-can I use shared memory to start an SDL OpenGL context 
-	to avoid having to spin up and break down everything on each launch?
+tg_040
+	merge these already
+
+boot
+	another potential way to identify devices
+		echo `cat /proc/device-tree/model`
 
 all
-	create a nop setterm file in /.system/<device>/bin to silence errors from system() calls
+	rename "Thread Core" to "Prioritize Audio"
+		Can eliminate crackle but may 
+		cause dropped frames. Best only
+		turned on if necessary.
+
+zero28
+	see if we can un-hardcode screensize in sdl2-mali
+	
+my355
+	undone
+		+ headphone jack
+			- mute is static noise (same on stock)
+			- see pull request re: brick volume
+		+ rumble
+			- feels awful
+		- hdmi
+			- stock requires reboot to load hdmi dtb
+			- screen turns off
+			- audio stays on device?
+			- almost works
+				- minui launches fine
+				- minarch running at 30fps
+				- exiting to minui displays correctly until first dirty
+					- then padding changes to 640x480 style
+					- who cares
+				
+hdmi
+	set some custom defaults
+	copy from smart pro?
 
 it's time to retire some supported devices
 	devices running SDL1.2 or sub-480
@@ -34,15 +62,20 @@ it's time to retire some supported devices
 		h700 has 64bit libs right?
 		
 	finish updating README (don't forget BASE readme!)
+	this will require some finesse for the Miyoo and Trimui devices
+		move static boot content from workspace/$@ to skeleton/BOOT
+		update makefile
 
 rg34xx
+	is power button issue caused by systemd restarting the ui loop?
+		could be fixed by adding a wait loop after poweroff in bin/shutdown
 	power button is kinda wonky
 		definitely wonky
 		doesn't always turn off
 		just had it turn off when I tried to wake it from sleep
 			like it got stuck depressed?
 			I've had the screen turn back on after showing the powering off message in menu
-
+		can't reproduce reliably
 	
 minput
 	seems to be designed top,left aligned for 640x480
@@ -124,7 +157,7 @@ next
 				tg3040
 				tg5040
 				trimuismart
-			where fonts and bunled libs aren't available yet
+			where fonts and bundled libs aren't available yet
 		
 	magicmini has no intel toolchain
 	

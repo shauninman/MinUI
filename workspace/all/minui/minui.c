@@ -212,11 +212,12 @@ static void getUniqueName(Entry* entry, char* out_name) {
 }
 
 static void Directory_index(Directory* self) {
-	int skip_index = exactMatch(FAUX_RECENT_PATH, self->path) || prefixMatch(COLLECTIONS_PATH, self->path); // not alphabetized
+	int is_collection = prefixMatch(COLLECTIONS_PATH, self->path);
+	int skip_index = exactMatch(FAUX_RECENT_PATH, self->path) || is_collection; // not alphabetized
 	
 	Hash* map = NULL;
 	char map_path[256];
-	sprintf(map_path, "%s/map.txt", self->path);
+	sprintf(map_path, "%s/map.txt", is_collection ? COLLECTIONS_PATH : self->path);
 	if (exists(map_path)) {
 		FILE* file = fopen(map_path, "r");
 		if (file) {

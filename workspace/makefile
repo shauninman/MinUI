@@ -31,4 +31,7 @@ clean:
 	cd ./$(PLATFORM)/keymon && make clean
 	cd ./all/minui/ && make clean
 	cd ./all/minarch/ && make clean
+	cd ./all/clock/ && make clean
+	cd ./all/minput/ && make clean
+	cd ./all/syncsettings/ && make clean
 	cd ./$(PLATFORM) && make clean

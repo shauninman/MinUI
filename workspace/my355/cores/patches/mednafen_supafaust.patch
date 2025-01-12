@@ -1,0 +1,34 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index f34a01587cda48cc28ebdfd7f00151b06ea88c42..6966d3c4802b200dea33bdbe8e96b2082a36d577 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -88,6 +88,29 @@ else ifeq ($(platform), classic_armv8_a35)
+ 	ARCH = arm
+ 	CFLAGS += -march=armv8-a
+ 	LDFLAGS += -static-libgcc -static-libstdc++
++
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   STRIP = $(CROSS_COMPILE)strip
++   NEED_BPP := 16
++   fpic := -fPIC
++   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
++   CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++   CFLAGS += -Ofast \
++   -flto=4 -fwhole-program -fuse-linker-plugin \
++   -fdata-sections -ffunction-sections -Wl,--gc-sections \
++   -fno-stack-protector -fno-ident -fomit-frame-pointer \
++   -falign-functions=1 -falign-jumps=1 -falign-loops=1 \
++   -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
++   -fmerge-all-constants -fno-math-errno
++   CXXFLAGS += $(CFLAGS)
++   HAVE_NEON = 1
++   ARCH = arm64
++
+ #######################################
+ 
+ else ifeq ($(platform), osx)

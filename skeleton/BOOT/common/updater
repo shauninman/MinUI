@@ -6,7 +6,7 @@ INFO=`cat /proc/cpuinfo 2> /dev/null`
 case $INFO in
 *"sun8i"*)
 	if [ -d /usr/miyoo ]; then
-		PLATFORM="my282"
+		PLATFORM="my282" # Miyoo A30
 	else
 		PLATFORM="trimuismart"
 	fi
@@ -15,10 +15,16 @@ case $INFO in
 	PLATFORM="miyoomini"
 	;;
 *"TG5040"*)
-	PLATFORM="tg5040"
+	PLATFORM="tg5040" # Trimui Smart Pro
 	;;
 *"TG3040"*)
-	PLATFORM="tg3040"
+	PLATFORM="tg3040" # Trimui Brick
+	;;
+*"0xd03"*)
+	PLATFORM="zero28" # MagicX Mini Zero 28
+	;;
+*"0xd05"*)
+	PLATFORM="my355" # Miyoo Flip
 	;;
 esac
 

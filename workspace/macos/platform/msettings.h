@@ -19,4 +19,6 @@ void SetJack(int value); // 0-1
 int GetHDMI(void);
 void SetHDMI(int value); // 0-1
 
+int GetMute(void);
+
 #endif  // __msettings_h__

@@ -1,0 +1,29 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index c3d5d3b30d71a8f9ed332482fa2af1c21b02605d..5e710154e499ddd7b1ae699122c38753b0f4bb4c 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -217,6 +217,24 @@ else ifneq (,$(filter $(platform), ps3 psl1ght))
+    endif
+    FLAGS += -D__PS3__
+ 
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   NEED_BPP := 16
++   fpic := -fPIC
++   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
++   LDFLAGS += -lrt
++   CFLAGS += -fomit-frame-pointer -ffast-math -fPIC -flto
++   CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++   CPPFLAGS += $(CFLAGS)
++   LDFLAGS += -flto
++   ifeq (,$(DEBUG))
++      LDFLAGS += -s
++   endif
++
+ # PSP
+ else ifeq ($(platform), psp1)
+    TARGET := $(TARGET_NAME)_libretro_$(platform).a

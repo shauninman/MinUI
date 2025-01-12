@@ -207,6 +207,17 @@ void SND_quit(void);
 
 ///////////////////////////////
 
+typedef struct LID_Context {
+	int has_lid;
+	int is_open;
+} LID_Context;
+extern LID_Context lid;
+
+void PLAT_initLid(void);
+int PLAT_lidChanged(int* state);
+
+///////////////////////////////
+
 typedef struct PAD_Axis {
 		int x;
 		int y;

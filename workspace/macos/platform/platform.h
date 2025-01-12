@@ -103,9 +103,9 @@
 
 ///////////////////////////////
 
-#define FIXED_SCALE 	3
-#define FIXED_WIDTH		1024
-#define FIXED_HEIGHT	768
+#define FIXED_SCALE 	2
+#define FIXED_WIDTH		640
+#define FIXED_HEIGHT	480
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
@@ -119,8 +119,8 @@
 
 ///////////////////////////////
 
-#define MAIN_ROW_COUNT 7
-#define PADDING 5
+#define MAIN_ROW_COUNT 6
+#define PADDING 10
 
 ///////////////////////////////
 

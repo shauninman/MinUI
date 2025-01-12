@@ -1,0 +1,26 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index dc4b60dec7f70a153dbc2eb849cd5acfc90f9d4d..94c7f8dd037284153b6858730a10b6aaaafd5ad4 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -524,6 +524,21 @@ else ifeq ($(platform), miyoomini)
+ 	ARCH = arm
+ 	BUILTIN_GPU = neon
+ 
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC = $(CROSS_COMPILE)gcc
++	CXX = $(CROSS_COMPILE)g++
++	AR = $(CROSS_COMPILE)ar
++	SHARED := -shared -Wl,--version-script=link.T
++	fpic := -fPIC -DPIC
++	CFLAGS += -fomit-frame-pointer -ffast-math
++	CFLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++	ARCH = arm64
++	CPU_ARCH := arm64
++	MMAP_JIT_CACHE = 1
++	HAVE_DYNAREC = 1
++
+ # Windows
+ else
+ 	TARGET := $(TARGET_NAME)_libretro.dll
