@@ -58,6 +58,8 @@ MIYOO MINI PLUS
 
 Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
 
+If you have a later device with RTC support, you can enable it by creating an empty file named "enable-rtc" (no extension) in "/.userdata/shared/".
+
 MIYOO FLIP
 
 Copy the "miyoo355" folder and "MinUI.zip" (without unzipping) to the root of the SD card. Put the SD card into the right slot (beneath the power button).
