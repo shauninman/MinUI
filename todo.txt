@@ -2,28 +2,23 @@ Changes
 
 BASE
 
-- 
+- tg3040: removed (merged into tg5040)
+- tg5040: improved audio quality (ht maxbize)
+- miyoomini: added rtc support, see README.txt (ht sinedied)
+
+	TODO: this didn't get pulled
+		and now there's conflicts :sob:
+	TODO: move enable-rtc to .userdata/miyoomini/
 
 EXTRAS
 
-- 
+- tg3040: removed (merged into tg5040)
 
 ---
 
 tg_040
-	merge these already
-	haha I've already forgotten how I did this for the h700 devices
-	winkles
-		+ scale
-		+ brightness ramps
-		+ volume buttons
-		+ stick gpios
-		+ show.elf calls (because of scale difference)
-			+ install/update
-			+ bootlogo
-			+ remove loading
-		- post update step (brick will check for tg3040/bin/install.sh)
-			it might not because that wasn't enabled for Trimui devices in older versions of MinUI...
+	try to reproduce hung shutdowns and fix
+		doesn't have or use a custom bin/shutdown
 
 boot
 	another potential way to identify devices
@@ -56,10 +51,6 @@ my355
 					- then padding changes to 640x480 style
 					- who cares
 				
-hdmi
-	set some custom defaults
-	copy from smart pro?
-
 it's time to retire some supported devices
 	devices running SDL1.2 or sub-480
 		gkdpixel (no longer manufactured?)
@@ -89,9 +80,6 @@ rg34xx
 			I've had the screen turn back on after showing the powering off message in menu
 		can't reproduce reliably
 	
-minput
-	seems to be designed top,left aligned for 640x480
-
 h700
 	video says 64bit system, why is MinUI using 32bit libraries then?
 	create new 64bit toolchain?
@@ -214,9 +202,6 @@ next
 			so we can only detect headphone change events not initial state
 				which makes separate speaker/headphone volumes useless RIP
 				
-		reduce min brightness
-			might require kernel hacking
-			added software stopgap
 		audio is choppy in places
 			even after 400 sample fix
 		
