@@ -121,8 +121,10 @@ special:
 	cp -R ./build/BOOT/.tmp_update ./build/BASE/magicx/
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo355
+ifneq (,$(findstring my355, $(PLATFORMS)))
 	cp -R ./workspace/my355/init ./build/BASE/miyoo355/app/my355
 	cp -r ./workspace/my355/other/squashfs/output/* ./build/BASE/miyoo355/app/my355/payload/
+endif
 
 tidy:
 	# ----------------------------------------------------
