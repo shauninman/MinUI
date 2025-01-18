@@ -890,8 +890,8 @@ static struct Config {
 			},
 			[FE_OPT_THREAD] = {
 				.key	= "minarch_thread_video",
-				.name	= "Thread Core",
-				.desc	= "Move emulation to a thread.\nPrevents audio crackle but may\ncause dropped frames.",
+				.name	= "Prioritize Audio",
+				.desc	= "Can eliminate crackle but\nmay cause dropped frames.\nOnly turn on if necessary.",
 				.default_value = 0,
 				.value = 0,
 				.count = 2,
