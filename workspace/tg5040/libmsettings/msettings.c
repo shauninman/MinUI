@@ -105,7 +105,6 @@ void InitSettings(void) {
 	 
 	system("amixer sset 'Headphone' 0"); // 100%
 	system("amixer sset 'digital volume' 0"); // 100%
-	system("amixer sset 'Soft Volume Master' 255"); // 100%
 	system("amixer sset 'DAC Swap' Off"); // Fix L/R channels
 	// volume is set with 'digital volume'
 	
