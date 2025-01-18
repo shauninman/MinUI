@@ -3,16 +3,35 @@ Changes
 BASE
 
 - tg3040: removed (merged into tg5040)
-- tg5040: improved audio quality (ht maxbize)
-- miyoomini: added rtc support, see README.txt (ht sinedied)
+- tg5040: improved audio quality (thanks maxbize)
+- miyoomini: added rtc support, see README.txt (thanks sinedied)
+- all: renamed "Thread Core" to "Prioritize Audio" (describe utility not implementation)
 
 EXTRAS
 
 - tg3040: removed (merged into tg5040)
+- tg5040: added Files.pak
 
 ---
 
+rg35xxplus
+	someone else reported the rg34xx power button thing I was seeing but on modstock on an xxSP
+rg34xx
+	is power button issue caused by systemd restarting the ui loop?
+		could be fixed by adding a wait loop after poweroff in bin/shutdown
+	power button is kinda wonky
+		definitely wonky
+		doesn't always turn off
+		just had it turn off when I tried to wake it from sleep
+			like it got stuck depressed?
+			I've had the screen turn back on after showing the powering off message in menu
+		can't reproduce reliably
+	
+
 tg_040
+	can I build my own version of SDL2 to speed up launch times?
+		currently just getting the rendering context going takes ~500ms versus ~200ms on other devices
+		is it a ram speed issue?
 	try to reproduce hung shutdowns and fix
 		doesn't have or use a custom bin/shutdown
 
@@ -20,16 +39,22 @@ boot
 	another potential way to identify devices
 		echo `cat /proc/device-tree/model`
 
-all
-	rename "Thread Core" to "Prioritize Audio"
-		Can eliminate crackle but may 
-		cause dropped frames. Best only
-		turned on if necessary.
-
 zero28
 	see if we can un-hardcode screensize in sdl2-mali
+		document how to build
+			./arm64.config.sh
+			make -j8
 	
 my355
+	firmware update
+		https://www.lomiyoo.com/en/gujianxiazai.html
+		test + bootlogo
+		
+	minui can't install if
+		MinUI is aleady installed on the card and the tmp_update hook has already been installed previously
+		solution
+			delete .tmp_update
+			or unzip MinUI.zip on the SD card first
 	undone
 		+ headphone jack
 			- mute is static noise (same on stock)
@@ -59,23 +84,13 @@ it's time to retire some supported devices
 		magicmini (by own zero28?)
 	what would this look like if I nuked 32bit archs?
 		h700 has 64bit libs right?
+		my282
 		
 	finish updating README (don't forget BASE readme!)
 	this will require some finesse for the Miyoo and Trimui devices
 		move static boot content from workspace/$@ to skeleton/BOOT
 		update makefile
 
-rg34xx
-	is power button issue caused by systemd restarting the ui loop?
-		could be fixed by adding a wait loop after poweroff in bin/shutdown
-	power button is kinda wonky
-		definitely wonky
-		doesn't always turn off
-		just had it turn off when I tried to wake it from sleep
-			like it got stuck depressed?
-			I've had the screen turn back on after showing the powering off message in menu
-		can't reproduce reliably
-	
 h700
 	video says 64bit system, why is MinUI using 32bit libraries then?
 	create new 64bit toolchain?
@@ -155,7 +170,10 @@ next
 				trimuismart
 			where fonts and bundled libs aren't available yet
 		
-	magicmini has no intel toolchain
+	no intel toolchain
+		magicmini 
+		zero28
+		my355
 	
 	slow buildroot evtest
 		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084
@@ -239,6 +257,7 @@ next
 			requires show.elf
 		limit option name replacements based on core lib name
 		noui
+			https://gist.github.com/shauninman/20d59da8621f79ff65ad561b7ed2b6f4
 			quit doesn't work as expected on trimuismart
 			possibly because of absense of shutdown?
 	h700

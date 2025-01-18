@@ -32,6 +32,8 @@ clean:
 	cd show && make clean
 	cd $(REQUIRES_COMMANDER) && make clean
 
+###########################################################
+
 $(REQUIRES_COMMANDER):
 	git clone --depth 1 https://github.com/shauninman/DinguxCommander-sdl2.git $(REQUIRES_COMMANDER)
 $(REQUIRES_EVTEST):
