@@ -6,10 +6,6 @@ BASE
 - tg5040: improved audio quality (ht maxbize)
 - miyoomini: added rtc support, see README.txt (ht sinedied)
 
-	TODO: this didn't get pulled
-		and now there's conflicts :sob:
-	TODO: move enable-rtc to .userdata/miyoomini/
-
 EXTRAS
 
 - tg3040: removed (merged into tg5040)

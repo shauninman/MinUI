@@ -69,6 +69,11 @@ flashcp boot.img /dev/mtd2 && sync
 
 show "reboot.png"
 echo "done, rebooting"
+
 sleep 2
+
+# self-destruct
+mv $DIR $DIR.disabled
 reboot
+
 exit
