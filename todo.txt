@@ -21,7 +21,6 @@ minarch
 		the trick is ignoring the release
 
 h700/a133
-	add Swap Menu.pak (swaps MENU and SELECT)
 	the power/shutdown issues are becoming a nuisance
 		ry said it fake powered down during auto-poweroff?
 		also affects paks that attempt to reboot, eg.
