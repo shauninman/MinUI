@@ -1861,6 +1861,10 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	// LOG_info("environment_callback: %i\n", cmd);
 	
 	switch(cmd) {
+	// case RETRO_ENVIRONMENT_SET_ROTATION: { /* 1 */
+	// 	LOG_info("RETRO_ENVIRONMENT_SET_ROTATION %i\n", *(int *)data); // core requests frontend to handle rotation
+	// 	break;
+	// }
 	case RETRO_ENVIRONMENT_GET_OVERSCAN: { /* 2 */
 		bool *out = (bool *)data;
 		if (out)
