@@ -1027,42 +1027,36 @@ static void SND_selectResampler(void) { // plat_sound_select_resampler
 		snd.resample = SND_resampleNear;
 	}
 }
-size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count) { // plat_sound_write / plat_sound_write_resample
-	
-	// return frame_count; // TODO: tmp, silent
-	
-	if (snd.frame_count==0) return 0;
-	
-	// LOG_info("%8i batching samples (%i frames)\n", ms(), frame_count);
-	
-	SDL_LockAudio();
+size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count) {
+    if (snd.frame_count == 0)
+        return 0;
 
-	int consumed = 0;
-	int consumed_frames = 0;
-	while (frame_count > 0) {
-		int tries = 0;
-		int amount = MIN(BATCH_SIZE, frame_count);
-		
-		while (tries < 10 && snd.frame_in==snd.frame_filled) {
-			tries++;
-			SDL_UnlockAudio();
-			SDL_Delay(1);
-			SDL_LockAudio();
-		}
-		// if (tries) LOG_info("%8i waited %ims for buffer to get low...\n", ms(), tries);
+    SDL_LockAudio();
 
-		while (amount && snd.frame_in != snd.frame_filled) {
-			consumed_frames = snd.resample(*frames);
-			
-			frames += consumed_frames;
-			amount -= consumed_frames;
-			frame_count -= consumed_frames;
-			consumed += consumed_frames;
-		}
-	}
-	SDL_UnlockAudio();
-	
-	return consumed;
+    int consumed = 0;
+    int consumed_frames = 0;
+    while (frame_count > 0) {
+        int amount = MIN(BATCH_SIZE, frame_count);
+
+        // If the buffer is full, skip the frames
+        if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+            frames += amount;
+            frame_count -= amount;
+            continue;
+        }
+
+        while (amount && snd.frame_in != snd.frame_filled) {
+            consumed_frames = snd.resample(*frames);
+
+            frames += consumed_frames;
+            amount -= consumed_frames;
+            frame_count -= consumed_frames;
+            consumed += consumed_frames;
+        }
+    }
+
+    SDL_UnlockAudio();
+    return consumed;
 }
 
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
