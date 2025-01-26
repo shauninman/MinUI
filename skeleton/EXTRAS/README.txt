@@ -63,4 +63,4 @@ This pak removes the "LOADING" text that appears between the boot logo and the m
 ----------------------------------------
 Swap Menu.pak (RG34XX)
 
-This pak sways the MENU and SELECT button at a system level to make MENU more accessible. Launch the pak then reboot. Relaunch the pak and reboot to undo the change.
+This pak swaps the MENU and SELECT button at a system level to make MENU more accessible. Launch the pak then reboot. Relaunch the pak and reboot to undo the change.
