@@ -148,7 +148,7 @@ package: tidy
 	rm -rf ./workspace/readmes
 	
 	cd ./build/SYSTEM && echo "$(RELEASE_NAME)\n$(BUILD_HASH)" > version.txt
-	./commits.sh > ./build/SYSTEM/commits.txt
+	# ./commits.sh > ./build/SYSTEM/commits.txt
 	cd ./build && find . -type f -name '.DS_Store' -delete
 	mkdir -p ./build/PAYLOAD
 	mv ./build/SYSTEM ./build/PAYLOAD/.system
