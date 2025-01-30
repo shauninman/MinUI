@@ -1286,7 +1286,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 	static double ratio = 1.0;			// Persistent ratio variable initialized to 1.0
 	static double previous_ratio = 1.0; // Store the previous ratio for smoothing
 	static double target_ratio = 1.0;	// Static target ratio for stability
-	const double smoothing_factor = 0.1;
+	const double smoothing_factor = 0.001;
 
 	if (snd.frame_count == 0)
 		return 0;
@@ -1312,12 +1312,12 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 	if (remaining_space < (snd.frame_count / 4))
 	{
 		// Decrease target_ratio to slow down the input rate if the buffer is filling up
-		target_ratio -= 0.000000001;
+		target_ratio -= 0.00001;
 	}
 	else if (remaining_space > (3 * snd.frame_count / 4))
 	{
 		// Increase target_ratio to speed up the input rate if the buffer has enough space
-		target_ratio += 0.000000001;
+		target_ratio += 0.00001;
 	}
 
 	// Smooth the target_ratio using a simple moving average
