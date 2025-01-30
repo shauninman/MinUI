@@ -1283,7 +1283,11 @@ static void SND_selectResampler(void)
 float dynamic_rate_adjust = 0.0001;
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 {
-	static double ratio = 1.0;
+	static double ratio = 1.0;			// Persistent ratio variable initialized to 1.0
+	static double previous_ratio = 1.0; // Store the previous ratio for smoothing
+	static double target_ratio = 1.0;	// Static target ratio for stability
+	const double smoothing_factor = 0.1;
+
 	if (snd.frame_count == 0)
 		return 0;
 
@@ -1301,25 +1305,31 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 		i++;
 	}
 
+	// Check buffer status and adjust resampling ratio using moving average
 	int remaining_space = (snd.frame_in >= snd.frame_filled) ? (snd.frame_count - (snd.frame_in - snd.frame_filled)) : (snd.frame_filled - snd.frame_in);
 
+	// Adjust target_ratio continuously for finer control
 	if (remaining_space < (snd.frame_count / 4))
 	{
-		// Decrease ratio to slow down the input rate if the buffer is filling up
-		ratio -= 0.001;
+		// Decrease target_ratio to slow down the input rate if the buffer is filling up
+		target_ratio -= 0.000001;
 	}
 	else if (remaining_space > (3 * snd.frame_count / 4))
 	{
-		// Increase ratio to speed up the input rate if the buffer has enough space
-		ratio += 0.001;
+		// Increase target_ratio to speed up the input rate if the buffer has enough space
+		target_ratio += 0.000001;
 	}
 
+	// Smooth the target_ratio using a simple moving average
+	ratio = (smoothing_factor * target_ratio) + ((1.0 - smoothing_factor) * previous_ratio);
+	previous_ratio = ratio; // Update the previous ratio for the next iteration
+	// LOG_info("resample ratio: %f\n", ratio);
+	// Cap the ratio to avoid extreme values
 	if (ratio < 0.8)
 		ratio = 0.8;
 	if (ratio > 1.2)
 		ratio = 1.2;
 
-	LOG_info("resample ratio: %f\n", ratio);
 	// LOG_info("stored in tmpbbuffer %i frames\n", i);
 	ResampledFrames resampled = resample_audio(tmpbuffer, frame_count, snd.sample_rate_in, snd.sample_rate_out, ratio);
 	// LOG_info("resampled %i frames\n", resampled.frame_count);
@@ -1337,7 +1347,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 		consumed += consumed_frames;
 	}
 
-	snd.frame_filled = snd.frame_in;
+	// snd.frame_filled = snd.frame_in;
 
 	free(resampled.frames);
 	// LOG_info("batch done unlock\n", frame_count);
@@ -1366,7 +1376,7 @@ void SND_init(double sample_rate, double frame_rate)
 	SDL_AudioSpec spec_in;
 	SDL_AudioSpec spec_out;
 
-	spec_in.freq = PLAT_pickSampleRate(sample_rate, MAX_SAMPLE_RATE);
+	spec_in.freq = PLAT_pickSampleRate(sample_rate * (60 / frame_rate), MAX_SAMPLE_RATE);
 	spec_in.format = AUDIO_S16;
 	spec_in.channels = 2;
 	spec_in.samples = SAMPLES;
@@ -1375,7 +1385,7 @@ void SND_init(double sample_rate, double frame_rate)
 	if (SDL_OpenAudio(&spec_in, &spec_out) < 0)
 		LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
 
-	snd.buffer_seconds = 8;
+	snd.buffer_seconds = 16;
 	snd.sample_rate_in = sample_rate;
 	snd.sample_rate_out = spec_out.freq;
 
