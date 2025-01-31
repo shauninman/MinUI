@@ -1349,7 +1349,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 		// Apply crossfade between the previous and current buffers
 		if (consumed > 0)
 		{
-			apply_crossfade(prev_buffer, resampled_frames, resampled_frame_count, 12);
+			apply_crossfade(prev_buffer, resampled_frames, resampled_frame_count, 64);
 		}
 
 		consumed_frames = 0;
