@@ -1274,13 +1274,15 @@ static void SND_selectResampler(void)
 
 #include <math.h> // For sin() function
 
-void apply_crossfade(SND_Frame *buffer, int length, int crossfade_length)
+void apply_crossfade(SND_Frame *prev_buffer, SND_Frame *curr_buffer, int length, int crossfade_length)
 {
 	for (int i = 0; i < crossfade_length; i++)
 	{
 		float factor = (float)i / (float)crossfade_length;
-		buffer[i].left = buffer[i].left * factor + buffer[length - crossfade_length + i].left * (1.0f - factor);
-		buffer[i].right = buffer[i].right * factor + buffer[length - crossfade_length + i].right * (1.0f - factor);
+		prev_buffer[length - crossfade_length + i].left =
+			prev_buffer[length - crossfade_length + i].left * (1.0f - factor) + curr_buffer[i].left * factor;
+		prev_buffer[length - crossfade_length + i].right =
+			prev_buffer[length - crossfade_length + i].right * (1.0f - factor) + curr_buffer[i].right * factor;
 	}
 }
 
@@ -1297,6 +1299,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 
 	// Allocate tmpbuffer once outside the loop
 	SND_Frame *tmpbuffer = (SND_Frame *)malloc(BATCH_SIZE * sizeof(SND_Frame));
+	SND_Frame *prev_buffer = (SND_Frame *)malloc(BATCH_SIZE * sizeof(SND_Frame));
 	if (!tmpbuffer)
 	{
 		fprintf(stderr, "Error allocating tmpbuffer\n");
@@ -1343,10 +1346,10 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 		SND_Frame *resampled_frames = resampled.frames;
 		int resampled_frame_count = resampled.frame_count;
 
-		// Apply crossfade at the buffer boundary
+		// Apply crossfade between the previous and current buffers
 		if (consumed > 0)
 		{
-			apply_crossfade(snd.buffer, consumed, 200);
+			apply_crossfade(prev_buffer, resampled_frames, resampled_frame_count, 12);
 		}
 
 		consumed_frames = 0;
@@ -1365,6 +1368,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 				break;
 			}
 		}
+		memcpy(prev_buffer, resampled_frames, resampled_frame_count * sizeof(SND_Frame));
 		free(resampled.frames);
 
 		consumed += consumed_frames;
@@ -1372,6 +1376,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 	}
 
 	free(tmpbuffer);
+	free(prev_buffer);
 	return consumed;
 }
 
