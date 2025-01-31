@@ -1291,7 +1291,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 	if (snd.frame_count == 0)
 		return 0;
 
-	SDL_LockAudio();
+	// SDL_LockAudio();
 
 	int consumed = 0;
 	int consumed_frames = 0;
@@ -1351,7 +1351,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 
 	free(resampled.frames);
 	// LOG_info("batch done unlock\n", frame_count);
-	SDL_UnlockAudio();
+	// SDL_UnlockAudio();
 	return consumed;
 }
 
