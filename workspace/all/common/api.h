@@ -56,6 +56,10 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
+extern float currentratio;
+extern int currentbufferfree;
+extern int currentframecount;
+ 
 
 enum {
 	ASSET_WHITE_PILL,

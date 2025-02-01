@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.tf": "terraform",
+        "*.in": "c"
+    }
+}

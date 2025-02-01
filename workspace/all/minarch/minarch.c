@@ -2813,7 +2813,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
 		
-		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
+		// sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
+		sprintf(debug_text, "%.05f/%i/%i", currentratio, currentbufferfree,currentframecount);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
@@ -2821,6 +2822,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	
 		sprintf(debug_text, "%.01f/%.01f %i%%", fps_double, cpu_double, (int)use_double);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
+
+	
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
