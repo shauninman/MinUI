@@ -1224,122 +1224,125 @@ int currentframecount = 0;
 
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
 {
-    const double adjust_step = 0.00001; // Proportional gain
-    static double ratio = 1.0; // Persistent ratio variable initialized to 1.0
-    const double target_buffer_level = snd.frame_count * 0.5; // Targeting 50% buffer fill
+	const double adjust_step = 0.00001;				  // Proportional gain
+	static double ratio = 1.0;								  // Persistent ratio variable initialized to 1.0
+	const double target_buffer_level = snd.frame_count * 0.5; // Targeting 50% buffer fill
 
-    #define BUFFER_SIZE 5000
-    static int remaining_space_buffer[BUFFER_SIZE] = {0};
-    static int buffer_index = 0;
+#define BUFFER_SIZE 500
+	static int remaining_space_buffer[BUFFER_SIZE] = {0};
+	static int buffer_index = 0;
 
-    int framecount = (int)frame_count;
+	int framecount = (int)frame_count;
 
-    if (snd.frame_count == 0)
-    {
-        LOG_info("Frame count is 0, returning 0.");
-        return 0;
-    }
+	if (snd.frame_count == 0)
+	{
+		LOG_info("Frame count is 0, returning 0.");
+		return 0;
+	}
 
-    int consumed = 0;
-    int total_consumed_frames = 0;
+	int consumed = 0;
+	int total_consumed_frames = 0;
 
-    while (framecount > 0 || unwritten_frame_count > 0)
-    {
-        int amount = 0;
-        if (unwritten_frame_count == 0)
-        {
-            amount = MIN(BATCH_SIZE, framecount);
+	while (framecount > 0 || unwritten_frame_count > 0)
+	{
+		int amount = 0;
+		if (unwritten_frame_count == 0)
+		{
+			amount = MIN(BATCH_SIZE, framecount);
 
-            // Copy frames
-            for (int i = 0; i < amount; i++)
-            {
-                tmpbuffer[i] = frames[consumed + i];
-            }
-            consumed += amount;
-            framecount -= amount;
+			// Copy frames
+			for (int i = 0; i < amount; i++)
+			{
+				tmpbuffer[i] = frames[consumed + i];
+			}
+			consumed += amount;
+			framecount -= amount;
 
-            // Resample frames
-            ResampledFrames resampled = resample_audio(tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, ratio);
-            unwritten_frames = resampled.frames;
-            unwritten_frame_count = resampled.frame_count;
-            currentframecount = resampled.frame_count;
-        }
+			// Resample frames
+			ResampledFrames resampled = resample_audio(tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, ratio);
+			unwritten_frames = resampled.frames;
+			unwritten_frame_count = resampled.frame_count;
+			currentframecount = resampled.frame_count;
+		}
 
-        // Adjust ratio based on buffer space (outside mutex)
-        int remaining_space;
-        pthread_mutex_lock(&audio_mutex);
-        if (snd.frame_in >= snd.frame_out)
-        {
-            remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
-        }
-        else
-        {
-            remaining_space = snd.frame_out - snd.frame_in;
-        }
-        currentbufferfree = remaining_space;
+		// Adjust ratio based on buffer space (outside mutex)
+		int remaining_space;
+		pthread_mutex_lock(&audio_mutex);
+		if (snd.frame_in >= snd.frame_out)
+		{
+			remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
+		}
+		else
+		{
+			remaining_space = snd.frame_out - snd.frame_in;
+		}
+		currentbufferfree = remaining_space;
 
-        // Store the current remaining space in the buffer
-        remaining_space_buffer[buffer_index] = remaining_space;
-        buffer_index = (buffer_index + 1) % BUFFER_SIZE;
+		// Store the current remaining space in the buffer
+		remaining_space_buffer[buffer_index] = remaining_space;
+		buffer_index = (buffer_index + 1) % BUFFER_SIZE;
 
-        pthread_mutex_unlock(&audio_mutex);
+		pthread_mutex_unlock(&audio_mutex);
 
-        // Compute the moving average of remaining space
-        double average_remaining_space = 0.0;
-        for (int i = 0; i < BUFFER_SIZE; i++)
-        {
-            average_remaining_space += remaining_space_buffer[i];
-        }
-        average_remaining_space /= BUFFER_SIZE;
+		// Compute the moving average of remaining space
+		double average_remaining_space = 0.0;
+		for (int i = 0; i < BUFFER_SIZE; i++)
+		{
+			average_remaining_space += remaining_space_buffer[i];
+		}
+		average_remaining_space /= BUFFER_SIZE;
 
-        // Compute error (corrected)
-        double error = average_remaining_space - target_buffer_level;
-        if (error > 0)
-        {
-            ratio += adjust_step;
-        }
-        else if (error < 0)
-        {
-            ratio -= adjust_step;
-        }
-        currentratio = ratio;
-		if(ratio < 0.98) ratio = 0.98;
-		if(ratio > 1.02) ratio = 1.02;
-        // Write resampled frames to the buffer
-        int written_frames = 0;
-        pthread_mutex_lock(&audio_mutex);
-        while (written_frames < unwritten_frame_count)
-        {
-            if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out)
-            {
-                break;
-            }
-            snd.buffer[snd.frame_in] = unwritten_frames[written_frames];
-            snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
-            written_frames++;
-        }
-        pthread_mutex_unlock(&audio_mutex);
+		// Compute error (corrected)
+		double error = average_remaining_space - target_buffer_level;
+		if (error > 0)
+		{
+			ratio += adjust_step;
+		}
+		else if (error < 0)
+		{
+			ratio -= adjust_step;
+		}
+		currentratio = ratio;
+		if (ratio < 0.99)
+			ratio = 0.99;
+		if (ratio > 1.01)
+			ratio = 1.01;
 
-        if (written_frames == unwritten_frame_count)
-        {
-            // All frames were written
-            free(unwritten_frames);
-            unwritten_frames = NULL;
-            unwritten_frame_count = 0;
-        }
-        else
-        {
-            // Not all frames were written, adjust unwritten frames
-            int remaining_frames = unwritten_frame_count - written_frames;
-            memmove(unwritten_frames, unwritten_frames + written_frames, remaining_frames * sizeof(SND_Frame));
-            unwritten_frame_count = remaining_frames;
-            // Sleep or yield to prevent busy-waiting
-            SDL_Delay(1);
-        }
+		// Write resampled frames to the buffer
+		int written_frames = 0;
+		pthread_mutex_lock(&audio_mutex);
+		while (written_frames < unwritten_frame_count)
+		{
+			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out)
+			{
+				break;
+			}
+			snd.buffer[snd.frame_in] = unwritten_frames[written_frames];
+			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
+			written_frames++;
+		}
+		pthread_mutex_unlock(&audio_mutex);
 
-        total_consumed_frames += written_frames;
-    }
-    return total_consumed_frames;
+		if (written_frames == unwritten_frame_count)
+		{
+			// All frames were written
+			free(unwritten_frames);
+			unwritten_frames = NULL;
+			unwritten_frame_count = 0;
+		}
+		else
+		{
+			// Not all frames were written, adjust unwritten frames
+			int remaining_frames = unwritten_frame_count - written_frames;
+			memmove(unwritten_frames, unwritten_frames + written_frames, remaining_frames * sizeof(SND_Frame));
+			unwritten_frame_count = remaining_frames;
+			// Sleep or yield to prevent busy-waiting
+			SDL_Delay(1);
+		}
+
+		total_consumed_frames += written_frames;
+	}
+	return total_consumed_frames;
 }
 
 void SND_init(double sample_rate, double frame_rate)
