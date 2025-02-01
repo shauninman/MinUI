@@ -1303,8 +1303,8 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
             ratio -= adjust_step;
         }
         currentratio = ratio;
-		if(ratio < 0.99) ratio = 0.99;
-		if(ratio > 1.01) ratio = 1.01;
+		if(ratio < 0.98) ratio = 0.98;
+		if(ratio > 1.02) ratio = 1.02;
         // Write resampled frames to the buffer
         int written_frames = 0;
         pthread_mutex_lock(&audio_mutex);
