@@ -1228,7 +1228,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count)
     static double ratio = 1.0; // Persistent ratio variable initialized to 1.0
     const double target_buffer_level = snd.frame_count * 0.5; // Targeting 50% buffer fill
 
-    #define BUFFER_SIZE 100
+    #define BUFFER_SIZE 5000
     static int remaining_space_buffer[BUFFER_SIZE] = {0};
     static int buffer_index = 0;
 
