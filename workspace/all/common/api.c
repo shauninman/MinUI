@@ -220,7 +220,7 @@ void GFX_startFrame(void) {
 	buffer_index = (buffer_index + 1) % FPS_BUFFER_SIZE;
 	// give it a little bit to stabilize and then use, meanwhile the buffer will
 	// cover it
-	if (fps_counter > 50) {
+	if (fps_counter > 100) {
 		double average_fps = 0.0;
 		int fpsbuffersize = MIN(fps_counter, FPS_BUFFER_SIZE);
 		for (int i = 0; i < fpsbuffersize; i++) {
@@ -1150,22 +1150,6 @@ int currentframecount = 0;
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	static double ratio = 1.0;
 
-	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
-	ratio = tempratio * (snd.frame_rate / current_fps);
-
-	currentfps = current_fps;
-	currentratio = ratio;
-
-	if (ratio < 0.5) ratio = 0.5;
-	if (ratio > 1.5) ratio = 1.5;
-
-	int framecount = (int)frame_count;
-
-	if (snd.frame_count == 0) {
-		LOG_info("Frame count is 0, returning 0.");
-		return 0;
-	}
-
 	int remaining_space;
 	pthread_mutex_lock(&audio_mutex);
 	if (snd.frame_in >= snd.frame_out) {
@@ -1176,6 +1160,26 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	currentbufferfree = remaining_space;
 
 	pthread_mutex_unlock(&audio_mutex);
+
+	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
+	ratio = tempratio * (snd.frame_rate / current_fps);
+
+	currentfps = current_fps;
+	currentratio = ratio;
+
+	int targetbuffer = snd.frame_count * 0.5;
+	if (remaining_space < targetbuffer) {
+		ratio = ratio - 0.001;
+	} else if (remaining_space > targetbuffer) {
+		ratio = ratio + 0.001;
+	}
+
+	int framecount = (int)frame_count;
+
+	if (snd.frame_count == 0) {
+		LOG_info("Frame count is 0, returning 0.");
+		return 0;
+	}
 
 	int consumed = 0;
 	int total_consumed_frames = 0;
