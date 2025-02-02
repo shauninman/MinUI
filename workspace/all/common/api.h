@@ -59,6 +59,7 @@ extern uint32_t RGB_DARK_GRAY;
 extern float currentratio;
 extern int currentbufferfree;
 extern int currentframecount;
+extern double currentfps;
  
 
 enum {

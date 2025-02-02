@@ -134,7 +134,7 @@ extern int is_brick;
 
 #define SDCARD_PATH "/mnt/SDCARD"
 #define MUTE_VOLUME_RAW 0
-#define SAMPLES 256
+#define SAMPLES 512
 ///////////////////////////////
 
 #endif
