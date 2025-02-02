@@ -1923,38 +1923,42 @@ static bool set_rumble_state(unsigned port, enum retro_rumble_effect effect,
 static bool environment_callback(
 	unsigned cmd, void* data) {	 // copied from picoarch initially
 	// LOG_info("environment_callback: %i\n", cmd);
-
-	switch (cmd) {
-		case RETRO_ENVIRONMENT_GET_OVERSCAN: { /* 2 */
-			bool* out = (bool*)data;
-			if (out) *out = true;
-			break;
+	
+	switch(cmd) {
+	// case RETRO_ENVIRONMENT_SET_ROTATION: { /* 1 */
+	// 	LOG_info("RETRO_ENVIRONMENT_SET_ROTATION %i\n", *(int *)data); // core requests frontend to handle rotation
+	// 	break;
+	// }
+	case RETRO_ENVIRONMENT_GET_OVERSCAN: { /* 2 */
+		bool *out = (bool *)data;
+		if (out)
+			*out = true;
+		break;
+	}
+	case RETRO_ENVIRONMENT_GET_CAN_DUPE: { /* 3 */
+		bool *out = (bool *)data;
+		if (out)
+			*out = true;
+		break;
+	}
+	case RETRO_ENVIRONMENT_SET_MESSAGE: { /* 6 */
+		const struct retro_message *message = (const struct retro_message*)data;
+		if (message) LOG_info("%s\n", message->msg);
+		break;
+	}
+	case RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL: { /* 8 */
+		// puts("RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL");
+		// TODO: used by fceumm at least
+	}
+	case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY: { /* 9 */
+		const char **out = (const char **)data;
+		if (out) {
+			*out = core.bios_dir;
 		}
-		case RETRO_ENVIRONMENT_GET_CAN_DUPE: { /* 3 */
-			bool* out = (bool*)data;
-			if (out) *out = true;
-			break;
-		}
-		case RETRO_ENVIRONMENT_SET_MESSAGE: { /* 6 */
-			const struct retro_message* message =
-				(const struct retro_message*)data;
-			if (message) LOG_info("%s\n", message->msg);
-			break;
-		}
-		case RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL: { /* 8 */
-			// puts("RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL");
-			// TODO: used by fceumm at least
-		}
-		case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY: { /* 9 */
-			const char** out = (const char**)data;
-			if (out) {
-				*out = core.bios_dir;
-			}
-			break;
-		}
-		case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: { /* 10 */
-			const enum retro_pixel_format* format =
-				(enum retro_pixel_format*)data;
+		break;
+	}
+	case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: { /* 10 */
+		const enum retro_pixel_format *format = (enum retro_pixel_format *)data;
 
 			if (*format !=
 				RETRO_PIXEL_FORMAT_RGB565) {  // TODO: pull from platform.h?

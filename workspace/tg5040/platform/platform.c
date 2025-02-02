@@ -514,6 +514,7 @@ void PLAT_enableBacklight(int enable) {
 }
 
 void PLAT_powerOff(void) {
+	system("rm -f /tmp/minui_exec && sync");
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
@@ -523,9 +524,13 @@ void PLAT_powerOff(void) {
 	PWR_quit();
 	GFX_quit();
 	
+	system("ifconfig wlan0 down");
+	system("killall -15 wpa_supplicant");
+	system("killall -9 udhcpc");
 	system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	system("poweroff");
-	while (1) pause(); // lolwat
+	exit(0);
+	// while (1) pause(); // lolwat
 }
 
 ///////////////////////////////

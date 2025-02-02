@@ -11,25 +11,51 @@ EXTRAS
 
 - tg3040: removed (merged into tg5040)
 - tg5040: added Files.pak
+- rg35xxplus: added Swap Menu.pak (for 34xx, swaps MENU and SELECT buttons)
 
 ---
 
-rg35xxplus
-	someone else reported the rg34xx power button thing I was seeing but on modstock on an xxSP
-rg34xx
-	is power button issue caused by systemd restarting the ui loop?
-		could be fixed by adding a wait loop after poweroff in bin/shutdown
-	power button is kinda wonky
-		definitely wonky
-		doesn't always turn off
-		just had it turn off when I tried to wake it from sleep
-			like it got stuck depressed?
-			I've had the screen turn back on after showing the powering off message in menu
-		can't reproduce reliably
-	
+minarch
+	can I ignore shortcut combo key input when shortcut is triggered?
+		eg. PAD_cancel(BTN_NAME)
+		the trick is ignoring the release
 
+h700/a133
+	the power/shutdown issues are becoming a nuisance
+		ry said it fake powered down during auto-poweroff?
+		also affects paks that attempt to reboot, eg.
+			panel fix
+			swap keys
+		it must have something to do with some control loop not being broken properly
+			caused by systemd restarting the ui loop?
+			check dmenu.bin or dmenu_ln
+				no loop, just calls MinUI.pak/launch.sh directly
+				check higher, what's changed?
+			check PLAT_powerOff()
+				looks fine (breaks MinUI loop and exits)
+
+it's time to retire some supported devices
+	this will require some finesse for the Miyoo and Trimui devices
+		move static boot content from workspace/$@ to skeleton/BOOT
+		update makefile
+	devices running SDL1.2 or sub-480
+		gkdpixel (no longer manufactured?)
+		trimuismart
+		rg35xx (og)
+		miyoomini (and plus)
+		m17
+	devices that have been superceded
+		rgb30 (by cubexx)
+		magicmini (by own zero28?)
+	what would this look like if I nuked 32bit archs?
+		h700 has 64bit libs right?
+		my282
+		
+	finish updating README (don't forget BASE readme!)
+	
 tg_040
 	can I build my own version of SDL2 to speed up launch times?
+		yes but no, built, no change in launch time :\
 		currently just getting the rendering context going takes ~500ms versus ~200ms on other devices
 		is it a ram speed issue?
 	try to reproduce hung shutdowns and fix
@@ -39,12 +65,6 @@ boot
 	another potential way to identify devices
 		echo `cat /proc/device-tree/model`
 
-zero28
-	see if we can un-hardcode screensize in sdl2-mali
-		document how to build
-			./arm64.config.sh
-			make -j8
-	
 my355
 	firmware update
 		https://www.lomiyoo.com/en/gujianxiazai.html
@@ -53,8 +73,8 @@ my355
 	minui can't install if
 		MinUI is aleady installed on the card and the tmp_update hook has already been installed previously
 		solution
-			delete .tmp_update
-			or unzip MinUI.zip on the SD card first
+			delete .tmp_update and reinstall
+			
 	undone
 		+ headphone jack
 			- mute is static noise (same on stock)
@@ -72,34 +92,10 @@ my355
 					- then padding changes to 640x480 style
 					- who cares
 				
-it's time to retire some supported devices
-	devices running SDL1.2 or sub-480
-		gkdpixel (no longer manufactured?)
-		trimuismart
-		rg35xx (og)
-		miyoomini (and plus)
-		m17
-	devices that have been superceded
-		rgb30 (by cubexx)
-		magicmini (by own zero28?)
-	what would this look like if I nuked 32bit archs?
-		h700 has 64bit libs right?
-		my282
-		
-	finish updating README (don't forget BASE readme!)
-	this will require some finesse for the Miyoo and Trimui devices
-		move static boot content from workspace/$@ to skeleton/BOOT
-		update makefile
-
 h700
 	video says 64bit system, why is MinUI using 32bit libraries then?
 	create new 64bit toolchain?
 	based on debian bullseye? (base on the magic mini toolchain or old tg5040?)
-
-my282
-	proper way to kill wifi might be
-		/etc/rc.d/S20network down
-		doesn't seem to be working (on brick)
 
 rg_xx
 	gbc runs poorly on the cubexx with patched panel
@@ -108,26 +104,6 @@ rg_xx
 			but the change is so extreme my patching method can't handle it
 			(because of the simple way I fudge the checksum...)
 	
-	usb controller
-		look into SDL2 controller API
-		stock supports bluetooth right? how?
-			enabling bluetooth via stock breaks wifi on MinUI
-	
-tg_040
-	overclocking during unzipping update had no effect...
-	properly disable wifi/bluetooth on boot (this will break ten's wifi pack without updates)
-		rfkill block bluetooth
-		rfkill block wifi
-		killall udhcpc
-	enable it
-		rfkill unblock wifi
-		/etc/init.d/wpa_supplicant start
-		udhcpc -i wlan0
-	disable it
-		/etc/init.d/wpa_supplicant stop
-		rfkill block wifi
-		killall udhcpc
-
 screen scaling + screen effect
 	aspect + grid on cubexx has grid alignment issues
 		even if aspect equals integer

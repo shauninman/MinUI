@@ -59,3 +59,8 @@ This pak removes the "LOADING" text that appears between the boot logo and the m
 Remove Loading.pak (Trimui Smart Pro and Brick)
 
 This pak removes the "LOADING" text that appears between the boot logo and the main interface when powering on. Compared to the A-30 this is a minimally invasive procedure. Nothing to worry about.
+
+----------------------------------------
+Swap Menu.pak (RG34XX)
+
+This pak swaps the MENU and SELECT button at a system level to make MENU more accessible. Launch the pak then reboot. Relaunch the pak and reboot to undo the change.
