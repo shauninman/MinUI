@@ -1,5 +1,14 @@
-BasedOnStyle: Google
-BreakBeforeBraces: Attach
+BasedOnStyle: LLVM
 IndentWidth: 4
 UseTab: Always
 TabWidth: 4
+ColumnLimit: 0
+BreakBeforeBraces: Custom
+AlignAfterOpenBracket: DontAlign
+AllowShortIfStatementsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortBlocksOnASingleLine: false
+IndentCaseLabels: false
+
+BraceWrapping:
+  BeforeElse: true
