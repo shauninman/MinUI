@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.tf": "terraform",
+        "defines.h": "c",
+        "utils.h": "c",
+        "api.h": "c",
+        "errno.h": "c",
+        "mman.h": "c",
+        "pthread.h": "c",
+        "math.h": "c"
+    }
+}
