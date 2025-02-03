@@ -210,6 +210,12 @@ static uint32_t frame_start = 0;
 static uint64_t per_frame_start = 0;
 #define FPS_BUFFER_SIZE 50
 void GFX_startFrame(void) {
+	frame_start = SDL_GetTicks();
+}
+
+void GFX_flip(SDL_Surface* screen) {
+	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
+	PLAT_flip(screen, should_vsync);
 	fps_counter++;
 
 	uint64_t performance_frequency = SDL_GetPerformanceFrequency();
@@ -236,13 +242,6 @@ void GFX_startFrame(void) {
 		current_fps = average_fps;
 	}
 	per_frame_start = SDL_GetPerformanceCounter();
-
-	frame_start = SDL_GetTicks();
-}
-
-void GFX_flip(SDL_Surface* screen) {
-	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
-	PLAT_flip(screen, should_vsync);
 }
 void GFX_sync(void) {
 	uint32_t frame_duration = SDL_GetTicks() - frame_start;

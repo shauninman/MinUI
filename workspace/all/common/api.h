@@ -56,6 +56,10 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
+extern float currentratio;
+extern int currentbufferfree;
+extern int currentframecount;
+extern double currentfps;
 
 enum {
 	ASSET_WHITE_PILL,
@@ -157,6 +161,7 @@ int GFX_hdmiChanged(void);
 #define GFX_clearAll PLAT_clearAll // (void)
 
 void GFX_startFrame(void);
+void audioFPS(void);
 void GFX_flip(SDL_Surface* screen);
 #define GFX_supportsOverscan PLAT_supportsOverscan // (void)
 void GFX_sync(void); // call this to maintain 60fps when not calling GFX_flip() this frame

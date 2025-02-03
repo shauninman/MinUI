@@ -2820,6 +2820,11 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 
+		sprintf(debug_text, "%.03f/%i//%.03f", currentratio, currentbufferfree,
+				currentfps);
+		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
+					   height);
+
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
