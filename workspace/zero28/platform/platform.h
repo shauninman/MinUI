@@ -129,6 +129,8 @@
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
 #define SAMPLES 400 // fix for (most) fceumm underruns
 
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.235
 ///////////////////////////////
 
 #endif

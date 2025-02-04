@@ -135,6 +135,9 @@ extern int is_brick;
 #define SDCARD_PATH "/mnt/SDCARD"
 #define MUTE_VOLUME_RAW 0
 
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.235
+
 ///////////////////////////////
 
 #endif

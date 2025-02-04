@@ -127,6 +127,8 @@
 #define SDCARD_PATH "/Users/shauninman/Projects/Personal/MinUI/workspace/macos/FAKESD"
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
 
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.235
 ///////////////////////////////
 
 #endif

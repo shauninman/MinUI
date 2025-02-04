@@ -1136,7 +1136,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
 	ratio = tempratio * (snd.frame_rate / current_fps);
-	if (current_fps > 60.5 || current_fps < 59.5)
+	if (current_fps > (SCREEN_FPS + 0.5) || current_fps < (SCREEN_FPS - 0.5) || GFX_getVsync()==VSYNC_OFF)
 		ratio = 1.0;
 	currentfps = current_fps;
 	currentratio = ratio;
