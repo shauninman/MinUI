@@ -1141,7 +1141,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	currentfps = current_fps;
 	currentratio = ratio;
 
-	int targetbuffer = snd.frame_count * 0.75;
+	int targetbuffer = snd.frame_count * 0.8;
 	if (remaining_space < targetbuffer) {
 		ratio = ratio - 0.003;
 	}
