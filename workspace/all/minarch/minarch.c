@@ -2817,11 +2817,14 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
 		
+		struct retro_system_av_info av_info = {};
+		core.get_system_av_info(&av_info);
+		
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 
-		sprintf(debug_text, "%.03f/%i//%.03f", currentratio, currentbufferfree,
-				currentfps);
+		sprintf(debug_text, "%.03f/%i/%.03f/%.03f", currentratio, currentbufferfree,
+				currentfps,av_info.timing.fps);
 		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
 					   height);
 
@@ -4752,9 +4755,12 @@ int main(int argc , char* argv[]) {
 	Special_init(); // after config
 	
 	sec_start = SDL_GetTicks();
+	
 	while (!quit) {
+
 		GFX_startFrame();
 		
+	
 		if (!thread_video) {
 			core.run();
 			limitFF();

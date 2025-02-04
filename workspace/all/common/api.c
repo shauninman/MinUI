@@ -222,7 +222,8 @@ void GFX_flip(SDL_Surface* screen) {
 	uint64_t frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
 	double elapsed_time_s = (double)frame_duration / performance_frequency;
 	double tempfps = 1.0 / elapsed_time_s;
-
+	if(tempfps < SCREEN_FPS * 0.9 || tempfps > SCREEN_FPS * 1.1) tempfps = SCREEN_FPS;
+	
 	// filling with  60.1 cause i'd rather underrun than overflow in start phase
 	static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
 	static int buffer_index = 0;
