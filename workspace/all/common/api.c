@@ -1136,16 +1136,17 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
 	ratio = tempratio * (snd.frame_rate / current_fps);
-
+	if (current_fps > 61 || current_fps < 59)
+		ratio = 1.0;
 	currentfps = current_fps;
 	currentratio = ratio;
 
-	int targetbuffer = snd.frame_count * 0.4;
+	int targetbuffer = snd.frame_count * 0.75;
 	if (remaining_space < targetbuffer) {
-		ratio = ratio - 0.002;
+		ratio = ratio - 0.003;
 	}
 	else if (remaining_space > targetbuffer) {
-		ratio = ratio + 0.002;
+		ratio = ratio + 0.003;
 	}
 
 	int framecount = (int)frame_count;
@@ -1172,17 +1173,19 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 		// Write resampled frames to the buffer
 		int written_frames = 0;
-		pthread_mutex_lock(&audio_mutex);
+		
 		for (int i = 0; i < resampled.frame_count; i++) {
-			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
-				// Buffer is full, skip remaining frames
-				break;
+			while ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+				// Buffer is full, wait for it to clear
+				SDL_Delay(1);
 			}
+			pthread_mutex_lock(&audio_mutex);
 			snd.buffer[snd.frame_in] = resampled.frames[i];
 			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
 			written_frames++;
+			pthread_mutex_unlock(&audio_mutex);
 		}
-		pthread_mutex_unlock(&audio_mutex);
+		
 
 		total_consumed_frames += written_frames;
 		free(resampled.frames);
