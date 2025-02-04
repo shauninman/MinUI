@@ -92,7 +92,7 @@ static struct PWR_Context {
 
 static int _;
 
-static double current_fps = 60.0;
+static double current_fps = SCREEN_FPS;
 static int fps_counter = 0;
 double currentfps = 0.0;
 SDL_Surface* GFX_init(int mode) {
