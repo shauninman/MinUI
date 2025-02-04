@@ -1221,7 +1221,7 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	
 	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
 	
-	snd.frame_count = 8000;
+	snd.frame_count = 4000;
 	snd.sample_rate_in  = sample_rate;
 	snd.sample_rate_out = spec_out.freq;
 	
