@@ -1137,10 +1137,6 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
 	ratio = tempratio * (snd.frame_rate / current_fps);
-	if (current_fps > (SCREEN_FPS + 0.5) || current_fps < (SCREEN_FPS - 0.5) || GFX_getVsync()==VSYNC_OFF)
-		ratio = 1.0;
-	currentfps = current_fps;
-	currentratio = ratio;
 
 	int targetbuffer = snd.frame_count * 0.8;
 	if (remaining_space < targetbuffer) {
@@ -1149,6 +1145,14 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	else if (remaining_space > targetbuffer) {
 		ratio = ratio + 0.003;
 	}
+
+	currentfps = current_fps;
+	currentratio = ratio;
+
+	if(ratio > 1.5) 
+		ratio = 1.5;
+	if(ratio < 0.5)
+		ratio = 0.5;
 
 	int framecount = (int)frame_count;
 
@@ -1176,6 +1180,15 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 		int written_frames = 0;
 		
 		for (int i = 0; i < resampled.frame_count; i++) {
+			// Honestely this delay is stupid and only needs to be here because of PCSX Rearmed
+			// because PCSX can switch frame rate specially like in video cut scenes, but there's no way of
+			// knowing because when you check av_info it still says 60fps, actually the core is still running at 60fps
+			// and its pushing out a 15fps video at 60fps and also 15fps audio frames
+			// but yeah main loop still running at 60fps and so audio buffer runs full immidiately
+			// so all I can do here is just stall the application when buffer is full and let everything basically 
+			// run at the speed of the audio. Which sort of gives the effect like everything is running fine
+			// Which is how MinUI was running for everything btw. But yeah just delaying on buffer full
+			// is not the way to do this..
 			while ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
 				// Buffer is full, wait for it to clear
 				SDL_Delay(1);
@@ -1187,7 +1200,6 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 			pthread_mutex_unlock(&audio_mutex);
 		}
 		
-
 		total_consumed_frames += written_frames;
 		free(resampled.frames);
 	}
