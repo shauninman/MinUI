@@ -49,6 +49,9 @@ void LOG_note(int level, const char* fmt, ...);
 
 #define FALLBACK_IMPLEMENTATION __attribute__((weak)) // used if platform doesn't provide an implementation
 
+#ifndef SCREEN_FPS
+#define SCREEN_FPS 60.0
+#endif
 ///////////////////////////////
 
 extern uint32_t RGB_WHITE;

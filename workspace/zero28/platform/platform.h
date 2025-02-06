@@ -130,7 +130,7 @@
 #define SAMPLES 400 // fix for (most) fceumm underruns
 
 // this should be set to the devices native screen refresh rate
-#define SCREEN_FPS 60.235
+#define SCREEN_FPS 60.0
 ///////////////////////////////
 
 #endif
