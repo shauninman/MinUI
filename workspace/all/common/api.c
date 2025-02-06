@@ -222,7 +222,14 @@ void GFX_flip(SDL_Surface* screen) {
 	uint64_t frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
 	double elapsed_time_s = (double)frame_duration / performance_frequency;
 	double tempfps = 1.0 / elapsed_time_s;
-	if(tempfps < SCREEN_FPS * 0.9 || tempfps > SCREEN_FPS * 1.1) tempfps = SCREEN_FPS;
+	if (!should_vsync) {
+    uint64_t frame_time = performance_frequency / SCREEN_FPS;  // Time per frame in performance counter units
+    if (frame_duration < frame_time) {
+        uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
+        SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
+    }
+}
+	if(tempfps < SCREEN_FPS * 0.8 || tempfps > SCREEN_FPS * 1.2) tempfps = SCREEN_FPS;
 	
 	// filling with  60.1 cause i'd rather underrun than overflow in start phase
 	static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
@@ -1180,18 +1187,9 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 		int written_frames = 0;
 		
 		for (int i = 0; i < resampled.frame_count; i++) {
-			// Honestely this delay is stupid and only needs to be here because of PCSX Rearmed
-			// because PCSX can switch frame rate specially like in video cut scenes, but there's no way of
-			// knowing because when you check av_info it still says 60fps, actually the core is still running at 60fps
-			// and its pushing out a 15fps video at 60fps and also 15fps audio frames
-			// but yeah main loop still running at 60fps and so audio buffer runs full immidiately
-			// so all I can do here is just stall the application when buffer is full and let everything basically 
-			// run at the speed of the audio. Which sort of gives the effect like everything is running fine
-			// Which is how MinUI was running for everything btw. But yeah just delaying on buffer full
-			// is not the way to do this..
-			while ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
-				// Buffer is full, wait for it to clear
-				SDL_Delay(1);
+			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+				// Buffer is full, break. This should never happen tho, but just to be save
+				break;
 			}
 			pthread_mutex_lock(&audio_mutex);
 			snd.buffer[snd.frame_in] = resampled.frames[i];

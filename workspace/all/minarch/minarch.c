@@ -2795,8 +2795,9 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	//  8: 60/210 (with optimize text off)
 	// you can squeeze more out of every console by turning prevent tearing off
 	// eg. PS@10 60/240
-	
-	if (!data) return;
+	if (!data) {
+		return;
+	}
 
 	fps_ticks += 1;
 	
@@ -2853,8 +2854,27 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	if (!thread_video) GFX_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
-static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
-	if (!data) return;
+const void* lastframe = NULL;
+
+static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
+    bool can_dupe = false;
+    environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
+    // LOG_info("can_dupe: %i\n", can_dupe);
+
+    // If data is NULL and duplication is not allowed, use the last frame
+    if (!data) {
+        if (lastframe) {
+            // LOG_info("Using last frame as no new data provided");
+            data = lastframe;
+        } else {
+            // LOG_info("No data and no last frame to use");
+            return; // No data to display
+        }
+    }
+
+    // Store the current frame as the last frame
+    lastframe = data;
+	// LOG_info("lastframe: %p\n", lastframe);
 	
 	if (thread_video) {
 		pthread_mutex_lock(&core_mx);
@@ -4759,7 +4779,7 @@ int main(int argc , char* argv[]) {
 	while (!quit) {
 
 		GFX_startFrame();
-		
+	
 	
 		if (!thread_video) {
 			core.run();
