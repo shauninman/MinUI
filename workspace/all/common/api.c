@@ -1120,6 +1120,32 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 	return resampled;
 }
 
+
+float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under) {
+    // Calculate the midpoint of the target buffer range
+    float midpoint = (targetbuffer_over + targetbuffer_under) / 2.0f;
+
+    // Determine the normalized distance from the midpoint (ranges from 0 to 1)
+    float normalizedDistance;
+    if (remaining_space <= midpoint) {
+        normalizedDistance = (midpoint - remaining_space) / (midpoint - targetbuffer_over);
+    } else {
+        normalizedDistance = (remaining_space - midpoint) / (targetbuffer_under - midpoint);
+    }
+
+    // Use exponential function to calculate the buffer adjustment
+    // Exponential growth towards 0.5 as normalizedDistance approaches 1
+    float adjustment = 0.001f + (0.2f - 0.001f) * pow(normalizedDistance, 3);
+
+    // Determine the sign of the adjustment based on whether remaining_space is below or above the midpoint
+    if (remaining_space <= midpoint) {
+        return -adjustment; // Negative adjustment when buffer is below midpoint
+    } else {
+        return adjustment;  // Positive adjustment when buffer is above midpoint
+    }
+}
+
+
 static SND_Frame tmpbuffer[BATCH_SIZE];
 static SND_Frame *unwritten_frames = NULL;
 static int unwritten_frame_count = 0;
@@ -1127,39 +1153,12 @@ static int unwritten_frame_count = 0;
 float currentratio = 0.0;
 int currentbufferfree = 0;
 int currentframecount = 0;
+static double ratio = 1.0;
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
-	static double ratio = 1.0;
+	
 
-	int remaining_space;
-	pthread_mutex_lock(&audio_mutex);
-	if (snd.frame_in >= snd.frame_out) {
-		remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
-	}
-	else {
-		remaining_space = snd.frame_out - snd.frame_in;
-	}
-	currentbufferfree = remaining_space;
-
-	pthread_mutex_unlock(&audio_mutex);
-
-	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
-	ratio = tempratio * (snd.frame_rate / current_fps);
-
-	int targetbuffer = snd.frame_count * 0.8;
-	if (remaining_space < targetbuffer) {
-		ratio = ratio - 0.003;
-	}
-	else if (remaining_space > targetbuffer) {
-		ratio = ratio + 0.003;
-	}
-
-	currentfps = current_fps;
-	currentratio = ratio;
-
-	if(ratio > 1.5) 
-		ratio = 1.5;
-	if(ratio < 0.5)
-		ratio = 0.5;
+	
+	
 
 	int framecount = (int)frame_count;
 
@@ -1172,6 +1171,36 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	int total_consumed_frames = 0;
 
 	while (framecount > 0) {
+		float remaining_space;
+		pthread_mutex_lock(&audio_mutex);
+		if (snd.frame_in >= snd.frame_out) {
+			remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
+		}
+		else {
+			remaining_space = snd.frame_out - snd.frame_in;
+		}
+		currentbufferfree = remaining_space;
+
+		pthread_mutex_unlock(&audio_mutex);
+
+		float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
+		ratio = tempratio * (snd.frame_rate / current_fps);
+
+		static float smoothed_bufferadjustment = 0.0f;
+
+		float alpha = 0.03f; 
+		float bufferadjustment = calculateBufferAdjustment(remaining_space, 0, snd.frame_count);
+		smoothed_bufferadjustment = alpha * bufferadjustment + (1.0f - alpha) * smoothed_bufferadjustment;
+		ratio += smoothed_bufferadjustment;
+
+
+		currentfps = current_fps;
+		currentratio = ratio;
+
+		if(ratio > 1.5) 
+			ratio = 1.5;
+		if(ratio < 0.5)
+			ratio = 0.5;
 		int amount = MIN(BATCH_SIZE, framecount);
 
 		for (int i = 0; i < amount; i++) {
