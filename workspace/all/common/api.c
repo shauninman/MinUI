@@ -95,6 +95,7 @@ static int _;
 static double current_fps = SCREEN_FPS;
 static int fps_counter = 0;
 double currentfps = 0.0;
+double currentreqfps = 0.0;
 SDL_Surface* GFX_init(int mode) {
 	// TODO: this doesn't really belong here...
 	// tried adding to PWR_init() but that was no good (not sure why)
@@ -216,6 +217,7 @@ void GFX_startFrame(void) {
 void GFX_flip(SDL_Surface* screen) {
 	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
 	PLAT_flip(screen, should_vsync);
+	currentfps = current_fps;
 	fps_counter++;
 
 	uint64_t performance_frequency = SDL_GetPerformanceFrequency();
@@ -223,12 +225,14 @@ void GFX_flip(SDL_Surface* screen) {
 	double elapsed_time_s = (double)frame_duration / performance_frequency;
 	double tempfps = 1.0 / elapsed_time_s;
 	if (!should_vsync) {
-    uint64_t frame_time = performance_frequency / SCREEN_FPS;  // Time per frame in performance counter units
-    if (frame_duration < frame_time) {
-        uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
-        SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
-    }
-}
+		uint64_t frame_time = performance_frequency / SCREEN_FPS;  // Time per frame in performance counter units
+		if (frame_duration < frame_time) {
+			uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
+			SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
+		}
+		per_frame_start = SDL_GetPerformanceCounter();
+		return;
+	}
 	if(tempfps < SCREEN_FPS * 0.8 || tempfps > SCREEN_FPS * 1.2) tempfps = SCREEN_FPS;
 	
 	// filling with  60.1 cause i'd rather underrun than overflow in start phase
@@ -246,11 +250,12 @@ void GFX_flip(SDL_Surface* screen) {
 			average_fps += fps_buffer[i];
 		}
 		average_fps /= fpsbuffersize;
-
 		current_fps = average_fps;
 	}
+	
 	per_frame_start = SDL_GetPerformanceCounter();
 }
+// eventually this function should be removed as its only here because of all the audio buffer based delay stuff
 void GFX_sync(void) {
 	uint32_t frame_duration = SDL_GetTicks() - frame_start;
 	if (gfx.vsync!=VSYNC_OFF) {
@@ -262,6 +267,11 @@ void GFX_sync(void) {
 	else {
 		if (frame_duration<FRAME_BUDGET) SDL_Delay(FRAME_BUDGET-frame_duration);
 	}
+}
+// if a fake vsycn delay is really needed 
+void GFX_delay(void) {
+	uint32_t frame_duration = SDL_GetTicks() - frame_start;
+	if (frame_duration<((1/SCREEN_FPS) * 1000)) SDL_Delay(((1/SCREEN_FPS) * 1000)-frame_duration);
 }
 
 FALLBACK_IMPLEMENTATION int PLAT_supportsOverscan(void) { return 0; }
@@ -1135,7 +1145,7 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
 
     // Use exponential function to calculate the buffer adjustment
     // Exponential growth towards 0.5 as normalizedDistance approaches 1
-    float adjustment = 0.001f + (0.2f - 0.001f) * pow(normalizedDistance, 3);
+    float adjustment = 0.00001f + (0.05f - 0.00001f) * pow(normalizedDistance, 3);
 
     // Determine the sign of the adjustment based on whether remaining_space is below or above the midpoint
     if (remaining_space <= midpoint) {
@@ -1156,10 +1166,6 @@ int currentframecount = 0;
 static double ratio = 1.0;
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	
-
-	
-	
-
 	int framecount = (int)frame_count;
 
 	if (snd.frame_count == 0) {
@@ -1184,17 +1190,10 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 		pthread_mutex_unlock(&audio_mutex);
 
 		float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
-		ratio = tempratio * (snd.frame_rate / current_fps);
+	
+		float bufferadjustment = calculateBufferAdjustment(remaining_space, 2000, snd.frame_count);
+		ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
 
-		static float smoothed_bufferadjustment = 0.0f;
-
-		float alpha = 0.03f; 
-		float bufferadjustment = calculateBufferAdjustment(remaining_space, 0, snd.frame_count);
-		smoothed_bufferadjustment = alpha * bufferadjustment + (1.0f - alpha) * smoothed_bufferadjustment;
-		ratio += smoothed_bufferadjustment;
-
-
-		currentfps = current_fps;
 		currentratio = ratio;
 
 		if(ratio > 1.5) 
@@ -1236,7 +1235,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
-	
+	currentreqfps = frame_rate;
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 	
 #if defined(USE_SDL2)

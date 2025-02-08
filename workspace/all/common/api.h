@@ -63,6 +63,7 @@ extern float currentratio;
 extern int currentbufferfree;
 extern int currentframecount;
 extern double currentfps;
+extern double currentreqfps;
 
 enum {
 	ASSET_WHITE_PILL,
@@ -168,6 +169,7 @@ void audioFPS(void);
 void GFX_flip(SDL_Surface* screen);
 #define GFX_supportsOverscan PLAT_supportsOverscan // (void)
 void GFX_sync(void); // call this to maintain 60fps when not calling GFX_flip() this frame
+void GFX_delay(void); // gfx_sync() is only for everywhere where there is no audio buffer to rely on for delaying, stupid so doing gfx_delay() for like waiting for input loop in binding menu. Need to remove gfx_sync() everwhere eventually
 void GFX_quit(void);
 
 enum {
