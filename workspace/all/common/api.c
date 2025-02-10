@@ -1132,18 +1132,15 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 
 
 float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under, int batchsize) {
-    // Calculate the midpoint of the target buffer range
     float midpoint = (targetbuffer_over + targetbuffer_under) / 2.0f;
 
-    // Define the deadzone range
     float deadzone_min = midpoint - batchsize;
     float deadzone_max = midpoint + batchsize;
-    // Check if remaining_space falls within the deadzone
+
     if (remaining_space >= deadzone_min && remaining_space <= deadzone_max) {
         return 0.0f; // No adjustment within the deadzone
     }
 
-    // Determine the normalized distance from the midpoint (ranges from 0 to 1)
     float normalizedDistance;
     if (remaining_space < midpoint) {
         normalizedDistance = (midpoint - remaining_space) / (midpoint - targetbuffer_over);
@@ -1151,15 +1148,12 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
         normalizedDistance = (remaining_space - midpoint) / (targetbuffer_under - midpoint);
     }
 
-    // Use exponential function to calculate the buffer adjustment
-    // Exponential growth towards 0.5 as normalizedDistance approaches 1
     float adjustment = 0.00001f + (0.05f - 0.00001f) * pow(normalizedDistance, 3);
 
-    // Determine the sign of the adjustment based on whether remaining_space is below or above the midpoint
     if (remaining_space < midpoint) {
-        return -adjustment; // Negative adjustment when buffer is below midpoint
+        return -adjustment;
     } else {
-        return adjustment;  // Positive adjustment when buffer is above midpoint
+        return adjustment; 
     }
 }
 
