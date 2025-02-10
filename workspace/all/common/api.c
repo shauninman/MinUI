@@ -1131,13 +1131,21 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 }
 
 
-float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under) {
+float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under, int batchsize) {
     // Calculate the midpoint of the target buffer range
     float midpoint = (targetbuffer_over + targetbuffer_under) / 2.0f;
 
+    // Define the deadzone range
+    float deadzone_min = midpoint - batchsize;
+    float deadzone_max = midpoint + batchsize;
+    // Check if remaining_space falls within the deadzone
+    if (remaining_space >= deadzone_min && remaining_space <= deadzone_max) {
+        return 0.0f; // No adjustment within the deadzone
+    }
+
     // Determine the normalized distance from the midpoint (ranges from 0 to 1)
     float normalizedDistance;
-    if (remaining_space <= midpoint) {
+    if (remaining_space < midpoint) {
         normalizedDistance = (midpoint - remaining_space) / (midpoint - targetbuffer_over);
     } else {
         normalizedDistance = (remaining_space - midpoint) / (targetbuffer_under - midpoint);
@@ -1148,7 +1156,7 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
     float adjustment = 0.00001f + (0.05f - 0.00001f) * pow(normalizedDistance, 3);
 
     // Determine the sign of the adjustment based on whether remaining_space is below or above the midpoint
-    if (remaining_space <= midpoint) {
+    if (remaining_space < midpoint) {
         return -adjustment; // Negative adjustment when buffer is below midpoint
     } else {
         return adjustment;  // Positive adjustment when buffer is above midpoint
@@ -1191,7 +1199,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 		float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
 	
-		float bufferadjustment = calculateBufferAdjustment(remaining_space, 2000, snd.frame_count);
+		float bufferadjustment = calculateBufferAdjustment(remaining_space, 2000, snd.frame_count,frame_count);
 		ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
 
 		currentratio = ratio;
