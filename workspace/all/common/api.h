@@ -221,6 +221,7 @@ typedef struct {
 void SND_init(double sample_rate, double frame_rate);
 size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count);
 void SND_quit(void);
+void SND_setQuality(int quality);
 
 ///////////////////////////////
 

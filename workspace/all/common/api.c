@@ -1038,6 +1038,12 @@ static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 
 	SDL_UnlockAudio();
 }
+static int soundQuality = 2;
+static int resetSrcState = 0;
+void SND_setQuality(int quality) {
+	soundQuality = quality;
+	resetSrcState = 1;
+}
 ResampledFrames resample_audio(const SND_Frame *input_frames,
 	int input_frame_count, int input_sample_rate,
 	int output_sample_rate, double ratio) {
@@ -1045,8 +1051,9 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 	static double previous_ratio = 1.0;
 	static SRC_STATE *src_state = NULL;
 
-	if (!src_state) {
-		src_state = src_new(SRC_SINC_MEDIUM_QUALITY, 2, &error);
+	if (!src_state || resetSrcState) {
+		resetSrcState = 0;
+		src_state = src_new(soundQuality, 2, &error);
 		if (src_state == NULL) {
 			fprintf(stderr, "Error initializing SRC state: %s\n",
 				src_strerror(error));
@@ -1152,7 +1159,7 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
         normalizedDistance = (remaining_space - midpoint) / (targetbuffer_under - midpoint);
     }
 
-    float adjustment = 0.00001f + (0.05f - 0.00001f) * pow(normalizedDistance, 3);
+    float adjustment = 0.00001f + (0.005f - 0.00001f) * pow(normalizedDistance, 3);
 
     if (remaining_space < midpoint) {
         adjustment = -adjustment;

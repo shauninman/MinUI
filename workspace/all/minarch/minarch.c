@@ -43,8 +43,11 @@ enum {
 	SCALE_COUNT,
 };
 
+
+
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
+static int resampling_quality = 2;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
@@ -619,6 +622,14 @@ static char* scaling_labels[] = {
 	"Cropped",
 	NULL
 };
+static char* resample_labels[] = {
+	"Max",
+	"High",
+	"Medium",
+	"Low",
+	NULL
+};
+
 static char* effect_labels[] = {
 	"None",
 	"Line",
@@ -653,6 +664,7 @@ static char* max_ff_labels[] = {
 
 enum {
 	FE_OPT_SCALING,
+	FE_OPT_RESAMPLING,
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
@@ -848,6 +860,16 @@ static struct Config {
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
+			[FE_OPT_RESAMPLING] = {
+				.key	= "minarch__resampling_quality", 
+				.name	= "Audio resampling quality",
+				.desc	= "Resampling quality higher takes more CPU", // will call getScreenScalingDesc()
+				.default_value = 2,
+				.value = 2,
+				.count = 4,
+				.values = resample_labels,
+				.labels = resample_labels,
+			},
 			[FE_OPT_EFFECT] = {
 				.key	= "minarch_screen_effect",
 				.name	= "Screen Effect",
@@ -979,6 +1001,11 @@ static void Config_syncFrontend(char* key, int value) {
 		
 		renderer.dst_p = 0;
 		i = FE_OPT_SCALING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_RESAMPLING].key)) {
+		resampling_quality = value;
+		SND_setQuality(resampling_quality);
+		i = FE_OPT_RESAMPLING;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_EFFECT].key)) {
 		screen_effect = value;
@@ -2817,9 +2844,6 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		char debug_text[128];
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
-		
-		struct retro_system_av_info av_info = {};
-		core.get_system_av_info(&av_info);
 		
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
