@@ -623,10 +623,10 @@ static char* scaling_labels[] = {
 	NULL
 };
 static char* resample_labels[] = {
-	"Max",
-	"High",
-	"Medium",
 	"Low",
+	"Medium",
+	"High",
+	"Max",
 	NULL
 };
 

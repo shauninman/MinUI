@@ -70,7 +70,12 @@ static uint32_t asset_rgbs[ASSET_COLORS];
 GFX_Fonts font;
 
 ///////////////////////////////
-
+static int qualityLevels[] = {
+	3,
+	4,
+	2,
+	1
+};
 static struct PWR_Context {
 	int initialized;
 	
@@ -1041,7 +1046,7 @@ static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 static int soundQuality = 2;
 static int resetSrcState = 0;
 void SND_setQuality(int quality) {
-	soundQuality = quality;
+	soundQuality = qualityLevels[quality];
 	resetSrcState = 1;
 }
 ResampledFrames resample_audio(const SND_Frame *input_frames,
