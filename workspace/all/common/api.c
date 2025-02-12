@@ -1046,7 +1046,7 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 	static SRC_STATE *src_state = NULL;
 
 	if (!src_state) {
-		src_state = src_new(SRC_SINC_FASTEST, 2, &error);
+		src_state = src_new(SRC_SINC_MEDIUM_QUALITY, 2, &error);
 		if (src_state == NULL) {
 			fprintf(stderr, "Error initializing SRC state: %s\n",
 				src_strerror(error));
@@ -1131,11 +1131,15 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 }
 
 
+#define ROLLING_AVERAGE_WINDOW_SIZE 5
+static float adjustment_history[ROLLING_AVERAGE_WINDOW_SIZE] = {0.0f};
+static int adjustment_index = 0;
+
 float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under, int batchsize) {
     float midpoint = (targetbuffer_over + targetbuffer_under) / 2.0f;
 
-    float deadzone_min = midpoint - batchsize;
-    float deadzone_max = midpoint + batchsize;
+    float deadzone_min = midpoint;
+    float deadzone_max = midpoint;
 
     if (remaining_space >= deadzone_min && remaining_space <= deadzone_max) {
         return 0.0f; // No adjustment within the deadzone
@@ -1151,11 +1155,23 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
     float adjustment = 0.00001f + (0.05f - 0.00001f) * pow(normalizedDistance, 3);
 
     if (remaining_space < midpoint) {
-        return -adjustment;
-    } else {
-        return adjustment; 
+        adjustment = -adjustment;
     }
+
+    adjustment_history[adjustment_index] = adjustment;
+    adjustment_index = (adjustment_index + 1) % ROLLING_AVERAGE_WINDOW_SIZE;
+
+    // Calculate the rolling average
+    float rolling_average = 0.0f;
+    for (int i = 0; i < ROLLING_AVERAGE_WINDOW_SIZE; ++i) {
+        rolling_average += adjustment_history[i];
+    }
+    rolling_average /= ROLLING_AVERAGE_WINDOW_SIZE;
+
+    return rolling_average;
 }
+
+
 
 
 static SND_Frame tmpbuffer[BATCH_SIZE];
@@ -1178,8 +1194,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	int consumed = 0;
 	int total_consumed_frames = 0;
 
-	while (framecount > 0) {
-		float remaining_space;
+	float remaining_space;
 		pthread_mutex_lock(&audio_mutex);
 		if (snd.frame_in >= snd.frame_out) {
 			remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
@@ -1202,6 +1217,9 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 			ratio = 1.5;
 		if(ratio < 0.5)
 			ratio = 0.5;
+
+	while (framecount > 0) {
+		
 		int amount = MIN(BATCH_SIZE, framecount);
 
 		for (int i = 0; i < amount; i++) {
