@@ -95,7 +95,7 @@ Extras:
 
 > [!NOTE]
 > **Working** Works! will still profit from future updates  
-> **WIP** Working on getting it ready for this device
+> **WIP** Working on getting it ready for this device   
 > **Questionable** I want to get it working on this device, but might not be possible due to HW limitations
    
 ## Legacy versions
