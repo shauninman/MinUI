@@ -1,7 +1,15 @@
-# MinUI
+# MinUI Next
    
-My Fork of MinUI with new Audio and Vsync code to fix problems within the original MinUI causing stuttering in video as well input and audio delays.   
+# Installing   
+
+Just copy MinUI.zip and trimui to your SD Card, bootup your Trim UI device and play magic!   
    
+Current supported devices:   
+Trimui Brick | MinUI-20241028-0   
+Trimui Smart Pro | MinUI-20231111b-2   
+
+# Why does this exist and why is this a seperate version?   
+      
 In short the original current MinUI relies on just filling up the audio buffer and then just let the audio buffer control the speed of the game by just adding new frames from the emulator core each time the audio buffer has space. This sort of works as the audio buffer is filled with samples from the emulator core and they do play back at a certain speed and so space in the buffer becomes available at this same speed.    
 But while this works, it will just play at the core's original FPS because the core is outputting audio meant to play at the speed of its original FPS which for most emulators is 59.23 something as that used to be the FPS of NTSC tv's, but this doesn't actually sync up with more modern screens like in emulation handhels which run around 60fps and so this mismatched of what the game runs at and your screen refreshes at will result in small stutters and what not while playing games. To say it in one line MinUI's Vsync does absolutely nothing!    
    
@@ -15,10 +23,13 @@ It's just a hobby project I started from me loving MinUI for what it is but not 
    
 If you like to try out my fix, the current build is for TrimUI Smart Pro and Brick. I am planning on building for other devices later too!
    
-But honestely since my PR on the original MinUI was closed without really any discussion and a 3 line commment with a reason which is not even valid as libraries can be included within the binary I kinda lost my love for MinUI a little and am wondering if I should even continue working on it. I don't say my PR should have been accepted but there was no room for discussion, no contacting me whatever is needed to accept my changes in confidence, nothing, It was just an invalid argument and immediatly closed right after. I worked for many many hours on this fix as this is actually very complex to solve evidenced by MinUI doing this wrong all this time and not touching this code ever release after release and it kinda sucks to see my PR closed like this with a comment with obviously shows they didn't even really look into my hard work. While I feel like my hard work is actually something that would solve a core problem in MinUI and actually fix their emulation. But it seems their not really interested or not even aware of how wrong the current implementation is and what problems it creates.
+# So why is this fix not in the original MinUI?   
+Well I did do a PR on the original MinUI, but it got declined. Personally I feel for invalid reasons as it could have been solved by rebuilding part of my code. But the OG creator just denied it immediately without leaving room for any discussion and changes. For me it felt a bit like disrespect towards my hard work on trying to help fixing a core problem in MinUI. His reason for closing was that because I use libsamplerate and use more accurate SDL2 timings it won't run or atleast needs to be tested on older devices, specially arm32 based devices as those libraries could maybe not run on those devices. At first I said this is total bullshit because I statically link the library, but during my process of creating this I find out this is actually true, so yeah have to give it to him on this part, but still doesn't take away the fact my logic could still be changed to work without samplerate and SDL1 (altough it won't be as good, still better than what MinUI is doing now).
+    
+So yeah this expirience made me feel to not contribute anymore to the orignal MinUI and continue this as a standalone version instead   
    
-So yeah maybe in the future I will replace this repo with something completely from my own, but for now you can try my rewritten MinUI version yourself in case your interested. But booting up MinUI on my Brick doesn't get me as excited anymore. 
-   
+But yeah now this is my own version I stand for a choice to rebuild parts of my code to lesser optimal versions without libsamplerate and SDL1 to support all devices the original MinUI does or do I choose to just support more recent devices so I can continue using more optimal code and better results. Right now I am going for the second choice as initially I was building this for myself and its still my main reasoning for doing this. Also I want to build towards the future and sometimes that means letting go of compatibility from older hardware.
+
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 /> 
