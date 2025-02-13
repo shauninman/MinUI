@@ -63,8 +63,6 @@ MinUI is a focused, custom launcher and libretro frontend for [a variety of retr
   multiple devices from different
   manufacturers
 
-You can [grab the latest version here](https://github.com/shauninman/MinUI/releases).
-
 > Devices with a physical power switch
 > use MENU to sleep and wake instead of
 > POWER. Once asleep the device can safely
@@ -92,6 +90,7 @@ Extras:
 - Super Game Boy
 - TurboGrafx-16 (and TurboGrafx-CD)
 - Virtual Boy
+- Arcade (cps, mame etc)
 
 ## Supported Devices
 
@@ -110,15 +109,3 @@ Extras:
 > **WIP** Working on getting it ready for this device   
 > **Questionable** I want to get it working on this device, but might not be possible due to HW limitations
    
-## Legacy versions
-
-The original Trimui Model S version of MinUI (2021/04/03-2021/08/06) has been archived [here](https://github.com/shauninman/MinUI-Legacy-Trimui-Model-S).
-
-The sequel, MiniUI for the Miyoo Mini (2022/04/20-2022/10/23), has been archived [here](https://github.com/shauninman/MiniUI-Legacy-Miyoo-Mini).
-
-The return of MinUI for the original Anbernic RG35XX (2023/02/26-2023/03/26) has been archived [here](https://github.com/shauninman/MinUI-Legacy-RG35XX).
-
-The current MinUI which introduced support for multiple devices starting with the Trimui Smart, Miyoo Mini (and Plus), and the original Anbernic RG35XX was released on [2023/09/22][init-release] with the initial functional commit 6 months earlier on [2023/03/27][init-commit].
-
-[init-release]:https://github.com/shauninman/MinUI/releases/tag/v20230922b-2
-[init-commit]:https://github.com/shauninman/MinUI/commit/53e0296ea5a2794290fb5783765af6cee0063445#diff-b993e61ab6e66a19b67c88cfb98261aa9267d250de8bb56463662f67aae1a558
