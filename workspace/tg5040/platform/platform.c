@@ -123,6 +123,59 @@ SDL_Surface* PLAT_initVideo(void) {
 	return vid.screen;
 }
 
+
+uint32_t PLAT_get_dominant_color() {
+    if (!vid.screen) {
+        fprintf(stderr, "Error: vid.screen is NULL.\n");
+        return 0;
+    }
+
+    uint32_t *pixels = (uint32_t *)vid.screen->pixels;
+    if (!pixels) {
+        fprintf(stderr, "Error: Unable to access pixel data.\n");
+        return 0;
+    }
+
+    int width = vid.screen->w;
+    int height = vid.screen->h;
+    int pixel_count = width * height;
+
+    SDL_PixelFormat *format = vid.screen->format;
+    if (!format) {
+        fprintf(stderr, "Error: Unable to access pixel format.\n");
+        return 0;
+    }
+
+    uint8_t r, g, b;
+
+    // Use dynamic memory allocation for the histogram to avoid stack overflow
+    uint32_t *color_histogram = (uint32_t *)calloc(256 * 256 * 256, sizeof(uint32_t));
+    if (!color_histogram) {
+        fprintf(stderr, "Error: Memory allocation failed.\n");
+        return 0;
+    }
+
+    for (int i = 0; i < pixel_count; i++) {
+        SDL_GetRGB(pixels[i], format, &r, &g, &b);
+        uint32_t color = (r << 16) | (g << 8) | b;
+        color_histogram[color]++;
+    }
+
+    // Find the most frequent color
+    uint32_t dominant_color = 0;
+    uint32_t max_count = 0;
+    for (int i = 0; i < 256 * 256 * 256; i++) {
+        if (color_histogram[i] > max_count) {
+            max_count = color_histogram[i];
+            dominant_color = i;
+        }
+    }
+
+    free(color_histogram);
+    return dominant_color;
+}
+
+
 static void clearVideo(void) {
 	for (int i=0; i<3; i++) {
 		SDL_RenderClear(vid.renderer);

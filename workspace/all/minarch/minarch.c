@@ -48,6 +48,7 @@ enum {
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
 static int resampling_quality = 2;
+static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
@@ -629,6 +630,15 @@ static char* resample_labels[] = {
 	"Max",
 	NULL
 };
+static char* ambient_labels[] = {
+	"Off",
+	"All",
+	"Top",
+	"FN",
+	"LR",
+	"Top/LR",
+	NULL
+};
 
 static char* effect_labels[] = {
 	"None",
@@ -665,6 +675,7 @@ static char* max_ff_labels[] = {
 enum {
 	FE_OPT_SCALING,
 	FE_OPT_RESAMPLING,
+	FE_OPT_AMBIENT,
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
@@ -870,6 +881,16 @@ static struct Config {
 				.values = resample_labels,
 				.labels = resample_labels,
 			},
+			[FE_OPT_AMBIENT] = {
+				.key	= "minarch_ambient", 
+				.name	= "Ambient mode",
+				.desc	= "Makes your leds follow on screen colors", // will call getScreenScalingDesc()
+				.default_value = 0,
+				.value = 0,
+				.count = 6,
+				.values = ambient_labels,
+				.labels = ambient_labels,
+			},
 			[FE_OPT_EFFECT] = {
 				.key	= "minarch_screen_effect",
 				.name	= "Screen Effect",
@@ -1006,6 +1027,10 @@ static void Config_syncFrontend(char* key, int value) {
 		resampling_quality = value;
 		SND_setQuality(resampling_quality);
 		i = FE_OPT_RESAMPLING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_AMBIENT].key)) {
+		ambient_mode = value;
+		i = FE_OPT_AMBIENT;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_EFFECT].key)) {
 		screen_effect = value;
@@ -2880,7 +2905,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
-	
+	 
+
 	GFX_blitRenderer(&renderer);
 	
 	if (!thread_video) GFX_flip(screen);
@@ -2888,6 +2914,21 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 }
 const void* lastframe = NULL;
 
+void *thread_func(void *arg) {
+    // Unpack arguments (this example assumes arguments are packed in a struct)
+    struct args {
+        const void *data;
+        unsigned width;
+        unsigned height;
+        size_t pitch;
+        int ambient_mode;
+    } *params = arg;
+
+    // Call your function
+    GFX_setAmbientColor(params->data, params->width, params->height, params->pitch, params->ambient_mode);
+    
+    return NULL; // Return NULL to indicate successful completion
+}
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
     bool can_dupe = false;
     environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
@@ -2906,6 +2947,22 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
     // Store the current frame as the last frame
     lastframe = data;
+	if(!fast_forward ) {
+		struct args {
+			const void *data;
+			unsigned width;
+			unsigned height;
+			size_t pitch;
+			int ambient_mode;
+		} params = { data, width, height, pitch, ambient_mode };
+
+		// Create and launch the new thread
+		pthread_t thread;
+		if (pthread_create(&thread, NULL, thread_func, &params) != 0) {
+			fprintf(stderr, "Error: Unable to create thread.\n");
+			return;
+		}
+	}
 	// LOG_info("lastframe: %p\n", lastframe);
 	
 	if (thread_video) {

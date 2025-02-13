@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+START=98
+STOP=99
+start() {
+    printf "Starting LED Control Daemon\n"
+    cd /etc/LedControl
+    /etc/LedControl/lcdaemon
+    echo "done"
+}
+
+stop_() {
+    printf "Stopping LED Control Daemon\n"
+    killall lcdaemon
+}

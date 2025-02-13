@@ -14,7 +14,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
+#include <sys/stat.h>
 
 #include "utils.h"
 
@@ -224,9 +224,150 @@ void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
 
+
+void chmodfile(const char *file, int writable)
+{
+    struct stat statbuf;
+    if (stat(file, &statbuf) == 0)
+    {
+        mode_t newMode;
+        if (writable)
+        {
+            // Add write permissions for all users
+            newMode = statbuf.st_mode | S_IWUSR | S_IWGRP | S_IWOTH;
+        }
+        else
+        {
+            // Remove write permissions for all users
+            newMode = statbuf.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+        }
+
+        // Apply the new permissions
+        if (chmod(file, newMode) != 0)
+        {
+            printf("chmod error %d %s", writable, file);
+        }
+    }
+    else
+    {
+        printf("stat error %d %s", writable, file);
+    }
+}
+
+uint32_t GFX_extract_dominant_color(const void *data, unsigned width, unsigned height, size_t pitch) {
+	if (!data) {
+        fprintf(stderr, "Error: data is NULL.\n");
+        return 0;
+    }
+
+    uint16_t *pixels = (uint16_t *)data;
+    int pixel_count = width * height;
+
+    uint64_t total_r = 0;
+    uint64_t total_g = 0;
+    uint64_t total_b = 0;
+    uint8_t r, g, b;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            uint16_t pixel = pixels[y * (pitch / 2) + x];  // Access pixel data
+
+            // Manually extract RGB values from RGB565 format
+            r = (pixel & 0xF800) >> 8;  // 5 bits red
+            g = (pixel & 0x07E0) >> 3;  // 6 bits green
+            b = (pixel & 0x001F) << 3;  // 5 bits blue
+
+            // Normalize RGB values to 8 bits
+            r |= r >> 5;
+            g |= g >> 6;
+            b |= b >> 5;
+
+            // Accumulate the color components
+            total_r += r;
+            total_g += g;
+            total_b += b;
+        }
+    }
+
+    // Calculate the average color components
+    uint8_t avg_r = total_r / pixel_count;
+    uint8_t avg_g = total_g / pixel_count;
+    uint8_t avg_b = total_b / pixel_count;
+
+    // Combine average color components into a single uint32_t color
+    uint32_t average_color = (avg_r << 16) | (avg_g << 8) | avg_b;
+
+    return average_color;
+
+}
+
+
+void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode) {
+	if(mode==0) return;
+
+	uint32_t dominant_color = GFX_extract_dominant_color(data, width, height,pitch);
+   
+	if(mode==1 || mode==2 || mode==5) {
+		chmodfile("/sys/class/led_anim/effect_m", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_m", 1);
+		// chmodfile("", 1);
+		FILE *file = fopen("/sys/class/led_anim/effect_m", "w");
+		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_m", "w");
+		// file3 = fopen(filepath, "w");
+		fprintf(file, "4");
+		fprintf(file2, "%06X", dominant_color);
+		
+		fclose(file);
+		fclose(file2);
+		chmodfile("/sys/class/led_anim/effect_m", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_m", 0);
+	}
+	if(mode==1 || mode==3) {
+		chmodfile("/sys/class/led_anim/effect_f1", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f1", 1);
+		chmodfile("/sys/class/led_anim/effect_f2", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f2", 1);
+		// chmodfile("", 1);
+		FILE *file = fopen("/sys/class/led_anim/effect_f1", "w");
+		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_f1", "w");
+		FILE *file3 = fopen("/sys/class/led_anim/effect_f2", "w");
+		FILE *file4 = fopen("/sys/class/led_anim/effect_rgb_hex_f2", "w");
+		// file3 = fopen(filepath, "w");
+		fprintf(file, "4");
+		fprintf(file2, "%06X", dominant_color);
+		fprintf(file3, "4");
+		fprintf(file4, "%06X", dominant_color);
+		
+		fclose(file);
+		fclose(file2);
+		fclose(file3);
+		fclose(file4);
+		chmodfile("/sys/class/led_anim/effect_f1", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f1", 0);
+		chmodfile("/sys/class/led_anim/effect_f2", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f2", 0);
+	}
+	if(mode==1 || mode==4 || mode==5) {
+		chmodfile("/sys/class/led_anim/effect_lr", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_lr", 1);
+		// chmodfile("", 1);
+		FILE *file = fopen("/sys/class/led_anim/effect_lr", "w");
+		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_lr", "w");
+		// file3 = fopen(filepath, "w");
+		fprintf(file, "4");
+		fprintf(file2, "%06X", dominant_color);
+		
+		fclose(file);
+		fclose(file2);
+		chmodfile("/sys/class/led_anim/effect_lr", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_lr", 0);
+	}
+}
+
 void GFX_flip(SDL_Surface* screen) {
 	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
 	PLAT_flip(screen, should_vsync);
+	
 	currentfps = current_fps;
 	fps_counter++;
 
