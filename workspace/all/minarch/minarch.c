@@ -2948,20 +2948,21 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
     // Store the current frame as the last frame
     lastframe = data;
 	if(!fast_forward ) {
-		struct args {
-			const void *data;
-			unsigned width;
-			unsigned height;
-			size_t pitch;
-			int ambient_mode;
-		} params = { data, width, height, pitch, ambient_mode };
+		// struct args {
+		// 	const void *data;
+		// 	unsigned width;
+		// 	unsigned height;
+		// 	size_t pitch;
+		// 	int ambient_mode;
+		// } params = { data, width, height, pitch, ambient_mode };
 
-		// Create and launch the new thread
-		pthread_t thread;
-		if (pthread_create(&thread, NULL, thread_func, &params) != 0) {
-			fprintf(stderr, "Error: Unable to create thread.\n");
-			return;
-		}
+		// // Create and launch the new thread
+		// pthread_t thread;
+		// if (pthread_create(&thread, NULL, thread_func, &params) != 0) {
+		// 	fprintf(stderr, "Error: Unable to create thread.\n");
+		// }
+
+		GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
 	}
 	// LOG_info("lastframe: %p\n", lastframe);
 	
