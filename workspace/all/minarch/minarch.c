@@ -2841,16 +2841,23 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	if (show_debug) {
 		int x = 2 + renderer.src_x;
 		int y = 2 + renderer.src_y;
-		char debug_text[128];
+		char debug_text[250];
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
 		
+		if (!isnan(currentratio) && !isnan(currentfps) && !isnan(currentreqfps)  && !isnan(currentbufferms) &&
+		 currentbuffersize >= 0  && currentbufferfree >= 0) {
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
-
-		sprintf(debug_text, "%.03f/%i/%.03f/%.03f", currentratio, currentbufferfree,
-				currentfps,currentreqfps);
+		
+		sprintf(debug_text, "%.03f/%.03f/%.03f/%i/%.1f/%i", currentratio,
+				currentfps,currentreqfps,currentbuffersize,currentbufferms, currentbufferfree);
 		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
+					height);
+		
+
+		sprintf(debug_text, "%i/%i", currentsampleratein, currentsamplerateout);
+		blitBitmapText(debug_text, x, y + 40, (uint16_t*)data, pitch / 2, width,
 					   height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
@@ -2861,6 +2868,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
+	}
 	}
 	
 	if (downsample) {

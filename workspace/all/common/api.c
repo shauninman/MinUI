@@ -56,6 +56,7 @@ uint32_t RGB_BLACK;
 uint32_t RGB_LIGHT_GRAY;
 uint32_t RGB_GRAY;
 uint32_t RGB_DARK_GRAY;
+float currentbufferms = 20.0;
 
 static struct GFX_Context {
 	SDL_Surface* screen;
@@ -101,6 +102,10 @@ static double current_fps = SCREEN_FPS;
 static int fps_counter = 0;
 double currentfps = 0.0;
 double currentreqfps = 0.0;
+
+int currentbuffersize = 0;
+int currentsampleratein = 0;
+int currentsamplerateout = 0;
 SDL_Surface* GFX_init(int mode) {
 	// TODO: this doesn't really belong here...
 	// tried adding to PWR_init() but that was no good (not sure why)
@@ -1007,19 +1012,20 @@ static void SND_audioCallback(void *userdata, uint8_t *stream, int len) {
 	len /= (sizeof(int16_t) * 2);
 
 	// Lock the mutex before accessing shared resources
-	pthread_mutex_lock(&audio_mutex);
+	
 
 	while (snd.frame_out != snd.frame_in && len > 0) {
+		
 		*out++ = snd.buffer[snd.frame_out].left;
 		*out++ = snd.buffer[snd.frame_out].right;
-
+		pthread_mutex_lock(&audio_mutex);
 		snd.frame_out += 1;
 		len -= 1;
-
 		if (snd.frame_out >= snd.frame_count)
 			snd.frame_out = 0;
+		pthread_mutex_unlock(&audio_mutex);
 	}
-	pthread_mutex_unlock(&audio_mutex);
+	
 
 	if (len > 0) {
 		memset(out, 0, len * (sizeof(int16_t) * 2));
@@ -1039,7 +1045,6 @@ static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 
 	snd.frame_in = 0;
 	snd.frame_out = 0;
-	// snd.frame_filled = snd.frame_count - 1;
 
 	SDL_UnlockAudio();
 }
@@ -1148,14 +1153,8 @@ static float adjustment_history[ROLLING_AVERAGE_WINDOW_SIZE] = {0.0f};
 static int adjustment_index = 0;
 
 float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under, int batchsize) {
+
     float midpoint = (targetbuffer_over + targetbuffer_under) / 2.0f;
-
-    float deadzone_min = midpoint;
-    float deadzone_max = midpoint;
-
-    if (remaining_space >= deadzone_min && remaining_space <= deadzone_max) {
-        return 0.0f; // No adjustment within the deadzone
-    }
 
     float normalizedDistance;
     if (remaining_space < midpoint) {
@@ -1163,8 +1162,12 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
     } else {
         normalizedDistance = (remaining_space - midpoint) / (targetbuffer_under - midpoint);
     }
-
-    float adjustment = 0.00001f + (0.005f - 0.00001f) * pow(normalizedDistance, 3);
+	// I make crazy small adjustments, mooore tiny is mooore stable :D But don't come neir the limits cuz imma hit ya with that 0.005 ratio adjustment, pow pow!
+    // I wonder if staying in the middle of 0 to 4000 with 512 samples per batch playing at tiny different speeds each iteration is like the smallest I can get
+	// lets say hovering around 2000 means 2000 samples queue, about 4 frames, so at 17ms(60fps) thats  68ms delay right?
+	// Should have payed attention when my math teacher was talking dammit
+	// Also I chose 3 for pow, but idk if that really the best nr, anyone good in maths looking at my code?
+	float adjustment = 0.0000001f + (0.005f - 0.0000001f) * pow(normalizedDistance, 3);
 
     if (remaining_space < midpoint) {
         adjustment = -adjustment;
@@ -1198,37 +1201,35 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	
 	int framecount = (int)frame_count;
 
-	if (snd.frame_count == 0) {
-		LOG_info("Frame count is 0, returning 0.");
-		return 0;
-	}
-
 	int consumed = 0;
 	int total_consumed_frames = 0;
 
-	float remaining_space;
-		pthread_mutex_lock(&audio_mutex);
-		if (snd.frame_in >= snd.frame_out) {
-			remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
-		}
-		else {
-			remaining_space = snd.frame_out - snd.frame_in;
-		}
-		currentbufferfree = remaining_space;
+	float remaining_space=snd.frame_count;
+	if (snd.frame_in >= snd.frame_out) {
+		remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
+	}
+	else {
+		remaining_space = snd.frame_out - snd.frame_in;
+	}
+	currentbufferfree = remaining_space;
 
-		pthread_mutex_unlock(&audio_mutex);
+	float tempdelay = ((snd.frame_count - remaining_space) / snd.sample_rate_out) * 1000;
 
-		float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
-	
-		float bufferadjustment = calculateBufferAdjustment(remaining_space, 2000, snd.frame_count,frame_count);
-		ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
+	currentbufferms = tempdelay;
 
-		currentratio = ratio;
+	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
+	// i use 0.4* as minimum free space because i want my algorithm to fight more for free buffer then full, cause you know free buffer is lower latency :D
+	// My algorithm is fighting here with audio hardware. 
+	// It's like a person is trying to balance on a rope (my algorithm) and another person (the audio hardware and screen) is wiggling the rope and the balancing person got to keep countering and try to stay stable
+	float bufferadjustment = calculateBufferAdjustment(remaining_space, snd.frame_count*0.4, snd.frame_count,frame_count);
+	ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
 
-		if(ratio > 1.5) 
-			ratio = 1.5;
-		if(ratio < 0.5)
-			ratio = 0.5;
+	currentratio = ratio;
+
+	if(ratio > 1.5) 
+		ratio = 1.5;
+	if(ratio < 0.5)
+		ratio = 0.5;
 
 	while (framecount > 0) {
 		
@@ -1254,8 +1255,9 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 			pthread_mutex_lock(&audio_mutex);
 			snd.buffer[snd.frame_in] = resampled.frames[i];
 			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
-			written_frames++;
 			pthread_mutex_unlock(&audio_mutex);
+			written_frames++;
+			
 		}
 		
 		total_consumed_frames += written_frames;
@@ -1292,9 +1294,12 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	
 	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
 	
-	snd.frame_count = 4000;
+	snd.frame_count = ((float)spec_out.freq/SCREEN_FPS)*6; // buffer size based on sample rate out (with 6 frames headroom), ideally you want to use actual FPS but don't know it at this point yet 
+	currentbuffersize = snd.frame_count;
 	snd.sample_rate_in  = sample_rate;
 	snd.sample_rate_out = spec_out.freq;
+	currentsampleratein = snd.sample_rate_in;
+	currentsamplerateout = snd.sample_rate_out;
 	
 	SND_resizeBuffer();
 	

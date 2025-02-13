@@ -64,6 +64,10 @@ extern int currentbufferfree;
 extern int currentframecount;
 extern double currentfps;
 extern double currentreqfps;
+extern float currentbufferms;
+extern int currentbuffersize;
+extern int currentsampleratein;
+extern int currentsamplerateout;
 
 enum {
 	ASSET_WHITE_PILL,
