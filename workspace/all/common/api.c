@@ -94,6 +94,23 @@ static struct PWR_Context {
 	SDL_Surface* overlay;
 } pwr = {0};
 
+
+static struct SND_Context {
+	int initialized;
+	double frame_rate;
+	
+	int sample_rate_in;
+	int sample_rate_out;
+	
+	SND_Frame* buffer;		// buf
+	size_t frame_count; 	// buf_len
+	
+	int frame_in;     // buf_w
+	int frame_out;    // buf_r
+	int frame_filled; // max_buf_w
+	
+} snd = {0};
+
 ///////////////////////////////
 
 static int _;
@@ -376,7 +393,7 @@ void GFX_flip(SDL_Surface* screen) {
 	double elapsed_time_s = (double)frame_duration / performance_frequency;
 	double tempfps = 1.0 / elapsed_time_s;
 	if (!should_vsync) {
-		uint64_t frame_time = performance_frequency / SCREEN_FPS;  // Time per frame in performance counter units
+		uint64_t frame_time = performance_frequency / snd.frame_rate;  // Time per frame in performance counter units
 		if (frame_duration < frame_time) {
 			uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
 			SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
@@ -1127,21 +1144,7 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 
 #define ms SDL_GetTicks
 
-static struct SND_Context {
-	int initialized;
-	double frame_rate;
-	
-	int sample_rate_in;
-	int sample_rate_out;
-	
-	SND_Frame* buffer;		// buf
-	size_t frame_count; 	// buf_len
-	
-	int frame_in;     // buf_w
-	int frame_out;    // buf_r
-	int frame_filled; // max_buf_w
-	
-} snd = {0};
+
 
 pthread_mutex_t audio_mutex = PTHREAD_MUTEX_INITIALIZER;
 

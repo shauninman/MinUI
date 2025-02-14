@@ -913,7 +913,7 @@ static struct Config {
 			},
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
-				.name	= "Prevent Tearing",
+				.name	= "VSync",
 				.desc	= "Wait for vsync before drawing the next frame.\nLenient only waits when within frame budget.\nStrict always waits.",
 				.default_value = VSYNC_LENIENT,
 				.value = VSYNC_LENIENT,
