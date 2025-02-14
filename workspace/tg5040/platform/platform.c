@@ -96,13 +96,16 @@ SDL_Surface* PLAT_initVideo(void) {
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
-	// vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED);
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(vid.renderer, &info);
 	// LOG_info("Current render driver: %s\n", info.name);
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
+	SDL_SetHint(SDL_HINT_RENDER_DRIVER,"opengl");
+	SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0");
+	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION,"1");
+	SDL_SetHint(SDL_HINT_RENDER_OPENGL_SHADERS,"1");
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
 	vid.target	= NULL; // only needed for non-native sizes
 	
