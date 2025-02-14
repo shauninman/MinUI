@@ -103,9 +103,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER,"opengl");
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC,"0");
 	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION,"1");
-	SDL_SetHint(SDL_HINT_RENDER_OPENGL_SHADERS,"1");
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
 	vid.target	= NULL; // only needed for non-native sizes
 	
