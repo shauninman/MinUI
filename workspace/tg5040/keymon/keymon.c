@@ -20,6 +20,8 @@
 #define VOLUME_MAX 		20
 #define BRIGHTNESS_MIN 	0
 #define BRIGHTNESS_MAX 	10
+#define COLORTEMP_MIN 	0
+#define COLORTEMP_MAX 	10
 
 #define CODE_MENU0		314
 #define CODE_MENU1		315
@@ -85,6 +87,7 @@ int main (int argc, char *argv[]) {
 	uint32_t input;
 	uint32_t val;
 	uint32_t menu_pressed = 0;
+	uint32_t menu2_pressed = 0;
 	
 	uint32_t up_pressed = 0;
 	uint32_t up_just_pressed = 0;
@@ -127,11 +130,11 @@ int main (int argc, char *argv[]) {
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
 				printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
 				switch (ev.code) {
-					case CODE_MENU0:
-					case CODE_MENU1:
 					case CODE_MENU2:
 						menu_pressed = val;
 					break;
+					case CODE_MENU0:
+						menu2_pressed = val;
 					break;
 					case CODE_PLUS:
 						up_pressed = up_just_pressed = val;
@@ -149,6 +152,7 @@ int main (int argc, char *argv[]) {
 		
 		if (ignore) {
 			menu_pressed = 0;
+			menu2_pressed = 0;
 			up_pressed = up_just_pressed = 0;
 			down_pressed = down_just_pressed = 0;
 			up_repeat_at = 0;
@@ -160,6 +164,11 @@ int main (int argc, char *argv[]) {
 				printf("brightness up\n"); fflush(stdout);
 				val = GetBrightness();
 				if (val<BRIGHTNESS_MAX) SetBrightness(++val);
+			}
+			else if (menu2_pressed) {
+				printf("color temp up %i\n",val); fflush(stdout);
+				val = GetColortemp() - 5;
+				SetColortemp(val );
 			}
 			else {
 				printf("volume up\n"); fflush(stdout);
@@ -173,9 +182,14 @@ int main (int argc, char *argv[]) {
 		
 		if (down_just_pressed || (down_pressed && now>=down_repeat_at)) {
 			if (menu_pressed) {
-				printf("brightness down\n"); fflush(stdout);
+				printf("color temp down %i\n",val); fflush(stdout);
 				val = GetBrightness();
 				if (val>BRIGHTNESS_MIN) SetBrightness(--val);
+			}
+			else if (menu2_pressed) {
+				printf("color temp donw\n"); fflush(stdout);
+				val = GetColortemp() +5;
+				SetColortemp(val);
 			}
 			else {
 				printf("volume down\n"); fflush(stdout);

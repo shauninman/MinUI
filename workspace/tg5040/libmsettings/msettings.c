@@ -16,10 +16,11 @@
 
 ///////////////////////////////////////
 
-#define SETTINGS_VERSION 3
+#define SETTINGS_VERSION 4
 typedef struct Settings {
 	int version; // future proofing
 	int brightness;
+	int colortemp;
 	int headphones;
 	int speaker;
 	int mute;
@@ -30,6 +31,7 @@ typedef struct Settings {
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = 2,
+	.colortemp = 0,
 	.headphones = 4,
 	.speaker = 8,
 	.mute = 0,
@@ -110,6 +112,7 @@ void InitSettings(void) {
 	
 	SetVolume(GetVolume());
 	SetBrightness(GetBrightness());
+	SetColortemp(GetColortemp());
 }
 void QuitSettings(void) {
 	munmap(settings, shm_size);
@@ -126,6 +129,9 @@ static inline void SaveSettings(void) {
 
 int GetBrightness(void) { // 0-10
 	return settings->brightness;
+}
+int GetColortemp(void) { // 0-10
+	return settings->colortemp;
 }
 void SetBrightness(int value) {
 	
@@ -164,6 +170,12 @@ void SetBrightness(int value) {
 	settings->brightness = value;
 	SaveSettings();
 }
+void SetColortemp(int value) {
+	printf("SetColortemp(%i)\n", value); fflush(stdout);
+	SetRawColortemp(value);
+	settings->colortemp = value;
+	SaveSettings();
+}
 
 int GetVolume(void) { // 0-20
 	if (settings->mute) return 0;
@@ -192,6 +204,17 @@ void SetRawBrightness(int val) { // 0 - 255
 	    unsigned long param[4]={0,val,0,0};
 		ioctl(fd, DISP_LCD_SET_BRIGHTNESS, &param);
 		close(fd);
+	}
+}
+void SetRawColortemp(int val) { // 0 - 255
+	// if (settings->hdmi) return;
+	
+	printf("SetRawColortemp(%i)\n", val); fflush(stdout);
+
+	FILE *fd = fopen("/sys/class/disp/disp/attr/color_temperature", "w");
+	if (fd) {
+		fprintf(fd, "%i", val);
+		fclose(fd);
 	}
 }
 void SetRawVolume(int val) { // 0-100
