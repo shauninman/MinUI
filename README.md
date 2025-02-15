@@ -1,10 +1,11 @@
 # MinUI Next   
-MinUI with a rebuild emulation engine
+MinUI with a rebuild emulation engine, includes all original MinUI Features plus:
 - Fixed screen tearing, sync problems
 - Better audio quality (with quality selection)
 - Much lower latency
 - Ambient light mode
 - Lot of fixes on original like inputs sometimes not registering etc.
+- Color temperature controls
 
 Current supported devices:   
 Trimui Brick | MinUI-20241028-0   
