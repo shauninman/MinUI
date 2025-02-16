@@ -171,11 +171,38 @@ void SetBrightness(int value) {
 	SaveSettings();
 }
 void SetColortemp(int value) {
-	printf("SetColortemp(%i)\n", value); fflush(stdout);
-	SetRawColortemp(value);
+	
+	int raw;
+	
+	switch (value) {
+		case 0: raw=-100; break; 		// 0
+		case 1: raw=-90; break; 		// 8
+		case 2: raw=-80; break; 		// 8
+		case 3: raw=-70; break; 		// 16
+		case 4: raw=-60; break;		// 16
+		case 5: raw=-50; break;		// 24
+		case 6: raw=-40; break;		// 24
+		case 7: raw=-30; break;		// 32
+		case 8: raw=-20; break;		// 32
+		case 9: raw=-10; break;		// 32
+		case 10: raw=0; break;	// 64
+		case 11: raw=10; break; 		// 0
+		case 12: raw=20; break; 		// 8
+		case 13: raw=30; break; 		// 8
+		case 14: raw=40; break; 		// 16
+		case 15: raw=50; break;		// 16
+		case 16: raw=60; break;		// 24
+		case 17: raw=70; break;		// 24
+		case 18: raw=80; break;		// 32
+		case 19: raw=90; break;		// 32
+		case 20: raw=100; break;		// 32
+	}
+	
+	SetRawColortemp(raw);
 	settings->colortemp = value;
 	SaveSettings();
 }
+
 
 int GetVolume(void) { // 0-20
 	if (settings->mute) return 0;

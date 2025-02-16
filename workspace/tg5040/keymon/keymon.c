@@ -21,7 +21,7 @@
 #define BRIGHTNESS_MIN 	0
 #define BRIGHTNESS_MAX 	10
 #define COLORTEMP_MIN 	0
-#define COLORTEMP_MAX 	10
+#define COLORTEMP_MAX 	20
 
 #define CODE_MENU0		314
 #define CODE_MENU1		315
@@ -167,8 +167,10 @@ int main (int argc, char *argv[]) {
 			}
 			else if (menu2_pressed) {
 				printf("color temp up %i\n",val); fflush(stdout);
-				val = GetColortemp() - 5;
-				SetColortemp(val );
+				val = GetColortemp();
+				if (val<COLORTEMP_MAX) {
+					SetColortemp(++val);
+				}
 			}
 			else {
 				printf("volume up\n"); fflush(stdout);
@@ -188,8 +190,10 @@ int main (int argc, char *argv[]) {
 			}
 			else if (menu2_pressed) {
 				printf("color temp donw\n"); fflush(stdout);
-				val = GetColortemp() +5;
-				SetColortemp(val);
+				val = GetColortemp();
+				if (val>COLORTEMP_MIN) {
+					SetColortemp(--val);
+				}
 			}
 			else {
 				printf("volume down\n"); fflush(stdout);
