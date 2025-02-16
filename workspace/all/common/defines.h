@@ -8,7 +8,7 @@
 #define BRIGHTNESS_MIN 	0
 #define BRIGHTNESS_MAX 	10
 #define COLORTEMP_MIN 	0
-#define COLORTEMP_MAX 	20
+#define COLORTEMP_MAX 	40
 
 #define MAX_PATH 512
 

@@ -16,11 +16,11 @@
 
 ///////////////////////////////////////
 
-#define SETTINGS_VERSION 4
+#define SETTINGS_VERSION 5
 typedef struct Settings {
 	int version; // future proofing
 	int brightness;
-	int colortemp;
+	int colortemperature;
 	int headphones;
 	int speaker;
 	int mute;
@@ -31,7 +31,7 @@ typedef struct Settings {
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = 2,
-	.colortemp = 0,
+	.colortemperature = 0,
 	.headphones = 4,
 	.speaker = 8,
 	.mute = 0,
@@ -131,7 +131,7 @@ int GetBrightness(void) { // 0-10
 	return settings->brightness;
 }
 int GetColortemp(void) { // 0-10
-	return settings->colortemp;
+	return settings->colortemperature;
 }
 void SetBrightness(int value) {
 	
@@ -175,31 +175,51 @@ void SetColortemp(int value) {
 	int raw;
 	
 	switch (value) {
-		case 0: raw=-100; break; 		// 0
-		case 1: raw=-90; break; 		// 8
-		case 2: raw=-80; break; 		// 8
-		case 3: raw=-70; break; 		// 16
-		case 4: raw=-60; break;		// 16
-		case 5: raw=-50; break;		// 24
-		case 6: raw=-40; break;		// 24
-		case 7: raw=-30; break;		// 32
-		case 8: raw=-20; break;		// 32
-		case 9: raw=-10; break;		// 32
-		case 10: raw=0; break;	// 64
-		case 11: raw=10; break; 		// 0
-		case 12: raw=20; break; 		// 8
-		case 13: raw=30; break; 		// 8
-		case 14: raw=40; break; 		// 16
-		case 15: raw=50; break;		// 16
-		case 16: raw=60; break;		// 24
-		case 17: raw=70; break;		// 24
-		case 18: raw=80; break;		// 32
-		case 19: raw=90; break;		// 32
-		case 20: raw=100; break;		// 32
+		case 0: raw=-200; break; 		// 8
+		case 1: raw=-190; break; 		// 8
+		case 2: raw=-180; break; 		// 16
+		case 3: raw=-170; break;		// 16
+		case 4: raw=-160; break;		// 24
+		case 5: raw=-150; break;		// 24
+		case 6: raw=-140; break;		// 32
+		case 7: raw=-130; break;		// 32
+		case 8: raw=-120; break;		// 32
+		case 9: raw=-110; break;	// 64
+		case 10: raw=-100; break; 		// 0
+		case 11: raw=-90; break; 		// 8
+		case 12: raw=-80; break; 		// 8
+		case 13: raw=-70; break; 		// 16
+		case 14: raw=-60; break;		// 16
+		case 15: raw=-50; break;		// 24
+		case 16: raw=-40; break;		// 24
+		case 17: raw=-30; break;		// 32
+		case 18: raw=-20; break;		// 32
+		case 19: raw=-10; break;		// 32
+		case 20: raw=0; break;	// 64
+		case 21: raw=10; break; 		// 0
+		case 22: raw=20; break; 		// 8
+		case 23: raw=30; break; 		// 8
+		case 24: raw=40; break; 		// 16
+		case 25: raw=50; break;		// 16
+		case 26: raw=60; break;		// 24
+		case 27: raw=70; break;		// 24
+		case 28: raw=80; break;		// 32
+		case 29: raw=90; break;		// 32
+		case 30: raw=100; break;		// 32
+		case 31: raw=110; break;	// 64
+		case 32: raw=120; break; 		// 0
+		case 33: raw=130; break; 		// 8
+		case 34: raw=140; break; 		// 8
+		case 35: raw=150; break; 		// 16
+		case 36: raw=160; break;		// 16
+		case 37: raw=170; break;		// 24
+		case 38: raw=180; break;		// 24
+		case 39: raw=190; break;		// 32
+		case 40: raw=200; break;		// 32
 	}
 	
 	SetRawColortemp(raw);
-	settings->colortemp = value;
+	settings->colortemperature = value;
 	SaveSettings();
 }
 
