@@ -31,7 +31,7 @@ typedef struct Settings {
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = 2,
-	.colortemperature = 0,
+	.colortemperature = 20,
 	.headphones = 4,
 	.speaker = 8,
 	.mute = 0,
