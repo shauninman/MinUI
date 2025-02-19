@@ -71,6 +71,7 @@ int main(int argc , char* argv[]) {
 	// int show_setting = 0;
 	// int was_online = PLAT_isOnline();
 	while(!quit) {
+		GFX_startFrame();
 		uint32_t frame_start = SDL_GetTicks();
 		
 		PAD_poll();
