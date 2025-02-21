@@ -934,7 +934,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			setting_min = BRIGHTNESS_MIN;
 			setting_max = BRIGHTNESS_MAX;
 		}
-		if (show_setting==3) {
+		else if (show_setting==3) {
 			setting_value = GetColortemp();
 			setting_min = COLORTEMP_MIN;
 			setting_max = COLORTEMP_MAX;
@@ -945,9 +945,9 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			setting_max = VOLUME_MAX;
 		}
 		
-		int asset = show_setting==3?ASSET_BRIGHTNESS:show_setting==1?ASSET_BRIGHTNESS:(setting_value>0?ASSET_VOLUME:ASSET_VOLUME_MUTE);
-		int ax = ox + (show_setting==1 ? SCALE1(6) : SCALE1(8));
-		int ay = oy + (show_setting==1 ? SCALE1(5) : SCALE1(7));
+		int asset = show_setting==3?ASSET_BUTTON:show_setting==1?ASSET_BRIGHTNESS:(setting_value>0?ASSET_VOLUME:ASSET_VOLUME_MUTE);
+		int ax = ox + (show_setting==1 || show_setting == 3 ? SCALE1(6) : SCALE1(8));
+		int ay = oy + (show_setting==1 || show_setting == 3 ? SCALE1(5) : SCALE1(7));
 		GFX_blitAsset(asset, NULL, dst, &(SDL_Rect){ax,ay});
 		
 		ox += SCALE1(PILL_SIZE);
@@ -1001,15 +1001,10 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 	return ow;
 }
 void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
-	if (BTN_MOD_VOLUME==BTN_SELECT && BTN_MOD_BRIGHTNESS==BTN_START) {
-		if (show_setting==1) GFX_blitButtonGroup((char*[]){ "SELECT","VOLUME",  NULL }, 0, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "START","BRIGHTNESS",  NULL }, 0, dst, 0);
-	}
-	else {
+
 		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, 0, dst, 0);
-		if (show_setting==3) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"COLORTEMP",  NULL }, 0, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, 0, dst, 0);
-	}
+		else if (show_setting==3) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"COLOR TEMP",  NULL }, 0, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ "MNU","BRGHT","SEL","CLTMP",  NULL }, 0, dst, 0);
 	
 }
 
@@ -1918,28 +1913,28 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	
 	int delay_settings = BTN_MOD_BRIGHTNESS==BTN_MENU; // when both volume and brighness require a modifier hide settings as soon as it is released
 	#define SETTING_DELAY 500
-	if (show_setting && (now-setting_shown_at>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
+	if (show_setting && (now-setting_shown_at>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS) && !PAD_isPressed(BTN_MOD_COLORTEMP)) {
 		show_setting = 0;
 		dirty = 1;
 	}
 	
-	if (!show_setting && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
+	if (!show_setting && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS) && !PAD_isPressed(BTN_MOD_COLORTEMP)) {
 		mod_unpressed_at = now; // this feels backwards but is correct
 	}
 	
 	#define MOD_DELAY 250
 	if (
 		(
-			(PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && 
+			(PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS) || PAD_isPressed(BTN_MOD_COLORTEMP)) && 
 			(!delay_settings || now-mod_unpressed_at>=MOD_DELAY)
 		) || 
-		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))
+		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS || !BTN_MOD_COLORTEMP) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))
 	) {
 		setting_shown_at = now;
 		if (PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 			show_setting = 1;
 		}
-		if (PAD_isPressed(BTN_MOD_COLORTEMP)) {
+		else if (PAD_isPressed(BTN_MOD_COLORTEMP)) {
 			show_setting = 3;
 		}
 		else {
