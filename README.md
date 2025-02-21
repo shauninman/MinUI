@@ -1,11 +1,14 @@
 # MinUI Next   
 MinUI with a rebuild emulation engine, includes all original MinUI Features plus:
-- Fixed screen tearing, sync problems
-- Better audio quality (with quality selection)
-- Much lower latency
-- Ambient light mode
+- Fixes for both screen tearing and sync problems
+- Super smooth gameplay actually in sync with your screen's refresh rate!
+- Much higher audio quality, due to much more advanced resampling engine (with quality selection)
+- Much lower latency (average 20ms, 1 frame of 60fps) 
+- Ambient light mode (Yes leds can follow the actual game's content) 
 - Lot of fixes on original like inputs sometimes not registering etc.
-- Color temperature controls
+- Screen color temperature controls, besides the standard brightness control.
+- Default Snes9x core instead of deprecated snes9x2005, also optimized versions of PCSX Rearmed and FBNeo included in extras
+- Ongoing development without downside of maintaining compatibility with legacy devices
 
 Current supported devices:   
 Trimui Brick | MinUI-20241028-0   
