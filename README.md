@@ -7,7 +7,7 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 - Ambient light mode (Yes leds can follow the actual game's content) 
 - Lot of fixes on original like inputs sometimes not registering etc.
 - Screen color temperature controls, besides the standard brightness control.
-- Default Snes9x core instead of deprecated snes9x2005, also optimized versions of PCSX Rearmed and FBNeo included in extras
+- Default Snes9x core instead of deprecated snes9x2005, also optimized version of PCSX Rearmed and optimized FBNeo included in extras
 - Ongoing development without downside of maintaining compatibility with legacy devices
 
 Current supported devices:   
