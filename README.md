@@ -1,7 +1,7 @@
 # MinUI Next   
 MinUI with a rebuild emulation engine, includes all original MinUI Features plus:
 - Fixes for both screen tearing and sync problems
-- Super smooth gameplay actually in sync with your screen's refresh rate!
+- Super smooth gameplay actually in sync with your screen's refresh rate! (no more stutters!)
 - Much higher audio quality, due to much more advanced resampling engine (with quality selection)
 - Much lower latency (average 20ms, 1 frame of 60fps) 
 - Ambient light mode (Yes leds can follow the actual game's content) 
