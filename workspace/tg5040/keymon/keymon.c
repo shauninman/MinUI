@@ -61,22 +61,21 @@ static void* watchMute(void *arg) {
 	is_muted = was_muted = getInt(MUTE_STATE_PATH);
 	SetMute(is_muted);
 	
-	while(1) {
-		usleep(200000); // 5 times per second
-		
-		is_muted = getInt(MUTE_STATE_PATH);
-		if (was_muted!=is_muted) {
-			was_muted = is_muted;
-			SetMute(is_muted);
-		}
+
+	is_muted = getInt(MUTE_STATE_PATH);
+	if (was_muted!=is_muted) {
+		was_muted = is_muted;
+		SetMute(is_muted);
 	}
+	
 	
 	return 0;
 }
 
 int main (int argc, char *argv[]) {
 	InitSettings();
-	pthread_create(&mute_pt, NULL, &watchMute, NULL);
+	// pthread_create(&mute_pt, NULL, &watchMute, NULL);
+
 	
 	char path[32];
 	for (int i=0; i<INPUT_COUNT; i++) {
@@ -107,6 +106,7 @@ int main (int argc, char *argv[]) {
 	ignore = 0;
 	
 	while (1) {
+		// watchMute();
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;
 		if (now-then>1000) ignore = 1; // ignore input that arrived during sleep
