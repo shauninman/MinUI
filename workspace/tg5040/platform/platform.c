@@ -424,80 +424,106 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
-void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	
-	if (!vid.blit) {
-		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
-		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
-		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
-		SDL_RenderPresent(vid.renderer);
-		return;
-	}
-	
-	// uint32_t then = SDL_GetTicks();
-	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
-	// LOG_info("blit blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
-	
-	SDL_Texture* target = vid.texture;
-	int x = vid.blit->src_x;
-	int y = vid.blit->src_y;
-	int w = vid.blit->src_w;
-	int h = vid.blit->src_h;
-	if (vid.sharpness==SHARPNESS_CRISP) {
-		SDL_SetRenderTarget(vid.renderer,vid.target);
-		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
-		SDL_SetRenderTarget(vid.renderer,NULL);
-		x *= hard_scale;
-		y *= hard_scale;
-		w *= hard_scale;
-		h *= hard_scale;
-		target = vid.target;
-	}
-	
-	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
-	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
-	if (vid.blit->aspect==0) { // native or cropped
-		// LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
-		
-		int w = vid.blit->src_w * vid.blit->scale;
-		int h = vid.blit->src_h * vid.blit->scale;
-		int x = (device_width - w) / 2;
-		int y = (device_height - h) / 2;
-		dst_rect->x = x;
-		dst_rect->y = y;
-		dst_rect->w = w;
-		dst_rect->h = h;
-						
-		// LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
-	}
-	else if (vid.blit->aspect>0) { // aspect
-		int h = device_height;
-		int w = h * vid.blit->aspect;
-		if (w>device_width) {
-			double ratio = 1 / vid.blit->aspect;
-			w = device_width;
-			h = w * ratio;
-		}
-		int x = (device_width - w) / 2;
-		int y = (device_height - h) / 2;
-		// dst_rect = &(SDL_Rect){x,y,w,h};
-		dst_rect->x = x;
-		dst_rect->y = y;
-		dst_rect->w = w;
-		dst_rect->h = h;
-	}
-	
-	SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
-	
-	updateEffect();
-	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
-		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,dst_rect->w,dst_rect->h}, dst_rect);
-	}
-	// uint32_t then = SDL_GetTicks();
-	SDL_RenderPresent(vid.renderer);
-	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
-	vid.blit = NULL;
+void rotate_and_render(SDL_Renderer* renderer, SDL_Texture* texture, SDL_Rect* src_rect, SDL_Rect* dst_rect) {
+    SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, 270.0, NULL, SDL_FLIP_NONE);
 }
+
+void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
+    if (!vid.blit) {
+        resizeVideo(device_width, device_height, FIXED_PITCH); // !!!???
+        SDL_UpdateTexture(vid.texture, NULL, vid.screen->pixels, vid.screen->pitch);
+        SDL_RenderCopy(vid.renderer, vid.texture, NULL, NULL);
+        SDL_RenderPresent(vid.renderer);
+        return;
+    }
+
+    SDL_UpdateTexture(vid.texture, NULL, vid.blit->src, vid.blit->src_p);
+
+    SDL_Texture* target = vid.texture;
+    int x = vid.blit->src_x;
+    int y = vid.blit->src_y;
+    int w = vid.blit->src_w;
+    int h = vid.blit->src_h;
+    if (vid.sharpness == SHARPNESS_CRISP) {
+        SDL_SetRenderTarget(vid.renderer, vid.target);
+        SDL_RenderCopy(vid.renderer, vid.texture, NULL, NULL);
+        SDL_SetRenderTarget(vid.renderer, NULL);
+        x *= hard_scale;
+        y *= hard_scale;
+        w *= hard_scale;
+        h *= hard_scale;
+        target = vid.target;
+    }
+
+    SDL_Rect* src_rect = &(SDL_Rect){x, y, w, h};
+    SDL_Rect* dst_rect = &(SDL_Rect){0, 0, device_width, device_height};
+
+    if (vid.blit->aspect == 0) { // native or cropped
+        w = vid.blit->src_w * vid.blit->scale;
+        h = vid.blit->src_h * vid.blit->scale;
+        x = (device_width - w) / 2;
+        y = (device_height - h) / 2;
+        dst_rect->x = x;
+        dst_rect->y = y;
+        dst_rect->w = w;
+        dst_rect->h = h;
+    } else if (vid.blit->aspect > 0) { // aspect scaling mode
+        if (should_rotate) {
+            h = device_width; // Scale height to the screen width
+            w = h * vid.blit->aspect;
+            if (w > device_height) {
+                double ratio = 1 / vid.blit->aspect;
+                w = device_height;
+                h = w * ratio;
+            }
+        } else {
+            h = device_height;
+            w = h * vid.blit->aspect;
+            if (w > device_width) {
+                double ratio = 1 / vid.blit->aspect;
+                w = device_width;
+                h = w * ratio;
+            }
+        }
+        x = (device_width - w) / 2;
+        y = (device_height - h) / 2;
+        dst_rect->x = x;
+        dst_rect->y = y;
+        dst_rect->w = w;
+        dst_rect->h = h;
+    } else { // full screen mode
+        if (should_rotate) {
+            dst_rect->w = device_height;
+            dst_rect->h = device_width;
+            dst_rect->x = (device_width - dst_rect->w) / 2;
+            dst_rect->y = (device_height - dst_rect->h) / 2;
+        } else {
+            dst_rect->x = 0;
+            dst_rect->y = 0;
+            dst_rect->w = device_width;
+            dst_rect->h = device_height;
+        }
+    }
+
+    if (should_rotate) {
+        rotate_and_render(vid.renderer, target, src_rect, dst_rect);
+    } else {
+        SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+    }
+
+    updateEffect();
+    if (vid.blit && effect.type != EFFECT_NONE && vid.effect) {
+        SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0, 0, dst_rect->w, dst_rect->h}, dst_rect);
+    }
+
+    SDL_RenderPresent(vid.renderer);
+    vid.blit = NULL;
+}
+
+
+
+
+
 
 ///////////////////////////////
 

@@ -1645,7 +1645,7 @@ static char* OptionList_getOptionValue(OptionList* list, const char* key) {
 	// if (item) LOG_info("\tGET %s (%s) = %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 	
 	if (item) return item->values[item->value];
-	else LOG_warn("unknown option %s \n", key);
+	// else LOG_warn("unknown option %s \n", key);
 	return NULL;
 }
 static void OptionList_setOptionRawValue(OptionList* list, const char* key, int value) {
@@ -2822,6 +2822,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		screen = GFX_resize(dst_w,dst_h,dst_p);
 	// }
 }
+
+
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
 	
@@ -2908,7 +2910,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	 
 
 	GFX_blitRenderer(&renderer);
-	
+
 	if (!thread_video) GFX_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
@@ -2929,43 +2931,47 @@ void *thread_func(void *arg) {
     
     return NULL; // Return NULL to indicate successful completion
 }
+
+
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
     bool can_dupe = false;
     environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
-    // LOG_info("can_dupe: %i\n", can_dupe);
+	struct retro_variable var = { "fbneo-vertical-mode", NULL };
+    environment_callback(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+	
+	if (var.value)
+	{
+		if (strcmp(var.value, "enabled") == 0 || 
+        strcmp(var.value, "alternate") == 0 || 
+        strcmp(var.value, "TATE") == 0 || 
+        strcmp(var.value, "TATE alternate") == 0) 
+		{
+        	should_rotate = 1;
+		}
+		else
+		{
+			should_rotate = 0;
+		}
+	}
+	else
+	{
+		should_rotate = 0;
+	}
 
-    // If data is NULL and duplication is not allowed, use the last frame
     if (!data) {
         if (lastframe) {
-            // LOG_info("Using last frame as no new data provided");
             data = lastframe;
         } else {
-            // LOG_info("No data and no last frame to use");
             return; // No data to display
         }
     }
 
-    // Store the current frame as the last frame
     lastframe = data;
+
 	if(!fast_forward ) {
-		// struct args {
-		// 	const void *data;
-		// 	unsigned width;
-		// 	unsigned height;
-		// 	size_t pitch;
-		// 	int ambient_mode;
-		// } params = { data, width, height, pitch, ambient_mode };
-
-		// // Create and launch the new thread
-		// pthread_t thread;
-		// if (pthread_create(&thread, NULL, thread_func, &params) != 0) {
-		// 	fprintf(stderr, "Error: Unable to create thread.\n");
-		// }
-
 		GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
 	}
-	// LOG_info("lastframe: %p\n", lastframe);
-	
+
 	if (thread_video) {
 		pthread_mutex_lock(&core_mx);
 		
@@ -2981,7 +2987,6 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 		}
 		
 		memcpy(backbuffer->pixels, data, backbuffer->h*backbuffer->pitch);
-		
 		pthread_cond_signal(&core_rq);
 		pthread_mutex_unlock(&core_mx);
 	}
@@ -4395,8 +4400,9 @@ static void Menu_loop(void) {
 	int dirty = 1;
 	int ignore_menu = 0;
 	int menu_start = 0;
-	
 	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
+
+
 	
 	while (show_menu) {
 		GFX_startFrame();
@@ -4512,8 +4518,10 @@ static void Menu_loop(void) {
 		
 		
 		GFX_clear(screen);
+		if(!should_rotate) {
+			SDL_BlitSurface(backing, NULL, screen, NULL);
+		} 
 		
-		SDL_BlitSurface(backing, NULL, screen, NULL);
 		SDL_BlitSurface(menu.overlay, NULL, screen, NULL);
 
 		int ox, oy;

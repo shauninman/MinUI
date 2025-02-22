@@ -68,6 +68,7 @@ extern float currentbufferms;
 extern int currentbuffersize;
 extern int currentsampleratein;
 extern int currentsamplerateout;
+extern int should_rotate;
 
 enum {
 	ASSET_WHITE_PILL,
