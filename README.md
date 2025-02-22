@@ -14,6 +14,17 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 Current supported devices:   
 Trimui Brick | MinUI-20241028-0   
 Trimui Smart Pro | MinUI-20231111b-2 
+
+# Future plans roadmap
+- Game switcher menu
+- Pal rom mode
+- Bluetooth and wifi integrated
+- Optional game art/media
+- Configurable FN and switch buttons
+- More compatibility testing with different emulators and fix/improve if nessecary
+- Once everything is to my liking I will look into porting this to more devices
+
+  
 # Installing   
 
 Just copy MinUI.zip and trimui to your SD Card, bootup your Trim UI device and play magic!   
