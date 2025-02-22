@@ -2941,12 +2941,14 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 	
 	if (var.value)
 	{
-		if (strcmp(var.value, "enabled") == 0 || 
-        strcmp(var.value, "alternate") == 0 || 
-        strcmp(var.value, "TATE") == 0 || 
-        strcmp(var.value, "TATE alternate") == 0) 
-		{
-        	should_rotate = 1;
+		if (strcmp(var.value, "enabled") == 0) {
+			should_rotate = 1;
+		} else if (strcmp(var.value, "alternate") == 0) {
+			should_rotate = 2; // Adjust if different for alternate
+		} else if (strcmp(var.value, "TATE") == 0) {
+			should_rotate = 3;
+		} else if (strcmp(var.value, "TATE alternate") == 0) {
+        	should_rotate = 4;
 		}
 		else
 		{
@@ -3051,6 +3053,9 @@ void Core_open(const char* core_path, const char* tag_name) {
 	struct retro_system_info info = {};
 	core.get_system_info(&info);
 	
+
+	LOG_info("Block Extract: %d", info.block_extract);
+
 	Core_getName((char*)core_path, (char*)core.name);
 	sprintf((char*)core.version, "%s (%s)", info.library_name, info.library_version);
 	strcpy((char*)core.tag, tag_name);

@@ -425,7 +425,13 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 }
 
 void rotate_and_render(SDL_Renderer* renderer, SDL_Texture* texture, SDL_Rect* src_rect, SDL_Rect* dst_rect) {
-    SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, 270.0, NULL, SDL_FLIP_NONE);
+	int degrees = should_rotate < 3 ? 270:90;
+	if(should_rotate == 2 || should_rotate==4) {
+		SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, (double)degrees, NULL, SDL_FLIP_VERTICAL);
+	} else  {
+		SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, (double)degrees, NULL, SDL_FLIP_NONE);
+	}
+    
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
