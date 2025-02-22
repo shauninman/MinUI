@@ -23,6 +23,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
 - Menu animations and color settings
+- Configurable sleep mode or default auto shutdown
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc. 
 
