@@ -16,7 +16,7 @@ Trimui Brick | MinUI-20241028-0
 Trimui Smart Pro | MinUI-20231111b-2 
 
 # Future plans roadmap
-- Game switcher menu
+- Game switcher menu (Onion OS style)
 - Pal rom mode
 - Bluetooth and wifi integrated
 - Optional game art/media
