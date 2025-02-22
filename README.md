@@ -22,6 +22,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Optional game art/media
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
+- Menu animations and color settings
 - Once everything is to my liking I will look into porting this to more devices
 
   
