@@ -426,8 +426,12 @@ static Array* recents; // RecentArray
 static int quit = 0;
 static int can_resume = 0;
 static int should_resume = 0; // set to 1 on BTN_RESUME but only if can_resume==1
+static int has_preview = 0;
 static int simple_mode = 0;
+static int show_switcher = 0;
+static int switcher_selected = 0;
 static char slot_path[256];
+static char preview_path[256];
 
 static int restore_depth = -1;
 static int restore_relative = -1;
@@ -537,8 +541,8 @@ static int hasRecents(void) {
 		}
 		unlink(CHANGE_DISC_PATH);
 	}
-	
-	FILE* file = fopen(RECENT_PATH, "r"); // newest at top
+
+	FILE *file = fopen(RECENT_PATH, "r"); // newest at top
 	if (file) {
 		char line[256];
 		while (fgets(line,256,file)!=NULL) {
@@ -751,24 +755,33 @@ static Array* getRoot(void) {
 	
 	return root;
 }
+static Entry* entryFromRecent(Recent* recent)
+{
+	if(!recent || !recent->available)
+		return NULL;
+	
+	char sd_path[256];
+	sprintf(sd_path, "%s%s", SDCARD_PATH, recent->path);
+	int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM; // ???
+	Entry* entry = Entry_new(sd_path, type);
+	if (recent->alias) {
+		free(entry->name);
+		entry->name = strdup(recent->alias);
+	}
+	return entry;
+}
+
 static Array* getRecents(void) {
 	Array* entries = Array_new();
 	for (int i=0; i<recents->count; i++) {
-		Recent* recent = recents->items[i];
-		if (!recent->available) continue;
-		
-		char sd_path[256];
-		sprintf(sd_path, "%s%s", SDCARD_PATH, recent->path);
-		int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM; // ???
-		Entry* entry = Entry_new(sd_path, type);
-		if (recent->alias) {
-			free(entry->name);
-			entry->name = strdup(recent->alias);
-		}
-		Array_push(entries, entry);
+		Recent *recent = recents->items[i];
+		Entry *entry = entryFromRecent(recent);
+		if(entry)
+			Array_push(entries, entry);
 	}
 	return entries;
 }
+
 static Array* getCollection(char* path) {
 	Array* entries = Array_new();
 	FILE* file = fopen(path, "r");
@@ -989,6 +1002,7 @@ static char* escapeSingleQuotes(char* str) {
 static void readyResumePath(char* rom_path, int type) {
 	char* tmp;
 	can_resume = 0;
+	has_preview = 0;
 	char path[256];
 	strcpy(path, rom_path);
 	
@@ -1020,8 +1034,11 @@ static void readyResumePath(char* rom_path, int type) {
 	strcpy(rom_file, tmp);
 	
 	sprintf(slot_path, "%s/.minui/%s/%s.txt", SHARED_USERDATA_PATH, emu_name, rom_file); // /.userdata/.minui/<EMU>/<romname>.ext.txt
+	sprintf(preview_path, "%s/.minui/%s/%s.0.bmp", SHARED_USERDATA_PATH, emu_name, rom_file); // /.userdata/.minui/<EMU>/<romname>.ext.0.bmp
 	
 	can_resume = exists(slot_path);
+	has_preview = exists(preview_path);
+
 }
 static void readyResume(Entry* entry) {
 	readyResumePath(entry->path, entry->type);
@@ -1297,6 +1314,33 @@ static void Menu_quit(void) {
 
 ///////////////////////////////////////
 
+static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
+    SDL_Rect scaled_rect;
+    
+    // Calculate the aspect ratios
+    float image_aspect = (float)image_rect.w / (float)image_rect.h;
+    float preview_aspect = (float)preview_rect.w / (float)preview_rect.h;
+    
+    // Determine scaling factor
+    if (image_aspect > preview_aspect) {
+        // Image is wider than the preview area
+        scaled_rect.w = preview_rect.w;
+        scaled_rect.h = (int)(preview_rect.w / image_aspect);
+    } else {
+        // Image is taller than or equal to the preview area
+        scaled_rect.h = preview_rect.h;
+        scaled_rect.w = (int)(preview_rect.h * image_aspect);
+    }
+    
+    // Center the scaled rectangle within preview_rect
+    scaled_rect.x = preview_rect.x + (preview_rect.w - scaled_rect.w) / 2;
+    scaled_rect.y = preview_rect.y + (preview_rect.h - scaled_rect.h) / 2;
+    
+    return scaled_rect;
+}
+
+///////////////////////////////////////
+
 int main (int argc, char *argv[]) {
 	// LOG_info("time from launch to:\n");
 	// unsigned long main_begin = SDL_GetTicks();
@@ -1320,9 +1364,17 @@ int main (int argc, char *argv[]) {
 	// LOG_info("- power init: %lu\n", SDL_GetTicks() - main_begin);
 	
 	SDL_Surface* version = NULL;
-	
+	SDL_Surface *preview = NULL;
+
 	Menu_init();
 	// LOG_info("- menu init: %lu\n", SDL_GetTicks() - main_begin);
+
+	show_switcher = exists(GAME_SWITCHER_PERSIST_PATH);
+	if (show_switcher) {
+		// consider this "consumed", dont bring up the switcher next time we regularly exit a game
+		unlink(GAME_SWITCHER_PERSIST_PATH);
+		// todo: map recent slot to last used game
+	}
 	
 	// now that (most of) the heavy lifting is done, take a load off
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
@@ -1357,11 +1409,53 @@ int main (int argc, char *argv[]) {
 				if (!HAS_POWER_BUTTON && !simple_mode) PWR_disableSleep();
 			}
 		}
+		else if(show_switcher) {
+			if (PAD_justPressed(BTN_B) || PAD_justReleased(BTN_SELECT)) {
+				show_switcher = 0;
+				switcher_selected = 0;
+				dirty = 1;
+			}
+			else if (recents->count > 0 && can_resume && PAD_justReleased(BTN_RESUME)) {
+				// TODO: This is crappy af - putting this here since it works, but
+				// super inefficient. Why are Recents not decorated with type, and need
+				// to be remade into Entries via getRecents()? - need to understand the 
+				// architecture more...
+				Entry *selectedEntry = entryFromRecent(recents->items[switcher_selected]);
+				should_resume = 1;
+				Entry_open(selectedEntry);
+				dirty = 1;
+				Entry_free(selectedEntry);
+			}
+			else if (recents->count > 0 && PAD_justReleased(BTN_A)) {
+				Entry *selectedEntry = entryFromRecent(recents->items[switcher_selected]);
+				Entry_open(selectedEntry);
+				dirty = 1;
+			}
+			else if (PAD_justPressed(BTN_RIGHT)) {
+				switcher_selected++;
+				if(switcher_selected == recents->count)
+					switcher_selected = 0; // wrap
+				dirty = 1;
+			}
+			else if (PAD_justPressed(BTN_LEFT)) {
+				switcher_selected--;
+				if(switcher_selected < 0)
+					switcher_selected = recents->count - 1; // wrap
+				dirty = 1;
+			}
+		}
 		else {
 			if (PAD_tappedMenu(now)) {
 				show_version = 1;
+				show_switcher = 0; // just to be sure
 				dirty = 1;
 				if (!HAS_POWER_BUTTON && !simple_mode) PWR_enableSleep();
+			}
+			else if (PAD_justReleased(BTN_SELECT)) {
+				show_switcher = 1;
+				switcher_selected = 0; 
+				show_version = 0; // just to be sure
+				dirty = 1;
 			}
 			else if (total>0) {
 				if (PAD_justRepeated(BTN_UP)) {
@@ -1584,6 +1678,92 @@ int main (int argc, char *argv[]) {
 				
 				GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, 0, screen, 1);
 			}
+			else if(show_switcher) {
+				// For all recents with resumable state (i.e. has savegame), show game switcher carousel
+
+				#define WINDOW_RADIUS 0 // TODO: this logic belongs in blitRect?
+				#define PAGINATION_HEIGHT 0
+				// unscaled
+				int hw = screen->w;
+				int hh = screen->h;
+				int pw = hw + SCALE1(WINDOW_RADIUS*2);
+				int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
+				ox = 0; // screen->w - pw - SCALE1(PADDING);
+				oy = 0; // (screen->h - ph) / 2;
+
+				// window
+				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
+
+				if(recents->count > 0) {
+					Entry *selectedEntry = entryFromRecent(recents->items[switcher_selected]);
+					readyResume(selectedEntry);
+
+					if(has_preview) {
+						// lotta memory churn here
+						SDL_Surface* bmp = IMG_Load(preview_path);
+						SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
+						SDL_Rect image_rect = {0, 0, raw_preview->w, raw_preview->h};
+						SDL_Rect preview_rect = {ox, oy, hw, hh};
+						SDL_Rect scaled_rect = GFX_scaled_rect(preview_rect, image_rect);
+						SDL_FillRect(screen, NULL, 0);
+						SDL_BlitScaled(raw_preview, NULL, screen, &scaled_rect);
+						SDL_FreeSurface(raw_preview);
+						SDL_FreeSurface(bmp);
+					}
+					else {
+						SDL_Rect preview_rect = {ox,oy,hw,hh};
+						SDL_FillRect(screen, &preview_rect, 0);
+						GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
+					}
+
+					// title pill
+					{
+						int ow = GFX_blitHardwareGroup(screen, show_setting);
+						int max_width = screen->w - SCALE1(PADDING * 2) - ow;
+						
+						char display_name[256];
+						int text_width = GFX_truncateText(font.large, selectedEntry->name, display_name, max_width, SCALE1(BUTTON_PADDING*2));
+						max_width = MIN(max_width, text_width);
+
+						SDL_Surface* text;
+						text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
+						GFX_blitPill(ASSET_BLACK_PILL, screen, &(SDL_Rect){
+							SCALE1(PADDING),
+							SCALE1(PADDING),
+							max_width,
+							SCALE1(PILL_SIZE)
+						});
+						SDL_BlitSurface(text, &(SDL_Rect){
+							0,
+							0,
+							max_width-SCALE1(BUTTON_PADDING*2),
+							text->h
+						}, screen, &(SDL_Rect){
+							SCALE1(PADDING+BUTTON_PADDING),
+							SCALE1(PADDING+4)
+						});
+						SDL_FreeSurface(text);
+					}
+
+					// pagination
+					{
+
+					}
+
+					if(can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, 0, screen, 0);
+					else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, 0, screen, 0);
+
+					GFX_blitButtonGroup((char*[]){ "B","BACK", "A", "OPEN", NULL }, 1, screen, 1);
+					
+					Entry_free(selectedEntry);
+				}
+				else {
+					SDL_Rect preview_rect = {ox,oy,hw,hh};
+					SDL_FillRect(screen, &preview_rect, 0);
+					GFX_blitMessage(font.large, "No Recents", screen, &preview_rect);
+					GFX_blitButtonGroup((char*[]){ "B","BACK", NULL }, 1, screen, 1);
+				}
+			}
 			else {
 				// list
 				if (total>0) {
@@ -1696,6 +1876,7 @@ int main (int argc, char *argv[]) {
 	}
 	
 	if (version) SDL_FreeSurface(version);
+	if (preview) SDL_FreeSurface(preview);
 
 	Menu_quit();
 	PWR_quit();

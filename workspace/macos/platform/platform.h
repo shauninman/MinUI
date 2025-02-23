@@ -37,12 +37,14 @@
 
 ///////////////////////////////
 
+// see https://wiki.libsdl.org/SDL2/SDL_Scancode
+
 #define CODE_UP			82
 #define CODE_DOWN		81
 #define CODE_LEFT		80
 #define CODE_RIGHT		79
 
-#define CODE_SELECT		52
+#define CODE_SELECT		53
 #define CODE_START		40
 
 #define CODE_A			22
