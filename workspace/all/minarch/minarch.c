@@ -1177,6 +1177,7 @@ static void Config_readOptionsString(char* cfg) {
 	
 	for (int i=0; config.core.options[i].key; i++) {
 		Option* option = &config.core.options[i];
+		LOG_info("%s\n",option->key);
 		if (!Config_getValue(cfg, option->key, value, &option->lock)) continue;
 		OptionList_setOptionValue(&config.core, option->key, value);
 	}
@@ -2098,6 +2099,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS: { /* 53 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS");
+		LOG_info("dit dan a");
 		if (data) {
 			OptionList_reset();
 			OptionList_init((const struct retro_core_option_definition *)data); 
@@ -2106,6 +2108,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL: { /* 54 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL");
+		LOG_info("dit dan b");
 		const struct retro_core_options_intl *options = (const struct retro_core_options_intl *)data;
 		if (options && options->us) {
 			OptionList_reset();
