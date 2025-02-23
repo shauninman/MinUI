@@ -3,7 +3,7 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 - Game switcher menu (Onion OS style) contributed by [@frysee](https://github.com/frysee)
 - Fixed both screen tearing and sync problems of the original MinUI
 - Super smooth gameplay actually in sync with your screen's refresh rate! (no more stutters!)
-- Much higher audio quality, due to much more advanced resampling engine (with quality setting)
+- Much higher audio quality, due to much more advanced resampling engine (with selectable quality setting)
 - Much lower latency (average 20ms, 1 frame of 60fps) 
 - Ambient light mode (Leds color based on whats on your screen)
 - Lot of fixes on original like inputs sometimes not registering etc.
