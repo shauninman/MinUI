@@ -45,7 +45,8 @@ While in menu:
 While in game:
 - Menu opens in game options menu, adjusting controls, scaling and what not
 - Hold menu and select at same time to open up game switcher
-     
+
+# Original MinUI's readme:
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 /> 
