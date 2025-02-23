@@ -33,7 +33,18 @@ Trimui Smart Pro | MinUI-20231111b-2
   
 # Installing   
 
-Just copy MinUI.zip and trimui to your SD Card, bootup your Trim UI device and play magic!   
+Just copy MinUI.zip (don't unzip this just copy as zipfile) and trimui to the root of your SD Card, bootup your Trim UI device it will say installing/updating and after that just enjoy all your beloved games!
+
+# How to use
+I think most speaks for itself but here are some handy short instructions just in case:
+While in menu:
+- Hold start and use volume up and down to adjust brightes
+- Hold select and use volume up and down to adjust color temperature
+- Short press select to open game switcher menu
+- Idk the rest speaks for itself I guess?
+While in game:
+- Menu opens in game options menu, adjusting controls, scaling and what not
+- Hold menu and select at same time to open up game switcher
      
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
 
