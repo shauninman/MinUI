@@ -24,6 +24,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 - More compatibility testing with different emulators and fix/improve if nessecary
 - Menu animations and color settings (maybe some kind of template system?)
 - Configurable sleep mode or default auto shutdown
+- Retroachievements
 - Shaders
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc. 
