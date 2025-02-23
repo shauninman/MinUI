@@ -4,7 +4,8 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 - Super smooth gameplay actually in sync with your screen's refresh rate! (no more stutters!)
 - Much higher audio quality, due to much more advanced resampling engine (with quality selection)
 - Much lower latency (average 20ms, 1 frame of 60fps) 
-- Ambient light mode (Yes leds can follow the actual game's content) 
+- Ambient light mode (Yes leds can follow the actual game's content)
+- Game switcher menu (Onion OS style) contributed by [@frysee](https://github.com/frysee)
 - Lot of fixes on original like inputs sometimes not registering etc.
 - Screen color temperature controls, besides the standard brightness control.
 - Default Snes9x core instead of deprecated snes9x2005, also optimized version of PCSX Rearmed and optimized FBNeo included in extras
@@ -16,7 +17,6 @@ Trimui Brick | MinUI-20241028-0
 Trimui Smart Pro | MinUI-20231111b-2 
 
 # Future plans roadmap
-- Game switcher menu (Onion OS style)
 - Pal rom mode
 - Bluetooth and wifi integrated
 - Optional game art/media
@@ -28,6 +28,8 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc. 
 
+# Super awesome contributions thank you's!
+- [@frysee](https://github.com/frysee) for the super awesome game switcher PR. Truly love this feature, thank you so much for contributing it to this project!
   
 # Installing   
 
