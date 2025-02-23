@@ -1664,6 +1664,13 @@ static void input_poll_callback(void) {
 	if (PAD_isPressed(BTN_MENU) && (PAD_isPressed(BTN_PLUS) || PAD_isPressed(BTN_MINUS))) {
 		ignore_menu = 1;
 	}
+	if (PAD_isPressed(BTN_MENU) && PAD_isPressed(BTN_SELECT)) {
+		ignore_menu = 1;
+		Menu_saveState();
+		putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
+		GFX_clear(screen);
+		quit = 1;
+	}
 	
 	if (PAD_justPressed(BTN_POWER)) {
 		if (thread_video) {
