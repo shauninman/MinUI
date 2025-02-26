@@ -127,8 +127,8 @@ extern int is_brick;
 
 ///////////////////////////////
 
-#define MAIN_ROW_COUNT (is_brick?7:8)
-#define PADDING (is_brick?5:40)
+#define MAIN_ROW_COUNT (is_brick ? 7 : 10)
+#define PADDING (is_brick ? 5 : 10)
 
 ///////////////////////////////
 
