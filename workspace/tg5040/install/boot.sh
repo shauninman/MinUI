@@ -20,18 +20,26 @@ if [ -f "$UPDATE_PATH" ]; then
 	# leds_off
 	echo 0 > /sys/class/led_anim/max_scale
 	
+	TRIMUI_MODEL=`strings /usr/trimui/bin/MainUI | grep ^Trimui`
+	if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
+		DEVICE="brick"
+	fi
+	
 	cd $(dirname "$0")/$PLATFORM
 	if [ -d "$SYSTEM_PATH" ]; then
-		./show.elf ./updating.png
+		./show.elf ./$DEVICE/updating.png
 	else
-		./show.elf ./installing.png
+		./show.elf ./$DEVICE/installing.png
 	fi
 
 	./unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH" # &> /mnt/SDCARD/unzip.txt
 	rm -f "$UPDATE_PATH"
 
 	# the updated system finishes the install/update
-	# $SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/install.txt
+	if [ -f $SYSTEM_PATH/$PLATFORM/bin/install.sh ]; then
+		$SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/log.txt
+	fi
+	
 fi
 
 LAUNCH_PATH="$SYSTEM_PATH/$PLATFORM/paks/MinUI.pak/launch.sh"

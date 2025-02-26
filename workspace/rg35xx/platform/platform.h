@@ -115,6 +115,8 @@
 #define MUTE_VOLUME_RAW 0
 #define HAS_NEON
 
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.0
 ///////////////////////////////
 
 #endif

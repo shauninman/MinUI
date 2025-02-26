@@ -17,6 +17,7 @@ all: readmes
 	cd show && make
 
 early: $(REQUIRES_COMMANDER) $(REQUIRES_UNZIP60)
+	mkdir -p other
 	cd other/DinguxCommander && make -j
 	cd other/unzip60 && make -f unix/Makefile.trimuismart unzip
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-EMU_EXE=snes9x2005_plus
+EMU_EXE=snes9x
 
 ###############################
 

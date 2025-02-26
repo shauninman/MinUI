@@ -1,22 +1,24 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <pthread.h>
-
-#include <errno.h>
-#include <stdbool.h>
-#include <stdint.h>
-
-#include <msettings.h>
-
 #include "defines.h"
 #include "api.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <math.h>
+#include <msettings.h>
+#include <pthread.h>
+#include <samplerate.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
 #include "utils.h"
+
+#include <pthread.h>
 
 ///////////////////////////////
 
@@ -54,6 +56,7 @@ uint32_t RGB_BLACK;
 uint32_t RGB_LIGHT_GRAY;
 uint32_t RGB_GRAY;
 uint32_t RGB_DARK_GRAY;
+float currentbufferms = 20.0;
 
 static struct GFX_Context {
 	SDL_Surface* screen;
@@ -63,41 +66,17 @@ static struct GFX_Context {
 	int vsync;
 } gfx;
 
-static SDL_Rect asset_rects[] = {
-	[ASSET_WHITE_PILL]		= {SCALE4( 1, 1,30,30)},
-	[ASSET_BLACK_PILL]		= {SCALE4(33, 1,30,30)},
-	[ASSET_DARK_GRAY_PILL]	= {SCALE4(65, 1,30,30)},
-	[ASSET_OPTION]			= {SCALE4(97, 1,20,20)},
-	[ASSET_BUTTON]			= {SCALE4( 1,33,20,20)},
-	[ASSET_PAGE_BG]			= {SCALE4(64,33,15,15)},
-	[ASSET_STATE_BG]		= {SCALE4(23,54, 8, 8)},
-	[ASSET_PAGE]			= {SCALE4(39,54, 6, 6)},
-	[ASSET_BAR]				= {SCALE4(33,58, 4, 4)},
-	[ASSET_BAR_BG]			= {SCALE4(15,55, 4, 4)},
-	[ASSET_BAR_BG_MENU]		= {SCALE4(85,56, 4, 4)},
-	[ASSET_UNDERLINE]		= {SCALE4(85,51, 3, 3)},
-	[ASSET_DOT]				= {SCALE4(33,54, 2, 2)},
-	
-	[ASSET_BRIGHTNESS]		= {SCALE4(23,33,19,19)},
-	[ASSET_VOLUME_MUTE]		= {SCALE4(44,33,10,16)},
-	[ASSET_VOLUME]			= {SCALE4(44,33,18,16)},
-	[ASSET_BATTERY]			= {SCALE4(47,51,17,10)},
-	[ASSET_BATTERY_LOW]		= {SCALE4(66,51,17,10)},
-	[ASSET_BATTERY_FILL]	= {SCALE4(81,33,12, 6)},
-	[ASSET_BATTERY_FILL_LOW]= {SCALE4( 1,55,12, 6)},
-	[ASSET_BATTERY_BOLT]	= {SCALE4(81,41,12, 6)},
-	
-	[ASSET_SCROLL_UP]		= {SCALE4(97,23,24, 6)},
-	[ASSET_SCROLL_DOWN]		= {SCALE4(97,31,24, 6)},
-
-	[ASSET_WIFI]			= {SCALE4(95,39,14,10)},
-	[ASSET_HOLE]			= {SCALE4( 1,63,20,20)},
-};
+static SDL_Rect asset_rects[ASSET_COUNT];
 static uint32_t asset_rgbs[ASSET_COLORS];
 GFX_Fonts font;
 
 ///////////////////////////////
-
+static int qualityLevels[] = {
+	3,
+	4,
+	2,
+	1
+};
 static struct PWR_Context {
 	int initialized;
 	
@@ -116,11 +95,42 @@ static struct PWR_Context {
 	SDL_Surface* overlay;
 } pwr = {0};
 
+
+static struct SND_Context {
+	int initialized;
+	double frame_rate;
+	
+	int sample_rate_in;
+	int sample_rate_out;
+	
+	SND_Frame* buffer;		// buf
+	size_t frame_count; 	// buf_len
+	
+	int frame_in;     // buf_w
+	int frame_out;    // buf_r
+	int frame_filled; // max_buf_w
+	
+} snd = {0};
+
 ///////////////////////////////
 
 static int _;
 
+static double current_fps = SCREEN_FPS;
+static int fps_counter = 0;
+double currentfps = 0.0;
+double currentreqfps = 0.0;
+
+int currentbuffersize = 0;
+int currentsampleratein = 0;
+int currentsamplerateout = 0;
+int should_rotate = 0;
+
 SDL_Surface* GFX_init(int mode) {
+	// TODO: this doesn't really belong here...
+	// tried adding to PWR_init() but that was no good (not sure why)
+	PLAT_initLid();
+	
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
 	gfx.mode = mode;
@@ -145,6 +155,32 @@ SDL_Surface* GFX_init(int mode) {
 	asset_rgbs[ASSET_UNDERLINE]		= RGB_GRAY;
 	asset_rgbs[ASSET_DOT]			= RGB_LIGHT_GRAY;
 	asset_rgbs[ASSET_HOLE]			= RGB_BLACK;
+	
+	asset_rects[ASSET_WHITE_PILL]		= (SDL_Rect){SCALE4( 1, 1,30,30)};
+	asset_rects[ASSET_BLACK_PILL]		= (SDL_Rect){SCALE4(33, 1,30,30)};
+	asset_rects[ASSET_DARK_GRAY_PILL]	= (SDL_Rect){SCALE4(65, 1,30,30)};
+	asset_rects[ASSET_OPTION]			= (SDL_Rect){SCALE4(97, 1,20,20)};
+	asset_rects[ASSET_BUTTON]			= (SDL_Rect){SCALE4( 1,33,20,20)};
+	asset_rects[ASSET_PAGE_BG]			= (SDL_Rect){SCALE4(64,33,15,15)};
+	asset_rects[ASSET_STATE_BG]			= (SDL_Rect){SCALE4(23,54, 8, 8)};
+	asset_rects[ASSET_PAGE]				= (SDL_Rect){SCALE4(39,54, 6, 6)};
+	asset_rects[ASSET_BAR]				= (SDL_Rect){SCALE4(33,58, 4, 4)};
+	asset_rects[ASSET_BAR_BG]			= (SDL_Rect){SCALE4(15,55, 4, 4)};
+	asset_rects[ASSET_BAR_BG_MENU]		= (SDL_Rect){SCALE4(85,56, 4, 4)};
+	asset_rects[ASSET_UNDERLINE]		= (SDL_Rect){SCALE4(85,51, 3, 3)};
+	asset_rects[ASSET_DOT]				= (SDL_Rect){SCALE4(33,54, 2, 2)};
+	asset_rects[ASSET_BRIGHTNESS]		= (SDL_Rect){SCALE4(23,33,19,19)};
+	asset_rects[ASSET_VOLUME_MUTE]		= (SDL_Rect){SCALE4(44,33,10,16)};
+	asset_rects[ASSET_VOLUME]			= (SDL_Rect){SCALE4(44,33,18,16)};
+	asset_rects[ASSET_BATTERY]			= (SDL_Rect){SCALE4(47,51,17,10)};
+	asset_rects[ASSET_BATTERY_LOW]		= (SDL_Rect){SCALE4(66,51,17,10)};
+	asset_rects[ASSET_BATTERY_FILL]		= (SDL_Rect){SCALE4(81,33,12, 6)};
+	asset_rects[ASSET_BATTERY_FILL_LOW]	= (SDL_Rect){SCALE4( 1,55,12, 6)};
+	asset_rects[ASSET_BATTERY_BOLT]		= (SDL_Rect){SCALE4(81,41,12, 6)};
+	asset_rects[ASSET_SCROLL_UP]		= (SDL_Rect){SCALE4(97,23,24, 6)};
+	asset_rects[ASSET_SCROLL_DOWN]		= (SDL_Rect){SCALE4(97,31,24, 6)};
+	asset_rects[ASSET_WIFI]				= (SDL_Rect){SCALE4(95,39,14,10)};
+	asset_rects[ASSET_HOLE]				= (SDL_Rect){SCALE4( 1,63,20,20)};
 	
 	char asset_path[MAX_PATH];
 	sprintf(asset_path, RES_PATH "/assets@%ix.png", FIXED_SCALE);
@@ -201,14 +237,196 @@ int GFX_hdmiChanged(void) {
 
 #define FRAME_BUDGET 17 // 60fps
 static uint32_t frame_start = 0;
+
+static uint64_t per_frame_start = 0;
+#define FPS_BUFFER_SIZE 50
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
+}
+
+
+void chmodfile(const char *file, int writable)
+{
+    struct stat statbuf;
+    if (stat(file, &statbuf) == 0)
+    {
+        mode_t newMode;
+        if (writable)
+        {
+            // Add write permissions for all users
+            newMode = statbuf.st_mode | S_IWUSR | S_IWGRP | S_IWOTH;
+        }
+        else
+        {
+            // Remove write permissions for all users
+            newMode = statbuf.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+        }
+
+        // Apply the new permissions
+        if (chmod(file, newMode) != 0)
+        {
+            printf("chmod error %d %s", writable, file);
+        }
+    }
+    else
+    {
+        printf("stat error %d %s", writable, file);
+    }
+}
+
+uint32_t GFX_extract_dominant_color(const void *data, unsigned width, unsigned height, size_t pitch) {
+	if (!data) {
+        fprintf(stderr, "Error: data is NULL.\n");
+        return 0;
+    }
+
+    uint16_t *pixels = (uint16_t *)data;
+    int pixel_count = width * height;
+
+    uint64_t total_r = 0;
+    uint64_t total_g = 0;
+    uint64_t total_b = 0;
+    uint8_t r, g, b;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            uint16_t pixel = pixels[y * (pitch / 2) + x];  // Access pixel data
+
+            // Manually extract RGB values from RGB565 format
+            r = (pixel & 0xF800) >> 8;  // 5 bits red
+            g = (pixel & 0x07E0) >> 3;  // 6 bits green
+            b = (pixel & 0x001F) << 3;  // 5 bits blue
+
+            // Normalize RGB values to 8 bits
+            r |= r >> 5;
+            g |= g >> 6;
+            b |= b >> 5;
+
+            // Accumulate the color components
+            total_r += r;
+            total_g += g;
+            total_b += b;
+        }
+    }
+
+    // Calculate the average color components
+    uint8_t avg_r = total_r / pixel_count;
+    uint8_t avg_g = total_g / pixel_count;
+    uint8_t avg_b = total_b / pixel_count;
+
+    // Combine average color components into a single uint32_t color
+    uint32_t average_color = (avg_r << 16) | (avg_g << 8) | avg_b;
+
+    return average_color;
+
+}
+
+
+void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode) {
+	if(mode==0) return;
+
+	uint32_t dominant_color = GFX_extract_dominant_color(data, width, height,pitch);
+   
+	if(mode==1 || mode==2 || mode==5) {
+		chmodfile("/sys/class/led_anim/effect_m", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_m", 1);
+		// chmodfile("", 1);
+		FILE *file = fopen("/sys/class/led_anim/effect_m", "w");
+		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_m", "w");
+		// file3 = fopen(filepath, "w");
+		fprintf(file, "4");
+		fprintf(file2, "%06X", dominant_color);
+		
+		fclose(file);
+		fclose(file2);
+		chmodfile("/sys/class/led_anim/effect_m", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_m", 0);
+	}
+	if(mode==1 || mode==3) {
+		chmodfile("/sys/class/led_anim/effect_f1", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f1", 1);
+		chmodfile("/sys/class/led_anim/effect_f2", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f2", 1);
+		// chmodfile("", 1);
+		FILE *file = fopen("/sys/class/led_anim/effect_f1", "w");
+		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_f1", "w");
+		FILE *file3 = fopen("/sys/class/led_anim/effect_f2", "w");
+		FILE *file4 = fopen("/sys/class/led_anim/effect_rgb_hex_f2", "w");
+		// file3 = fopen(filepath, "w");
+		fprintf(file, "4");
+		fprintf(file2, "%06X", dominant_color);
+		fprintf(file3, "4");
+		fprintf(file4, "%06X", dominant_color);
+		
+		fclose(file);
+		fclose(file2);
+		fclose(file3);
+		fclose(file4);
+		chmodfile("/sys/class/led_anim/effect_f1", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f1", 0);
+		chmodfile("/sys/class/led_anim/effect_f2", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_f2", 0);
+	}
+	if(mode==1 || mode==4 || mode==5) {
+		chmodfile("/sys/class/led_anim/effect_lr", 1);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_lr", 1);
+		// chmodfile("", 1);
+		FILE *file = fopen("/sys/class/led_anim/effect_lr", "w");
+		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_lr", "w");
+		// file3 = fopen(filepath, "w");
+		fprintf(file, "4");
+		fprintf(file2, "%06X", dominant_color);
+		
+		fclose(file);
+		fclose(file2);
+		chmodfile("/sys/class/led_anim/effect_lr", 0);
+		chmodfile("/sys/class/led_anim/effect_rgb_hex_lr", 0);
+	}
 }
 
 void GFX_flip(SDL_Surface* screen) {
 	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
 	PLAT_flip(screen, should_vsync);
+	
+	currentfps = current_fps;
+	fps_counter++;
+
+	uint64_t performance_frequency = SDL_GetPerformanceFrequency();
+	uint64_t frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
+	double elapsed_time_s = (double)frame_duration / performance_frequency;
+	double tempfps = 1.0 / elapsed_time_s;
+	if (!should_vsync) {
+		uint64_t frame_time = performance_frequency / snd.frame_rate;  // Time per frame in performance counter units
+		if (frame_duration < frame_time) {
+			uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
+			SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
+		}
+		per_frame_start = SDL_GetPerformanceCounter();
+		return;
+	}
+	if(tempfps < SCREEN_FPS * 0.8 || tempfps > SCREEN_FPS * 1.2) tempfps = SCREEN_FPS;
+	
+	// filling with  60.1 cause i'd rather underrun than overflow in start phase
+	static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
+	static int buffer_index = 0;
+
+	fps_buffer[buffer_index] = tempfps;
+	buffer_index = (buffer_index + 1) % FPS_BUFFER_SIZE;
+	// give it a little bit to stabilize and then use, meanwhile the buffer will
+	// cover it
+	if (fps_counter > 100) {
+		double average_fps = 0.0;
+		int fpsbuffersize = MIN(fps_counter, FPS_BUFFER_SIZE);
+		for (int i = 0; i < fpsbuffersize; i++) {
+			average_fps += fps_buffer[i];
+		}
+		average_fps /= fpsbuffersize;
+		current_fps = average_fps;
+	}
+	
+	per_frame_start = SDL_GetPerformanceCounter();
 }
+// eventually this function should be removed as its only here because of all the audio buffer based delay stuff
 void GFX_sync(void) {
 	uint32_t frame_duration = SDL_GetTicks() - frame_start;
 	if (gfx.vsync!=VSYNC_OFF) {
@@ -220,6 +438,11 @@ void GFX_sync(void) {
 	else {
 		if (frame_duration<FRAME_BUDGET) SDL_Delay(FRAME_BUDGET-frame_duration);
 	}
+}
+// if a fake vsycn delay is really needed 
+void GFX_delay(void) {
+	uint32_t frame_duration = SDL_GetTicks() - frame_start;
+	if (frame_duration<((1/SCREEN_FPS) * 1000)) SDL_Delay(((1/SCREEN_FPS) * 1000)-frame_duration);
 }
 
 FALLBACK_IMPLEMENTATION int PLAT_supportsOverscan(void) { return 0; }
@@ -714,15 +937,20 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			setting_min = BRIGHTNESS_MIN;
 			setting_max = BRIGHTNESS_MAX;
 		}
+		else if (show_setting==3) {
+			setting_value = GetColortemp();
+			setting_min = COLORTEMP_MIN;
+			setting_max = COLORTEMP_MAX;
+		}
 		else {
 			setting_value = GetVolume();
 			setting_min = VOLUME_MIN;
 			setting_max = VOLUME_MAX;
 		}
 		
-		int asset = show_setting==1?ASSET_BRIGHTNESS:(setting_value>0?ASSET_VOLUME:ASSET_VOLUME_MUTE);
-		int ax = ox + (show_setting==1 ? SCALE1(6) : SCALE1(8));
-		int ay = oy + (show_setting==1 ? SCALE1(5) : SCALE1(7));
+		int asset = show_setting==3?ASSET_BUTTON:show_setting==1?ASSET_BRIGHTNESS:(setting_value>0?ASSET_VOLUME:ASSET_VOLUME_MUTE);
+		int ax = ox + (show_setting==1 || show_setting == 3 ? SCALE1(6) : SCALE1(8));
+		int ay = oy + (show_setting==1 || show_setting == 3 ? SCALE1(5) : SCALE1(7));
 		GFX_blitAsset(asset, NULL, dst, &(SDL_Rect){ax,ay});
 		
 		ox += SCALE1(PILL_SIZE);
@@ -735,7 +963,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		});
 		
 		float percent = ((float)(setting_value-setting_min) / (setting_max-setting_min));
-		if (show_setting==1 || setting_value>0) {
+		if (show_setting==1 || show_setting==3 || setting_value>0) {
 			GFX_blitPill(ASSET_BAR, dst, &(SDL_Rect){
 				ox,
 				oy,
@@ -776,14 +1004,10 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 	return ow;
 }
 void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
-	if (BTN_MOD_VOLUME==BTN_SELECT && BTN_MOD_BRIGHTNESS==BTN_START) {
-		if (show_setting==1) GFX_blitButtonGroup((char*[]){ "SELECT","VOLUME",  NULL }, 0, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "START","BRIGHTNESS",  NULL }, 0, dst, 0);
-	}
-	else {
+
 		if (show_setting==1) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"BRIGHTNESS",  NULL }, 0, dst, 0);
-		else GFX_blitButtonGroup((char*[]){ "MENU","BRIGHTNESS",  NULL }, 0, dst, 0);
-	}
+		else if (show_setting==3) GFX_blitButtonGroup((char*[]){ BRIGHTNESS_BUTTON_LABEL,"COLOR TEMP",  NULL }, 0, dst, 0);
+		else GFX_blitButtonGroup((char*[]){ "MNU","BRGHT","SEL","CLTMP",  NULL }, 0, dst, 0);
 	
 }
 
@@ -924,146 +1148,276 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 
 #define ms SDL_GetTicks
 
-typedef int (*SND_Resampler)(const SND_Frame frame);
-static struct SND_Context {
-	int initialized;
-	double frame_rate;
-	
-	int sample_rate_in;
-	int sample_rate_out;
-	
-	int buffer_seconds;     // current_audio_buffer_size
-	SND_Frame* buffer;		// buf
-	size_t frame_count; 	// buf_len
-	
-	int frame_in;     // buf_w
-	int frame_out;    // buf_r
-	int frame_filled; // max_buf_w
-	
-	SND_Resampler resample;
-} snd = {0};
-static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // plat_sound_callback
-	
-	// return (void)memset(stream,0,len); // TODO: tmp, silent
-	
-	if (snd.frame_count==0) return;
-	
+
+
+pthread_mutex_t audio_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void SND_audioCallback(void *userdata, uint8_t *stream, int len) {
+	if (snd.frame_count == 0)
+		return;
+
 	int16_t *out = (int16_t *)stream;
 	len /= (sizeof(int16_t) * 2);
+
+	// Lock the mutex before accessing shared resources
 	
-	// if (snd.frame_out!=snd.frame_in) LOG_info("%8i consuming samples (%i frames)\n", ms(), len);
-	
-	while (snd.frame_out!=snd.frame_in && len>0) {
+
+	while (snd.frame_out != snd.frame_in && len > 0) {
+		
 		*out++ = snd.buffer[snd.frame_out].left;
 		*out++ = snd.buffer[snd.frame_out].right;
-		
-		snd.frame_filled = snd.frame_out;
-		
+		pthread_mutex_lock(&audio_mutex);
 		snd.frame_out += 1;
 		len -= 1;
-		
-		if (snd.frame_out>=snd.frame_count) snd.frame_out = 0;
+		if (snd.frame_out >= snd.frame_count)
+			snd.frame_out = 0;
+		pthread_mutex_unlock(&audio_mutex);
 	}
 	
-	int zero = len>0 && len==SAMPLES;
-	if (zero) return (void)memset(out,0,len*(sizeof(int16_t) * 2));
-	// else if (len>=5) LOG_info("%8i BUFFER UNDERRUN (%i frames)\n", ms(), len);
 
-	int16_t *in = out-1;
-	while (len>0) {
-		*out++ = (void*)in>(void*)stream ? *--in : 0;
-		*out++ = (void*)in>(void*)stream ? *--in : 0;
-		len -= 1;
+	if (len > 0) {
+		memset(out, 0, len * (sizeof(int16_t) * 2));
 	}
 }
 static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
-	snd.frame_count = snd.buffer_seconds * snd.sample_rate_in / snd.frame_rate;
-	if (snd.frame_count==0) return;
-	
+
+	if (snd.frame_count == 0)
+		return;
+
 	SDL_LockAudio();
-	
+
 	int buffer_bytes = snd.frame_count * sizeof(SND_Frame);
 	snd.buffer = realloc(snd.buffer, buffer_bytes);
-	
+
 	memset(snd.buffer, 0, buffer_bytes);
-	
+
 	snd.frame_in = 0;
 	snd.frame_out = 0;
-	snd.frame_filled = snd.frame_count - 1;
-	
+
 	SDL_UnlockAudio();
 }
-static int SND_resampleNone(SND_Frame frame) { // audio_resample_passthrough
-	snd.buffer[snd.frame_in++] = frame;
-	if (snd.frame_in >= snd.frame_count) snd.frame_in = 0;
-	return 1;
+static int soundQuality = 2;
+static int resetSrcState = 0;
+void SND_setQuality(int quality) {
+	soundQuality = qualityLevels[quality];
+	resetSrcState = 1;
 }
-static int SND_resampleNear(SND_Frame frame) { // audio_resample_nearest
-	static int diff = 0;
+ResampledFrames resample_audio(const SND_Frame *input_frames,
+	int input_frame_count, int input_sample_rate,
+	int output_sample_rate, double ratio) {
+	int error;
+	static double previous_ratio = 1.0;
+	static SRC_STATE *src_state = NULL;
+
+	if (!src_state || resetSrcState) {
+		resetSrcState = 0;
+		src_state = src_new(soundQuality, 2, &error);
+		if (src_state == NULL) {
+			fprintf(stderr, "Error initializing SRC state: %s\n",
+				src_strerror(error));
+			exit(1);
+		}
+	}
+
+	if (previous_ratio != ratio) {
+		if (src_set_ratio(src_state, ratio) != 0) {
+			fprintf(stderr, "Error setting resampling ratio: %s\n",
+				src_strerror(src_error(src_state)));
+			exit(1);
+		}
+
+		previous_ratio = ratio;
+	}
+
+	int max_output_frames = (int)(input_frame_count * ratio + 1);
+
+	float *input_buffer = malloc(input_frame_count * 2 * sizeof(float));
+	float *output_buffer = malloc(max_output_frames * 2 * sizeof(float));
+	if (!input_buffer || !output_buffer) {
+		fprintf(stderr, "Error allocating buffers\n");
+		free(input_buffer);
+		free(output_buffer);
+		src_delete(src_state);
+		exit(1);
+	}
+
+	for (int i = 0; i < input_frame_count; i++) {
+		input_buffer[2 * i] = input_frames[i].left / 32768.0f;
+		input_buffer[2 * i + 1] = input_frames[i].right / 32768.0f;
+	}
+
+	SRC_DATA src_data = {.data_in = input_buffer,
+		.data_out = output_buffer,
+		.input_frames = input_frame_count,
+		.output_frames = max_output_frames,
+		.src_ratio = ratio,
+		.end_of_input = 0};
+
+	// Perform resampling
+	if (src_process(src_state, &src_data) != 0) {
+		fprintf(stderr, "Error resampling: %s\n",
+			src_strerror(src_error(src_state)));
+		free(input_buffer);
+		free(output_buffer);
+		exit(1);
+	}
+
+	int output_frame_count = src_data.output_frames_gen;
+
+	SND_Frame *output_frames = malloc(output_frame_count * sizeof(SND_Frame));
+	if (!output_frames) {
+		fprintf(stderr, "Error allocating output frames\n");
+		free(input_buffer);
+		free(output_buffer);
+		exit(1);
+	}
+
+	for (int i = 0; i < output_frame_count; i++) {
+		float left = output_buffer[2 * i];
+		float right = output_buffer[2 * i + 1];
+
+		left = fmaxf(-1.0f, fminf(1.0f, left));
+		right = fmaxf(-1.0f, fminf(1.0f, right));
+
+		output_frames[i].left = (int16_t)(left * 32767.0f);
+		output_frames[i].right = (int16_t)(right * 32767.0f);
+	}
+
+	// Free temporary buffers
+	free(input_buffer);
+	free(output_buffer);
+
+	// Return the resampled frames
+	ResampledFrames resampled;
+	resampled.frames = output_frames;
+	resampled.frame_count = output_frame_count;
+
+	return resampled;
+}
+
+
+#define ROLLING_AVERAGE_WINDOW_SIZE 5
+static float adjustment_history[ROLLING_AVERAGE_WINDOW_SIZE] = {0.0f};
+static int adjustment_index = 0;
+
+float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, float targetbuffer_under, int batchsize) {
+
+    float midpoint = (targetbuffer_over + targetbuffer_under) / 2.0f;
+
+    float normalizedDistance;
+    if (remaining_space < midpoint) {
+        normalizedDistance = (midpoint - remaining_space) / (midpoint - targetbuffer_over);
+    } else {
+        normalizedDistance = (remaining_space - midpoint) / (targetbuffer_under - midpoint);
+    }
+	// I make crazy small adjustments, mooore tiny is mooore stable :D But don't come neir the limits cuz imma hit ya with that 0.005 ratio adjustment, pow pow!
+    // I wonder if staying in the middle of 0 to 4000 with 512 samples per batch playing at tiny different speeds each iteration is like the smallest I can get
+	// lets say hovering around 2000 means 2000 samples queue, about 4 frames, so at 17ms(60fps) thats  68ms delay right?
+	// Should have payed attention when my math teacher was talking dammit
+	// Also I chose 3 for pow, but idk if that really the best nr, anyone good in maths looking at my code?
+	float adjustment = 0.0000001f + (0.005f - 0.0000001f) * pow(normalizedDistance, 3);
+
+    if (remaining_space < midpoint) {
+        adjustment = -adjustment;
+    }
+
+    adjustment_history[adjustment_index] = adjustment;
+    adjustment_index = (adjustment_index + 1) % ROLLING_AVERAGE_WINDOW_SIZE;
+
+    // Calculate the rolling average
+    float rolling_average = 0.0f;
+    for (int i = 0; i < ROLLING_AVERAGE_WINDOW_SIZE; ++i) {
+        rolling_average += adjustment_history[i];
+    }
+    rolling_average /= ROLLING_AVERAGE_WINDOW_SIZE;
+
+    return rolling_average;
+}
+
+
+
+
+static SND_Frame tmpbuffer[BATCH_SIZE];
+static SND_Frame *unwritten_frames = NULL;
+static int unwritten_frame_count = 0;
+
+float currentratio = 0.0;
+int currentbufferfree = 0;
+int currentframecount = 0;
+static double ratio = 1.0;
+size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
+	
+	int framecount = (int)frame_count;
+
 	int consumed = 0;
+	int total_consumed_frames = 0;
 
-	if (diff < snd.sample_rate_out) {
-		snd.buffer[snd.frame_in++] = frame;
-		if (snd.frame_in >= snd.frame_count) snd.frame_in = 0;
-		diff += snd.sample_rate_in;
-	}
-
-	if (diff >= snd.sample_rate_out) {
-		consumed++;
-		diff -= snd.sample_rate_out;
-	}
-
-	return consumed;
-}
-static void SND_selectResampler(void) { // plat_sound_select_resampler
-	if (snd.sample_rate_in==snd.sample_rate_out) {
-		snd.resample =  SND_resampleNone;
+	float remaining_space=snd.frame_count;
+	if (snd.frame_in >= snd.frame_out) {
+		remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
 	}
 	else {
-		snd.resample = SND_resampleNear;
+		remaining_space = snd.frame_out - snd.frame_in;
 	}
-}
-size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count) { // plat_sound_write / plat_sound_write_resample
-	
-	// return frame_count; // TODO: tmp, silent
-	
-	if (snd.frame_count==0) return 0;
-	
-	// LOG_info("%8i batching samples (%i frames)\n", ms(), frame_count);
-	
-	SDL_LockAudio();
+	currentbufferfree = remaining_space;
 
-	int consumed = 0;
-	int consumed_frames = 0;
-	while (frame_count > 0) {
-		int tries = 0;
-		int amount = MIN(BATCH_SIZE, frame_count);
+	float tempdelay = ((snd.frame_count - remaining_space) / snd.sample_rate_out) * 1000;
+
+	currentbufferms = tempdelay;
+
+	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
+	// i use 0.4* as minimum free space because i want my algorithm to fight more for free buffer then full, cause you know free buffer is lower latency :D
+	// My algorithm is fighting here with audio hardware. 
+	// It's like a person is trying to balance on a rope (my algorithm) and another person (the audio hardware and screen) is wiggling the rope and the balancing person got to keep countering and try to stay stable
+	float bufferadjustment = calculateBufferAdjustment(remaining_space, snd.frame_count*0.4, snd.frame_count,frame_count);
+	ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
+
+	currentratio = ratio;
+
+	if(ratio > 1.5) 
+		ratio = 1.5;
+	if(ratio < 0.5)
+		ratio = 0.5;
+
+	while (framecount > 0) {
 		
-		while (tries < 10 && snd.frame_in==snd.frame_filled) {
-			tries++;
-			SDL_UnlockAudio();
-			SDL_Delay(1);
-			SDL_LockAudio();
-		}
-		// if (tries) LOG_info("%8i waited %ims for buffer to get low...\n", ms(), tries);
+		int amount = MIN(BATCH_SIZE, framecount);
 
-		while (amount && snd.frame_in != snd.frame_filled) {
-			consumed_frames = snd.resample(*frames);
-			
-			frames += consumed_frames;
-			amount -= consumed_frames;
-			frame_count -= consumed_frames;
-			consumed += consumed_frames;
+		for (int i = 0; i < amount; i++) {
+			tmpbuffer[i] = frames[consumed + i];
 		}
+		consumed += amount;
+		framecount -= amount;
+
+		ResampledFrames resampled = resample_audio(
+			tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, ratio);
+
+		// Write resampled frames to the buffer
+		int written_frames = 0;
+		
+		for (int i = 0; i < resampled.frame_count; i++) {
+			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+				// Buffer is full, break. This should never happen tho, but just to be save
+				break;
+			}
+			pthread_mutex_lock(&audio_mutex);
+			snd.buffer[snd.frame_in] = resampled.frames[i];
+			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
+			pthread_mutex_unlock(&audio_mutex);
+			written_frames++;
+			
+		}
+		
+		total_consumed_frames += written_frames;
+		free(resampled.frames);
 	}
-	SDL_UnlockAudio();
-	
-	return consumed;
+
+	return total_consumed_frames;
 }
 
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
-	
+	currentreqfps = frame_rate;
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 	
 #if defined(USE_SDL2)
@@ -1088,11 +1442,13 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	
 	if (SDL_OpenAudio(&spec_in, &spec_out)<0) LOG_info("SDL_OpenAudio error: %s\n", SDL_GetError());
 	
-	snd.buffer_seconds = 5;
+	snd.frame_count = ((float)spec_out.freq/SCREEN_FPS)*6; // buffer size based on sample rate out (with 6 frames headroom), ideally you want to use actual FPS but don't know it at this point yet 
+	currentbuffersize = snd.frame_count;
 	snd.sample_rate_in  = sample_rate;
 	snd.sample_rate_out = spec_out.freq;
+	currentsampleratein = snd.sample_rate_in;
+	currentsamplerateout = snd.sample_rate_out;
 	
-	SND_selectResampler();
 	SND_resizeBuffer();
 	
 	SDL_PauseAudio(0);
@@ -1111,6 +1467,16 @@ void SND_quit(void) { // plat_sound_finish
 		snd.buffer = NULL;
 	}
 }
+
+///////////////////////////////
+
+LID_Context lid = {
+	.has_lid = 0,
+	.is_open = 1,
+};
+
+FALLBACK_IMPLEMENTATION void PLAT_initLid(void) {  }
+FALLBACK_IMPLEMENTATION int PLAT_lidChanged(int* state) { return 0; }
 
 ///////////////////////////////
 
@@ -1327,19 +1693,29 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 			pad.repeat_at[id]	= tick + PAD_REPEAT_DELAY;
 		}
 	}
+	
+	if (lid.has_lid && PLAT_lidChanged(NULL)) pad.just_released |= BTN_SLEEP;
 }
 FALLBACK_IMPLEMENTATION int PLAT_shouldWake(void) {
+	int lid_open = 1; // assume open by default
+	if (lid.has_lid && PLAT_lidChanged(&lid_open) && lid_open) return 1;
+	
+	
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type==SDL_KEYUP) {
 			uint8_t code = event.key.keysym.scancode;
 			if ((BTN_WAKE==BTN_POWER && code==CODE_POWER) || (BTN_WAKE==BTN_MENU && (code==CODE_MENU || code==CODE_MENU_ALT))) {
+				// ignore input while lid is closed
+				if (lid.has_lid && !lid.is_open) return 0;  // do it here so we eat the input
 				return 1;
 			}
 		}
 		else if (event.type==SDL_JOYBUTTONUP) {
 			uint8_t joy = event.jbutton.button;
 			if ((BTN_WAKE==BTN_POWER && joy==JOY_POWER) || (BTN_WAKE==BTN_MENU && (joy==JOY_MENU || joy==JOY_MENU_ALT))) {
+				// ignore input while lid is closed
+				if (lid.has_lid && !lid.is_open) return 0;  // do it here so we eat the input
 				return 1;
 			}
 		} 
@@ -1569,26 +1945,29 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	
 	int delay_settings = BTN_MOD_BRIGHTNESS==BTN_MENU; // when both volume and brighness require a modifier hide settings as soon as it is released
 	#define SETTING_DELAY 500
-	if (show_setting && (now-setting_shown_at>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
+	if (show_setting && (now-setting_shown_at>=SETTING_DELAY || !delay_settings) && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS) && !PAD_isPressed(BTN_MOD_COLORTEMP)) {
 		show_setting = 0;
 		dirty = 1;
 	}
 	
-	if (!show_setting && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
+	if (!show_setting && !PAD_isPressed(BTN_MOD_VOLUME) && !PAD_isPressed(BTN_MOD_BRIGHTNESS) && !PAD_isPressed(BTN_MOD_COLORTEMP)) {
 		mod_unpressed_at = now; // this feels backwards but is correct
 	}
 	
 	#define MOD_DELAY 250
 	if (
 		(
-			(PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS)) && 
+			(PAD_isPressed(BTN_MOD_VOLUME) || PAD_isPressed(BTN_MOD_BRIGHTNESS) || PAD_isPressed(BTN_MOD_COLORTEMP)) && 
 			(!delay_settings || now-mod_unpressed_at>=MOD_DELAY)
 		) || 
-		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))
+		((!BTN_MOD_VOLUME || !BTN_MOD_BRIGHTNESS || !BTN_MOD_COLORTEMP) && (PAD_justRepeated(BTN_MOD_PLUS) || PAD_justRepeated(BTN_MOD_MINUS)))
 	) {
 		setting_shown_at = now;
 		if (PAD_isPressed(BTN_MOD_BRIGHTNESS)) {
 			show_setting = 1;
+		}
+		else if (PAD_isPressed(BTN_MOD_COLORTEMP)) {
+			show_setting = 3;
 		}
 		else {
 			show_setting = 2;
@@ -1769,4 +2148,5 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	char cmd[512];
 	sprintf(cmd, "date -s '%d-%d-%d %d:%d:%d'; hwclock --utc -w", y,m,d,h,i,s);
 	system(cmd);
+	return 0; // why does this return an int?
 }

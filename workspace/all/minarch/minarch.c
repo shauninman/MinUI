@@ -43,8 +43,12 @@ enum {
 	SCALE_COUNT,
 };
 
+
+
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
+static int resampling_quality = 2;
+static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
@@ -619,6 +623,23 @@ static char* scaling_labels[] = {
 	"Cropped",
 	NULL
 };
+static char* resample_labels[] = {
+	"Low",
+	"Medium",
+	"High",
+	"Max",
+	NULL
+};
+static char* ambient_labels[] = {
+	"Off",
+	"All",
+	"Top",
+	"FN",
+	"LR",
+	"Top/LR",
+	NULL
+};
+
 static char* effect_labels[] = {
 	"None",
 	"Line",
@@ -653,6 +674,8 @@ static char* max_ff_labels[] = {
 
 enum {
 	FE_OPT_SCALING,
+	FE_OPT_RESAMPLING,
+	FE_OPT_AMBIENT,
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
@@ -848,6 +871,26 @@ static struct Config {
 				.values = scaling_labels,
 				.labels = scaling_labels,
 			},
+			[FE_OPT_RESAMPLING] = {
+				.key	= "minarch__resampling_quality", 
+				.name	= "Audio resampling quality",
+				.desc	= "Resampling quality higher takes more CPU", // will call getScreenScalingDesc()
+				.default_value = 2,
+				.value = 2,
+				.count = 4,
+				.values = resample_labels,
+				.labels = resample_labels,
+			},
+			[FE_OPT_AMBIENT] = {
+				.key	= "minarch_ambient", 
+				.name	= "Ambient mode",
+				.desc	= "Makes your leds follow on screen colors", // will call getScreenScalingDesc()
+				.default_value = 0,
+				.value = 0,
+				.count = 6,
+				.values = ambient_labels,
+				.labels = ambient_labels,
+			},
 			[FE_OPT_EFFECT] = {
 				.key	= "minarch_screen_effect",
 				.name	= "Screen Effect",
@@ -870,7 +913,7 @@ static struct Config {
 			},
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
-				.name	= "Prevent Tearing",
+				.name	= "VSync",
 				.desc	= "Wait for vsync before drawing the next frame.\nLenient only waits when within frame budget.\nStrict always waits.",
 				.default_value = VSYNC_LENIENT,
 				.value = VSYNC_LENIENT,
@@ -890,8 +933,8 @@ static struct Config {
 			},
 			[FE_OPT_THREAD] = {
 				.key	= "minarch_thread_video",
-				.name	= "Thread Core",
-				.desc	= "Move emulation to a thread.\nPrevents audio crackle but may\ncause dropped frames.",
+				.name	= "Prioritize Audio",
+				.desc	= "Can eliminate crackle but\nmay cause dropped frames.\nOnly turn on if necessary.",
 				.default_value = 0,
 				.value = 0,
 				.count = 2,
@@ -979,6 +1022,15 @@ static void Config_syncFrontend(char* key, int value) {
 		
 		renderer.dst_p = 0;
 		i = FE_OPT_SCALING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_RESAMPLING].key)) {
+		resampling_quality = value;
+		SND_setQuality(resampling_quality);
+		i = FE_OPT_RESAMPLING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_AMBIENT].key)) {
+		ambient_mode = value;
+		i = FE_OPT_AMBIENT;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_EFFECT].key)) {
 		screen_effect = value;
@@ -1125,6 +1177,7 @@ static void Config_readOptionsString(char* cfg) {
 	
 	for (int i=0; config.core.options[i].key; i++) {
 		Option* option = &config.core.options[i];
+		LOG_info("%s\n",option->key);
 		if (!Config_getValue(cfg, option->key, value, &option->lock)) continue;
 		OptionList_setOptionValue(&config.core, option->key, value);
 	}
@@ -1593,7 +1646,7 @@ static char* OptionList_getOptionValue(OptionList* list, const char* key) {
 	// if (item) LOG_info("\tGET %s (%s) = %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
 	
 	if (item) return item->values[item->value];
-	else LOG_warn("unknown option %s \n", key);
+	// else LOG_warn("unknown option %s \n", key);
 	return NULL;
 }
 static void OptionList_setOptionRawValue(OptionList* list, const char* key, int value) {
@@ -1663,6 +1716,13 @@ static void input_poll_callback(void) {
 	}
 	if (PAD_isPressed(BTN_MENU) && (PAD_isPressed(BTN_PLUS) || PAD_isPressed(BTN_MINUS))) {
 		ignore_menu = 1;
+	}
+	if (PAD_isPressed(BTN_MENU) && PAD_isPressed(BTN_SELECT)) {
+		ignore_menu = 1;
+		Menu_saveState();
+		putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
+		GFX_clear(screen);
+		quit = 1;
 	}
 	
 	if (PAD_justPressed(BTN_POWER)) {
@@ -1861,6 +1921,10 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	// LOG_info("environment_callback: %i\n", cmd);
 	
 	switch(cmd) {
+	// case RETRO_ENVIRONMENT_SET_ROTATION: { /* 1 */
+	// 	LOG_info("RETRO_ENVIRONMENT_SET_ROTATION %i\n", *(int *)data); // core requests frontend to handle rotation
+	// 	break;
+	// }
 	case RETRO_ENVIRONMENT_GET_OVERSCAN: { /* 2 */
 		bool *out = (bool *)data;
 		if (out)
@@ -2042,6 +2106,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS: { /* 53 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS");
+		LOG_info("dit dan a");
 		if (data) {
 			OptionList_reset();
 			OptionList_init((const struct retro_core_option_definition *)data); 
@@ -2050,6 +2115,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL: { /* 54 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL");
+		LOG_info("dit dan b");
 		const struct retro_core_options_intl *options = (const struct retro_core_options_intl *)data;
 		if (options && options->us) {
 			OptionList_reset();
@@ -2766,6 +2832,8 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		screen = GFX_resize(dst_w,dst_h,dst_p);
 	// }
 }
+
+
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
 	
@@ -2791,8 +2859,9 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	//  8: 60/210 (with optimize text off)
 	// you can squeeze more out of every console by turning prevent tearing off
 	// eg. PS@10 60/240
-	
-	if (!data) return;
+	if (!data) {
+		return;
+	}
 
 	fps_ticks += 1;
 	
@@ -2809,12 +2878,24 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	if (show_debug) {
 		int x = 2 + renderer.src_x;
 		int y = 2 + renderer.src_y;
-		char debug_text[128];
+		char debug_text[250];
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
 		
+		if (!isnan(currentratio) && !isnan(currentfps) && !isnan(currentreqfps)  && !isnan(currentbufferms) &&
+		 currentbuffersize >= 0  && currentbufferfree >= 0) {
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
+		
+		sprintf(debug_text, "%.03f/%.03f/%.03f/%i/%.1f/%i", currentratio,
+				currentfps,currentreqfps,currentbuffersize,currentbufferms, currentbufferfree);
+		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
+					height);
+		
+
+		sprintf(debug_text, "%i/%i", currentsampleratein, currentsamplerateout);
+		blitBitmapText(debug_text, x, y + 40, (uint16_t*)data, pitch / 2, width,
+					   height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
@@ -2824,6 +2905,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
+	}
 	}
 	
 	if (downsample) {
@@ -2835,15 +2917,73 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
-	
+	 
+
 	GFX_blitRenderer(&renderer);
-	
+
 	if (!thread_video) GFX_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
-static void video_refresh_callback(const void *data, unsigned width, unsigned height, size_t pitch) {
-	if (!data) return;
+const void* lastframe = NULL;
+
+void *thread_func(void *arg) {
+    // Unpack arguments (this example assumes arguments are packed in a struct)
+    struct args {
+        const void *data;
+        unsigned width;
+        unsigned height;
+        size_t pitch;
+        int ambient_mode;
+    } *params = arg;
+
+    // Call your function
+    GFX_setAmbientColor(params->data, params->width, params->height, params->pitch, params->ambient_mode);
+    
+    return NULL; // Return NULL to indicate successful completion
+}
+
+
+static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
+    bool can_dupe = false;
+    environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
+	struct retro_variable var = { "fbneo-vertical-mode", NULL };
+    environment_callback(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
 	
+	if (var.value)
+	{
+		if (strcmp(var.value, "enabled") == 0) {
+			should_rotate = 1;
+		} else if (strcmp(var.value, "alternate") == 0) {
+			should_rotate = 2; // Adjust if different for alternate
+		} else if (strcmp(var.value, "TATE") == 0) {
+			should_rotate = 3;
+		} else if (strcmp(var.value, "TATE alternate") == 0) {
+        	should_rotate = 4;
+		}
+		else
+		{
+			should_rotate = 0;
+		}
+	}
+	else
+	{
+		should_rotate = 0;
+	}
+
+    if (!data) {
+        if (lastframe) {
+            data = lastframe;
+        } else {
+            return; // No data to display
+        }
+    }
+
+    lastframe = data;
+
+	if(!fast_forward ) {
+		GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
+	}
+
 	if (thread_video) {
 		pthread_mutex_lock(&core_mx);
 		
@@ -2859,7 +2999,6 @@ static void video_refresh_callback(const void *data, unsigned width, unsigned he
 		}
 		
 		memcpy(backbuffer->pixels, data, backbuffer->h*backbuffer->pitch);
-		
 		pthread_cond_signal(&core_rq);
 		pthread_mutex_unlock(&core_mx);
 	}
@@ -2924,6 +3063,9 @@ void Core_open(const char* core_path, const char* tag_name) {
 	struct retro_system_info info = {};
 	core.get_system_info(&info);
 	
+
+	LOG_info("Block Extract: %d", info.block_extract);
+
 	Core_getName((char*)core_path, (char*)core.name);
 	sprintf((char*)core.version, "%s (%s)", info.library_name, info.library_version);
 	strcpy((char*)core.tag, tag_name);
@@ -3165,14 +3307,13 @@ static int Menu_message(char* message, char** pairs) {
 		
 		PWR_update(&dirty, NULL, Menu_beforeSleep, Menu_afterSleep);
 		
-		if (dirty) {
-			GFX_clear(screen);
-			GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
-			GFX_blitButtonGroup(pairs, 0, screen, 1);
-			GFX_flip(screen);
-			dirty = 0;
-		}
-		else GFX_sync();
+	
+		GFX_clear(screen);
+		GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
+		GFX_blitButtonGroup(pairs, 0, screen, 1);
+		GFX_flip(screen);
+		dirty = 0;
+		
 		
 		hdmimon();
 	}
@@ -3342,7 +3483,7 @@ int OptionControls_bind(MenuList* list, int i) {
 				break;
 			}
 		}
-		GFX_sync();
+		GFX_delay();
 		hdmimon();
 	}
 	return MENU_CALLBACK_NEXT_ITEM;
@@ -3455,7 +3596,7 @@ static int OptionShortcuts_bind(MenuList* list, int i) {
 				break;
 			}
 		}
-		GFX_sync();
+		GFX_delay();
 		hdmimon();
 	}
 	return MENU_CALLBACK_NEXT_ITEM;
@@ -3737,225 +3878,223 @@ static int Menu_options(MenuList* list) {
 		
 		if (defer_menu && PAD_justReleased(BTN_MENU)) defer_menu = false;
 		
-		if (dirty) {
-			GFX_clear(screen);
-			GFX_blitHardwareGroup(screen, show_settings);
-			
-			char* desc = NULL;
-			SDL_Surface* text;
+		GFX_clear(screen);
+		GFX_blitHardwareGroup(screen, show_settings);
+		
+		char* desc = NULL;
+		SDL_Surface* text;
 
-			if (type==MENU_LIST) {
-				int mw = list->max_width;
-				if (!mw) {
-					// get the width of the widest item
-					for (int i=0; i<count; i++) {
-						MenuItem* item = &items[i];
-						int w = 0;
-						TTF_SizeUTF8(font.small, item->name, &w, NULL);
-						w += SCALE1(OPTION_PADDING*2);
-						if (w>mw) mw = w;
-					}
-					// cache the result
-					list->max_width = mw = MIN(mw, screen->w - SCALE1(PADDING *2));
-				}
-				
-				int ox = (screen->w - mw) / 2;
-				int oy = SCALE1(PADDING + PILL_SIZE);
-				int selected_row = selected - start;
-				for (int i=start,j=0; i<end; i++,j++) {
+		if (type==MENU_LIST) {
+			int mw = list->max_width;
+			if (!mw) {
+				// get the width of the widest item
+				for (int i=0; i<count; i++) {
 					MenuItem* item = &items[i];
-					SDL_Color text_color = COLOR_WHITE;
-
-					// int ox = (screen->w - w) / 2; // if we're centering these (but I don't think we should after seeing it)
-					if (j==selected_row) {
-						// move out of conditional if centering
-						int w = 0;
-						TTF_SizeUTF8(font.small, item->name, &w, NULL);
-						w += SCALE1(OPTION_PADDING*2);
-						
-						GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
-							ox,
-							oy+SCALE1(j*BUTTON_SIZE),
-							w,
-							SCALE1(BUTTON_SIZE)
-						});
-						text_color = COLOR_BLACK;
-						
-						if (item->desc) desc = item->desc;
-					}
-					text = TTF_RenderUTF8_Blended(font.small, item->name, text_color);
-					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-						ox+SCALE1(OPTION_PADDING),
-						oy+SCALE1((j*BUTTON_SIZE)+1)
-					});
-					SDL_FreeSurface(text);
+					int w = 0;
+					TTF_SizeUTF8(font.small, item->name, &w, NULL);
+					w += SCALE1(OPTION_PADDING*2);
+					if (w>mw) mw = w;
 				}
-			}
-			else if (type==MENU_FIXED) {
-				// NOTE: no need to calculate max width
-				int mw = screen->w - SCALE1(PADDING*2);
-				// int lw,rw;
-				// lw = rw = mw / 2;
-				int ox,oy;
-				ox = oy = SCALE1(PADDING);
-				oy += SCALE1(PILL_SIZE);
-				
-				int selected_row = selected - start;
-				for (int i=start,j=0; i<end; i++,j++) {
-					MenuItem* item = &items[i];
-					SDL_Color text_color = COLOR_WHITE;
-
-					if (j==selected_row) {
-						// gray pill
-						GFX_blitPill(ASSET_OPTION, screen, &(SDL_Rect){
-							ox,
-							oy+SCALE1(j*BUTTON_SIZE),
-							mw,
-							SCALE1(BUTTON_SIZE)
-						});
-					}
-					
-					if (item->value>=0) {
-						text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
-						SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-							ox + mw - text->w - SCALE1(OPTION_PADDING),
-							oy+SCALE1((j*BUTTON_SIZE)+3)
-						});
-						SDL_FreeSurface(text);
-					}
-					
-					// TODO: blit a black pill on unselected rows (to cover longer item->values?) or truncate longer item->values?
-					if (j==selected_row) {
-						// white pill
-						int w = 0;
-						TTF_SizeUTF8(font.small, item->name, &w, NULL);
-						w += SCALE1(OPTION_PADDING*2);
-						GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
-							ox,
-							oy+SCALE1(j*BUTTON_SIZE),
-							w,
-							SCALE1(BUTTON_SIZE)
-						});
-						text_color = COLOR_BLACK;
-						
-						if (item->desc) desc = item->desc;
-					}
-					text = TTF_RenderUTF8_Blended(font.small, item->name, text_color);
-					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-						ox+SCALE1(OPTION_PADDING),
-						oy+SCALE1((j*BUTTON_SIZE)+1)
-					});
-					SDL_FreeSurface(text);
-				}
-			}
-			else if (type==MENU_VAR || type==MENU_INPUT) {
-				int mw = list->max_width;
-				if (!mw) {
-					// get the width of the widest row
-					int mrw = 0;
-					for (int i=0; i<count; i++) {
-						MenuItem* item = &items[i];
-						int w = 0;
-						int lw = 0;
-						int rw = 0;
-						TTF_SizeUTF8(font.small, item->name, &lw, NULL);
-						
-						// every value list in an input table is the same
-						// so only calculate rw for the first item...
-						if (!mrw || type!=MENU_INPUT) {
-							for (int j=0; item->values[j]; j++) {
-								TTF_SizeUTF8(font.tiny, item->values[j], &rw, NULL);
-								if (lw+rw>w) w = lw+rw;
-								if (rw>mrw) mrw = rw;
-							}
-						}
-						else {
-							w = lw + mrw;
-						}
-						w += SCALE1(OPTION_PADDING*4);
-						if (w>mw) mw = w;
-					}
-					fflush(stdout);
-					// cache the result
-					list->max_width = mw = MIN(mw, screen->w - SCALE1(PADDING *2));
-				}
-				
-				int ox = (screen->w - mw) / 2;
-				int oy = SCALE1(PADDING + PILL_SIZE);
-				int selected_row = selected - start;
-				for (int i=start,j=0; i<end; i++,j++) {
-					MenuItem* item = &items[i];
-					SDL_Color text_color = COLOR_WHITE;
-
-					if (j==selected_row) {
-						// gray pill
-						GFX_blitPill(ASSET_OPTION, screen, &(SDL_Rect){
-							ox,
-							oy+SCALE1(j*BUTTON_SIZE),
-							mw,
-							SCALE1(BUTTON_SIZE)
-						});
-						
-						// white pill
-						int w = 0;
-						TTF_SizeUTF8(font.small, item->name, &w, NULL);
-						w += SCALE1(OPTION_PADDING*2);
-						GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
-							ox,
-							oy+SCALE1(j*BUTTON_SIZE),
-							w,
-							SCALE1(BUTTON_SIZE)
-						});
-						text_color = COLOR_BLACK;
-						
-						if (item->desc) desc = item->desc;
-					}
-					text = TTF_RenderUTF8_Blended(font.small, item->name, text_color);
-					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-						ox+SCALE1(OPTION_PADDING),
-						oy+SCALE1((j*BUTTON_SIZE)+1)
-					});
-					SDL_FreeSurface(text);
-					
-					if (await_input && j==selected_row) {
-						// buh
-					}
-					else if (item->value>=0) {
-						text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
-						SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-							ox + mw - text->w - SCALE1(OPTION_PADDING),
-							oy+SCALE1((j*BUTTON_SIZE)+3)
-						});
-						SDL_FreeSurface(text);
-					}
-				}
+				// cache the result
+				list->max_width = mw = MIN(mw, screen->w - SCALE1(PADDING *2));
 			}
 			
-			if (count>max_visible_options) {
-				#define SCROLL_WIDTH 24
-				#define SCROLL_HEIGHT 4
-				int ox = (screen->w - SCALE1(SCROLL_WIDTH))/2;
-				int oy = SCALE1((PILL_SIZE - SCROLL_HEIGHT) / 2);
-				if (start>0) GFX_blitAsset(ASSET_SCROLL_UP,   NULL, screen, &(SDL_Rect){ox, SCALE1(PADDING) + oy});
-				if (end<count) GFX_blitAsset(ASSET_SCROLL_DOWN, NULL, screen, &(SDL_Rect){ox, screen->h - SCALE1(PADDING + PILL_SIZE + BUTTON_SIZE) + oy});
-			}
-			
-			if (!desc && list->desc) desc = list->desc;
-			
-			if (desc) {
-				int w,h;
-				GFX_sizeText(font.tiny, desc, SCALE1(12), &w,&h);
-				GFX_blitText(font.tiny, desc, SCALE1(12), COLOR_WHITE, screen, &(SDL_Rect){
-					(screen->w - w) / 2,
-					screen->h - SCALE1(PADDING) - h,
-					w,h
+			int ox = (screen->w - mw) / 2;
+			int oy = SCALE1(PADDING + PILL_SIZE);
+			int selected_row = selected - start;
+			for (int i=start,j=0; i<end; i++,j++) {
+				MenuItem* item = &items[i];
+				SDL_Color text_color = COLOR_WHITE;
+
+				// int ox = (screen->w - w) / 2; // if we're centering these (but I don't think we should after seeing it)
+				if (j==selected_row) {
+					// move out of conditional if centering
+					int w = 0;
+					TTF_SizeUTF8(font.small, item->name, &w, NULL);
+					w += SCALE1(OPTION_PADDING*2);
+					
+					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
+						ox,
+						oy+SCALE1(j*BUTTON_SIZE),
+						w,
+						SCALE1(BUTTON_SIZE)
+					});
+					text_color = COLOR_BLACK;
+					
+					if (item->desc) desc = item->desc;
+				}
+				text = TTF_RenderUTF8_Blended(font.small, item->name, text_color);
+				SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+					ox+SCALE1(OPTION_PADDING),
+					oy+SCALE1((j*BUTTON_SIZE)+1)
 				});
+				SDL_FreeSurface(text);
+			}
+		}
+		else if (type==MENU_FIXED) {
+			// NOTE: no need to calculate max width
+			int mw = screen->w - SCALE1(PADDING*2);
+			// int lw,rw;
+			// lw = rw = mw / 2;
+			int ox,oy;
+			ox = oy = SCALE1(PADDING);
+			oy += SCALE1(PILL_SIZE);
+			
+			int selected_row = selected - start;
+			for (int i=start,j=0; i<end; i++,j++) {
+				MenuItem* item = &items[i];
+				SDL_Color text_color = COLOR_WHITE;
+
+				if (j==selected_row) {
+					// gray pill
+					GFX_blitPill(ASSET_OPTION, screen, &(SDL_Rect){
+						ox,
+						oy+SCALE1(j*BUTTON_SIZE),
+						mw,
+						SCALE1(BUTTON_SIZE)
+					});
+				}
+				
+				if (item->value>=0) {
+					text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
+					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+						ox + mw - text->w - SCALE1(OPTION_PADDING),
+						oy+SCALE1((j*BUTTON_SIZE)+3)
+					});
+					SDL_FreeSurface(text);
+				}
+				
+				// TODO: blit a black pill on unselected rows (to cover longer item->values?) or truncate longer item->values?
+				if (j==selected_row) {
+					// white pill
+					int w = 0;
+					TTF_SizeUTF8(font.small, item->name, &w, NULL);
+					w += SCALE1(OPTION_PADDING*2);
+					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
+						ox,
+						oy+SCALE1(j*BUTTON_SIZE),
+						w,
+						SCALE1(BUTTON_SIZE)
+					});
+					text_color = COLOR_BLACK;
+					
+					if (item->desc) desc = item->desc;
+				}
+				text = TTF_RenderUTF8_Blended(font.small, item->name, text_color);
+				SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+					ox+SCALE1(OPTION_PADDING),
+					oy+SCALE1((j*BUTTON_SIZE)+1)
+				});
+				SDL_FreeSurface(text);
+			}
+		}
+		else if (type==MENU_VAR || type==MENU_INPUT) {
+			int mw = list->max_width;
+			if (!mw) {
+				// get the width of the widest row
+				int mrw = 0;
+				for (int i=0; i<count; i++) {
+					MenuItem* item = &items[i];
+					int w = 0;
+					int lw = 0;
+					int rw = 0;
+					TTF_SizeUTF8(font.small, item->name, &lw, NULL);
+					
+					// every value list in an input table is the same
+					// so only calculate rw for the first item...
+					if (!mrw || type!=MENU_INPUT) {
+						for (int j=0; item->values[j]; j++) {
+							TTF_SizeUTF8(font.tiny, item->values[j], &rw, NULL);
+							if (lw+rw>w) w = lw+rw;
+							if (rw>mrw) mrw = rw;
+						}
+					}
+					else {
+						w = lw + mrw;
+					}
+					w += SCALE1(OPTION_PADDING*4);
+					if (w>mw) mw = w;
+				}
+				fflush(stdout);
+				// cache the result
+				list->max_width = mw = MIN(mw, screen->w - SCALE1(PADDING *2));
 			}
 			
-			GFX_flip(screen);
-			dirty = 0;
+			int ox = (screen->w - mw) / 2;
+			int oy = SCALE1(PADDING + PILL_SIZE);
+			int selected_row = selected - start;
+			for (int i=start,j=0; i<end; i++,j++) {
+				MenuItem* item = &items[i];
+				SDL_Color text_color = COLOR_WHITE;
+
+				if (j==selected_row) {
+					// gray pill
+					GFX_blitPill(ASSET_OPTION, screen, &(SDL_Rect){
+						ox,
+						oy+SCALE1(j*BUTTON_SIZE),
+						mw,
+						SCALE1(BUTTON_SIZE)
+					});
+					
+					// white pill
+					int w = 0;
+					TTF_SizeUTF8(font.small, item->name, &w, NULL);
+					w += SCALE1(OPTION_PADDING*2);
+					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
+						ox,
+						oy+SCALE1(j*BUTTON_SIZE),
+						w,
+						SCALE1(BUTTON_SIZE)
+					});
+					text_color = COLOR_BLACK;
+					
+					if (item->desc) desc = item->desc;
+				}
+				text = TTF_RenderUTF8_Blended(font.small, item->name, text_color);
+				SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+					ox+SCALE1(OPTION_PADDING),
+					oy+SCALE1((j*BUTTON_SIZE)+1)
+				});
+				SDL_FreeSurface(text);
+				
+				if (await_input && j==selected_row) {
+					// buh
+				}
+				else if (item->value>=0) {
+					text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
+					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+						ox + mw - text->w - SCALE1(OPTION_PADDING),
+						oy+SCALE1((j*BUTTON_SIZE)+3)
+					});
+					SDL_FreeSurface(text);
+				}
+			}
 		}
-		else GFX_sync();
+		
+		if (count>max_visible_options) {
+			#define SCROLL_WIDTH 24
+			#define SCROLL_HEIGHT 4
+			int ox = (screen->w - SCALE1(SCROLL_WIDTH))/2;
+			int oy = SCALE1((PILL_SIZE - SCROLL_HEIGHT) / 2);
+			if (start>0) GFX_blitAsset(ASSET_SCROLL_UP,   NULL, screen, &(SDL_Rect){ox, SCALE1(PADDING) + oy});
+			if (end<count) GFX_blitAsset(ASSET_SCROLL_DOWN, NULL, screen, &(SDL_Rect){ox, screen->h - SCALE1(PADDING + PILL_SIZE + BUTTON_SIZE) + oy});
+		}
+		
+		if (!desc && list->desc) desc = list->desc;
+		
+		if (desc) {
+			int w,h;
+			GFX_sizeText(font.tiny, desc, SCALE1(12), &w,&h);
+			GFX_blitText(font.tiny, desc, SCALE1(12), COLOR_WHITE, screen, &(SDL_Rect){
+				(screen->w - w) / 2,
+				screen->h - SCALE1(PADDING) - h,
+				w,h
+			});
+		}
+		
+		GFX_flip(screen);
+		dirty = 0;
+		
 		hdmimon();
 	}
 	
@@ -4236,7 +4375,10 @@ static void Menu_loop(void) {
 	PWR_warn(0);
 	if (!HAS_POWER_BUTTON) PWR_enableSleep();
 	PWR_setCPUSpeed(CPU_SPEED_MENU); // set Hz directly
-	GFX_setVsync(VSYNC_STRICT);
+
+	// why are you even doing this? Because in menu you got no audio buffer to rely on for delaying your code and your GFX_flip code does nothing
+	// so this this would run wild and instead everywhere is GFX_sync() shit to keep it all under control, what a mess!!
+	// GFX_setVsync(VSYNC_STRICT);
 	GFX_setEffect(EFFECT_NONE);
 	
 	int rumble_strength = VIB_getStrength();
@@ -4273,8 +4415,9 @@ static void Menu_loop(void) {
 	int dirty = 1;
 	int ignore_menu = 0;
 	int menu_start = 0;
-	
 	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
+
+
 	
 	while (show_menu) {
 		GFX_startFrame();
@@ -4388,147 +4531,148 @@ static void Menu_loop(void) {
 
 		PWR_update(&dirty, &show_setting, Menu_beforeSleep, Menu_afterSleep);
 		
-		if (dirty) {
-			GFX_clear(screen);
-			
+		
+		GFX_clear(screen);
+		if(!should_rotate) {
 			SDL_BlitSurface(backing, NULL, screen, NULL);
-			SDL_BlitSurface(menu.overlay, NULL, screen, NULL);
+		} 
+		
+		SDL_BlitSurface(menu.overlay, NULL, screen, NULL);
 
-			int ox, oy;
-			int ow = GFX_blitHardwareGroup(screen, show_setting);
-			int max_width = screen->w - SCALE1(PADDING * 2) - ow;
-			
-			char display_name[256];
-			int text_width = GFX_truncateText(font.large, rom_name, display_name, max_width, SCALE1(BUTTON_PADDING*2));
-			max_width = MIN(max_width, text_width);
+		int ox, oy;
+		int ow = GFX_blitHardwareGroup(screen, show_setting);
+		int max_width = screen->w - SCALE1(PADDING * 2) - ow;
+		
+		char display_name[256];
+		int text_width = GFX_truncateText(font.large, rom_name, display_name, max_width, SCALE1(BUTTON_PADDING*2));
+		max_width = MIN(max_width, text_width);
 
-			SDL_Surface* text;
-			text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
-			GFX_blitPill(ASSET_BLACK_PILL, screen, &(SDL_Rect){
-				SCALE1(PADDING),
-				SCALE1(PADDING),
-				max_width,
-				SCALE1(PILL_SIZE)
-			});
-			SDL_BlitSurface(text, &(SDL_Rect){
-				0,
-				0,
-				max_width-SCALE1(BUTTON_PADDING*2),
-				text->h
-			}, screen, &(SDL_Rect){
-				SCALE1(PADDING+BUTTON_PADDING),
-				SCALE1(PADDING+4)
-			});
-			SDL_FreeSurface(text);
+		SDL_Surface* text;
+		text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
+		GFX_blitPill(ASSET_BLACK_PILL, screen, &(SDL_Rect){
+			SCALE1(PADDING),
+			SCALE1(PADDING),
+			max_width,
+			SCALE1(PILL_SIZE)
+		});
+		SDL_BlitSurface(text, &(SDL_Rect){
+			0,
+			0,
+			max_width-SCALE1(BUTTON_PADDING*2),
+			text->h
+		}, screen, &(SDL_Rect){
+			SCALE1(PADDING+BUTTON_PADDING),
+			SCALE1(PADDING+4)
+		});
+		SDL_FreeSurface(text);
+		
+		if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
+		else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, 0, screen, 0);
+		GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
+		
+		// list
+		oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
+		for (int i=0; i<MENU_ITEM_COUNT; i++) {
+			char* item = menu.items[i];
+			SDL_Color text_color = COLOR_WHITE;
 			
-			if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
-			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, 0, screen, 0);
-			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
-			
-			// list
-			oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
-			for (int i=0; i<MENU_ITEM_COUNT; i++) {
-				char* item = menu.items[i];
-				SDL_Color text_color = COLOR_WHITE;
-				
-				if (i==selected) {
-					// disc change
-					if (menu.total_discs>1 && i==ITEM_CONT) {				
-						GFX_blitPill(ASSET_DARK_GRAY_PILL, screen, &(SDL_Rect){
-							SCALE1(PADDING),
-							SCALE1(oy + PADDING),
-							screen->w - SCALE1(PADDING * 2),
-							SCALE1(PILL_SIZE)
-						});
-						text = TTF_RenderUTF8_Blended(font.large, disc_name, COLOR_WHITE);
-						SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-							screen->w - SCALE1(PADDING + BUTTON_PADDING) - text->w,
-							SCALE1(oy + PADDING + 4)
-						});
-						SDL_FreeSurface(text);
-					}
-					
-					TTF_SizeUTF8(font.large, item, &ow, NULL);
-					ow += SCALE1(BUTTON_PADDING*2);
-					
-					// pill
-					GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+			if (i==selected) {
+				// disc change
+				if (menu.total_discs>1 && i==ITEM_CONT) {				
+					GFX_blitPill(ASSET_DARK_GRAY_PILL, screen, &(SDL_Rect){
 						SCALE1(PADDING),
-						SCALE1(oy + PADDING + (i * PILL_SIZE)),
-						ow,
+						SCALE1(oy + PADDING),
+						screen->w - SCALE1(PADDING * 2),
 						SCALE1(PILL_SIZE)
 					});
-					text_color = COLOR_BLACK;
-				}
-				else {
-					// shadow
-					text = TTF_RenderUTF8_Blended(font.large, item, COLOR_BLACK);
+					text = TTF_RenderUTF8_Blended(font.large, disc_name, COLOR_WHITE);
 					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-						SCALE1(2 + PADDING + BUTTON_PADDING),
-						SCALE1(1 + PADDING + oy + (i * PILL_SIZE) + 4)
+						screen->w - SCALE1(PADDING + BUTTON_PADDING) - text->w,
+						SCALE1(oy + PADDING + 4)
 					});
 					SDL_FreeSurface(text);
 				}
 				
-				// text
-				text = TTF_RenderUTF8_Blended(font.large, item, text_color);
+				TTF_SizeUTF8(font.large, item, &ow, NULL);
+				ow += SCALE1(BUTTON_PADDING*2);
+				
+				// pill
+				GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+					SCALE1(PADDING),
+					SCALE1(oy + PADDING + (i * PILL_SIZE)),
+					ow,
+					SCALE1(PILL_SIZE)
+				});
+				text_color = COLOR_BLACK;
+			}
+			else {
+				// shadow
+				text = TTF_RenderUTF8_Blended(font.large, item, COLOR_BLACK);
 				SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-					SCALE1(PADDING + BUTTON_PADDING),
-					SCALE1(oy + PADDING + (i * PILL_SIZE) + 4)
+					SCALE1(2 + PADDING + BUTTON_PADDING),
+					SCALE1(1 + PADDING + oy + (i * PILL_SIZE) + 4)
 				});
 				SDL_FreeSurface(text);
 			}
 			
-			// slot preview
-			if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
-				#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
-				#define PAGINATION_HEIGHT 6
-				// unscaled
-				int hw = DEVICE_WIDTH / 2;
-				int hh = DEVICE_HEIGHT / 2;
-				int pw = hw + SCALE1(WINDOW_RADIUS*2);
-				int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
-				ox = DEVICE_WIDTH - pw - SCALE1(PADDING);
-				oy = (DEVICE_HEIGHT - ph) / 2;
-				
-				// window
-				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
-				ox += SCALE1(WINDOW_RADIUS);
-				oy += SCALE1(WINDOW_RADIUS);
-				
-				if (menu.preview_exists) { // has save, has preview
-					// lotta memory churn here
-					SDL_Surface* bmp = IMG_Load(menu.bmp_path);
-					SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
-					
-					// LOG_info("raw_preview %ix%i\n", raw_preview->w,raw_preview->h);
-					
-					SDL_FillRect(preview, NULL, 0);
-					Menu_scale(raw_preview, preview);
-					SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){ox,oy});
-					SDL_FreeSurface(raw_preview);
-					SDL_FreeSurface(bmp);
-				}
-				else {
-					SDL_Rect preview_rect = {ox,oy,hw,hh};
-					SDL_FillRect(screen, &preview_rect, 0);
-					if (menu.save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
-					else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
-				}
-				
-				// pagination
-				ox += (pw-SCALE1(15*MENU_SLOT_COUNT))/2;
-				oy += hh+SCALE1(WINDOW_RADIUS);
-				for (int i=0; i<MENU_SLOT_COUNT; i++) {
-					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15),oy});
-					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});
-				}
-			}
-	
-			GFX_flip(screen);
-			dirty = 0;
+			// text
+			text = TTF_RenderUTF8_Blended(font.large, item, text_color);
+			SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+				SCALE1(PADDING + BUTTON_PADDING),
+				SCALE1(oy + PADDING + (i * PILL_SIZE) + 4)
+			});
+			SDL_FreeSurface(text);
 		}
-		else GFX_sync();
+		
+		// slot preview
+		if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
+			#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
+			#define PAGINATION_HEIGHT 6
+			// unscaled
+			int hw = DEVICE_WIDTH / 2;
+			int hh = DEVICE_HEIGHT / 2;
+			int pw = hw + SCALE1(WINDOW_RADIUS*2);
+			int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
+			ox = DEVICE_WIDTH - pw - SCALE1(PADDING);
+			oy = (DEVICE_HEIGHT - ph) / 2;
+			
+			// window
+			GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
+			ox += SCALE1(WINDOW_RADIUS);
+			oy += SCALE1(WINDOW_RADIUS);
+			
+			if (menu.preview_exists) { // has save, has preview
+				// lotta memory churn here
+				SDL_Surface* bmp = IMG_Load(menu.bmp_path);
+				SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
+				
+				// LOG_info("raw_preview %ix%i\n", raw_preview->w,raw_preview->h);
+				
+				SDL_FillRect(preview, NULL, 0);
+				Menu_scale(raw_preview, preview);
+				SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){ox,oy});
+				SDL_FreeSurface(raw_preview);
+				SDL_FreeSurface(bmp);
+			}
+			else {
+				SDL_Rect preview_rect = {ox,oy,hw,hh};
+				SDL_FillRect(screen, &preview_rect, 0);
+				if (menu.save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
+				else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
+			}
+			
+			// pagination
+			ox += (pw-SCALE1(15*MENU_SLOT_COUNT))/2;
+			oy += hh+SCALE1(WINDOW_RADIUS);
+			for (int i=0; i<MENU_SLOT_COUNT; i++) {
+				if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15),oy});
+				else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});
+			}
+		}
+
+		GFX_flip(screen);
+		dirty = 0;
+
 		hdmimon();
 	}
 	
@@ -4550,7 +4694,6 @@ static void Menu_loop(void) {
 		setOverclock(overclock); // restore overclock value
 		if (rumble_strength) VIB_setStrength(rumble_strength);
 		
-		GFX_setVsync(prevent_tearing);
 		if (!HAS_POWER_BUTTON) PWR_disableSleep();
 
 		if (thread_video) {
@@ -4743,9 +4886,12 @@ int main(int argc , char* argv[]) {
 	Special_init(); // after config
 	
 	sec_start = SDL_GetTicks();
+	
 	while (!quit) {
+
 		GFX_startFrame();
-		
+	
+	
 		if (!thread_video) {
 			core.run();
 			limitFF();

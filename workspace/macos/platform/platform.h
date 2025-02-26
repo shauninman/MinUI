@@ -37,12 +37,14 @@
 
 ///////////////////////////////
 
+// see https://wiki.libsdl.org/SDL2/SDL_Scancode
+
 #define CODE_UP			82
 #define CODE_DOWN		81
 #define CODE_LEFT		80
 #define CODE_RIGHT		79
 
-#define CODE_SELECT		52
+#define CODE_SELECT		53
 #define CODE_START		40
 
 #define CODE_A			22
@@ -103,9 +105,9 @@
 
 ///////////////////////////////
 
-#define FIXED_SCALE 	3
-#define FIXED_WIDTH		1024
-#define FIXED_HEIGHT	768
+#define FIXED_SCALE 	2
+#define FIXED_WIDTH		640
+#define FIXED_HEIGHT	480
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
@@ -119,14 +121,16 @@
 
 ///////////////////////////////
 
-#define MAIN_ROW_COUNT 7
-#define PADDING 5
+#define MAIN_ROW_COUNT 6
+#define PADDING 10
 
 ///////////////////////////////
 
 #define SDCARD_PATH "/Users/shauninman/Projects/Personal/MinUI/workspace/macos/FAKESD"
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
 
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.0
 ///////////////////////////////
 
 #endif

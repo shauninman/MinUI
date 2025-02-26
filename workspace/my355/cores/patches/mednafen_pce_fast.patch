@@ -1,0 +1,25 @@
+diff --git forkSrcPrefix/Makefile forkDstPrefix/Makefile
+index 5b54403d915e46cb0df8f428355665fbe26e05b4..f72733d9689aa78795ce8b9d777b0ab9fcc5b65e 100644
+--- forkSrcPrefix/Makefile
++++ forkDstPrefix/Makefile
+@@ -380,6 +380,20 @@ else ifeq ($(platform), miyoo)
+    CXXFLAGS += -std=c++11
+    CFLAGS += -std=gnu11
+ 
++# MIYOO FLIP
++else ifeq ($(platform), my355)
++   TARGET := $(TARGET_NAME)_libretro.so
++   CC = $(CROSS_COMPILE)gcc
++   CXX = $(CROSS_COMPILE)g++
++   AR = $(CROSS_COMPILE)ar
++   fpic := -fPIC
++   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
++   LDFLAGS += -lrt
++   FLAGS += -mcpu=cortex-a55 -mtune=cortex-a55 -march=armv8.2-a 
++   FLAGS += -fomit-frame-pointer -ffast-math -D_GNU_SOURCE
++   CXXFLAGS += -std=c++11
++   CFLAGS += -std=gnu11
++
+ # Windows MSVC 2017 all architectures
+ else ifneq (,$(findstring windows_msvc2017,$(platform)))
+ 

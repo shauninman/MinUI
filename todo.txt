@@ -1,26 +1,43 @@
 Changes
 
-
 BASE
 
-- rg35xxplus: added initial support for RG34xx
-- rg35xxplus: merged RG CubeXX into rg35xxplus
-- rg35xxplus: added independent settings for HDMI
+- tg3040: removed (merged into tg5040)
+- tg5040: improved audio quality (thanks maxbize)
+- miyoomini: added rtc support, see README.txt (thanks sinedied)
+- all: renamed "Thread Core" to "Prioritize Audio" (describe utility not implementation)
 
 EXTRAS
 
-- rg35xxplus: initial support for RG34xx
-- rg40xxcube: removed (merged into rg35xxplus)
+- tg3040: removed (merged into tg5040)
+- tg5040: added Files.pak
+- rg35xxplus: added Swap Menu.pak (for 34xx, swaps MENU and SELECT buttons)
 
 ---
 
-can I use shared memory to start an SDL OpenGL context 
-	to avoid having to spin up and break down everything on each launch?
+minarch
+	can I ignore shortcut combo key input when shortcut is triggered?
+		eg. PAD_cancel(BTN_NAME)
+		the trick is ignoring the release
 
-all
-	create a nop setterm file in /.system/<device>/bin to silence errors from system() calls
+h700/a133
+	the power/shutdown issues are becoming a nuisance
+		ry said it fake powered down during auto-poweroff?
+		also affects paks that attempt to reboot, eg.
+			panel fix
+			swap keys
+		it must have something to do with some control loop not being broken properly
+			caused by systemd restarting the ui loop?
+			check dmenu.bin or dmenu_ln
+				no loop, just calls MinUI.pak/launch.sh directly
+				check higher, what's changed?
+			check PLAT_powerOff()
+				looks fine (breaks MinUI loop and exits)
 
 it's time to retire some supported devices
+	this will require some finesse for the Miyoo and Trimui devices
+		move static boot content from workspace/$@ to skeleton/BOOT
+		update makefile
 	devices running SDL1.2 or sub-480
 		gkdpixel (no longer manufactured?)
 		trimuismart
@@ -32,30 +49,53 @@ it's time to retire some supported devices
 		magicmini (by own zero28?)
 	what would this look like if I nuked 32bit archs?
 		h700 has 64bit libs right?
+		my282
 		
 	finish updating README (don't forget BASE readme!)
-
-rg34xx
-	power button is kinda wonky
-		definitely wonky
-		doesn't always turn off
-		just had it turn off when I tried to wake it from sleep
-			like it got stuck depressed?
-			I've had the screen turn back on after showing the powering off message in menu
-
 	
-minput
-	seems to be designed top,left aligned for 640x480
+tg_040
+	can I build my own version of SDL2 to speed up launch times?
+		yes but no, built, no change in launch time :\
+		currently just getting the rendering context going takes ~500ms versus ~200ms on other devices
+		is it a ram speed issue?
+	try to reproduce hung shutdowns and fix
+		doesn't have or use a custom bin/shutdown
 
+boot
+	another potential way to identify devices
+		echo `cat /proc/device-tree/model`
+
+my355
+	firmware update
+		https://www.lomiyoo.com/en/gujianxiazai.html
+		test + bootlogo
+		
+	minui can't install if
+		MinUI is aleady installed on the card and the tmp_update hook has already been installed previously
+		solution
+			delete .tmp_update and reinstall
+			
+	undone
+		+ headphone jack
+			- mute is static noise (same on stock)
+			- so left at 0 volume instead
+		+ rumble
+			- feels awful
+		- hdmi
+			- stock requires reboot to load hdmi dtb
+			- screen turns off
+			- audio stays on device?
+			- almost works
+				- minui launches fine
+				- minarch running at 30fps
+				- exiting to minui displays correctly until first dirty
+					- then padding changes to 640x480 style
+					- who cares
+				
 h700
 	video says 64bit system, why is MinUI using 32bit libraries then?
 	create new 64bit toolchain?
 	based on debian bullseye? (base on the magic mini toolchain or old tg5040?)
-
-my282
-	proper way to kill wifi might be
-		/etc/rc.d/S20network down
-		doesn't seem to be working (on brick)
 
 rg_xx
 	gbc runs poorly on the cubexx with patched panel
@@ -64,26 +104,6 @@ rg_xx
 			but the change is so extreme my patching method can't handle it
 			(because of the simple way I fudge the checksum...)
 	
-	usb controller
-		look into SDL2 controller API
-		stock supports bluetooth right? how?
-			enabling bluetooth via stock breaks wifi on MinUI
-	
-tg_040
-	overclocking during unzipping update had no effect...
-	properly disable wifi/bluetooth on boot (this will break ten's wifi pack without updates)
-		rfkill block bluetooth
-		rfkill block wifi
-		killall udhcpc
-	enable it
-		rfkill unblock wifi
-		/etc/init.d/wpa_supplicant start
-		udhcpc -i wlan0
-	disable it
-		/etc/init.d/wpa_supplicant stop
-		rfkill block wifi
-		killall udhcpc
-
 screen scaling + screen effect
 	aspect + grid on cubexx has grid alignment issues
 		even if aspect equals integer
@@ -124,9 +144,12 @@ next
 				tg3040
 				tg5040
 				trimuismart
-			where fonts and bunled libs aren't available yet
+			where fonts and bundled libs aren't available yet
 		
-	magicmini has no intel toolchain
+	no intel toolchain
+		magicmini 
+		zero28
+		my355
 	
 	slow buildroot evtest
 		https://discord.com/channels/741895796315914271/1232969624417730630/1284606079614849084
@@ -169,9 +192,6 @@ next
 			so we can only detect headphone change events not initial state
 				which makes separate speaker/headphone volumes useless RIP
 				
-		reduce min brightness
-			might require kernel hacking
-			added software stopgap
 		audio is choppy in places
 			even after 400 sample fix
 		
@@ -213,6 +233,7 @@ next
 			requires show.elf
 		limit option name replacements based on core lib name
 		noui
+			https://gist.github.com/shauninman/20d59da8621f79ff65ad561b7ed2b6f4
 			quit doesn't work as expected on trimuismart
 			possibly because of absense of shutdown?
 	h700

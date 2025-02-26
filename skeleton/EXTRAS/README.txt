@@ -51,11 +51,16 @@ Open "wifi.txt" in a plain text editor and enter your network name and password 
 Copy "Wi-Fi.pak" to "/Tools/rgb30/" on your SD card. The first time you open the pak (or any time you change the contents of "wifi.txt") it will update the network name and password then connect. Subsequent launches will toggle wi-fi on and off. Wi-fi will drain the battery so it's best to only enable it when you plan to use it and disable it when you're done. Your Wi-fi state persists across reboots.
 
 ----------------------------------------
-Remove Loading.pak (Miyoo A30-only)
+Remove Loading.pak (Miyoo A30)
 
 This pak removes the "LOADING" text that appears between the boot logo and the main interface when powering on. It requires patching nand memory to modify the otherwise read-only root file system. It takes around 5 minutes to complete. While not required it is a very good idea to be connected to power while performing this operation. Please be patient and do not power off the device before it completes.
 
 ----------------------------------------
-Remove Loading.pak (Trimui Smart Pro-only)
+Remove Loading.pak (Trimui Smart Pro and Brick)
 
 This pak removes the "LOADING" text that appears between the boot logo and the main interface when powering on. Compared to the A-30 this is a minimally invasive procedure. Nothing to worry about.
+
+----------------------------------------
+Swap Menu.pak (RG34XX)
+
+This pak swaps the MENU and SELECT button at a system level to make MENU more accessible. Launch the pak then reboot. Relaunch the pak and reboot to undo the change.

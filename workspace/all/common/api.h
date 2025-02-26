@@ -49,6 +49,9 @@ void LOG_note(int level, const char* fmt, ...);
 
 #define FALLBACK_IMPLEMENTATION __attribute__((weak)) // used if platform doesn't provide an implementation
 
+#ifndef SCREEN_FPS
+#define SCREEN_FPS 60.0
+#endif
 ///////////////////////////////
 
 extern uint32_t RGB_WHITE;
@@ -56,6 +59,16 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
+extern float currentratio;
+extern int currentbufferfree;
+extern int currentframecount;
+extern double currentfps;
+extern double currentreqfps;
+extern float currentbufferms;
+extern int currentbuffersize;
+extern int currentsampleratein;
+extern int currentsamplerateout;
+extern int should_rotate;
 
 enum {
 	ASSET_WHITE_PILL,
@@ -88,6 +101,8 @@ enum {
 	ASSET_SCROLL_DOWN,
 	
 	ASSET_WIFI,
+	
+	ASSET_COUNT,
 };
 
 typedef struct GFX_Fonts {
@@ -155,9 +170,11 @@ int GFX_hdmiChanged(void);
 #define GFX_clearAll PLAT_clearAll // (void)
 
 void GFX_startFrame(void);
+void audioFPS(void);
 void GFX_flip(SDL_Surface* screen);
 #define GFX_supportsOverscan PLAT_supportsOverscan // (void)
 void GFX_sync(void); // call this to maintain 60fps when not calling GFX_flip() this frame
+void GFX_delay(void); // gfx_sync() is only for everywhere where there is no audio buffer to rely on for delaying, stupid so doing gfx_delay() for like waiting for input loop in binding menu. Need to remove gfx_sync() everwhere eventually
 void GFX_quit(void);
 
 enum {
@@ -193,7 +210,7 @@ int GFX_blitButtonGroup(char** hints, int primary, SDL_Surface* dst, int align_r
 
 void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h);
 void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect);
-
+void GFX_setAmbientColor();
 ///////////////////////////////
 
 typedef struct SND_Frame {
@@ -201,9 +218,26 @@ typedef struct SND_Frame {
 	int16_t right;
 } SND_Frame;
 
+typedef struct {
+	SND_Frame* frames;
+	int frame_count;
+} ResampledFrames;
+
 void SND_init(double sample_rate, double frame_rate);
 size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count);
 void SND_quit(void);
+void SND_setQuality(int quality);
+
+///////////////////////////////
+
+typedef struct LID_Context {
+	int has_lid;
+	int is_open;
+} LID_Context;
+extern LID_Context lid;
+
+void PLAT_initLid(void);
+int PLAT_lidChanged(int* state);
 
 ///////////////////////////////
 
@@ -297,6 +331,7 @@ int PLAT_shouldWake(void);
 
 SDL_Surface* PLAT_initVideo(void);
 void PLAT_quitVideo(void);
+uint32_t PLAT_get_dominant_color(void);
 void PLAT_clearVideo(SDL_Surface* screen);
 void PLAT_clearAll(void);
 void PLAT_setVsync(int vsync);

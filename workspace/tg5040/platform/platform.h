@@ -9,6 +9,10 @@
 
 ///////////////////////////////
 
+extern int is_brick;
+
+///////////////////////////////
+
 #define BUTTON_UP		BUTTON_NA
 #define BUTTON_DOWN		BUTTON_NA
 #define BUTTON_LEFT		BUTTON_NA
@@ -83,13 +87,13 @@
 #define JOY_R1			5
 #define JOY_L2			JOY_NA
 #define JOY_R2			JOY_NA
-#define JOY_L3			JOY_NA
-#define JOY_R3			JOY_NA
+#define JOY_L3			(is_brick?9:JOY_NA)
+#define JOY_R3			(is_brick?10:JOY_NA)
 
 #define JOY_MENU		8
 #define JOY_POWER		102
-#define JOY_PLUS		128
-#define JOY_MINUS		129
+#define JOY_PLUS		(is_brick?14:128)
+#define JOY_MINUS		(is_brick?13:129)
 
 ///////////////////////////////
 
@@ -108,34 +112,32 @@
 #define BTN_WAKE 			BTN_POWER
 #define BTN_MOD_VOLUME 		BTN_NONE
 #define BTN_MOD_BRIGHTNESS 	BTN_MENU
+#define BTN_MOD_COLORTEMP 	BTN_SELECT
 #define BTN_MOD_PLUS 		BTN_PLUS
 #define BTN_MOD_MINUS 		BTN_MINUS
 
 ///////////////////////////////
 
-#define FIXED_SCALE 	2
-#define FIXED_WIDTH		1280
-#define FIXED_HEIGHT	720
+#define FIXED_SCALE 	(is_brick?3:2)
+#define FIXED_WIDTH		(is_brick?1024:1280)
+#define FIXED_HEIGHT	(is_brick?768:720)
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
 #define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
 
-// #define HAS_HDMI	1
-// #define HDMI_WIDTH 	1280
-// #define HDMI_HEIGHT 720
-// #define HDMI_PITCH 	(HDMI_WIDTH * FIXED_BPP)
-// #define HDMI_SIZE	(HDMI_PITCH * HDMI_HEIGHT)
-
 ///////////////////////////////
 
-#define MAIN_ROW_COUNT 8
-#define PADDING 40
+#define MAIN_ROW_COUNT (is_brick?7:8)
+#define PADDING (is_brick?5:40)
 
 ///////////////////////////////
 
 #define SDCARD_PATH "/mnt/SDCARD"
-#define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
+#define MUTE_VOLUME_RAW 0
+
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.235
 
 ///////////////////////////////
 

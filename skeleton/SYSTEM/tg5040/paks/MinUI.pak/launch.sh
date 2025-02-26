@@ -32,6 +32,11 @@ mkdir -p "$USERDATA_PATH"
 mkdir -p "$LOGS_PATH"
 mkdir -p "$SHARED_USERDATA_PATH/.minui"
 
+export TRIMUI_MODEL=`strings /usr/trimui/bin/MainUI | grep ^Trimui`
+if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
+	export DEVICE="brick"
+fi
+
 #######################################
 
 #PD11 pull high for VCC-5v
@@ -44,22 +49,20 @@ echo 227 > /sys/class/gpio/export
 echo -n out > /sys/class/gpio/gpio227/direction
 echo -n 0 > /sys/class/gpio/gpio227/value
 
-#Left/Right Pad PD14/PD18
-echo 110 > /sys/class/gpio/export
-echo -n out > /sys/class/gpio/gpio110/direction
-echo -n 1 > /sys/class/gpio/gpio110/value
+if [ "$TRIMUI_MODEL" = "Trimui Smart Pro" ]; then
+	#Left/Right Pad PD14/PD18
+	echo 110 > /sys/class/gpio/export
+	echo -n out > /sys/class/gpio/gpio110/direction
+	echo -n 1 > /sys/class/gpio/gpio110/value
 
-echo 114 > /sys/class/gpio/export
-echo -n out > /sys/class/gpio/gpio114/direction
-echo -n 1 > /sys/class/gpio/gpio114/value
+	echo 114 > /sys/class/gpio/export
+	echo -n out > /sys/class/gpio/gpio114/direction
+	echo -n 1 > /sys/class/gpio/gpio114/value
+fi
 
 #DIP Switch PH19
 echo 243 > /sys/class/gpio/export
 echo -n in > /sys/class/gpio/gpio243/direction
-
-export LD_LIBRARY_PATH=/usr/trimui/lib
-cd /usr/trimui/bin
-./trimui_inputd &
 
 #######################################
 
@@ -68,6 +71,13 @@ export PATH=$SYSTEM_PATH/bin:/usr/trimui/bin:$PATH
 
 # leds_off
 echo 0 > /sys/class/led_anim/max_scale
+if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
+	echo 0 > /sys/class/led_anim/max_scale_lr
+	echo 0 > /sys/class/led_anim/max_scale_f1f2
+fi
+
+# start stock gpio input daemon
+trimui_inputd &
 
 echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
@@ -75,9 +85,11 @@ CPU_SPEED_PERF=2000000
 echo $CPU_SPEED_PERF > $CPU_PATH
 
 # disable internet stuff
+rfkill block bluetooth
+rfkill block wifi
+killall udhcpc
 killall MtpDaemon
-killall wpa_supplicant
-ifconfig wlan0 down
+/etc/init.d/wpa_supplicant stop # not sure this is working
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
 

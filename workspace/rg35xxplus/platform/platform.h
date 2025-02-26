@@ -9,6 +9,12 @@
 
 ///////////////////////////////
 
+extern int is_cubexx;
+extern int is_rg34xx;
+extern int on_hdmi;
+
+///////////////////////////////
+
 #define	BUTTON_UP		BUTTON_NA
 #define	BUTTON_DOWN		BUTTON_NA
 #define	BUTTON_LEFT		BUTTON_NA
@@ -101,10 +107,6 @@
 
 ///////////////////////////////
 
-extern int is_cubexx;
-extern int is_rg34xx;
-extern int on_hdmi;
-
 #define FIXED_SCALE 	2
 #define FIXED_WIDTH		(is_cubexx?720:(is_rg34xx?720:640))
 #define FIXED_HEIGHT	(is_cubexx?720:480)
@@ -136,6 +138,8 @@ extern int on_hdmi;
 #define HAS_NEON
 #define SAMPLES 400 // fix for (most) fceumm underruns
 
+// this should be set to the devices native screen refresh rate
+#define SCREEN_FPS 60.0
 ///////////////////////////////
 
 #endif

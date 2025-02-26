@@ -20,8 +20,12 @@
 #define VOLUME_MAX 		20
 #define BRIGHTNESS_MIN 	0
 #define BRIGHTNESS_MAX 	10
+#define COLORTEMP_MIN 	0
+#define COLORTEMP_MAX 	40
 
-#define CODE_MENU		316
+#define CODE_MENU0		314
+#define CODE_MENU1		315
+#define CODE_MENU2		316
 #define CODE_PLUS		115
 #define CODE_MINUS		114
 #define CODE_MUTE		1
@@ -57,22 +61,21 @@ static void* watchMute(void *arg) {
 	is_muted = was_muted = getInt(MUTE_STATE_PATH);
 	SetMute(is_muted);
 	
-	while(1) {
-		usleep(200000); // 5 times per second
-		
-		is_muted = getInt(MUTE_STATE_PATH);
-		if (was_muted!=is_muted) {
-			was_muted = is_muted;
-			SetMute(is_muted);
-		}
+
+	is_muted = getInt(MUTE_STATE_PATH);
+	if (was_muted!=is_muted) {
+		was_muted = is_muted;
+		SetMute(is_muted);
 	}
+	
 	
 	return 0;
 }
 
 int main (int argc, char *argv[]) {
 	InitSettings();
-	pthread_create(&mute_pt, NULL, &watchMute, NULL);
+	// pthread_create(&mute_pt, NULL, &watchMute, NULL);
+
 	
 	char path[32];
 	for (int i=0; i<INPUT_COUNT; i++) {
@@ -83,6 +86,7 @@ int main (int argc, char *argv[]) {
 	uint32_t input;
 	uint32_t val;
 	uint32_t menu_pressed = 0;
+	uint32_t menu2_pressed = 0;
 	
 	uint32_t up_pressed = 0;
 	uint32_t up_just_pressed = 0;
@@ -102,6 +106,7 @@ int main (int argc, char *argv[]) {
 	ignore = 0;
 	
 	while (1) {
+		// watchMute();
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;
 		if (now-then>1000) ignore = 1; // ignore input that arrived during sleep
@@ -125,9 +130,11 @@ int main (int argc, char *argv[]) {
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
 				printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
 				switch (ev.code) {
-					case CODE_MENU:
+					case CODE_MENU2:
 						menu_pressed = val;
 					break;
+					case CODE_MENU0:
+						menu2_pressed = val;
 					break;
 					case CODE_PLUS:
 						up_pressed = up_just_pressed = val;
@@ -145,6 +152,7 @@ int main (int argc, char *argv[]) {
 		
 		if (ignore) {
 			menu_pressed = 0;
+			menu2_pressed = 0;
 			up_pressed = up_just_pressed = 0;
 			down_pressed = down_just_pressed = 0;
 			up_repeat_at = 0;
@@ -156,6 +164,13 @@ int main (int argc, char *argv[]) {
 				printf("brightness up\n"); fflush(stdout);
 				val = GetBrightness();
 				if (val<BRIGHTNESS_MAX) SetBrightness(++val);
+			}
+			else if (menu2_pressed) {
+				printf("color temp up %i\n",val); fflush(stdout);
+				val = GetColortemp();
+				if (val<COLORTEMP_MAX) {
+					SetColortemp(++val);
+				}
 			}
 			else {
 				printf("volume up\n"); fflush(stdout);
@@ -169,9 +184,16 @@ int main (int argc, char *argv[]) {
 		
 		if (down_just_pressed || (down_pressed && now>=down_repeat_at)) {
 			if (menu_pressed) {
-				printf("brightness down\n"); fflush(stdout);
+				printf("color temp down %i\n",val); fflush(stdout);
 				val = GetBrightness();
 				if (val>BRIGHTNESS_MIN) SetBrightness(--val);
+			}
+			else if (menu2_pressed) {
+				printf("color temp donw\n"); fflush(stdout);
+				val = GetColortemp();
+				if (val>COLORTEMP_MIN) {
+					SetColortemp(--val);
+				}
 			}
 			else {
 				printf("volume down\n"); fflush(stdout);

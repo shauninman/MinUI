@@ -76,10 +76,6 @@ bump() {
 	show ./workspace/tg5040/other/unzip60
 	cores tg5040
 	
-	tell TG3040 # just copied from tg5040
-	show ./workspace/tg5040/other/unzip60
-	cores tg5040
-
 	tell M17
 	cores m17
 	
@@ -95,11 +91,23 @@ bump() {
 	
 	tell MY282
 	show ./workspace/my282/other/unzip60
+	show ./workspace/my282/other/DinguxCommander-sdl2
 	cores rg35xx # just copied from normal rg35xx
 	
 	tell MAGICMINI
 	show ./workspace/magicmini/other/351files
 	cores magicmini
+	
+	tell ZERO28
+	show ./workspace/zero28/other/DinguxCommander-sdl2
+	cores tg5040 # just copied from tg5040
+	
+	tell MY355
+	show ./workspace/my355/other/evtest
+	show ./workspace/my355/other/mkbootimg
+	show ./workspace/my355/other/rsce-go
+	show ./workspace/my355/other/DinguxCommander-sdl2
+	cores my355
 	
 	tell CHECK
 	echo https://github.com/USER/REPO/compare/HASH...HEAD

@@ -5,12 +5,15 @@ void InitSettings(void);
 void QuitSettings(void);
 
 int GetBrightness(void);
+int GetColortemp(void);
 int GetVolume(void);
 
 void SetRawBrightness(int value); // 0-255
-void SetRawVolume(int value); // 0-160
+void SetRawColortemp(int value); // 0-255
+void SetRawVolume(int value); // 0-100
 
 void SetBrightness(int value); // 0-10
+void SetColortemp(int value); // 0-10
 void SetVolume(int value); // 0-20
 
 int GetJack(void);

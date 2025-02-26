@@ -18,6 +18,8 @@
 
 #include "scaler.h"
 
+int is_brick = 0;
+
 ///////////////////////////////
 
 static SDL_Joystick *joystick;
@@ -54,49 +56,54 @@ static int device_height;
 static int device_pitch;
 
 SDL_Surface* PLAT_initVideo(void) {
+	char* device = getenv("DEVICE");
+	is_brick = exactMatch("brick", device);
+	// LOG_info("DEVICE: %s is_brick: %i\n", device, is_brick);
+	
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
-	SDL_version compiled;
-	SDL_version linked;
-	SDL_VERSION(&compiled);
-	SDL_GetVersion(&linked);
-	LOG_info("Compiled SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
-	LOG_info("Linked SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
-	
-	LOG_info("Available video drivers:\n");
-	for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
-		LOG_info("- %s\n", SDL_GetVideoDriver(i));
-	}
-	LOG_info("Current video driver: %s\n", SDL_GetCurrentVideoDriver());
-	
-	LOG_info("Available render drivers:\n");
-	for (int i=0; i<SDL_GetNumRenderDrivers(); i++) {
-		SDL_RendererInfo info;
-		SDL_GetRenderDriverInfo(i,&info);
-		LOG_info("- %s\n", info.name);
-	}
-	
-	LOG_info("Available display modes:\n");
-	SDL_DisplayMode mode;
-	for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
-		SDL_GetDisplayMode(0, i, &mode);
-		LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
-	}
-	SDL_GetCurrentDisplayMode(0, &mode);
-	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// SDL_version compiled;
+	// SDL_version linked;
+	// SDL_VERSION(&compiled);
+	// SDL_GetVersion(&linked);
+	// LOG_info("Compiled SDL version %d.%d.%d ...\n", compiled.major, compiled.minor, compiled.patch);
+	// LOG_info("Linked SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+	//
+	// LOG_info("Available video drivers:\n");
+	// for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
+	// 	LOG_info("- %s\n", SDL_GetVideoDriver(i));
+	// }
+	// LOG_info("Current video driver: %s\n", SDL_GetCurrentVideoDriver());
+	//
+	// LOG_info("Available render drivers:\n");
+	// for (int i=0; i<SDL_GetNumRenderDrivers(); i++) {
+	// 	SDL_RendererInfo info;
+	// 	SDL_GetRenderDriverInfo(i,&info);
+	// 	LOG_info("- %s\n", info.name);
+	// }
+	//
+	// LOG_info("Available display modes:\n");
+	// SDL_DisplayMode mode;
+	// for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
+	// 	SDL_GetDisplayMode(0, i, &mode);
+	// 	LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// }
+	// SDL_GetCurrentDisplayMode(0, &mode);
+	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
-	
-	SDL_RendererInfo info;
-	SDL_GetRendererInfo(vid.renderer, &info);
-	LOG_info("Current render driver: %s\n", info.name);
+	// SDL_RendererInfo info;
+	// SDL_GetRendererInfo(vid.renderer, &info);
+	// LOG_info("Current render driver: %s\n", info.name);
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
+	SDL_SetHint(SDL_HINT_RENDER_DRIVER,"opengl");
+	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION,"1");
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
 	vid.target	= NULL; // only needed for non-native sizes
 	
@@ -116,6 +123,59 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	return vid.screen;
 }
+
+
+uint32_t PLAT_get_dominant_color() {
+    if (!vid.screen) {
+        fprintf(stderr, "Error: vid.screen is NULL.\n");
+        return 0;
+    }
+
+    uint32_t *pixels = (uint32_t *)vid.screen->pixels;
+    if (!pixels) {
+        fprintf(stderr, "Error: Unable to access pixel data.\n");
+        return 0;
+    }
+
+    int width = vid.screen->w;
+    int height = vid.screen->h;
+    int pixel_count = width * height;
+
+    SDL_PixelFormat *format = vid.screen->format;
+    if (!format) {
+        fprintf(stderr, "Error: Unable to access pixel format.\n");
+        return 0;
+    }
+
+    uint8_t r, g, b;
+
+    // Use dynamic memory allocation for the histogram to avoid stack overflow
+    uint32_t *color_histogram = (uint32_t *)calloc(256 * 256 * 256, sizeof(uint32_t));
+    if (!color_histogram) {
+        fprintf(stderr, "Error: Memory allocation failed.\n");
+        return 0;
+    }
+
+    for (int i = 0; i < pixel_count; i++) {
+        SDL_GetRGB(pixels[i], format, &r, &g, &b);
+        uint32_t color = (r << 16) | (g << 8) | b;
+        color_histogram[color]++;
+    }
+
+    // Find the most frequent color
+    uint32_t dominant_color = 0;
+    uint32_t max_count = 0;
+    for (int i = 0; i < 256 * 256 * 256; i++) {
+        if (color_histogram[i] > max_count) {
+            max_count = color_histogram[i];
+            dominant_color = i;
+        }
+    }
+
+    free(color_histogram);
+    return dominant_color;
+}
+
 
 static void clearVideo(void) {
 	for (int i=0; i<3; i++) {
@@ -364,80 +424,112 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
-void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	
-	if (!vid.blit) {
-		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
-		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
-		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
-		SDL_RenderPresent(vid.renderer);
-		return;
+void rotate_and_render(SDL_Renderer* renderer, SDL_Texture* texture, SDL_Rect* src_rect, SDL_Rect* dst_rect) {
+	int degrees = should_rotate < 3 ? 270:90;
+	if(should_rotate == 2 || should_rotate==4) {
+		SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, (double)degrees, NULL, SDL_FLIP_VERTICAL);
+	} else  {
+		SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, (double)degrees, NULL, SDL_FLIP_NONE);
 	}
-	
-	// uint32_t then = SDL_GetTicks();
-	SDL_UpdateTexture(vid.texture,NULL,vid.blit->src,vid.blit->src_p);
-	// LOG_info("blit blocked for %ims (%i,%i)\n", SDL_GetTicks()-then,vid.buffer->w,vid.buffer->h);
-	
-	SDL_Texture* target = vid.texture;
-	int x = vid.blit->src_x;
-	int y = vid.blit->src_y;
-	int w = vid.blit->src_w;
-	int h = vid.blit->src_h;
-	if (vid.sharpness==SHARPNESS_CRISP) {
-		SDL_SetRenderTarget(vid.renderer,vid.target);
-		SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
-		SDL_SetRenderTarget(vid.renderer,NULL);
-		x *= hard_scale;
-		y *= hard_scale;
-		w *= hard_scale;
-		h *= hard_scale;
-		target = vid.target;
-	}
-	
-	SDL_Rect* src_rect = &(SDL_Rect){x,y,w,h};
-	SDL_Rect* dst_rect = &(SDL_Rect){0,0,device_width,device_height};
-	if (vid.blit->aspect==0) { // native or cropped
-		// LOG_info("src_rect %i,%i %ix%i\n",src_rect->x,src_rect->y,src_rect->w,src_rect->h);
-		
-		int w = vid.blit->src_w * vid.blit->scale;
-		int h = vid.blit->src_h * vid.blit->scale;
-		int x = (device_width - w) / 2;
-		int y = (device_height - h) / 2;
-		dst_rect->x = x;
-		dst_rect->y = y;
-		dst_rect->w = w;
-		dst_rect->h = h;
-						
-		// LOG_info("dst_rect %i,%i %ix%i\n",dst_rect->x,dst_rect->y,dst_rect->w,dst_rect->h);
-	}
-	else if (vid.blit->aspect>0) { // aspect
-		int h = device_height;
-		int w = h * vid.blit->aspect;
-		if (w>device_width) {
-			double ratio = 1 / vid.blit->aspect;
-			w = device_width;
-			h = w * ratio;
-		}
-		int x = (device_width - w) / 2;
-		int y = (device_height - h) / 2;
-		// dst_rect = &(SDL_Rect){x,y,w,h};
-		dst_rect->x = x;
-		dst_rect->y = y;
-		dst_rect->w = w;
-		dst_rect->h = h;
-	}
-	
-	SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
-	
-	updateEffect();
-	if (vid.blit && effect.type!=EFFECT_NONE && vid.effect) {
-		SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0,0,dst_rect->w,dst_rect->h}, dst_rect);
-	}
-	// uint32_t then = SDL_GetTicks();
-	SDL_RenderPresent(vid.renderer);
-	// LOG_info("SDL_RenderPresent blocked for %ims\n", SDL_GetTicks()-then);
-	vid.blit = NULL;
+    
 }
+
+void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
+    if (!vid.blit) {
+        resizeVideo(device_width, device_height, FIXED_PITCH); // !!!???
+        SDL_UpdateTexture(vid.texture, NULL, vid.screen->pixels, vid.screen->pitch);
+        SDL_RenderCopy(vid.renderer, vid.texture, NULL, NULL);
+        SDL_RenderPresent(vid.renderer);
+        return;
+    }
+
+    SDL_UpdateTexture(vid.texture, NULL, vid.blit->src, vid.blit->src_p);
+
+    SDL_Texture* target = vid.texture;
+    int x = vid.blit->src_x;
+    int y = vid.blit->src_y;
+    int w = vid.blit->src_w;
+    int h = vid.blit->src_h;
+    if (vid.sharpness == SHARPNESS_CRISP) {
+        SDL_SetRenderTarget(vid.renderer, vid.target);
+        SDL_RenderCopy(vid.renderer, vid.texture, NULL, NULL);
+        SDL_SetRenderTarget(vid.renderer, NULL);
+        x *= hard_scale;
+        y *= hard_scale;
+        w *= hard_scale;
+        h *= hard_scale;
+        target = vid.target;
+    }
+
+    SDL_Rect* src_rect = &(SDL_Rect){x, y, w, h};
+    SDL_Rect* dst_rect = &(SDL_Rect){0, 0, device_width, device_height};
+
+    if (vid.blit->aspect == 0) { // native or cropped
+        w = vid.blit->src_w * vid.blit->scale;
+        h = vid.blit->src_h * vid.blit->scale;
+        x = (device_width - w) / 2;
+        y = (device_height - h) / 2;
+        dst_rect->x = x;
+        dst_rect->y = y;
+        dst_rect->w = w;
+        dst_rect->h = h;
+    } else if (vid.blit->aspect > 0) { // aspect scaling mode
+        if (should_rotate) {
+            h = device_width; // Scale height to the screen width
+            w = h * vid.blit->aspect;
+            if (w > device_height) {
+                double ratio = 1 / vid.blit->aspect;
+                w = device_height;
+                h = w * ratio;
+            }
+        } else {
+            h = device_height;
+            w = h * vid.blit->aspect;
+            if (w > device_width) {
+                double ratio = 1 / vid.blit->aspect;
+                w = device_width;
+                h = w * ratio;
+            }
+        }
+        x = (device_width - w) / 2;
+        y = (device_height - h) / 2;
+        dst_rect->x = x;
+        dst_rect->y = y;
+        dst_rect->w = w;
+        dst_rect->h = h;
+    } else { // full screen mode
+        if (should_rotate) {
+            dst_rect->w = device_height;
+            dst_rect->h = device_width;
+            dst_rect->x = (device_width - dst_rect->w) / 2;
+            dst_rect->y = (device_height - dst_rect->h) / 2;
+        } else {
+            dst_rect->x = 0;
+            dst_rect->y = 0;
+            dst_rect->w = device_width;
+            dst_rect->h = device_height;
+        }
+    }
+
+    if (should_rotate) {
+        rotate_and_render(vid.renderer, target, src_rect, dst_rect);
+    } else {
+        SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+    }
+
+    updateEffect();
+    if (vid.blit && effect.type != EFFECT_NONE && vid.effect) {
+        SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0, 0, dst_rect->w, dst_rect->h}, dst_rect);
+    }
+
+    SDL_RenderPresent(vid.renderer);
+    vid.blit = NULL;
+}
+
+
+
+
+
 
 ///////////////////////////////
 
@@ -488,19 +580,27 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
-#define LED_PATH "/sys/class/led_anim/max_scale"
+#define LED_PATH1 "/sys/class/led_anim/max_scale"
+#define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
+#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
+		if (is_brick) SetRawBrightness(8);
 		SetBrightness(GetBrightness());
-		putInt(LED_PATH,0);
+		putInt(LED_PATH1,0);
+		if (is_brick) putInt(LED_PATH2,0);
+		if (is_brick) putInt(LED_PATH3,0);
 	}
 	else {
 		SetRawBrightness(0);
-		putInt(LED_PATH,52); // 52 seems to be the max brightness
+		putInt(LED_PATH1,60);
+		if (is_brick) putInt(LED_PATH2,60);
+		if (is_brick) putInt(LED_PATH3,60);
 	}
 }
 
 void PLAT_powerOff(void) {
+	system("rm -f /tmp/minui_exec && sync");
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
@@ -510,9 +610,13 @@ void PLAT_powerOff(void) {
 	PWR_quit();
 	GFX_quit();
 	
+	system("ifconfig wlan0 down");
+	system("killall -15 wpa_supplicant");
+	system("killall -9 udhcpc");
 	system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	system("poweroff");
-	while (1) pause(); // lolwat
+	exit(0);
+	// while (1) pause(); // lolwat
 }
 
 int PLAT_supportsDeepSleep(void) { return 1; }
@@ -541,6 +645,8 @@ int PLAT_pickSampleRate(int requested, int max) {
 }
 
 char* PLAT_getModel(void) {
+	char* model = getenv("TRIMUI_MODEL");
+	if (model) return model;
 	return "Trimui Smart Pro";
 }
 

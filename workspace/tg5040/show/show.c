@@ -22,9 +22,7 @@ int main(int argc , char* argv[]) {
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
-	int w = 1280;
-	int h = 720;
-	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,h, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0,0, SDL_WINDOW_SHOWN);
 	puts("");
 	
 	screen = SDL_GetWindowSurface(window); 

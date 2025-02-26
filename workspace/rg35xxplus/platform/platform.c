@@ -111,14 +111,15 @@ static int inputs[INPUT_COUNT];
 static GamepadType pad_type = kGamepadTypeUnknown;
 
 #define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
-static int check_lid = 0;
-static int lid_open = 1;
+void PLAT_initLid(void) {
+	lid.has_lid = exists(LID_PATH);
+}
 int PLAT_lidChanged(int* state) {
-	if (check_lid) {
-		int lid = getInt(LID_PATH);
-		if (lid!=lid_open) {
-			lid_open = lid;
-			if (state) *state = lid;
+	if (lid.has_lid) {
+		int lid_open = getInt(LID_PATH);
+		if (lid_open!=lid.is_open) {
+			lid.is_open = lid_open;
+			if (state) *state = lid_open;
 			return 1;
 		}
 	}
@@ -164,7 +165,6 @@ void PLAT_initInput(void) {
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[kPadIndex] = -1; 
 	checkForGamepad();
-	check_lid = exists(LID_PATH);
 }
 void PLAT_quitInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
@@ -354,12 +354,12 @@ void PLAT_pollInput(void) {
 		}
 	}
 	
-	if (check_lid && PLAT_lidChanged(NULL)) pad.just_released |= BTN_SLEEP;
+	if (lid.has_lid && PLAT_lidChanged(NULL)) pad.just_released |= BTN_SLEEP;
 }
 
 int PLAT_shouldWake(void) {
-	int lid = 1; // assume open by default
-	if (check_lid && PLAT_lidChanged(&lid) && lid) return 1;
+	int lid_open = 1; // assume open by default
+	if (lid.has_lid && PLAT_lidChanged(&lid_open) && lid_open) return 1;
 	
 	int input;
 	static struct input_event event;
@@ -368,7 +368,7 @@ int PLAT_shouldWake(void) {
 		while (read(input, &event, sizeof(event))==sizeof(event)) {
 			if (event.type==EV_KEY && event.code==RAW_POWER && event.value==0) {
 				// ignore input while lid is closed
-				if (check_lid && !lid_open) return 0;  // do it here so we eat the input
+				if (lid.has_lid && !lid.is_open) return 0;  // do it here so we eat the input
 				return 1;
 			}
 		}
@@ -407,7 +407,7 @@ static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
 	
-	char* model = getenv("RGXX_MODEL");
+	char* model = getenv("RGXX_MODEL"); // TODO: use device?
 	is_cubexx = exactMatch("RGcubexx", model);
 	is_rg34xx = exactMatch("RG34xx", model);
 	
@@ -933,6 +933,7 @@ void PLAT_powerOff(void) {
 	// while (1) pause(); // lolwat
 	
 	// touch("/tmp/poweroff");
+	// sync();
 	// system("touch /tmp/poweroff && sync");
 	exit(0);
 }
@@ -944,7 +945,6 @@ void PLAT_setCPUSpeed(int speed) {
 }
 
 #define RUMBLE_PATH "/sys/class/power_supply/axp2202-battery/moto"
-
 void PLAT_setRumble(int strength) {
 	if (GetHDMI()) return; // assume we're using a controller?
 	putInt(RUMBLE_PATH, strength?1:0);

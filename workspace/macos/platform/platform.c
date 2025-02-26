@@ -36,6 +36,8 @@ void SetJack(int value) {}
 int GetHDMI(void) { return 0; }
 void SetHDMI(int value) {}
 
+int GetMute(void) { return 0; }
+
 ///////////////////////////////
 
 static SDL_Joystick *joystick;
@@ -64,6 +66,10 @@ static struct VID_Context {
 	int pitch;
 } vid;
 
+static int device_width;
+static int device_height;
+static int device_pitch;
+static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
 	// SDL_InitSubSystem(SDL_INIT_VIDEO);
 	// SDL_ShowCursor(0);
@@ -82,18 +88,20 @@ SDL_Surface* PLAT_initVideo(void) {
 	// }
 	//
 	// LOG_info("Available display modes:\n");
-	// SDL_DisplayMode mode;
+	SDL_DisplayMode mode;
 	// for (int i=0; i<SDL_GetNumDisplayModes(0); i++) {
 	// 	SDL_GetDisplayMode(0, i, &mode);
 	// 	LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	// }
-	// SDL_GetCurrentDisplayMode(0, &mode);
-	// LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	SDL_GetCurrentDisplayMode(0, &mode);
+	// if (mode.h>mode.w)
+	rotate = 1;
+	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
-	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w/3,h/3, SDL_WINDOW_SHOWN);
+	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, h,w, SDL_WINDOW_SHOWN);
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	
 	// SDL_RendererInfo info;
@@ -111,6 +119,10 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.pitch	= p;
 	
 	PWR_disablePowerOff();
+	
+	device_width	= w;
+	device_height	= h;
+	device_pitch	= p;
 	
 	return vid.screen;
 }
@@ -207,6 +219,22 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
+	
+	if (!vid.blit) {
+		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
+		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
+		if (rotate) {
+			LOG_info("rotated\n");
+			SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){device_height,0,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
+		}
+		else {
+			LOG_info("not rotated\n");
+			SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
+		}
+		SDL_RenderPresent(vid.renderer);
+		return;
+	}
+	
 	if (!vid.blit) resizeVideo(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH); // !!!???
 	
 	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);

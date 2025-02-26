@@ -1,5 +1,53 @@
-# MinUI
+# MinUI Next   
+MinUI with a rebuild emulation engine, includes all original MinUI Features plus:
+- Game switcher menu (Onion OS style) contributed by [@frysee](https://github.com/frysee)
+- Fixed both screen tearing and sync problems of the original MinUI
+- Super smooth gameplay actually in sync with your screen's refresh rate! (no more stutters!)
+- Much higher audio quality, due to much more advanced resampling engine (with selectable quality setting)
+- Much lower latency (average 20ms, 1 frame of 60fps) 
+- Ambient light mode (Leds color based on whats on your screen)
+- Lot of fixes on original like inputs sometimes not registering etc.
+- Screen color temperature controls, besides the standard brightness control.
+- Default Snes9x core instead of deprecated snes9x2005, also optimized version of PCSX Rearmed and optimized FBNeo included in extras
+- FBNeo screen rotation works
+- Ongoing development without downside of maintaining compatibility with legacy devices
 
+Current supported devices:   
+Trimui Brick | MinUI-20241028-0   
+Trimui Smart Pro | MinUI-20231111b-2 
+
+# Future plans roadmap
+- Pal rom mode
+- Bluetooth and wifi integrated
+- Optional game art/media
+- Configurable FN and switch buttons
+- More compatibility testing with different emulators and fix/improve if nessecary
+- Menu animations and color settings (maybe some kind of template system?)
+- Configurable sleep mode or default auto shutdown
+- Retroachievements
+- Shaders
+- Once everything is to my liking I will look into porting this to more devices
+- Clean up all MinUI code and strip it from all stuff for legacy devices etc. 
+
+# Super awesome contributions thank you's!
+- [@frysee](https://github.com/frysee) for the super awesome game switcher PR. Truly love this feature, thank you so much for contributing it to this project!
+  
+# Installing   
+
+Just copy MinUI.zip (don't unzip this just copy as zipfile) and trimui to the root of your SD Card, bootup your Trim UI device it will say installing/updating and after that just enjoy all your beloved games!
+
+# How to use
+I think most speaks for itself but here are some handy short instructions just in case:
+While in menu:
+- Hold start and use volume up and down to adjust brightes
+- Hold select and use volume up and down to adjust color temperature
+- Short press select to open game switcher menu
+- Idk the rest speaks for itself I guess?
+While in game:
+- Menu opens in game options menu, adjusting controls, scaling and what not
+- Hold menu and select at same time to open up game switcher
+
+# Original MinUI's readme:
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
 
 <img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 /> 
@@ -32,8 +80,6 @@ MinUI is a focused, custom launcher and libretro frontend for [a variety of retr
   multiple devices from different
   manufacturers
 
-You can [grab the latest version here](https://github.com/shauninman/MinUI/releases).
-
 > Devices with a physical power switch
 > use MENU to sleep and wake instead of
 > POWER. Once asleep the device can safely
@@ -61,40 +107,22 @@ Extras:
 - Super Game Boy
 - TurboGrafx-16 (and TurboGrafx-CD)
 - Virtual Boy
+- Arcade (cps, mame etc)
 
 ## Supported Devices
 
 | Device | Added | Status |
 | -- | -- | -- |
-| Anbernic RG28xx | MinUI-20240429b-2 | Maintained |
-| Anbernic RG35xx | MinUI-20230922b-2 | Deprecated |
-| Anbernic RG35xx Plus | MinUI-20240106b-0 | Maintained |
-| Anbernic RG35xxH | MinUI-20240120b-1 | Maintained |
-| Anbernic RG35xxSP | MinUI-20240525-0 | Maintained |
-| Anbernic RG40xxH | MinUI-20240717-1 | Maintained |
-| Anbernic RG40xxV | MinUI-20240831-0 | Maintained | 
-| Anbernic RG CubeXX | MinUI-202401028-0 | Active | 
-| GKD Pixel | MinUI-20240120b-1 | Deprecated |
-| M17 | MinUI-20231126b-2 | Deprecated |
-| MagicX XU Mini M | MinUI-20240831-0 | Maintained | 
-| Miyoo A30 | MinUI-20240705-0 | Maintained |
-| Miyoo Mini | MinUI-20230922b-2 | Deprecated |
-| Miyoo Mini Plus | MinUI-20230922b-2 | Deprecated |
-| Powkiddy RGB30 | MinUI-20231014b-1 | Deprecated |
-| Trimui Brick | MinUI-20241028-0 | Active |
-| Trimui Smart | MinUI-20230922b-2 | Deprecated |
-| Trimui Smart Pro | MinUI-20231111b-2 | Maintained |
+| Anbernic RG40xxH | MinUI-20240717-1 | WIP |
+| Anbernic RG40xxV | MinUI-20240831-0 | WIP | 
+| Anbernic RG CubeXX | MinUI-202401028-0 | WIP | 
+| Miyoo Flip | MinUI-20250111-0 | WIP |
+| Miyoo Mini (plus) | MinUI-20250111-0 | Questionable |
+| Trimui Brick | MinUI-20241028-0 | Working |
+| Trimui Smart Pro | MinUI-20231111b-2 | Working |
 
 > [!NOTE]
-> **Active** actively working on compatibility and improvements specific to this device  
-> **Maintained** inheriting improvements to common functionality  
-> **Deprecated** will be retired in a future update  
-> **Retired** removed from repo, no longer updated or packaged with new releases  
-
-## Legacy versions
-
-The original Trimui Model S version of MinUI (2021/04/03-2021/08/06) has been archived [here](https://github.com/shauninman/MinUI-Legacy-Trimui-Model-S).
-
-The sequel, MiniUI for the Miyoo Mini (2022/04/20-2022/10/23), has been archived [here](https://github.com/shauninman/MiniUI-Legacy-Miyoo-Mini).
-
-The return of MinUI for the original Anbernic RG35XX (2023/02/26-2023/03/26) has been archived [here](https://github.com/shauninman/MinUI-Legacy-RG35XX).
+> **Working** Works! will still profit from future updates  
+> **WIP** Working on getting it ready for this device   
+> **Questionable** I want to get it working on this device, but might not be possible due to HW limitations
+   

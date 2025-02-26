@@ -1,3 +1,4 @@
+// tg5040
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,10 +16,11 @@
 
 ///////////////////////////////////////
 
-#define SETTINGS_VERSION 3
+#define SETTINGS_VERSION 5
 typedef struct Settings {
 	int version; // future proofing
 	int brightness;
+	int colortemperature;
 	int headphones;
 	int speaker;
 	int mute;
@@ -29,6 +31,7 @@ typedef struct Settings {
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = 2,
+	.colortemperature = 20,
 	.headphones = 4,
 	.speaker = 8,
 	.mute = 0,
@@ -56,8 +59,19 @@ int getInt(char* path) {
 	}
 	return i;
 }
+int exactMatch(char* str1, char* str2) {
+	if (!str1 || !str2) return 0; // NULL isn't safe here
+	int len1 = strlen(str1);
+	if (len1!=strlen(str2)) return 0;
+	return (strncmp(str1,str2,len1)==0);
+}
+
+static int is_brick = 0;
 
 void InitSettings(void) {	
+	char* device = getenv("DEVICE");
+	is_brick = exactMatch("brick", device);
+	
 	sprintf(SettingsPath, "%s/msettings.bin", getenv("USERDATA_PATH"));
 	
 	shm_fd = shm_open(SHM_KEY, O_RDWR | O_CREAT | O_EXCL, 0644); // see if it exists
@@ -93,11 +107,12 @@ void InitSettings(void) {
 	 
 	system("amixer sset 'Headphone' 0"); // 100%
 	system("amixer sset 'digital volume' 0"); // 100%
-	system("amixer sset 'Soft Volume Master' 255"); // 100%
-	// volume is set with 'DAC volume'
+	system("amixer sset 'DAC Swap' Off"); // Fix L/R channels
+	// volume is set with 'digital volume'
 	
 	SetVolume(GetVolume());
 	SetBrightness(GetBrightness());
+	SetColortemp(GetColortemp());
 }
 void QuitSettings(void) {
 	munmap(settings, shm_size);
@@ -115,26 +130,99 @@ static inline void SaveSettings(void) {
 int GetBrightness(void) { // 0-10
 	return settings->brightness;
 }
+int GetColortemp(void) { // 0-10
+	return settings->colortemperature;
+}
 void SetBrightness(int value) {
 	
 	int raw;
-	switch (value) {
-		case 0: raw=4; break; 		//  0
-		case 1: raw=6; break; 		//  2
-		case 2: raw=10; break; 		//  4
-		case 3: raw=16; break; 		//  6
-		case 4: raw=32; break;		// 16
-		case 5: raw=48; break;		// 16
-		case 6: raw=64; break;		// 16
-		case 7: raw=96; break;		// 32
-		case 8: raw=128; break;		// 32
-		case 9: raw=192; break;		// 64
-		case 10: raw=255; break;	// 64
+	if (is_brick) {
+		switch (value) {
+			case 0: raw=1; break; 		// 0
+			case 1: raw=8; break; 		// 8
+			case 2: raw=16; break; 		// 8
+			case 3: raw=32; break; 		// 16
+			case 4: raw=48; break;		// 16
+			case 5: raw=72; break;		// 24
+			case 6: raw=96; break;		// 24
+			case 7: raw=128; break;		// 32
+			case 8: raw=160; break;		// 32
+			case 9: raw=192; break;		// 32
+			case 10: raw=255; break;	// 64
+		}
+	}
+	else {
+		switch (value) {
+			case 0: raw=4; break; 		//  0
+			case 1: raw=6; break; 		//  2
+			case 2: raw=10; break; 		//  4
+			case 3: raw=16; break; 		//  6
+			case 4: raw=32; break;		// 16
+			case 5: raw=48; break;		// 16
+			case 6: raw=64; break;		// 16
+			case 7: raw=96; break;		// 32
+			case 8: raw=128; break;		// 32
+			case 9: raw=192; break;		// 64
+			case 10: raw=255; break;	// 64
+		}
 	}
 	SetRawBrightness(raw);
 	settings->brightness = value;
 	SaveSettings();
 }
+void SetColortemp(int value) {
+	
+	int raw;
+	
+	switch (value) {
+		case 0: raw=-200; break; 		// 8
+		case 1: raw=-190; break; 		// 8
+		case 2: raw=-180; break; 		// 16
+		case 3: raw=-170; break;		// 16
+		case 4: raw=-160; break;		// 24
+		case 5: raw=-150; break;		// 24
+		case 6: raw=-140; break;		// 32
+		case 7: raw=-130; break;		// 32
+		case 8: raw=-120; break;		// 32
+		case 9: raw=-110; break;	// 64
+		case 10: raw=-100; break; 		// 0
+		case 11: raw=-90; break; 		// 8
+		case 12: raw=-80; break; 		// 8
+		case 13: raw=-70; break; 		// 16
+		case 14: raw=-60; break;		// 16
+		case 15: raw=-50; break;		// 24
+		case 16: raw=-40; break;		// 24
+		case 17: raw=-30; break;		// 32
+		case 18: raw=-20; break;		// 32
+		case 19: raw=-10; break;		// 32
+		case 20: raw=0; break;	// 64
+		case 21: raw=10; break; 		// 0
+		case 22: raw=20; break; 		// 8
+		case 23: raw=30; break; 		// 8
+		case 24: raw=40; break; 		// 16
+		case 25: raw=50; break;		// 16
+		case 26: raw=60; break;		// 24
+		case 27: raw=70; break;		// 24
+		case 28: raw=80; break;		// 32
+		case 29: raw=90; break;		// 32
+		case 30: raw=100; break;		// 32
+		case 31: raw=110; break;	// 64
+		case 32: raw=120; break; 		// 0
+		case 33: raw=130; break; 		// 8
+		case 34: raw=140; break; 		// 8
+		case 35: raw=150; break; 		// 16
+		case 36: raw=160; break;		// 16
+		case 37: raw=170; break;		// 24
+		case 38: raw=180; break;		// 24
+		case 39: raw=190; break;		// 32
+		case 40: raw=200; break;		// 32
+	}
+	
+	SetRawColortemp(raw);
+	settings->colortemperature = value;
+	SaveSettings();
+}
+
 
 int GetVolume(void) { // 0-20
 	if (settings->mute) return 0;
@@ -148,7 +236,6 @@ void SetVolume(int value) { // 0-20
 	else settings->speaker = value;
 
 	int raw = value * 5;
-	if (raw>0) raw = 96 + (64 * raw) / 100;
 	SetRawVolume(raw);
 	SaveSettings();
 }
@@ -166,14 +253,30 @@ void SetRawBrightness(int val) { // 0 - 255
 		close(fd);
 	}
 }
-void SetRawVolume(int val) { // 0 or 96 - 160
+void SetRawColortemp(int val) { // 0 - 255
+	// if (settings->hdmi) return;
+	
+	printf("SetRawColortemp(%i)\n", val); fflush(stdout);
+
+	FILE *fd = fopen("/sys/class/disp/disp/attr/color_temperature", "w");
+	if (fd) {
+		fprintf(fd, "%i", val);
+		fclose(fd);
+	}
+}
+void SetRawVolume(int val) { // 0-100
 	printf("SetRawVolume(%i)\n", val); fflush(stdout);
 	if (settings->mute) val = 0;
 	
+	// Note: 'digital volume' mapping is reversed
 	char cmd[256];
-	sprintf(cmd, "amixer sset 'DAC volume' %i &> /dev/null", val);
+	sprintf(cmd, "amixer sset 'digital volume' -M %i%% &> /dev/null", 100-val);
 	system(cmd);
 	
+	// Setting just 'digital volume' to 0 still plays audio quietly. Also set DAC volume to 0
+	if (val == 0) system("amixer sset 'DAC volume' 0 &> /dev/null");
+	else system("amixer sset 'DAC volume' 160 &> /dev/null"); // 160=0dB=max for 'DAC volume'
+
 	// TODO: unfortunately doing it this way creating a linker nightmare
 	// struct mixer *mixer = mixer_open(0);
 	// struct mixer_ctl *ctl;
