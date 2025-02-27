@@ -92,7 +92,6 @@ killall MtpDaemon
 # Wait for wpa_supplicant to fully start before attempting to stop it
 for i in $(seq 1 10); do
     if pgrep -x "wpa_supplicant" > /dev/null; then
-        echo "Stopping wpa_supplicant" > /dev/console
         /etc/init.d/wpa_supplicant stop
         break
     fi
