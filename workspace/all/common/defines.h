@@ -16,7 +16,7 @@
 #define ROOT_SYSTEM_PATH SDCARD_PATH "/.system/"
 #define SYSTEM_PATH SDCARD_PATH "/.system/" PLATFORM
 #define RES_PATH SDCARD_PATH "/.system/res"
-#define FONT_PATH RES_PATH "/BPreplayBold-unhinted.otf"
+#define FONT_PATH RES_PATH "/RoundedMplus1c-Bold.ttf"
 #define USERDATA_PATH SDCARD_PATH "/.userdata/" PLATFORM
 #define SHARED_USERDATA_PATH SDCARD_PATH "/.userdata/shared"
 #define PAKS_PATH SYSTEM_PATH "/paks"
@@ -67,10 +67,10 @@
 #define PADDING 10 // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
 #endif
 
-#define FONT_LARGE 14 	// menu
-#define FONT_MEDIUM 12 	// single char button label
-#define FONT_SMALL 10	// button hint
-#define FONT_TINY 8 	// multi char button label
+#define FONT_LARGE 20 	// menu
+#define FONT_MEDIUM 18 	// single char button label
+#define FONT_SMALL 16	// button hint
+#define FONT_TINY 14	// multi char button label
 
 ///////////////////////////////
 
