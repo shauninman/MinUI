@@ -1817,7 +1817,7 @@ int main (int argc, char *argv[]) {
 							text->h
 						}, screen, &(SDL_Rect){
 							SCALE1(PADDING+BUTTON_PADDING),
-							SCALE1(PADDING+(j*PILL_SIZE)+4)
+							SCALE1(PADDING+(j*PILL_SIZE)+5)
 						});
 						SDL_FreeSurface(text);
 					}
