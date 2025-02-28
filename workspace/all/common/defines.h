@@ -66,10 +66,10 @@
 #define PADDING 10 // PILL_SIZE / 3 (or non-integer part of the previous calculatiom divided by three)
 #endif
 
-#define FONT_LARGE 16 	// menu
-#define FONT_MEDIUM 14 	// single char button label
-#define FONT_SMALL 12 	// button hint
-#define FONT_TINY 10  	// multi char button label
+#define FONT_LARGE 20 	// menu
+#define FONT_MEDIUM 18 	// single char button label
+#define FONT_SMALL 16 	// button hint
+#define FONT_TINY 14  	// multi char button label
 
 ///////////////////////////////
 
