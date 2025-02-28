@@ -31,6 +31,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 
 # Super awesome contributions thank you's!
 - [@frysee](https://github.com/frysee) for the super awesome game switcher PR. Truly love this feature, thank you so much for contributing it to this project!
+- [@frysee](https://github.com/frysee) for optimizing screeen space use 
   
 # Installing   
 
