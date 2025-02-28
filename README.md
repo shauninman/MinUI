@@ -8,8 +8,10 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 - Ambient light mode (Leds color based on whats on your screen)
 - Lot of fixes on original like inputs sometimes not registering etc.
 - Screen color temperature controls, besides the standard brightness control.
+- Fully working Deep Sleep mode instead of complete power off after 2 minutes (instant on) 
 - Default Snes9x core instead of deprecated snes9x2005, also optimized version of PCSX Rearmed and optimized FBNeo included in extras
 - FBNeo screen rotation works
+- JP and partial CN/KR characters supported
 - Ongoing development without downside of maintaining compatibility with legacy devices
 
 Current supported devices:   
