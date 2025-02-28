@@ -1,5 +1,6 @@
 CORES = fceumm gambatte gpsp pcsx_rearmed picodrive snes9x
 CORES+= mednafen_pce_fast mednafen_vb fake-08 mednafen_supafaust mgba pokemini race fbneo
+#CORES+= mednafen_pce_fast mednafen_vb fake-08 mednafen_supafaust mgba pokemini race 
 
 ###############################
 
