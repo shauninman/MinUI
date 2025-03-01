@@ -309,13 +309,7 @@ void VIB_setStrength(int strength);
 
 #define BRIGHTNESS_BUTTON_LABEL "+ -" // ew
 
-enum{
-	SLEEP_HW_REQUESTED,
-	SLEEP_AUTO,
-	SLEEP_MANUAL,
-	SLEEP_POWEROFF
-};
-typedef void (*PWR_callback_t)(int reason);
+typedef void (*PWR_callback_t)();
 void PWR_init(void);
 void PWR_quit(void);
 void PWR_warn(int enable);

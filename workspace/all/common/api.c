@@ -2066,7 +2066,7 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	}
 	
 	if (PAD_justReleased(BTN_POWEROFF) || (power_pressed_at && now-power_pressed_at>=1000)) {
-		if (before_sleep) before_sleep(SLEEP_POWEROFF);
+		if (before_sleep) before_sleep();
 		PWR_powerOff();
 	}
 	
@@ -2087,13 +2087,10 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		now-last_input_at>=SLEEP_DELAY || // autosleep
 		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP) && power_pressed_at) // manual sleep
 	) {
-		int reason = pwr.requested_sleep					  ? SLEEP_HW_REQUESTED
-					 : now - last_input_at >= GetSleepDelay() ? SLEEP_AUTO
-															  : SLEEP_MANUAL;
 		pwr.requested_sleep = 0;
-		if (before_sleep) before_sleep(reason);
+		if (before_sleep) before_sleep();
 		PWR_sleep();
-		if (after_sleep) after_sleep(reason);
+		if (after_sleep) after_sleep();
 		last_input_at = now = SDL_GetTicks();
 		power_pressed_at = 0;
 		dirty = 1;

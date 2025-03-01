@@ -272,11 +272,11 @@ int main(int argc, char *argv[])
                 update_current_duration();
 
                 int session_time = get_current_session_time();
-                LOG_info("Charging detected - Previous session duration = %d\n", session_time);
+                LOG_debug("Charging detected - Previous session duration = %d\n", session_time);
 
                 if (session_time > best_session_time)
                 {
-                    LOG_info("Best session duration\n", 1);
+                    LOG_debug("Best session duration\n", 1);
                     set_best_session_time(session_time);
                     best_session_time = session_time;
                 }
@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
             was_charging = false;
             lowest_percentage_after_charge = 500; // Reset lowest percentage after charge
 
-            LOG_info(
+            LOG_debug(
                 "Charging stopped: suspended = %d, perc = %d\n",
                 is_suspended, pwr.charge);
 
@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
         {
             if (ticks >= CHECK_BATTERY_TIMEOUT_S)
             {
-                LOG_info(
+                LOG_debug(
                     "battery check: suspended = %d, perc = %d\n",
                     is_suspended, pwr.charge);
 
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
             {
                 // This statement is not englobed in the previous one
                 // in order to be launched once when batmon starts
-                LOG_info(
+                LOG_debug(
                     "saving percBat: suspended = %d, perc = %d\n",
                     is_suspended, pwr.charge);
                 old_percentage = pwr.charge;
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
         ticks++;
     }
 
-    LOG_info("caught SIGTERM/SIGINT, quitting\n");
+    LOG_debug("caught SIGTERM/SIGINT, quitting\n");
 
     // Current battery state duration addition
     update_current_duration();

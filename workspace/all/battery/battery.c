@@ -633,11 +633,6 @@ void initLayout()
     }
 }
 
-void pre_sleep_callback(int reason)
-{
-    LOG_info("System going to sleep reason: %i\n", reason);
-}
-
 int main(int argc, char *argv[])
 {
     InitSettings();
@@ -713,7 +708,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        PWR_update(&dirty, &show_setting, pre_sleep_callback, NULL);
+        PWR_update(&dirty, &show_setting, NULL, NULL);
 
         int is_online = PLAT_isOnline();
         if (was_online != is_online)
