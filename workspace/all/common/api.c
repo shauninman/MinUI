@@ -69,72 +69,78 @@ MinUISettings settings;
 
 void loadSettings() {
 
+
 	FILE *file = PLAT_OpenSettings("minuisettings.txt");
 	if (file == NULL)
     {
-        perror("Unable to open settings file");
+        LOG_info("Unable to open settings file222");
+		setRGBValues("ffffff",color1);
+		setRGBValues("9b2257",color2);
+		setRGBValues("1e2329",color3);
+		FONT_PATH = RES_PATH "/chillroundm.ttf";
  
-    } else {
+    } 
+	else {
 
-    char line[256];
-    int current_light = -1;
-    while (fgets(line, sizeof(line), file))
-    {
-        
-            int temp_value;
-            uint32_t temp_color;
+		char line[256];
+		int current_light = -1;
+		while (fgets(line, sizeof(line), file))
+		{
+			
+				int temp_value;
+				uint32_t temp_color;
 
-            if (sscanf(line, "font=%i", &temp_value) == 1)
-            {
-				LOG_info("ditte? %i \n",temp_value);
-				if(temp_value==1) {
-					FONT_PATH = RES_PATH "/chillroundm.ttf";
-				} else {
-					FONT_PATH = RES_PATH "/BPreplayBold-unhinted.otf";
+				if (sscanf(line, "font=%i", &temp_value) == 1)
+				{
+					LOG_info("ditte? %i \n",temp_value);
+					if(temp_value==1) {
+						FONT_PATH = RES_PATH "/chillroundm.ttf";
+					} else {
+						FONT_PATH = RES_PATH "/BPreplayBold-unhinted.otf";
+					}
+					continue;
 				}
-                continue;
-            }
-            if (sscanf(line, "color1=%x", &temp_color) == 1)
-            {
-				char hexColor[7];
-				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-				
-				// Set RGB values
-				setRGBValues(hexColor, color1);
-                continue;
-            }
-            if (sscanf(line, "color2=%x", &temp_color) == 1)
-            {
-				char hexColor[7];
-				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-				
-				// Set RGB values
-				setRGBValues(hexColor, color2);
-                continue;
-            }
-            if (sscanf(line, "color3=%x", &temp_color) == 1)
-            {
-				char hexColor[7];
-				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-				
-				// Set RGB values
-				setRGBValues(hexColor, color3);
-                continue;
-            }
-            if (sscanf(line, "backgroundcolor=%x", &temp_color) == 1)
-            {
-				char hexColor[7];
-				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-				
-				// Set RGB values
-				setRGBValues(hexColor, color4);
-                continue;
-            }
-        
-    }
+				if (sscanf(line, "color1=%x", &temp_color) == 1)
+				{
+					char hexColor[7];
+					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+					
+					// Set RGB values
+					setRGBValues(hexColor, color1);
+					continue;
+				}
+				if (sscanf(line, "color2=%x", &temp_color) == 1)
+				{
+					char hexColor[7];
+					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+					
+					// Set RGB values
+					setRGBValues(hexColor, color2);
+					continue;
+				}
+				if (sscanf(line, "color3=%x", &temp_color) == 1)
+				{
+					char hexColor[7];
+					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+					
+					// Set RGB values
+					setRGBValues(hexColor, color3);
+					continue;
+				}
+				if (sscanf(line, "backgroundcolor=%x", &temp_color) == 1)
+				{
+					char hexColor[7];
+					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+					
+					// Set RGB values
+					setRGBValues(hexColor, color4);
+					continue;
+				}
+			
+		}
 
-    fclose(file);
-}
+		fclose(file);
+	}
 }
 
 ///////////////////////////////

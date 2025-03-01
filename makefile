@@ -156,7 +156,7 @@ package: tidy
 	cp -R ./build/BOOT/.tmp_update ./build/PAYLOAD/
 	cp -R ./build/EXTRAS/Tools ./build/PAYLOAD/
 	
-	cd ./build/PAYLOAD && zip -r MinUI.zip .system .tmp_update
+	cd ./build/PAYLOAD && zip -r MinUI.zip .system .tmp_update Tools
 	mv ./build/PAYLOAD/MinUI.zip ./build/BASE
 	
 	# TODO: can I just add everything in BASE to zip?

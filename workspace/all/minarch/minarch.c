@@ -3947,7 +3947,7 @@ static int Menu_options(MenuList* list) {
 
 				if (j==selected_row) {
 					// gray pill
-					GFX_blitPillDark(ASSET_BUTTON, screen, &(SDL_Rect){
+					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
 						ox,
 						oy+SCALE1(j*BUTTON_SIZE),
 						mw,

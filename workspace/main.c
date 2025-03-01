@@ -13,7 +13,7 @@
 #include <dirent.h>
 #include <string.h>
 
-#define NUM_OPTIONS 4
+#define NUM_OPTIONS 3
 #define MAX_NAME_LEN 50
 typedef struct
 {
@@ -133,6 +133,7 @@ void handle_light_input(SDL_Event *event, int selected_setting)
         0xDA70D6, // Orchid
         0xDDA0DD, // Plum
         0xBA55D3, // Medium Orchid
+        0x9B2257, // Medium Orchid
 
         // Purple
         0x800080, // Purple
@@ -161,7 +162,9 @@ void handle_light_input(SDL_Event *event, int selected_setting)
         // Others
         0xFFFFFF, // White
         0xC0C0C0, // Silver
-        0x000000  // Black
+        0x000000,  // Black
+        0x1E2329,  // GRAY
+        0xCCCCCC    // GRAY 2
     };
 
     const int num_bright_colors = sizeof(bright_colors) / sizeof(bright_colors[0]);
@@ -521,7 +524,7 @@ int main(int argc, char *argv[])
      SDL_Rect dstrect = (SDL_Rect){50, 30, text_width, text_height};
      SDL_RenderCopy(renderer, texture, NULL, &dstrect);
      SDL_DestroyTexture(texture);
-        for (int j = 0; j < 5; ++j)
+        for (int j = 0; j < 4; ++j)
         {
             char setting_text[256];
 
