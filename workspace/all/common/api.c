@@ -22,6 +22,20 @@
 
 ///////////////////////////////
 
+unsigned char color1[3];
+unsigned char color2[3];
+unsigned char color3[3];
+unsigned char color4[3];
+
+// Function to convert hex color code to RGB and set the values
+void setRGBValues(const char *hexColor, unsigned char color[3]) {
+    int r, g, b;
+    sscanf(hexColor, "%02x%02x%02x", &r, &g, &b);
+    color[0] = (unsigned char)r;
+    color[1] = (unsigned char)g;
+    color[2] = (unsigned char)b;
+}
+
 void LOG_note(int level, const char* fmt, ...) {
 	char buf[1024] = {0};
 	va_list args;
@@ -47,6 +61,80 @@ void LOG_note(int level, const char* fmt, ...) {
 		break;
 	}
 	fflush(stdout);
+}
+
+char *FONT_PATH;
+
+MinUISettings settings;
+
+void loadSettings() {
+
+	FILE *file = PLAT_OpenSettings("minuisettings.txt");
+	if (file == NULL)
+    {
+        perror("Unable to open settings file");
+ 
+    } else {
+
+    char line[256];
+    int current_light = -1;
+    while (fgets(line, sizeof(line), file))
+    {
+        
+            int temp_value;
+            uint32_t temp_color;
+
+            if (sscanf(line, "font=%i", &temp_value) == 1)
+            {
+				LOG_info("ditte? %i \n",temp_value);
+				if(temp_value==1) {
+					FONT_PATH = RES_PATH "/chillroundm.ttf";
+				} else {
+					FONT_PATH = RES_PATH "/BPreplayBold-unhinted.otf";
+				}
+                continue;
+            }
+            if (sscanf(line, "color1=%x", &temp_color) == 1)
+            {
+				char hexColor[7];
+				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+				
+				// Set RGB values
+				setRGBValues(hexColor, color1);
+                continue;
+            }
+            if (sscanf(line, "color2=%x", &temp_color) == 1)
+            {
+				char hexColor[7];
+				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+				
+				// Set RGB values
+				setRGBValues(hexColor, color2);
+                continue;
+            }
+            if (sscanf(line, "color3=%x", &temp_color) == 1)
+            {
+				char hexColor[7];
+				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+				
+				// Set RGB values
+				setRGBValues(hexColor, color3);
+                continue;
+            }
+            if (sscanf(line, "backgroundcolor=%x", &temp_color) == 1)
+            {
+				char hexColor[7];
+				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+				
+				// Set RGB values
+				setRGBValues(hexColor, color4);
+                continue;
+            }
+        
+    }
+
+    fclose(file);
+}
 }
 
 ///////////////////////////////
@@ -125,22 +213,29 @@ int currentbuffersize = 0;
 int currentsampleratein = 0;
 int currentsamplerateout = 0;
 int should_rotate = 0;
+SDL_Color ALT_BUTTON_TEXT_COLOR;
 
 SDL_Surface* GFX_init(int mode) {
 	// TODO: this doesn't really belong here...
 	// tried adding to PWR_init() but that was no good (not sure why)
+
+
 	PLAT_initLid();
 	
+	loadSettings();
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
 	gfx.mode = mode;
 	
 	RGB_WHITE		= SDL_MapRGB(gfx.screen->format, TRIAD_WHITE);
-	RGB_BLACK		= SDL_MapRGB(gfx.screen->format, TRIAD_BLACK);
-	RGB_LIGHT_GRAY	= SDL_MapRGB(gfx.screen->format, TRIAD_LIGHT_GRAY);
-	RGB_GRAY		= SDL_MapRGB(gfx.screen->format, TRIAD_GRAY);
-	RGB_DARK_GRAY	= SDL_MapRGB(gfx.screen->format, TRIAD_DARK_GRAY);
-	
+	RGB_BLACK		= SDL_MapRGB(gfx.screen->format,TRIAD_BLACK);
+	RGB_LIGHT_GRAY	= SDL_MapRGB(gfx.screen->format, color1[0],color1[1],color1[2]);
+	RGB_GRAY		= SDL_MapRGB(gfx.screen->format, color2[0],color2[1],color2[2]);
+	RGB_DARK_GRAY	= SDL_MapRGB(gfx.screen->format, color3[0],color3[1],color3[2]);
+	ALT_BUTTON_TEXT_COLOR.r = color3[0];
+	ALT_BUTTON_TEXT_COLOR.g = color3[1];
+	ALT_BUTTON_TEXT_COLOR.b = color3[2];
+
 	asset_rgbs[ASSET_WHITE_PILL]	= RGB_WHITE;
 	asset_rgbs[ASSET_BLACK_PILL]	= RGB_BLACK;
 	asset_rgbs[ASSET_DARK_GRAY_PILL]= RGB_DARK_GRAY;
@@ -724,6 +819,24 @@ void GFX_freeAAScaler(void) {
 
 ///////////////////////////////
 
+void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, char color[3]) {
+	SDL_Rect* rect = &asset_rects[asset];
+	SDL_Rect adj_rect = {
+		.x = rect->x,
+		.y = rect->y,
+		.w = rect->w,
+		.h = rect->h,
+	};
+	if (src_rect) {
+		adj_rect.x += src_rect->x;
+		adj_rect.y += src_rect->y;
+		adj_rect.w  = src_rect->w;
+		adj_rect.h  = src_rect->h;
+	}
+	
+	SDL_SetSurfaceColorMod(gfx.assets, color[0], color[1], color[2]);
+	SDL_BlitSurface(gfx.assets, &adj_rect, dst, dst_rect);
+}
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	SDL_Rect* rect = &asset_rects[asset];
 	SDL_Rect adj_rect = {
@@ -738,9 +851,10 @@ void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* ds
 		adj_rect.w  = src_rect->w;
 		adj_rect.h  = src_rect->h;
 	}
+	
 	SDL_BlitSurface(gfx.assets, &adj_rect, dst, dst_rect);
 }
-void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
+void GFX_blitPillNormal(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	int x = dst_rect->x;
 	int y = dst_rect->y;
 	int w = dst_rect->w;
@@ -755,10 +869,70 @@ void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	GFX_blitAsset(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y});
 	x += r;
 	if (w>0) {
-		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_rgbs[asset]);
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h},RGB_DARK_GRAY);
 		x += w;
 	}
 	GFX_blitAsset(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y});
+}
+void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
+	int x = dst_rect->x;
+	int y = dst_rect->y;
+	int w = dst_rect->w;
+	int h = dst_rect->h;
+
+	if (h==0) h = asset_rects[asset].h;
+	
+	int r = h / 2;
+	if (w < h) w = h;
+	w -= h;
+	
+	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y},color3);
+	x += r;
+	if (w>0) {
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h},RGB_DARK_GRAY);
+		x += w;
+	}
+	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y},color3);
+}
+void GFX_blitPillLight(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
+	int x = dst_rect->x;
+	int y = dst_rect->y;
+	int w = dst_rect->w;
+	int h = dst_rect->h;
+
+	if (h==0) h = asset_rects[asset].h;
+	
+	int r = h / 2;
+	if (w < h) w = h;
+	w -= h;
+	
+	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y},color2);
+	x += r;
+	if (w>0) {
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h},RGB_GRAY);
+		x += w;
+	}
+	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y},color2);
+}
+void GFX_blitPillDark(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
+	int x = dst_rect->x;
+	int y = dst_rect->y;
+	int w = dst_rect->w;
+	int h = dst_rect->h;
+
+	if (h==0) h = asset_rects[asset].h;
+	
+	int r = h / 2;
+	if (w < h) w = h;
+	w -= h;
+	
+	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y},color1);
+	x += r;
+	if (w>0) {
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h},RGB_LIGHT_GRAY);
+		x += w;
+	}
+	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y},color1);
 }
 void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	int x = dst_rect->x;
@@ -771,13 +945,13 @@ void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	int d = rect->w;
 	int r = d / 2;
 
-	GFX_blitAsset(asset, &(SDL_Rect){0,0,r,r}, dst, &(SDL_Rect){x,y});
+	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,r}, dst, &(SDL_Rect){x,y},color1);
 	SDL_FillRect(dst, &(SDL_Rect){x+r,y,w-d,r}, c);
-	GFX_blitAsset(asset, &(SDL_Rect){r,0,r,r}, dst, &(SDL_Rect){x+w-r,y});
+	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,r}, dst, &(SDL_Rect){x+w-r,y},color1);
 	SDL_FillRect(dst, &(SDL_Rect){x,y+r,w,h-d}, c);
-	GFX_blitAsset(asset, &(SDL_Rect){0,r,r,r}, dst, &(SDL_Rect){x,y+h-r});
+	GFX_blitAssetColor(asset, &(SDL_Rect){0,r,r,r}, dst, &(SDL_Rect){x,y+h-r},color1);
 	SDL_FillRect(dst, &(SDL_Rect){x+r,y+h-r,w-d,r}, c);
-	GFX_blitAsset(asset, &(SDL_Rect){r,r,r,r}, dst, &(SDL_Rect){x+w-r,y+h-r});
+	GFX_blitAssetColor(asset, &(SDL_Rect){r,r,r,r}, dst, &(SDL_Rect){x+w-r,y+h-r},color1);
 }
 void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	// LOG_info("dst: %p\n", dst);
@@ -792,12 +966,12 @@ void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	y += (SCALE1(PILL_SIZE) - rect.h) / 2;
 	
 	if (pwr.is_charging) {
-		GFX_blitAsset(ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y});
-		GFX_blitAsset(ASSET_BATTERY_BOLT, NULL, dst, &(SDL_Rect){x+SCALE1(3),y+SCALE1(2)});
+		GFX_blitAssetColor(ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y},color1);
+		GFX_blitAssetColor(ASSET_BATTERY_BOLT, NULL, dst, &(SDL_Rect){x+SCALE1(3),y+SCALE1(2)},color1);
 	}
 	else {
 		int percent = pwr.charge;
-		GFX_blitAsset(percent<=10?ASSET_BATTERY_LOW:ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y});
+		GFX_blitAssetColor(percent<=10?ASSET_BATTERY_LOW:ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y},color1);
 		
 		rect = asset_rects[ASSET_BATTERY_FILL];
 		SDL_Rect clip = rect;
@@ -807,7 +981,7 @@ void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 		clip.x = rect.w - clip.w;
 		clip.y = 0;
 		
-		GFX_blitAsset(percent<=20?ASSET_BATTERY_FILL_LOW:ASSET_BATTERY_FILL, &clip, dst, &(SDL_Rect){x+SCALE1(3)+clip.x,y+SCALE1(2)});
+		GFX_blitAssetColor(percent<=20?ASSET_BATTERY_FILL_LOW:ASSET_BATTERY_FILL, &clip, dst, &(SDL_Rect){x+SCALE1(3)+clip.x,y+SCALE1(2)},color1);
 	}
 }
 int GFX_getButtonWidth(char* hint, char* button) {
@@ -838,17 +1012,17 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 	
 	// button
 	if (strlen(button)==1) {
-		GFX_blitAsset(ASSET_BUTTON, NULL, dst, dst_rect);
+		GFX_blitAssetColor(ASSET_BUTTON, NULL, dst, dst_rect,color1);
 
 		// label
-		text = TTF_RenderUTF8_Blended(font.medium, button, COLOR_BUTTON_TEXT);
+		text = TTF_RenderUTF8_Blended(font.medium, button, ALT_BUTTON_TEXT_COLOR);
 		SDL_BlitSurface(text, NULL, dst, &(SDL_Rect){dst_rect->x+(SCALE1(BUTTON_SIZE)-text->w)/2,dst_rect->y+(SCALE1(BUTTON_SIZE)-text->h)/2});
 		ox += SCALE1(BUTTON_SIZE);
 		SDL_FreeSurface(text);
 	}
 	else {
-		text = TTF_RenderUTF8_Blended(special_case ? font.large : font.tiny, button, COLOR_BUTTON_TEXT);
-		GFX_blitPill(ASSET_BUTTON, dst, &(SDL_Rect){dst_rect->x,dst_rect->y,SCALE1(BUTTON_SIZE)/2+text->w,SCALE1(BUTTON_SIZE)});
+		text = TTF_RenderUTF8_Blended(special_case ? font.large : font.tiny, button, ALT_BUTTON_TEXT_COLOR);
+		GFX_blitPillDark(ASSET_BUTTON, dst, &(SDL_Rect){dst_rect->x,dst_rect->y,SCALE1(BUTTON_SIZE)/2+text->w,SCALE1(BUTTON_SIZE)});
 		ox += SCALE1(BUTTON_SIZE)/4;
 		
 		int oy = special_case ? SCALE1(-2) : 0;
@@ -925,7 +1099,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		ow = SCALE1(PILL_SIZE + SETTINGS_WIDTH + 10 + 4);
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
-		GFX_blitPill(gfx.mode==MODE_MAIN ? ASSET_DARK_GRAY_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
+		GFX_blitPillLight(gfx.mode==MODE_MAIN ? ASSET_WHITE_PILL : ASSET_WHITE_PILL, dst, &(SDL_Rect){
 			ox,
 			oy,
 			ow,
@@ -951,7 +1125,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		int asset = show_setting==3?ASSET_BUTTON:show_setting==1?ASSET_BRIGHTNESS:(setting_value>0?ASSET_VOLUME:ASSET_VOLUME_MUTE);
 		int ax = ox + (show_setting==1 || show_setting == 3 ? SCALE1(6) : SCALE1(8));
 		int ay = oy + (show_setting==1 || show_setting == 3 ? SCALE1(5) : SCALE1(7));
-		GFX_blitAsset(asset, NULL, dst, &(SDL_Rect){ax,ay});
+		GFX_blitAssetColor(asset, NULL, dst, &(SDL_Rect){ax,ay},color1);
 		
 		ox += SCALE1(PILL_SIZE);
 		oy += SCALE1((PILL_SIZE - SETTINGS_SIZE) / 2);
@@ -964,7 +1138,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		
 		float percent = ((float)(setting_value-setting_min) / (setting_max-setting_min));
 		if (show_setting==1 || show_setting==3 || setting_value>0) {
-			GFX_blitPill(ASSET_BAR, dst, &(SDL_Rect){
+			GFX_blitPillDark(ASSET_BAR, dst, &(SDL_Rect){
 				ox,
 				oy,
 				SCALE1(SETTINGS_WIDTH) * percent,
@@ -982,7 +1156,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
-		GFX_blitPill(gfx.mode==MODE_MAIN ? ASSET_DARK_GRAY_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
+		GFX_blitPillLight(gfx.mode==MODE_MAIN ? ASSET_WHITE_PILL : ASSET_WHITE_PILL, dst, &(SDL_Rect){
 			ox,
 			oy,
 			ow,
@@ -995,7 +1169,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			x += (SCALE1(PILL_SIZE) - rect.w) / 2;
 			y += (SCALE1(PILL_SIZE) - rect.h) / 2;
 			
-			GFX_blitAsset(ASSET_WIFI, NULL, dst, &(SDL_Rect){x,y});
+			GFX_blitAssetColor(ASSET_WIFI, NULL, dst, &(SDL_Rect){x,y},color1);
 			ox += ww;
 		}
 		GFX_blitBattery(dst, &(SDL_Rect){ox,oy});
@@ -1045,7 +1219,7 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 	
 	ow += SCALE1(BUTTON_MARGIN);
 	if (align_right) ox -= ow;
-	GFX_blitPill(gfx.mode==MODE_MAIN ? ASSET_DARK_GRAY_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
+	GFX_blitPillLight(gfx.mode==MODE_MAIN ? ASSET_WHITE_PILL : ASSET_WHITE_PILL, dst, &(SDL_Rect){
 		ox,
 		oy,
 		ow,
@@ -1823,7 +1997,7 @@ static void PWR_initOverlay(void) {
 
 	// draw battery
 	SDLX_SetAlpha(gfx.assets, 0,0);
-	GFX_blitAsset(ASSET_BLACK_PILL, NULL, pwr.overlay, NULL);
+	GFX_blitAssetColor(ASSET_WHITE_PILL, NULL, pwr.overlay, NULL,color1);
 	SDLX_SetAlpha(gfx.assets, SDL_SRCALPHA,0);
 	GFX_blitBattery(pwr.overlay, NULL);
 }

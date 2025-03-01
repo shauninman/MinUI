@@ -13,6 +13,17 @@ enum {
 	LOG_ERROR,
 };
 
+typedef struct
+{
+    int font;
+    uint32_t color1;
+    uint32_t color2;
+    uint32_t color3;
+    uint32_t backgroundColor;
+} MinUISettings;
+
+
+
 #define LOG_debug(fmt, ...) LOG_note(LOG_DEBUG, fmt, ##__VA_ARGS__)
 #define LOG_info(fmt, ...) LOG_note(LOG_INFO, fmt, ##__VA_ARGS__)
 #define LOG_warn(fmt, ...) LOG_note(LOG_WARN, fmt, ##__VA_ARGS__)
@@ -69,6 +80,7 @@ extern int currentbuffersize;
 extern int currentsampleratein;
 extern int currentsamplerateout;
 extern int should_rotate;
+extern MinUISettings settings;
 
 enum {
 	ASSET_WHITE_PILL,
@@ -156,6 +168,7 @@ enum {
 	MODE_MENU,
 };
 
+void loadSettings();
 SDL_Surface* GFX_init(int mode);
 #define GFX_resize PLAT_resizeVideo // (int w, int h, int pitch);
 #define GFX_setScaleClip PLAT_setVideoScaleClip // (int x, int y, int width, int height)
@@ -196,8 +209,11 @@ scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
 void GFX_freeAAScaler(void);
 
 // NOTE: all dimensions should be pre-scaled
+void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect,char color[3]);
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_blitPillLight(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_blitPillDark(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect);
 int GFX_getButtonWidth(char* hint, char* button);
@@ -324,6 +340,7 @@ enum {
 
 ///////////////////////////////
 
+FILE *PLAT_OpenSettings(const char *filename);
 void PLAT_initInput(void);
 void PLAT_quitInput(void);
 void PLAT_pollInput(void);

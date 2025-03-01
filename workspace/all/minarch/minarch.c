@@ -3913,7 +3913,7 @@ static int Menu_options(MenuList* list) {
 					TTF_SizeUTF8(font.small, item->name, &w, NULL);
 					w += SCALE1(OPTION_PADDING*2);
 					
-					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
+					GFX_blitPillDark(ASSET_BUTTON, screen, &(SDL_Rect){
 						ox,
 						oy+SCALE1(j*BUTTON_SIZE),
 						w,
@@ -3947,7 +3947,7 @@ static int Menu_options(MenuList* list) {
 
 				if (j==selected_row) {
 					// gray pill
-					GFX_blitPill(ASSET_OPTION, screen, &(SDL_Rect){
+					GFX_blitPillDark(ASSET_BUTTON, screen, &(SDL_Rect){
 						ox,
 						oy+SCALE1(j*BUTTON_SIZE),
 						mw,
@@ -3970,7 +3970,7 @@ static int Menu_options(MenuList* list) {
 					int w = 0;
 					TTF_SizeUTF8(font.small, item->name, &w, NULL);
 					w += SCALE1(OPTION_PADDING*2);
-					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
+					GFX_blitPillDark(ASSET_BUTTON, screen, &(SDL_Rect){
 						ox,
 						oy+SCALE1(j*BUTTON_SIZE),
 						w,
@@ -4029,7 +4029,7 @@ static int Menu_options(MenuList* list) {
 
 				if (j==selected_row) {
 					// gray pill
-					GFX_blitPill(ASSET_OPTION, screen, &(SDL_Rect){
+					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
 						ox,
 						oy+SCALE1(j*BUTTON_SIZE),
 						mw,
@@ -4040,7 +4040,7 @@ static int Menu_options(MenuList* list) {
 					int w = 0;
 					TTF_SizeUTF8(font.small, item->name, &w, NULL);
 					w += SCALE1(OPTION_PADDING*2);
-					GFX_blitPill(ASSET_BUTTON, screen, &(SDL_Rect){
+					GFX_blitPillDark(ASSET_BUTTON, screen, &(SDL_Rect){
 						ox,
 						oy+SCALE1(j*BUTTON_SIZE),
 						w,
@@ -4549,7 +4549,7 @@ static void Menu_loop(void) {
 
 		SDL_Surface* text;
 		text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
-		GFX_blitPill(ASSET_BLACK_PILL, screen, &(SDL_Rect){
+		GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 			SCALE1(PADDING),
 			SCALE1(PADDING),
 			max_width,
@@ -4579,7 +4579,7 @@ static void Menu_loop(void) {
 			if (i==selected) {
 				// disc change
 				if (menu.total_discs>1 && i==ITEM_CONT) {				
-					GFX_blitPill(ASSET_DARK_GRAY_PILL, screen, &(SDL_Rect){
+					GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 						SCALE1(PADDING),
 						SCALE1(oy + PADDING),
 						screen->w - SCALE1(PADDING * 2),
@@ -4597,7 +4597,7 @@ static void Menu_loop(void) {
 				ow += SCALE1(BUTTON_PADDING*2);
 				
 				// pill
-				GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+				GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 					SCALE1(PADDING),
 					SCALE1(oy + PADDING + (i * PILL_SIZE)),
 					ow,

@@ -1727,7 +1727,7 @@ int main (int argc, char *argv[]) {
 
 						SDL_Surface* text;
 						text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
-						GFX_blitPill(ASSET_BLACK_PILL, screen, &(SDL_Rect){
+						GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING),
 							SCALE1(PADDING),
 							max_width,
@@ -1783,7 +1783,7 @@ int main (int argc, char *argv[]) {
 						int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						int max_width = MIN(available_width, text_width);
 						if (j==selected_row) {
-							GFX_blitPill(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING),
 								SCALE1(PADDING+(j*PILL_SIZE)),
 								max_width,
@@ -1817,7 +1817,7 @@ int main (int argc, char *argv[]) {
 							text->h
 						}, screen, &(SDL_Rect){
 							SCALE1(PADDING+BUTTON_PADDING),
-							SCALE1(PADDING+(j*PILL_SIZE)+5)
+							SCALE1(PADDING+(j*PILL_SIZE)+4)
 						});
 						SDL_FreeSurface(text);
 					}
