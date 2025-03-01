@@ -452,6 +452,11 @@ void ADC_quit(void) {
 
 #define USB_SPEED "/sys/devices/platform/sunxi_usb_udc/udc/sunxi_usb_udc/current_speed"
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
+	PLAT_getBatteryStatusFine(is_charging, charge);
+}
+
+void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
+{
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
 	// return;

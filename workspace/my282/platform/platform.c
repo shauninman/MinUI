@@ -650,20 +650,26 @@ void PLAT_enableOverlay(int enable) {
 
 static int online = 0;
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
+	PLAT_getBatteryStatusFine(is_charging, charge);
+
+	// worry less about battery and more about the game you're playing
+	     if (*charge>80) *charge = 100;
+	else if (*charge>60) *charge =  80;
+	else if (*charge>40) *charge =  60;
+	else if (*charge>20) *charge =  40;
+	else if (*charge>10) *charge =  20;
+	else           		 *charge =  10;
+}
+
+void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
+{
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
 	// return;
 	
 	*is_charging = getInt("/sys/class/power_supply/usb/online");
 
-	int i = getInt("/sys/class/power_supply/battery/capacity");
-	// worry less about battery and more about the game you're playing
-	     if (i>80) *charge = 100;
-	else if (i>60) *charge =  80;
-	else if (i>40) *charge =  60;
-	else if (i>20) *charge =  40;
-	else if (i>10) *charge =  20;
-	else           *charge =  10;
+	*charge = getInt("/sys/class/power_supply/battery/capacity");
 
 	// wifi status, just hooking into the regular PWR polling
 	// char status[16];

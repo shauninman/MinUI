@@ -447,17 +447,22 @@ int axp_read(unsigned char address) {
 ///////////////////////////////
 
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
-	*is_charging = is_plus ? (axp_read(0x00) & 0x4) > 0 : getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
-	
-	int i = getInt("/tmp/battery"); // 0-100?
+	PLAT_getBatteryStatusFine(is_charging, charge);
 
 	// worry less about battery and more about the game you're playing
-	     if (i>80) *charge = 100;
-	else if (i>60) *charge =  80;
-	else if (i>40) *charge =  60;
-	else if (i>20) *charge =  40;
-	else if (i>10) *charge =  20;
-	else           *charge =  10;
+	     if (*charge>80) *charge = 100;
+	else if (*charge>60) *charge =  80;
+	else if (*charge>40) *charge =  60;
+	else if (*charge>20) *charge =  40;
+	else if (*charge>10) *charge =  20;
+	else           		 *charge =  10;
+}
+
+void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
+{
+	*is_charging = is_plus ? (axp_read(0x00) & 0x4) > 0 : getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
+	
+	*charge = getInt("/tmp/battery"); // 0-100?
 
 	// TODO: tmp
 	// *is_charging = 0;

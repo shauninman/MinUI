@@ -309,7 +309,13 @@ void VIB_setStrength(int strength);
 
 #define BRIGHTNESS_BUTTON_LABEL "+ -" // ew
 
-typedef void (*PWR_callback_t)(void);
+enum{
+	SLEEP_HW_REQUESTED,
+	SLEEP_AUTO,
+	SLEEP_MANUAL,
+	SLEEP_POWEROFF
+};
+typedef void (*PWR_callback_t)(int reason);
 void PWR_init(void);
 void PWR_quit(void);
 void PWR_warn(int enable);
@@ -374,6 +380,7 @@ void PLAT_enableOverlay(int enable);
 	
 #define PWR_LOW_CHARGE 10
 void PLAT_getBatteryStatus(int* is_charging, int* charge); // 0,1 and 0,10,20,40,60,80,100
+void PLAT_getBatteryStatusFine(int* is_charging, int* charge); // 0,1 and 0-100
 void PLAT_enableBacklight(int enable);
 int PLAT_supportsDeepSleep(void);
 int PLAT_deepSleep(void);

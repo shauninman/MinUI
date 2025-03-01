@@ -528,18 +528,23 @@ void PLAT_enableOverlay(int enable) {
 ///////////////////////////////
 
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
-	*is_charging = getInt("/sys/class/power_supply/battery/charger_online");
-	
-	int i = getInt("/sys/class/power_supply/battery/voltage_now") / 10000; // 310-410
-	i -= 310; 	// ~0-100
+	PLAT_getBatteryStatusFine(is_charging, charge);
 
 	// worry less about battery and more about the game you're playing
-	     if (i>80) *charge = 100;
-	else if (i>60) *charge =  80;
-	else if (i>40) *charge =  60;
-	else if (i>20) *charge =  40;
-	else if (i>10) *charge =  20;
-	else           *charge =  10;
+	     if (*charge>80) *charge = 100;
+	else if (*charge>60) *charge =  80;
+	else if (*charge>40) *charge =  60;
+	else if (*charge>20) *charge =  40;
+	else if (*charge>10) *charge =  20;
+	else           		 *charge =  10;
+}
+
+void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
+{
+	*is_charging = getInt("/sys/class/power_supply/battery/charger_online");
+	
+	*charge = getInt("/sys/class/power_supply/battery/voltage_now") / 10000; // 310-410
+	*charge -= 310; 	// ~0-100
 
 	// TODO: tmp
 	// *is_charging = 0;
