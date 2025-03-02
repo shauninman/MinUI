@@ -89,7 +89,14 @@ rfkill block bluetooth
 rfkill block wifi
 killall udhcpc
 killall MtpDaemon
-/etc/init.d/wpa_supplicant stop # not sure this is working
+for i in $(seq 1 10); do
+    if pgrep -f "S[0-9]*wpa_supplicant" > /dev/null; then
+        sleep 0.25
+        continue
+    fi
+    break
+done
+/etc/init.d/wpa_supplicant stop
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
 
