@@ -90,7 +90,7 @@ rfkill block wifi
 killall udhcpc
 killall MtpDaemon
 for i in $(seq 1 10); do
-    if ps | grep "{S[0-9]*wpa_supplica}" | grep -v grep > /dev/null; then
+    if pgrep -f "S[0-9]*wpa_supplicant" > /dev/null; then
         sleep 0.25
         continue
     fi
