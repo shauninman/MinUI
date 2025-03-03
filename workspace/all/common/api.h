@@ -70,6 +70,9 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
+extern uint32_t THEME_COLOR1;
+extern uint32_t THEME_COLOR2;
+extern uint32_t THEME_COLOR3;
 extern float currentratio;
 extern int currentbufferfree;
 extern int currentframecount;
@@ -209,8 +212,9 @@ scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
 void GFX_freeAAScaler(void);
 
 // NOTE: all dimensions should be pre-scaled
-void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect,char color[3]);
+void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t asset_color);
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_blitPillColor(int asset, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t asset_color, uint32_t fill_color);
 void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitPillLight(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitPillDark(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
@@ -226,7 +230,7 @@ int GFX_blitButtonGroup(char** hints, int primary, SDL_Surface* dst, int align_r
 
 void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h);
 void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect);
-void GFX_setAmbientColor();
+void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode);
 ///////////////////////////////
 
 typedef struct SND_Frame {
