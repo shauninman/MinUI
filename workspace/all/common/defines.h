@@ -34,12 +34,8 @@
 #define RESUME_SLOT_PATH "/tmp/resume_slot.txt"
 #define NOUI_PATH "/tmp/noui"
 
-
-#define EXPAND_COLOR(color) color[0], color[1], color[2]
-
 #define TRIAD_WHITE 		0xff,0xff,0xff
 #define TRIAD_BLACK 		0x00,0x00,0x00
-
 #define TRIAD_LIGHT_GRAY 	0x7f,0x7f,0x7f
 #define TRIAD_GRAY 			0x99,0x99,0x99
 #define TRIAD_DARK_GRAY 	0x26,0x26,0x26
