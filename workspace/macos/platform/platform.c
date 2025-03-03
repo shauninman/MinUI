@@ -22,12 +22,14 @@ void InitSettings(void){}
 void QuitSettings(void){}
 
 int GetBrightness(void) { return 0; }
+int GetColortemp(void) { return 0; }
 int GetVolume(void) { return 0; }
 
 void SetRawBrightness(int value) {}
 void SetRawVolume(int value){}
 
 void SetBrightness(int value) {}
+void SetColortemp(int value) {}
 void SetVolume(int value) {}
 
 int GetJack(void) { return 0; }
@@ -48,6 +50,20 @@ void PLAT_initInput(void) {
 void PLAT_quitInput(void) {
 	SDL_JoystickClose(joystick);
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+}
+
+FILE *PLAT_OpenSettings(const char *filename)
+{
+    char diskfilename[256];
+    snprintf(diskfilename, sizeof(diskfilename), SDCARD_PATH "/.userdata/%s", filename);
+
+	FILE *file = fopen(diskfilename, "r");
+	if (file == NULL)
+    {
+        return NULL;
+ 
+    }
+	return file;
 }
 
 ///////////////////////////////
@@ -71,8 +87,8 @@ static int device_height;
 static int device_pitch;
 static int rotate = 0;
 SDL_Surface* PLAT_initVideo(void) {
-	// SDL_InitSubSystem(SDL_INIT_VIDEO);
-	// SDL_ShowCursor(0);
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
+	SDL_ShowCursor(0);
 	//
 	// LOG_info("Available video drivers:\n");
 	// for (int i=0; i<SDL_GetNumVideoDrivers(); i++) {
@@ -94,14 +110,14 @@ SDL_Surface* PLAT_initVideo(void) {
 	// 	LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	// }
 	SDL_GetCurrentDisplayMode(0, &mode);
-	// if (mode.h>mode.w)
-	rotate = 1;
+	if (mode.h>mode.w)
+		rotate = 1;
 	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
-	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, h,w, SDL_WINDOW_SHOWN);
+	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	
 	// SDL_RendererInfo info;

@@ -99,6 +99,7 @@
 #define BTN_SLEEP 			BTN_POWER
 #define BTN_WAKE 			BTN_POWER
 #define BTN_MOD_VOLUME 		BTN_NONE
+#define BTN_MOD_COLORTEMP	BTN_NONE
 #define BTN_MOD_BRIGHTNESS 	BTN_MENU
 #define BTN_MOD_PLUS 		BTN_PLUS
 #define BTN_MOD_MINUS 		BTN_MINUS
@@ -126,7 +127,7 @@
 
 ///////////////////////////////
 
-#define SDCARD_PATH "/Users/shauninman/Projects/Personal/MinUI/workspace/macos/FAKESD"
+#define SDCARD_PATH "/Library/Developer/Projects/private/MinUI_FAKESD"
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
 
 // this should be set to the devices native screen refresh rate
