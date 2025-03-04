@@ -31,6 +31,10 @@ def process_folder(folder_path, gamelist_path):
         # Loop through all files in the specified folder
         for root, _, files in os.walk(folder_path):
             for file in files:
+                # Ignore .txt and .xml files
+                if file.endswith('.txt') or file.endswith('.xml'):
+                    continue
+                
                 # Preprocess the filename
                 preprocessed_filename = preprocess_filename(file)
                 
@@ -40,10 +44,14 @@ def process_folder(folder_path, gamelist_path):
                 # Write the result to map.txt
                 output_file.write(f"{file}\t{best_match[0]}\n")
 
+def main():
+    # Read the folders.xml file and process each folder
+    tree = ET.parse("folders.xml")
+    root = tree.getroot()
+    for folder in root.findall('folder'):
+        folder_path = folder.find('path').text
+        gamelist_path = folder.find('gamelist').text
+        process_folder(folder_path, gamelist_path)
+
 if __name__ == "__main__":
-    # Specify the folder path and gamelist.xml path
-    folder_path = "/mnt/SDCARD/Roms/Super Nintendo Entertainment System (SFC)"  # Current directory
-    gamelist_path = "gamelist.xml"
-    
-    # Process the folder and perform fuzzy matching
-    process_folder(folder_path, gamelist_path)
+    main()
