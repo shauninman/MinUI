@@ -2091,7 +2091,6 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		if (before_sleep) before_sleep();
 		PWR_sleep();
 		if (after_sleep) after_sleep();
-		
 		last_input_at = now = SDL_GetTicks();
 		power_pressed_at = 0;
 		dirty = 1;
@@ -2193,11 +2192,13 @@ static void PWR_enterSleep(void) {
 		PLAT_enableBacklight(0);
 	}
 	system("killall -STOP keymon.elf");
+	system("killall -STOP batmon.elf");
 	
 	sync();
 }
 static void PWR_exitSleep(void) {
 	system("killall -CONT keymon.elf");
+	system("killall -CONT batmon.elf");
 	if (GetHDMI()) {
 		// buh
 	}

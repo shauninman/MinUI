@@ -20,8 +20,10 @@ all:
 	cd ./$(PLATFORM)/keymon && make
 	cd ./all/minui/ && make
 	cd ./all/minarch/ && make
+	cd ./all/battery/ && make
 	cd ./all/clock/ && make
-	cd ./all/minput/ && make
+	cd ./all/libbatmondb/ && make
+	cd ./all/batmon/ && make
 	cd ./all/syncsettings/ && make
 	cd ./all/settings/ && make
 # BUILDOPTION: don't forget to uncomment this to rebuild cores from  source, idk if this was left commented by mistake, but I actually agree on leaving this commented out by default as they take a long while to build and only really need building if someone bothered to pull the repo's manually and there are actually updates to any core worth including in new MinUI Next releases.
@@ -33,7 +35,10 @@ clean:
 	cd ./$(PLATFORM)/keymon && make clean
 	cd ./all/minui/ && make clean
 	cd ./all/minarch/ && make clean
+	cd ./all/battery/ && make clean
 	cd ./all/clock/ && make clean
+	cd ./all/libbatmondb/ && make clean
+	cd ./all/batmon/ && make clean
 	cd ./all/minput/ && make clean
 	cd ./all/syncsettings/ && make clean
 	cd ./all/settings/ && make

@@ -92,6 +92,7 @@ killall MtpDaemon
 /etc/init.d/wpa_supplicant stop # not sure this is working
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
+batmon.elf & # &> $SDCARD_PATH/batmon.txt &
 
 #######################################
 

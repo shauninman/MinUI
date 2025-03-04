@@ -1681,8 +1681,8 @@ static void OptionList_setOptionValue(OptionList* list, const char* key, const c
 
 ///////////////////////////////
 
-static void Menu_beforeSleep(void);
-static void Menu_afterSleep(void);
+static void Menu_beforeSleep();
+static void Menu_afterSleep();
 
 static void Menu_saveState(void);
 static void Menu_loadState(void);
@@ -3247,7 +3247,7 @@ void Menu_init(void) {
 void Menu_quit(void) {
 	SDL_FreeSurface(menu.overlay);
 }
-void Menu_beforeSleep(void) {
+void Menu_beforeSleep() {
 	// LOG_info("beforeSleep\n");
 	SRAM_write();
 	RTC_write();
@@ -3255,7 +3255,7 @@ void Menu_beforeSleep(void) {
 	putFile(AUTO_RESUME_PATH, game.path + strlen(SDCARD_PATH));
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 }
-void Menu_afterSleep(void) {
+void Menu_afterSleep() {
 	// LOG_info("beforeSleep\n");
 	unlink(AUTO_RESUME_PATH);
 	setOverclock(overclock);
