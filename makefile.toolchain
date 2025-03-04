@@ -20,7 +20,7 @@ $(INIT_IF_NECESSARY): $(GIT_IF_NECESSARY)
 
 $(GIT_IF_NECESSARY):
 	mkdir -p toolchains
-	git clone https://github.com/shauninman/union-$(PLATFORM)-toolchain/ toolchains/$(PLATFORM)-toolchain
+	git clone https://github.com/ro8inmorgan/$(PLATFORM)-toolchain/ toolchains/$(PLATFORM)-toolchain
 
 clean:
 	cd toolchains/$(PLATFORM)-toolchain && make clean
