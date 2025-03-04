@@ -1090,12 +1090,12 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		ow = SCALE1(PILL_SIZE + SETTINGS_WIDTH + 10 + 4);
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
-		GFX_blitPillColor(gfx.mode==MODE_MAIN ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
+		GFX_blitPillColor(ASSET_WHITE_PILL, dst, &(SDL_Rect){
 			ox,
 			oy,
 			ow,
 			SCALE1(PILL_SIZE)
-		},THEME_COLOR2, gfx.mode==MODE_MAIN ? RGB_WHITE : RGB_BLACK);
+		},THEME_COLOR2, RGB_WHITE);
 		
 		if (show_setting==1) {
 			setting_value = GetBrightness();
@@ -1147,12 +1147,12 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
-		GFX_blitPillColor(gfx.mode==MODE_MAIN ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
+		GFX_blitPillColor(ASSET_WHITE_PILL, dst, &(SDL_Rect){
 			ox,
 			oy,
 			ow,
 			SCALE1(PILL_SIZE)
-		}, THEME_COLOR2, gfx.mode==MODE_MAIN ? RGB_WHITE : RGB_BLACK);
+		}, THEME_COLOR2, RGB_WHITE);
 		if (show_wifi) {
 			SDL_Rect rect = asset_rects[ASSET_WIFI];
 			int x = ox;
@@ -1215,7 +1215,7 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 		oy,
 		ow,
 		SCALE1(PILL_SIZE)
-	}, THEME_COLOR2, gfx.mode==MODE_MAIN ? RGB_WHITE : RGB_BLACK);
+	}, THEME_COLOR2, RGB_WHITE);
 	
 	ox += SCALE1(BUTTON_MARGIN);
 	oy += SCALE1(BUTTON_MARGIN);
