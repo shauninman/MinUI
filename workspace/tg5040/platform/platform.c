@@ -307,7 +307,7 @@ FILE *PLAT_OpenSettings(const char *filename)
 {
 
     char diskfilename[256];
-    snprintf(diskfilename, sizeof(diskfilename), "/mnt/SDCARD/.userdata/%s", filename);
+    snprintf(diskfilename, sizeof(diskfilename), "/mnt/SDCARD/.userdata/shared/%s", filename);
 
 	FILE *file = fopen(diskfilename, "r");
 	if (file == NULL)
