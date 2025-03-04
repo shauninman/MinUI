@@ -87,68 +87,23 @@ void handle_light_input(SDL_Event *event, int selected_setting)
 {
     const uint32_t bright_colors[] = {
         // Blues
-        0x000080, // Navy Blue
-        0x0080FF, // Sky Blue
-        0x00BFFF, // Deep Sky Blue
-        0x8080FF, // Light Blue
-        0x483D8B, // Dark Slate Blue
-        0x7B68EE, // Medium Slate Blue
-
+        0x000022, 0x000044, 0x000066, 0x000088, 0x0000AA, 0x0000CC, 0x3366FF, 0x4D7AFF, 0x6699FF, 0x80B3FF, 0x99CCFF, 0xB3D9FF,
         // Cyan
-        0x00FFFF, // Cyan
-        0x40E0D0, // Turquoise
-        0x80FFFF, // Light Cyan
-        0x008080, // Teal
-        0x00CED1, // Dark Turquoise
-        0x20B2AA, // Light Sea Green
-
+        0x002222, 0x004444, 0x006666, 0x008888, 0x00AAAA, 0x00CCCC, 0x33FFFF, 0x4DFFFF, 0x66FFFF, 0x80FFFF, 0x99FFFF, 0xB3FFFF,
         // Green
-        0x00FF00, // Green
-        0x32CD32, // Lime Green
-        0x7FFF00, // Chartreuse
-        0x80FF00, // Lime
-        0x80FF80, // Light Green
-        0xADFF2F, // Green Yellow
-
+        0x002200, 0x004400, 0x006600, 0x008800, 0x00AA00, 0x00CC00, 0x33FF33, 0x4DFF4D, 0x66FF66, 0x80FF80, 0x99FF99, 0xB3FFB3,
         // Magenta
-        0xFF00FF, // Magenta
-        0xFF80C0, // Light Magenta
-        0xEE82EE, // Violet
-        0xDA70D6, // Orchid
-        0xDDA0DD, // Plum
-        0xBA55D3, // Medium Orchid
-        0x9B2257, // Medium Orchid
-
+        0x220022, 0x440044, 0x660066, 0x880088, 0xAA00AA, 0xCC00CC, 0xFF33FF, 0xFF4DFF, 0xFF66FF, 0xFF80FF, 0xFF99FF, 0xFFB3FF,
         // Purple
-        0x800080, // Purple
-        0x8A2BE2, // Blue Violet
-        0x9400D3, // Dark Violet
-        0x9B30FF, // Purple2
-        0xA020F0, // Purple
-        0x9370DB, // Medium Purple
-
+        0x110022, 0x220044, 0x330066, 0x440088, 0x5500AA, 0x6600CC, 0x8833FF, 0x994DFF, 0xAA66FF, 0xBB80FF, 0xCC99FF, 0xDDB3FF,
         // Red
-        0xFF0000, // Red
-        0xFF4500, // Red Orange
-        0xFF6347, // Tomato
-        0xDC143C, // Crimson
-        0xFF69B4, // Hot Pink
-        0xFF1493, // Deep Pink
-
-        // Yellow and Orange
-        0xFFD700, // Gold
-        0xFFA500, // Orange
-        0xFF8000, // Orange Red
-        0xFFFF00, // Yellow
-        0xFFFF80, // Light Yellow
-        0xFFDAB9, // Peach Puff
-
-        // Others
-        0xFFFFFF, // White
-        0xC0C0C0, // Silver
-        0x000000,  // Black
-        0x1E2329,  // GRAY
-        0xCCCCCC    // GRAY 2
+        0x220000, 0x440000, 0x660000, 0x880000, 0xAA0000, 0xCC0000, 0xFF3333, 0xFF4D4D, 0xFF6666, 0xFF8080, 0xFF9999, 0xFFB3B3,
+        // Yellow
+        0x222200, 0x444400, 0x666600, 0x888800, 0xAAAA00, 0xCCCC00, 0xFFFF33, 0xFFFF4D, 0xFFFF66, 0xFFFF80, 0xFFFF99, 0xFFFFB3,
+        // Orange
+        0x221100, 0x442200, 0x663300, 0x884400, 0xAA5500, 0xCC6600, 0xFF8833, 0xFF994D, 0xFFAA66, 0xFFBB80, 0xFFCC99, 0xFFDDB3,
+        // White to Black Gradient
+        0x000000, 0x141414, 0x282828, 0x3C3C3C, 0x505050, 0x646464, 0x8C8C8C, 0xA0A0A0, 0xB4B4B4, 0xC8C8C8, 0xDCDCDC, 0xFFFFFF
     };
 
     const int num_bright_colors = sizeof(bright_colors) / sizeof(bright_colors[0]);
