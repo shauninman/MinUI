@@ -1,14 +1,14 @@
 <folders>
     <folder>
         <path>/mnt/SDCARD/Roms/Super Nintendo Entertainment System (SFC)</path>
-        <gamelist>/mnt/SDCARD/Roms/Super Nintendo Entertainment System (SFC)/gamelist.xml</gamelist>
+        <gamelist>./SFC.xml</gamelist>
     </folder>
     <folder>
         <path>/mnt/SDCARD/Roms/Nintendo Entertainment System (FC)</path>
-        <gamelist>/mnt/SDCARD/Roms/Nintendo Entertainment System (FC)/gamelist.xml</gamelist>
+        <gamelist>./FC.xml</gamelist>
     </folder>
     <folder>
         <path>/mnt/SDCARD/Roms/Game Boy Advance (GBA)</path>
-        <gamelist>/mnt/SDCARD/Roms/Game Boy Advance (GBA)/gamelist.xml</gamelist>
+        <gamelist>./GBA.xml</gamelist>
     </folder>
 </folders>
