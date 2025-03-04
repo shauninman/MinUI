@@ -53,7 +53,7 @@ system:
 	cp ./workspace/all/syncsettings/build/$(PLATFORM)/syncsettings.elf ./build/SYSTEM/$(PLATFORM)/bin/
 	cp ./workspace/all/clock/build/$(PLATFORM)/clock.elf ./build/EXTRAS/Tools/$(PLATFORM)/Clock.pak/
 	cp ./workspace/all/minput/build/$(PLATFORM)/minput.elf ./build/EXTRAS/Tools/$(PLATFORM)/Input.pak/
-	cp ./workspace/all/settings/build/$(PLATFORM)/settings.elf ./build/SYSTEM/$(PLATFORM)/bin/
+	cp ./workspace/all/settings/build/$(PLATFORM)/settings.elf ./build/EXTRAS/Tools/$(PLATFORM)/Settings.pak/
 
 cores: # TODO: can't assume every platform will have the same stock cores (platform should be responsible for copy too)
 	# stock cores

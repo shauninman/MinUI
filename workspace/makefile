@@ -24,6 +24,7 @@ all:
 	cd ./all/minput/ && make
 	cd ./all/syncsettings/ && make
 	cd ./all/settings/ && make
+#	cd ./$(PLATFORM)/cores && make
 	cd ./$(PLATFORM) && make
 
 clean:
