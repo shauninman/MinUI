@@ -1,0 +1,23 @@
+diff --git a/libretro/Makefile b/libretro/Makefile
+old mode 100644
+new mode 100755
+index 466fa6b..0b758f4
+--- a/libretro/Makefile
++++ b/libretro/Makefile
+@@ -82,6 +82,16 @@ ifneq (,$(findstring unix,$(platform)))
+    endif
+ endif
+ 
++# tg5040
++else ifneq (,$(findstring tg5040,$(platform)))
++   CXX=/usr/bin/aarch64-linux-gnu-gcc
++   CFLAGS += $(LTO)
++   CXXFLAGS += $(LTO) -O3 -Ofast -march=armv8-a+simd -mtune=cortex-a53 -ffast-math
++   LDFLAGS += $(LTO)
++   TARGET := $(TARGET_NAME)_libretro.so
++   fpic := -fPIC
++   SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=link.T
++   
+ # ODROIDN2
+ else ifneq (,$(findstring CortexA73_G12B,$(platform)))
+ 	TARGET := $(TARGET_NAME)_libretro.so
