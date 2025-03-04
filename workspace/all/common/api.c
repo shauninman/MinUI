@@ -1210,7 +1210,7 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 	
 	ow += SCALE1(BUTTON_MARGIN);
 	if (align_right) ox -= ow;
-	GFX_blitPillColor(gfx.mode==MODE_MAIN ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, dst, &(SDL_Rect){
+	GFX_blitPillColor(ASSET_WHITE_PILL, dst, &(SDL_Rect){
 		ox,
 		oy,
 		ow,
