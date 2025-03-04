@@ -1,15 +1,16 @@
 # MinUI Next   
 MinUI with a rebuild emulation engine, includes all original MinUI Features plus:
 - Game switcher menu (Onion OS style) contributed by [@frysee](https://github.com/frysee)
-- Color and font options to customize the MinUI screens
 - Fixed both screen tearing and sync problems of the original MinUI
 - Super smooth gameplay actually in sync with your screen's refresh rate! (no more stutters!)
 - Much higher audio quality, due to much more advanced resampling engine (with selectable quality setting)
-- Much lower latency (average 20ms, 1 frame of 60fps) 
+- Much lower latency (average 20ms, 1 frame of 60fps)
+- Color and font options to customize the MinUI screens
 - Ambient light mode (Leds color based on whats on your screen)
 - Lot of fixes on original like inputs sometimes not registering etc.
 - Screen color temperature controls, besides the standard brightness control.
-- Fully working Deep Sleep mode instead of complete power off after 2 minutes (instant on) 
+- Fully working Deep Sleep mode instead of complete power off after 2 minutes (instant on)
+- Battery Monitoring with graph and everything
 - Default Snes9x core instead of deprecated snes9x2005, also optimized version of PCSX Rearmed and optimized FBNeo included in extras
 - FBNeo screen rotation works
 - JP and partial CN/KR characters supported
