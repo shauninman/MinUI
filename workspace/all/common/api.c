@@ -124,13 +124,20 @@ void loadSettings() {
 	FILE *file = PLAT_OpenSettings("minuisettings.txt");
 	if (file == NULL)
     {
-		LOG_info("Unable to open settings file");
-		THEME_COLOR1_255 = HexToUint32_unmapped("0xffffff");
-		THEME_COLOR2_255 = HexToUint32_unmapped("0x9b2257");
-		THEME_COLOR3_255 = HexToUint32_unmapped("0x1e2329");
-		THEME_COLOR1 = HexToUint("0xffffff");
-		THEME_COLOR2 = HexToUint("0x9b2257");
-		THEME_COLOR3 = HexToUint("0x1e2329");
+		LOG_info("Unable to open settings file\n");
+		char hexColor[7];
+		snprintf(hexColor, sizeof(hexColor), "%06x", 0xffffff);
+		THEME_COLOR1_255 = HexToUint32_unmapped(hexColor);
+		snprintf(hexColor, sizeof(hexColor), "%06x", 0x9b2257);
+		THEME_COLOR2_255 = HexToUint32_unmapped(hexColor);
+		snprintf(hexColor, sizeof(hexColor), "%06x", 0x1e2329);
+		THEME_COLOR3_255 = HexToUint32_unmapped(hexColor);
+		snprintf(hexColor, sizeof(hexColor), "%06x", 0xffffff);
+		THEME_COLOR1 = HexToUint(hexColor);
+		snprintf(hexColor, sizeof(hexColor), "%06x", 0x9b2257);
+		THEME_COLOR2 = HexToUint(hexColor);
+		snprintf(hexColor, sizeof(hexColor), "%06x", 0x1e2329);
+		THEME_COLOR3 = HexToUint(hexColor);
 		FONT_PATH = RES_PATH "/chillroundm.ttf";
 	} 
 	else {
