@@ -44,7 +44,6 @@ snes9x2005_plus_FLAGS = USE_BLARGG_APU=1
 snes9x_REPO = https://github.com/libretro/snes9x
 snes9x_CORE = snes9x_libretro.so
 snes9x_BUILD_PATH = snes9x/libretro
-snes9x_MAKE = make
 
 ###############################
 
