@@ -1,7 +1,7 @@
 diff --git a/src/burner/libretro/Makefile b/src/burner/libretro/Makefile
 old mode 100644
 new mode 100755
-index 0b7d646c7..0c9ac1c6b
+index 0b7d646c7..2784aa150
 --- a/src/burner/libretro/Makefile
 +++ b/src/burner/libretro/Makefile
 @@ -346,6 +346,22 @@ else ifeq ($(platform), classic_armv7_a7)
@@ -14,16 +14,16 @@ index 0b7d646c7..0c9ac1c6b
 +	CXX=/usr/bin/aarch64-linux-gnu-gcc
 +	fpic := -fPIC
 +	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
-+	PLATFORM_FLAGS := -O3 -Ofast -DNDEBUG=1 -fomit-frame-pointer -ffast-math -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a+simd -flto
-+	USE_EXPERIMENTAL_FLAGS = 1
++	PLATFORM_FLAGS := -O3 -Ofast -DNDEBUG=1 -fomit-frame-pointer -ffast-math -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a+simd
++	USE_EXPERIMENTAL_FLAGS = 0
 +	HAVE_NEON = 0
 +	USE_CYCLONE = 0
 +	ARCH = arm
 +	ENDIANNESS_DEFINES := -DLSB_FIRST
-+	LDFLAGS += -static-libgcc -static-libstdc++ -flto
++	LDFLAGS += -lstdc++ -static-libgcc -static-libstdc++ -lpthread -lm -flto
 +	CFLAGS += $(PLATFORM_FLAGS)
 +	CXXFLAGS += $(PLATFORM_FLAGS)
-+
++	
  # (armv8 a35, hard point, neon based) ###
  # Playstation Classic
  else ifeq ($(platform), classic_armv8_a35)
