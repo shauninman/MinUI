@@ -191,7 +191,7 @@ void loadSettings() {
 		fclose(file);
 	}
 
-	ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3);
+	ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3_255);
 }
 
 ///////////////////////////////
