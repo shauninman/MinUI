@@ -11,4 +11,16 @@
         <path>/mnt/SDCARD/Roms/Game Boy Advance (GBA)</path>
         <gamelist>./GBA.xml</gamelist>
     </folder>
+    <folder>
+        <path>/mnt/SDCARD/Roms/Sega Megadrive (MD)</path>
+        <gamelist>./MD.xml</gamelist>
+    </folder>
+    <folder>
+        <path>/mnt/SDCARD/Roms/Game Boy (GB)</path>
+        <gamelist>./GB.xml</gamelist>
+    </folder>
+    <folder>
+        <path>/mnt/SDCARD/Roms/Game Boy Color (GBC)</path>
+        <gamelist>./GBC.xml</gamelist>
+    </folder>
 </folders>
