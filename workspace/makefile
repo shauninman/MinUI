@@ -23,7 +23,8 @@ all:
 	cd ./all/clock/ && make
 	cd ./all/minput/ && make
 	cd ./all/syncsettings/ && make
-	cd ./$(PLATFORM)/cores && make
+	cd ./all/settings/ && make
+#	cd ./$(PLATFORM)/cores && make
 	cd ./$(PLATFORM) && make
 
 clean:
@@ -34,4 +35,5 @@ clean:
 	cd ./all/clock/ && make clean
 	cd ./all/minput/ && make clean
 	cd ./all/syncsettings/ && make clean
+	cd ./all/settings/ && make
 	cd ./$(PLATFORM) && make clean
