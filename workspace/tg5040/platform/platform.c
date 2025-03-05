@@ -662,7 +662,7 @@ void PLAT_setCPUSpeed(int speed) {
 #define RUMBLE_VOLTAGE_PATH "/sys/class/motor/voltage"
 #define MAX_STRENGTH 0xFFFF
 #define MIN_VOLTAGE 500000
-#define MAX_VOLTAGE 3500000
+#define MAX_VOLTAGE 3300000
 
 void PLAT_setRumble(int strength) {
 	if(strength != 0) {
