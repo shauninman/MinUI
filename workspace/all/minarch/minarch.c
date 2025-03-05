@@ -1177,7 +1177,7 @@ static void Config_readOptionsString(char* cfg) {
 	
 	for (int i=0; config.core.options[i].key; i++) {
 		Option* option = &config.core.options[i];
-		LOG_info("%s\n",option->key);
+		// LOG_info("%s\n",option->key);
 		if (!Config_getValue(cfg, option->key, value, &option->lock)) continue;
 		OptionList_setOptionValue(&config.core, option->key, value);
 	}
@@ -1486,6 +1486,7 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 		config.core.options = calloc(count+1, sizeof(Option));
 		
 		for (int i=0; i<config.core.count; i++) {
+			LOG_info("optie\n");
 			int len;
 			const struct retro_core_option_definition *def = &defs[i];
 			Option* item = &config.core.options[i];
@@ -2875,15 +2876,14 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	
 	// debug
-	if (show_debug) {
+	if (show_debug && !isnan(currentratio) && !isnan(currentfps) && !isnan(currentreqfps)  && !isnan(currentbufferms) &&
+	currentbuffersize >= 0  && currentbufferfree >= 0 && SDL_GetTicks() > 5000) {
 		int x = 2 + renderer.src_x;
 		int y = 2 + renderer.src_y;
 		char debug_text[250];
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
-		
-		if (!isnan(currentratio) && !isnan(currentfps) && !isnan(currentreqfps)  && !isnan(currentbufferms) &&
-		 currentbuffersize >= 0  && currentbufferfree >= 0) {
+
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 		
@@ -2905,7 +2905,6 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
-	}
 	}
 	
 	if (downsample) {
@@ -3104,11 +3103,12 @@ void Core_load(void) {
 	game_info.size = game.size;
 	LOG_info("game path: %s (%i)\n", game_info.path, game.size);
 	
+	LOG_info("gamepje laden\n");
 	core.load_game(&game_info);
-	
+	LOG_info("gamepje laden gedaan\n");
 	SRAM_read();
 	RTC_read();
-	
+	LOG_info("andere zooi gedaan?\n");
 	// NOTE: must be called after core.load_game!
 	struct retro_system_av_info av_info = {};
 	core.get_system_av_info(&av_info);
@@ -4856,19 +4856,27 @@ int main(int argc , char* argv[]) {
 	// why not move to Core_init()?
 	// ah, because it's defined before options_menu...
 	options_menu.items[1].desc = (char*)core.version;
-	
+	LOG_info("stap 1\n");
 	Core_load();
+	LOG_info("stap 2\n");
 	Input_init(NULL);
+	LOG_info("stap 3\n");
 	Config_readOptions(); // but others load and report options later (eg. nes)
+	LOG_info("stap 4\n");
 	Config_readControls(); // restore controls (after the core has reported its defaults)
+	LOG_info("stap 5\n");
 	Config_free();
-		
+	LOG_info("stap 6\n");
 	SND_init(core.sample_rate, core.fps);
+	LOG_info("stap 7\n");
 	InitSettings(); // after we initialize audio
+	LOG_info("stap 8\n");
 	Menu_init();
+	LOG_info("stap 9\n");
 	State_resume();
+	LOG_info("stap 10\n");
 	Menu_initState(); // make ready for state shortcuts
-	
+	LOG_info("stap 11\n");
 	if (thread_video) {
 		core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 		core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
