@@ -1,10 +1,10 @@
 diff --git a/Makefile.libretro b/Makefile.libretro
-index 40d635b..64fa91f
+index 2197946c..df72d03d
 --- a/Makefile.libretro
 +++ b/Makefile.libretro
-@@ -504,6 +504,25 @@ else ifeq ($(platform), rpi4)
- 	BUILTIN_GPU = neon
- 	DYNAREC = ari64
+@@ -518,6 +518,25 @@ else ifeq ($(platform), rpi4_64)
+         fpic := -fPIC
+         CFLAGS += -march=armv8-a+crc+simd -mtune=cortex-a72 -ftree-vectorize
  
 +# TRIMUI SMART PRO
 +else ifeq ($(platform), tg5040)
@@ -24,7 +24,7 @@ index 40d635b..64fa91f
 +	BUILTIN_GPU = neon
 +	ARCH = arm64
 +	DYNAREC = ari64
-+
- #Raspberry Pi 4 with a 64bit GNU/Linux OS
- else ifeq ($(platform), rpi4_64)
-         TARGET := $(TARGET_NAME)_libretro.so
++	
+ # Classic Platforms ####################
+ # Platform affix = classic_<ISA>_<µARCH>
+ # Help at https://modmyclassic.com/comp
