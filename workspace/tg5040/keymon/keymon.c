@@ -192,4 +192,7 @@ int main (int argc, char *argv[]) {
 		
 		usleep(16666); // 60fps
 	}
+
+	pthread_cancel(mute_pt);
+	pthread_join(mute_pt, NULL);
 }
