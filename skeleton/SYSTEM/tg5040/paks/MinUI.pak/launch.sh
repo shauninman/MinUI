@@ -39,6 +39,14 @@ fi
 
 #######################################
 
+##REmove Old Led Daemon
+LCDAEMON_PATH="/etc/LedControl"
+
+cd $(dirname "$0")
+rm -R $LCDAEMON_PATH
+/etc/init.d/lcservice disable
+rm /etc/init.d/lcservice
+
 #PD11 pull high for VCC-5v
 echo 107 > /sys/class/gpio/export
 echo -n out > /sys/class/gpio/gpio107/direction
