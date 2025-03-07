@@ -55,7 +55,7 @@ While in game:
 - Hold menu and select at same time to open up game switcher
     
 Deep sleep:   
-- First the device goes into light sleep mode the screen turns off and the Leds will pulse briefly to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off. 
+- First the device goes into light sleep mode the screen turns off and the Leds will pulse 5 times to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off. 
 
 # Original MinUI's readme:
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
