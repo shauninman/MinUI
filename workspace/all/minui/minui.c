@@ -1745,10 +1745,10 @@ int main (int argc, char *argv[]) {
 
 					}
 
-					if(can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, 0, screen, 0);
+					if(can_resume) GFX_blitButtonGroup((char*[]){ "A","RESUME",  NULL }, 0, screen, 0);
 					else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, 0, screen, 0);
 
-					GFX_blitButtonGroup((char*[]){ "B","BACK", "A", "OPEN", NULL }, 1, screen, 1);
+					GFX_blitButtonGroup((char*[]){ "B","BACK", NULL }, 1, screen, 1);
 					
 					Entry_free(selectedEntry);
 				}
