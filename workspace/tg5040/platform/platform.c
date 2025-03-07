@@ -726,12 +726,64 @@ void PLAT_chmod(const char *file, int writable)
     }
 }
 
+void PLAT_initDefaultLeds() {
+	lights[0] = (LightSettings) {
+		"FN 1 key",
+		"f1",
+		4,
+		1000,
+		100,
+		0xFFFFFF,
+		0xFFFFFF,
+		0,
+		{},
+		1
+	};
+	lights[1] = (LightSettings) {
+		"FN 2 key",
+		"f2",
+		4,
+		1000,
+		100,
+		0xFFFFFF,
+		0xFFFFFF,
+		0,
+		{},
+		1
+	};
+	lights[2] = (LightSettings) {
+		"Topbar",
+		"m",
+		4,
+		1000,
+		100,
+		0xFFFFFF,
+		0xFFFFFF,
+		0,
+		{},
+		1
+	};
+	lights[3] = (LightSettings) {
+		"L/R triggers",
+		"lr",
+		4,
+		1000,
+		100,
+		0xFFFFFF,
+		0xFFFFFF,
+		0,
+		{},
+		1
+	};
+}
 void PLAT_initLeds(LightSettings *lights) {
-
+	PLAT_initDefaultLeds();
 	FILE *file = PLAT_OpenSettings("ledsettings.txt");
     if (file == NULL)
     {
+		
         LOG_info("Unable to open led settings file");
+	
     }
 	else {
 		char line[256];
