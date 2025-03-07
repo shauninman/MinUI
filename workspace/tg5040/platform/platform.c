@@ -868,20 +868,22 @@ void PLAT_setLedBrightness(LightSettings *led)
     // first set brightness
 	if (strcmp(led->filename, "m") == 0) {
         snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
-    } else if (strcmp(led->filename, "f1") == 0 || strcmp(led->filename, "f2") == 0) {
+    } else if (strcmp(led->filename, "f1") == 0) {
         snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
-    } else {
+    } else  {
         snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
     }
-
-    PLAT_chmod(filepath, 1);
-    file = fopen(filepath, "w");
-    if (file != NULL)
-    {
-        fprintf(file, "%i\n", led->brightness);
-        fclose(file);
-    }
-    PLAT_chmod(filepath, 0);
+	if (strcmp(led->filename, "f2") != 0) {
+		// do nothhing for f2
+		PLAT_chmod(filepath, 1);
+		file = fopen(filepath, "w");
+		if (file != NULL)
+		{
+			fprintf(file, "%i\n", led->brightness);
+			fclose(file);
+		}
+		PLAT_chmod(filepath, 0);
+	}
 }
 void PLAT_setLedEffect(LightSettings *led)
 {

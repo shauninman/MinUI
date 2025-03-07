@@ -354,6 +354,7 @@ int PWR_getBattery(void);
 
 void LEDS_updateLeds();
 void LEDS_SaveSettings();
+void LEDS_setEffect();
 
 enum {
 	CPU_SPEED_MENU,

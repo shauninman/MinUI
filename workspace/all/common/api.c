@@ -464,20 +464,20 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 	if(mode==1 || mode==2 || mode==5) {
 		lights[2].color1 = dominant_color;
 		lights[2].effect = 4;
-		lights[2].brightness = 255;
+		lights[2].brightness = 100;
 	}
 	if(mode==1 || mode==3) {
 		lights[0].color1 = dominant_color;
 		lights[0].effect = 4;
-		lights[0].brightness = 255;
+		lights[0].brightness = 100;
 		lights[1].color1 = dominant_color;
 		lights[1].effect = 4;
-		lights[1].brightness = 255;
+		lights[1].brightness = 100;
 	}
 	if(mode==1 || mode==4 || mode==5) {
 		lights[3].color1 = dominant_color;
 		lights[3].effect = 4;
-		lights[3].brightness = 255;
+		lights[3].brightness = 100;
 	}
 }
 
@@ -2160,6 +2160,7 @@ void PWR_powerOff(void) {
 
 static void PWR_enterSleep(void) {
 	SDL_PauseAudio(1);
+	LEDS_setEffect(2);
 	if (GetHDMI()) {
 		PLAT_clearVideo(gfx.screen);
 		PLAT_flip(gfx.screen, 0);
@@ -2174,6 +2175,8 @@ static void PWR_enterSleep(void) {
 	sync();
 }
 static void PWR_exitSleep(void) {
+	PLAT_initLeds(lights);
+	LEDS_updateLeds();
 	system("killall -CONT keymon.elf");
 	system("killall -CONT batmon.elf");
 	if (GetHDMI()) {
@@ -2287,6 +2290,15 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	return 0; // why does this return an int?
 }
 
+
+void LEDS_setEffect(int effect) {
+	int lightsize = sizeof(lights) / sizeof(lights[0]);
+	for (int i = 0; i < lightsize; i++)
+	{
+		lights[i].effect = effect;
+		PLAT_setLedEffect(&lights[i]);
+	}
+}
 
 void LEDS_updateLeds() {
 	int lightsize = sizeof(lights) / sizeof(lights[0]);
