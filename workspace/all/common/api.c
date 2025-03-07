@@ -261,14 +261,7 @@ SDL_Surface* GFX_init(int mode) {
 
 	PLAT_initLid();
 	PLAT_initLeds(lights);
-
-	for (int i = 0; i < 4; i++)
-	{
-		PLAT_setLedBrightness(&lights[i]);
-		PLAT_setLedEffect(&lights[i]);
-		PLAT_setLedColor(&lights[i]);
-	}
-
+	LEDS_updateLeds();
 	
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
@@ -469,59 +462,22 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 	uint32_t dominant_color = GFX_extract_dominant_color(data, width, height,pitch);
    
 	if(mode==1 || mode==2 || mode==5) {
-		chmodfile("/sys/class/led_anim/effect_m", 1);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_m", 1);
-		// chmodfile("", 1);
-		FILE *file = fopen("/sys/class/led_anim/effect_m", "w");
-		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_m", "w");
-		// file3 = fopen(filepath, "w");
-		fprintf(file, "4");
-		fprintf(file2, "%06X", dominant_color);
-		
-		fclose(file);
-		fclose(file2);
-		chmodfile("/sys/class/led_anim/effect_m", 0);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_m", 0);
+		lights[2].color1 = dominant_color;
+		lights[2].effect = 4;
+		lights[2].brightness = 255;
 	}
 	if(mode==1 || mode==3) {
-		chmodfile("/sys/class/led_anim/effect_f1", 1);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_f1", 1);
-		chmodfile("/sys/class/led_anim/effect_f2", 1);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_f2", 1);
-		// chmodfile("", 1);
-		FILE *file = fopen("/sys/class/led_anim/effect_f1", "w");
-		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_f1", "w");
-		FILE *file3 = fopen("/sys/class/led_anim/effect_f2", "w");
-		FILE *file4 = fopen("/sys/class/led_anim/effect_rgb_hex_f2", "w");
-		// file3 = fopen(filepath, "w");
-		fprintf(file, "4");
-		fprintf(file2, "%06X", dominant_color);
-		fprintf(file3, "4");
-		fprintf(file4, "%06X", dominant_color);
-		
-		fclose(file);
-		fclose(file2);
-		fclose(file3);
-		fclose(file4);
-		chmodfile("/sys/class/led_anim/effect_f1", 0);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_f1", 0);
-		chmodfile("/sys/class/led_anim/effect_f2", 0);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_f2", 0);
+		lights[0].color1 = dominant_color;
+		lights[0].effect = 4;
+		lights[0].brightness = 255;
+		lights[1].color1 = dominant_color;
+		lights[1].effect = 4;
+		lights[1].brightness = 255;
 	}
 	if(mode==1 || mode==4 || mode==5) {
-		chmodfile("/sys/class/led_anim/effect_lr", 1);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_lr", 1);
-		// chmodfile("", 1);
-		FILE *file = fopen("/sys/class/led_anim/effect_lr", "w");
-		FILE *file2 = fopen("/sys/class/led_anim/effect_rgb_hex_lr", "w");
-		// file3 = fopen(filepath, "w");
-		fprintf(file, "4");
-		fprintf(file2, "%06X", dominant_color);
-		
-		fclose(file);
-		fclose(file2);
-		chmodfile("/sys/class/led_anim/effect_lr", 0);
-		chmodfile("/sys/class/led_anim/effect_rgb_hex_lr", 0);
+		lights[3].color1 = dominant_color;
+		lights[3].effect = 4;
+		lights[3].brightness = 255;
 	}
 }
 
@@ -2333,10 +2289,14 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 
 
 void LEDS_updateLeds() {
-	for (int i = 0; i < sizeof(lights); i++)
-        {
-			PLAT_setLedColor(&lights[i]);
-        }
+	int lightsize = sizeof(lights) / sizeof(lights[0]);
+	for (int i = 0; i < lightsize; i++)
+	{
+		PLAT_setLedBrightness(&lights[i]);
+		PLAT_setLedColor(&lights[i]);
+		PLAT_setLedEffect(&lights[i]);
+		
+	}
 }
 
 

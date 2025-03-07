@@ -85,6 +85,7 @@ extern int currentsamplerateout;
 extern int should_rotate;
 extern MinUISettings settings;
 
+
 enum {
 	ASSET_WHITE_PILL,
 	ASSET_BLACK_PILL,
@@ -180,6 +181,8 @@ typedef struct
     int trigger;
 
 } LightSettings;
+
+extern LightSettings lights[MAX_LIGHTS];
 
 enum {
 	MODE_MAIN,
@@ -348,6 +351,9 @@ int PWR_preventAutosleep(void);
 
 int PWR_isCharging(void);
 int PWR_getBattery(void);
+
+void LEDS_updateLeds();
+void LEDS_SaveSettings();
 
 enum {
 	CPU_SPEED_MENU,

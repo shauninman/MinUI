@@ -807,6 +807,8 @@ void PLAT_initLeds(LightSettings *lights) {
 	LOG_info("lights setup\n");
 }
 
+
+
 void PLAT_setLedBrightness(LightSettings *led)
 {
     char filepath[256];
@@ -814,13 +816,10 @@ void PLAT_setLedBrightness(LightSettings *led)
     // first set brightness
 	if (strcmp(led->filename, "m") == 0) {
         snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
-		LOG_info( "led brightness: /sys/class/led_anim/max_scale\n");
     } else if (strcmp(led->filename, "f1") == 0 || strcmp(led->filename, "f2") == 0) {
         snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
-		LOG_info( "led brightness: /sys/class/led_anim/max_scale_f1f2\n");
     } else {
         snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
-		LOG_info( "led brightness: /sys/class/led_anim/max_scale_%s\n", led->filename);
     }
 
     PLAT_chmod(filepath, 1);
@@ -838,7 +837,6 @@ void PLAT_setLedEffect(LightSettings *led)
     FILE *file;
     // first set brightness
     snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/effect_%s", led->filename);
-	LOG_info( "led effect: /sys/class/led_anim/effect_%s\n", led->filename);
     PLAT_chmod(filepath, 1);
     file = fopen(filepath, "w");
     if (file != NULL)
@@ -854,12 +852,11 @@ void PLAT_setLedColor(LightSettings *led)
     FILE *file;
     // first set brightness
     snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/effect_rgb_hex_%s", led->filename);
-	LOG_info( "led color: /sys/class/led_anim/effect_rgb_hex_%s\n", led->filename);
     PLAT_chmod(filepath, 1);
     file = fopen(filepath, "w");
     if (file != NULL)
     {
-        fprintf(file, "%d\n", led->color1);
+        fprintf(file, "%06X\n", led->color1);
         fclose(file);
     }
     PLAT_chmod(filepath, 0);

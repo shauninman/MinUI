@@ -141,7 +141,7 @@ extern int is_brick;
 
 
 #define LED_PATH "/sys/class/led_anim"
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 4
 
 
 
