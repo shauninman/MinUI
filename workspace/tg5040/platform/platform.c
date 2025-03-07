@@ -727,20 +727,83 @@ void PLAT_chmod(const char *file, int writable)
 }
 
 void PLAT_initLeds(LightSettings *lights) {
-	lights[0] = (LightSettings) {
-		
-			"Top Bar",
-			"m",
-			4,
-			1000,
-		 	255,
-			0x0000FF,
-			0xFF0000,
-			0,
-			{0},
-			0
-		
-	};
+
+	FILE *file = PLAT_OpenSettings("ledsettings.txt");
+    if (file == NULL)
+    {
+        LOG_info("Unable to open led settings file");
+    }
+	else {
+		char line[256];
+		int current_light = -1;
+		while (fgets(line, sizeof(line), file))
+		{
+			if (line[0] == '[')
+			{
+				// Section header
+				char light_name[255];
+				if (sscanf(line, "[%49[^]]]", light_name) == 1)
+				{
+					current_light++;
+					if (current_light < MAX_LIGHTS)
+					{
+						strncpy(lights[current_light].name, light_name, 255 - 1);
+						lights[current_light].name[255 - 1] = '\0'; // Ensure null-termination
+					}
+					else
+					{
+						current_light = -1; // Reset if max_lights exceeded
+					}
+				}
+			}
+			else if (current_light >= 0 && current_light < MAX_LIGHTS)
+			{
+				int temp_value;
+				uint32_t temp_color;
+				char filename[255];
+
+				if (sscanf(line, "filename=%s", &filename) == 1)
+				{
+					strncpy(lights[current_light].filename, filename, 255 - 1);
+					continue;
+				}
+				if (sscanf(line, "effect=%d", &temp_value) == 1)
+				{
+					lights[current_light].effect = temp_value;
+					continue;
+				}
+				if (sscanf(line, "color1=%x", &temp_color) == 1)
+				{
+					lights[current_light].color1 = temp_color;
+					continue;
+				}
+				if (sscanf(line, "color2=%x", &temp_color) == 1)
+				{
+					lights[current_light].color2 = temp_color;
+					continue;
+				}
+				if (sscanf(line, "speed=%d", &temp_value) == 1)
+				{
+					lights[current_light].speed = temp_value;
+					continue;
+				}
+				if (sscanf(line, "brightness=%d", &temp_value) == 1)
+				{
+					lights[current_light].brightness = temp_value;
+					continue;
+				}
+				if (sscanf(line, "trigger=%d", &temp_value) == 1)
+				{
+					lights[current_light].trigger = temp_value;
+					continue;
+				}
+			}
+		}
+
+		fclose(file);
+	}
+
+	
 	LOG_info("lights setup\n");
 }
 
@@ -749,8 +812,17 @@ void PLAT_setLedBrightness(LightSettings *led)
     char filepath[256];
     FILE *file;
     // first set brightness
-    snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale%s", strcmp(led->filename,"m") == 0 ? "":"_m");
-	LOG_info( "led effect: /sys/class/led_anim/effect_%s\n", led->filename);
+	if (strcmp(led->filename, "m") == 0) {
+        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
+		LOG_info( "led brightness: /sys/class/led_anim/max_scale\n");
+    } else if (strcmp(led->filename, "f1") == 0 || strcmp(led->filename, "f2") == 0) {
+        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
+		LOG_info( "led brightness: /sys/class/led_anim/max_scale_f1f2\n");
+    } else {
+        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
+		LOG_info( "led brightness: /sys/class/led_anim/max_scale_%s\n", led->filename);
+    }
+
     PLAT_chmod(filepath, 1);
     file = fopen(filepath, "w");
     if (file != NULL)

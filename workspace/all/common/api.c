@@ -193,7 +193,11 @@ void loadSettings() {
 	}
 
 	ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3_255);
+
 }
+
+
+
 
 ///////////////////////////////
 static int qualityLevels[] = {
@@ -257,9 +261,14 @@ SDL_Surface* GFX_init(int mode) {
 
 	PLAT_initLid();
 	PLAT_initLeds(lights);
-	PLAT_setLedBrightness(&lights[0]);
-	PLAT_setLedEffect(&lights[0]);
-	PLAT_setLedColor(&lights[0]);
+
+	for (int i = 0; i < 4; i++)
+	{
+		PLAT_setLedBrightness(&lights[i]);
+		PLAT_setLedEffect(&lights[i]);
+		PLAT_setLedColor(&lights[i]);
+	}
+
 	
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
