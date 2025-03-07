@@ -2925,22 +2925,6 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 }
 const void* lastframe = NULL;
 
-void *thread_func(void *arg) {
-    // Unpack arguments (this example assumes arguments are packed in a struct)
-    struct args {
-        const void *data;
-        unsigned width;
-        unsigned height;
-        size_t pitch;
-        int ambient_mode;
-    } *params = arg;
-
-    // Call your function
-    GFX_setAmbientColor(params->data, params->width, params->height, params->pitch, params->ambient_mode);
-    
-    return NULL; // Return NULL to indicate successful completion
-}
-
 
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
     bool can_dupe = false;
@@ -2980,8 +2964,10 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
     lastframe = data;
 
 	if(!fast_forward ) {
-		GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
-		LEDS_updateLeds();
+		if(ambient_mode!=0) {
+			GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
+			LEDS_updateLeds();
+		}
 	}
 
 	if (thread_video) {
