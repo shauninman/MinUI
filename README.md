@@ -27,7 +27,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Optional game art/media
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
-- Menu animations and color settings (maybe some kind of template system?)
+- Menu animations
 - Configurable sleep mode or default auto shutdown
 - Retroachievements
 - Shaders
