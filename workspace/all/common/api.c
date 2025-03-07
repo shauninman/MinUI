@@ -255,6 +255,10 @@ SDL_Surface* GFX_init(int mode) {
 	// tried adding to PWR_init() but that was no good (not sure why)
 
 	PLAT_initLid();
+	PLAT_initLeds();
+	PLAT_setLedBrightness(&lights[0]);
+	PLAT_setLedEffect(&lights[0]);
+	PLAT_setLedColor(&lights[0]);
 	
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
@@ -2316,3 +2320,13 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	system(cmd);
 	return 0; // why does this return an int?
 }
+
+
+void LEDS_updateLeds() {
+	for (int i = 0; i < sizeof(lights); i++)
+        {
+			PLAT_setLedColor(&lights[i]);
+        }
+}
+
+

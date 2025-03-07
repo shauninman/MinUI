@@ -7,6 +7,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <errno.h>
 
 #include <msettings.h>
@@ -17,6 +18,7 @@
 #include "utils.h"
 
 #include "scaler.h"
+
 
 int is_brick = 0;
 
@@ -690,3 +692,104 @@ char* PLAT_getModel(void) {
 int PLAT_isOnline(void) {
 	return online;
 }
+
+
+
+
+
+void PLAT_chmod(const char *file, int writable)
+{
+    struct stat statbuf;
+    if (stat(file, &statbuf) == 0)
+    {
+        mode_t newMode;
+        if (writable)
+        {
+            // Add write permissions for all users
+            newMode = statbuf.st_mode | S_IWUSR | S_IWGRP | S_IWOTH;
+        }
+        else
+        {
+            // Remove write permissions for all users
+            newMode = statbuf.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+        }
+
+        // Apply the new permissions
+        if (chmod(file, newMode) != 0)
+        {
+            printf("chmod error %d %s", writable, file);
+        }
+    }
+    else
+    {
+        printf("stat error %d %s", writable, file);
+    }
+}
+
+void PLAT_initLeds() {
+	lights[0] = (LightSettings) {
+		
+			"Top Bar",
+			"m",
+			4,
+			1000,
+		 	255,
+			0x0000FF,
+			0xFF0000,
+			0,
+			{0},
+			0
+		
+	};
+	LOG_info("lights setup\n");
+}
+
+void PLAT_setLedBrightness(LightSettings *led)
+{
+    char filepath[256];
+    FILE *file;
+    // first set brightness
+    snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale%s", strcmp(led->filename,"m") == 0 ? "":"_m");
+	LOG_info( "led effect: /sys/class/led_anim/effect_%s\n", led->filename);
+    PLAT_chmod(filepath, 1);
+    file = fopen(filepath, "w");
+    if (file != NULL)
+    {
+        fprintf(file, "%i\n", led->brightness);
+        fclose(file);
+    }
+    PLAT_chmod(filepath, 0);
+}
+void PLAT_setLedEffect(LightSettings *led)
+{
+    char filepath[256];
+    FILE *file;
+    // first set brightness
+    snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/effect_%s", led->filename);
+	LOG_info( "led effect: /sys/class/led_anim/effect_%s\n", led->filename);
+    PLAT_chmod(filepath, 1);
+    file = fopen(filepath, "w");
+    if (file != NULL)
+    {
+        fprintf(file, "%i\n", led->effect);
+        fclose(file);
+    }
+    PLAT_chmod(filepath, 0);
+}
+void PLAT_setLedColor(LightSettings *led)
+{
+    char filepath[256];
+    FILE *file;
+    // first set brightness
+    snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/effect_rgb_hex_%s", led->filename);
+	LOG_info( "led color: /sys/class/led_anim/effect_rgb_hex_%s\n", led->filename);
+    PLAT_chmod(filepath, 1);
+    file = fopen(filepath, "w");
+    if (file != NULL)
+    {
+        fprintf(file, "%d\n", led->color1);
+        fclose(file);
+    }
+    PLAT_chmod(filepath, 0);
+}
+

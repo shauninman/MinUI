@@ -387,5 +387,9 @@ int PLAT_pickSampleRate(int requested, int max);
 char* PLAT_getModel(void);
 int PLAT_isOnline(void);
 int PLAT_setDateTime(int y, int m, int d, int h, int i, int s);
+void PLAT_setLedEffect(LightSettings *led);
+void PLAT_setLedColor(LightSettings *led);
+void PLAT_setLedBrightness(LightSettings *led);
+void PLAT_initLeds();
 
 #endif
