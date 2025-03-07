@@ -2,11 +2,18 @@
 cd $(dirname "$0")
 chmod a+w /sys/class/led_anim/* >> launch.log
 
+# remove original leddaemon
+LCDAEMON_PATH="/etc/LedControl"
+
+cd $(dirname "$0")
+rm -R $LCDAEMON_PATH
+/etc/init.d/lcservice disable
+rm /etc/init.d/lcservice
 
 TARGET_PATH="/mnt/SDCARD/.userdata/shared/ledsettings.txt"
 if [ ! -f "$TARGET_PATH" ]; then
     cp ./settings.txt /mnt/SDCARD/.userdata/shared/ledsettings.txt >> launch.log
-    echo "File copied to $LCDAEMON_PATH" >> launch.log
+    echo "File copied to $TARGET_PATH" >> launch.log
 else
     echo "File already exists in TARGET_PATH" >> launch.log
 fi
