@@ -27,7 +27,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Optional game art/media
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
-- Menu animations and color settings (maybe some kind of template system?)
+- Menu animations
 - Configurable sleep mode or default auto shutdown
 - Retroachievements
 - Shaders
@@ -43,14 +43,19 @@ Just copy MinUI.zip (don't unzip this just copy as zipfile) and trimui to the ro
 
 # How to use
 I think most speaks for itself but here are some handy short instructions just in case:
-While in menu:
+   
+While in menu:   
 - Hold start and use volume up and down to adjust brightes
 - Hold select and use volume up and down to adjust color temperature
 - Short press select to open game switcher menu
 - Idk the rest speaks for itself I guess?
-While in game:
+   
+While in game:   
 - Menu opens in game options menu, adjusting controls, scaling and what not
 - Hold menu and select at same time to open up game switcher
+    
+Deep sleep:   
+- First the device goes into light sleep mode the screen turns off and the Leds will pulse briefly to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off. 
 
 # Original MinUI's readme:
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
