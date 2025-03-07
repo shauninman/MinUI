@@ -726,7 +726,7 @@ void PLAT_chmod(const char *file, int writable)
     }
 }
 
-void PLAT_initLeds() {
+void PLAT_initLeds(LightSettings *lights) {
 	lights[0] = (LightSettings) {
 		
 			"Top Bar",

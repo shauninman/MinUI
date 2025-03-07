@@ -143,22 +143,9 @@ extern int is_brick;
 #define LED_PATH "/sys/class/led_anim"
 #define MAX_LIGHTS 10
 
-typedef struct
-{
-    char name[255];
-    char filename[255];
-    int effect;
-    int speed;
-    int brightness;
-    uint32_t color1;
-    uint32_t color2;
-    int updated;
-    int colorFrames[255];
-    int trigger;
 
-} LightSettings;
 
-LightSettings lights[10];
+
 
 ///////////////////////////////
 

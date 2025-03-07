@@ -166,6 +166,21 @@ typedef struct GFX_Renderer {
 	int dst_p;
 } GFX_Renderer;
 
+typedef struct
+{
+    char name[255];
+    char filename[255];
+    int effect;
+    int speed;
+    int brightness;
+    uint32_t color1;
+    uint32_t color2;
+    int updated;
+    int colorFrames[255];
+    int trigger;
+
+} LightSettings;
+
 enum {
 	MODE_MAIN,
 	MODE_MENU,
@@ -390,6 +405,6 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s);
 void PLAT_setLedEffect(LightSettings *led);
 void PLAT_setLedColor(LightSettings *led);
 void PLAT_setLedBrightness(LightSettings *led);
-void PLAT_initLeds();
+void PLAT_initLeds(LightSettings *lights);
 
 #endif

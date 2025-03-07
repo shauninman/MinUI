@@ -57,6 +57,7 @@ uint32_t RGB_LIGHT_GRAY;
 uint32_t RGB_GRAY;
 uint32_t RGB_DARK_GRAY;
 float currentbufferms = 20.0;
+LightSettings lights[MAX_LIGHTS];
 
 static struct GFX_Context {
 	SDL_Surface* screen;
@@ -255,7 +256,7 @@ SDL_Surface* GFX_init(int mode) {
 	// tried adding to PWR_init() but that was no good (not sure why)
 
 	PLAT_initLid();
-	PLAT_initLeds();
+	PLAT_initLeds(lights);
 	PLAT_setLedBrightness(&lights[0]);
 	PLAT_setLedEffect(&lights[0]);
 	PLAT_setLedColor(&lights[0]);
