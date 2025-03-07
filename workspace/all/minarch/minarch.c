@@ -2981,6 +2981,7 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
 	if(!fast_forward ) {
 		GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
+		LEDS_updateLeds();
 	}
 
 	if (thread_video) {
