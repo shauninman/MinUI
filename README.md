@@ -7,8 +7,8 @@ MinUI with a rebuild emulation engine and tons of added features
 - Color and font options to customize the MinUI screens
 - Fully Integrated LEDS control, change colors, effects, brightness and also LED indicators for example standby mode indicator
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
-- Screen color temperature and brightness control
-- Deep Sleep mode, gives instant ON and avoids the Power off overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
+- Screen color temperature and brightness controls
+- Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
 - Battery Monitoring including history graph and time left predicition
 - Updated and optimized build emulation cores
 - Rumble strength fixed and is now variable as used by the games
