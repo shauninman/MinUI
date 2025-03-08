@@ -2929,29 +2929,31 @@ const void* lastframe = NULL;
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
     bool can_dupe = false;
     environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
-	struct retro_variable var = { "fbneo-vertical-mode", NULL };
-    environment_callback(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+
+	// fbneo now has auto rotation, but keeping this here maybe we need in the future?
+	// struct retro_variable var = { "fbneo-vertical-mode", NULL };
+    // environment_callback(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
 	
-	if (var.value)
-	{
-		if (strcmp(var.value, "enabled") == 0) {
-			should_rotate = 1;
-		} else if (strcmp(var.value, "alternate") == 0) {
-			should_rotate = 2; // Adjust if different for alternate
-		} else if (strcmp(var.value, "TATE") == 0) {
-			should_rotate = 3;
-		} else if (strcmp(var.value, "TATE alternate") == 0) {
-        	should_rotate = 4;
-		}
-		else
-		{
-			should_rotate = 0;
-		}
-	}
-	else
-	{
-		should_rotate = 0;
-	}
+	// if (var.value)
+	// {
+	// 	if (strcmp(var.value, "enabled") == 0) {
+	// 		should_rotate = 1;
+	// 	} else if (strcmp(var.value, "alternate") == 0) {
+	// 		should_rotate = 2; // Adjust if different for alternate
+	// 	} else if (strcmp(var.value, "TATE") == 0) {
+	// 		should_rotate = 3;
+	// 	} else if (strcmp(var.value, "TATE alternate") == 0) {
+    //     	should_rotate = 4;
+	// 	}
+	// 	else
+	// 	{
+	// 		should_rotate = 0;
+	// 	}
+	// }
+	// else
+	// {
+	// 	should_rotate = 0;
+	// }
 
     if (!data) {
         if (lastframe) {
@@ -4522,9 +4524,9 @@ static void Menu_loop(void) {
 		
 		
 		GFX_clear(screen);
-		if(!should_rotate) {
+		// if(!should_rotate) {
 			SDL_BlitSurface(backing, NULL, screen, NULL);
-		} 
+		// } 
 		
 		SDL_BlitSurface(menu.overlay, NULL, screen, NULL);
 

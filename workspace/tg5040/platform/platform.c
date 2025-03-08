@@ -530,11 +530,14 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
         }
     }
 
-    if (should_rotate) {
-        rotate_and_render(vid.renderer, target, src_rect, dst_rect);
-    } else {
-        SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
-    }
+	// FBneo now has auto rotate but keeping this here in case we need it in the future
+    // if (should_rotate) {
+    //     rotate_and_render(vid.renderer, target, src_rect, dst_rect);
+    // } else {
+	// below rendercopy goes here
+	// }
+    SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
+    
 
     updateEffect();
     if (vid.blit && effect.type != EFFECT_NONE && vid.effect) {
