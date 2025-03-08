@@ -7,14 +7,14 @@ MinUI with a rebuild emulation engine and tons of added features
 - Color and font options to customize the MinUI screens
 - Fully Integrated LEDS control, change colors, effects, brightness and also LED indicators for example standby mode indicator
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
-- Screen color temperature controls, besides the standard brightness control.
-- Fully working Deep Sleep mode gives instant ON and avoids the Power off overheat Bug on these devices by [@zhaofengli](https://github.com/zhaofengli)
-- Battery Monitoring with graph and everything
-- Default Snes9x core instead of deprecated snes9x2005, also optimized version of PCSX Rearmed and optimized FBNeo included in extras
-- FBNeo screen rotation works
+- Screen color temperature and brightness control
+- Deep Sleep mode, gives instant ON and avoids the Power off overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
+- Battery Monitoring including history graph and time left predicition
+- Updated and optimized build emulation cores
 - Rumble strength fixed and is now variable as used by the games
-- JP and partial CN/KR characters supported
-- Lot of other smaller fixes, like inputs sometimes not registering etc.
+- FBNeo Arcade screen rotation
+- Next font supports CJK for JP/CN etc rom names
+- Lot of other smaller fixes and optimizations
 
 Current supported devices:   
 Trimui Brick | MinUI-20241028-0   
