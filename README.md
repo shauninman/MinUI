@@ -5,7 +5,8 @@ MinUI with a rebuild emulation engine and tons of added features
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Color and font settings to customize the NextUI interface
-- Fully Integrated LEDS control, change colors, effects, brightness and also LED indicators for example standby mode indicator
+- Fully Integrated LEDS control, change colors, effects, brightness
+- LED indicators, low battery, stand by, charging (brightness can be set seperately)
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
 - Screen color temperature and brightness controls
 - Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
