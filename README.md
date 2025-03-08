@@ -4,7 +4,7 @@ MinUI with a rebuild emulation engine and tons of added features
 - Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
-- Color and font options to customize the MinUI screens
+- Color and font settings to customize the NextUI interface
 - Fully Integrated LEDS control, change colors, effects, brightness and also LED indicators for example standby mode indicator
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
 - Screen color temperature and brightness controls
