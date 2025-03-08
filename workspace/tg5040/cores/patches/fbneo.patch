@@ -27,3 +27,82 @@ index 0b7d646c7..2784aa150
  # (armv8 a35, hard point, neon based) ###
  # Playstation Classic
  else ifeq ($(platform), classic_armv8_a35)
+diff --git a/src/burner/libretro/libretro.cpp b/src/burner/libretro/libretro.cpp
+index 3726ec60f..30a6c8cd6 100644
+--- a/src/burner/libretro/libretro.cpp
++++ b/src/burner/libretro/libretro.cpp
+@@ -78,7 +78,7 @@ INT32 nAudSegLen = 0;
+ 
+ static UINT8* pVidImage              = NULL;
+ static bool bVidImageNeedRealloc     = false;
+-static bool bRotationDone            = false;
++static bool bRotationDone            = true;
+ static int16_t *pAudBuffer           = NULL;
+ static char text_missing_files[2048] = "";
+ 
+@@ -1550,8 +1550,46 @@ void retro_run()
+ 		// current frame will be corrupted, let's dupe instead
+ 		pBurnDraw = NULL;
+ 	}
++    // get flags
++    UINT32 flags = BurnDrvGetFlags();
++
++    if (pBurnDraw && flags & BDF_ORIENTATION_VERTICAL) {
++        int y=0;
++
++        UINT8 *pTMP = (UINT8*)malloc(nGameWidth * nGameHeight * nBurnBpp);
++        memcpy(pTMP, pBurnDraw, nGameWidth * nGameHeight * nBurnBpp);
++
++        int newGameWidth = nGameHeight;
++        int newGameHeight = nGameWidth;
++        int newBurnPitch = newGameWidth * nBurnBpp;
++
++		if ((BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL))
++        while (y < newGameHeight) {
++            int x = 0;
++
++		    if ( flags & BDF_ORIENTATION_FLIPPED ) {
++                while (x < newGameWidth)
++                {
++                    for (int i = 0; i < nBurnBpp; i++)
++                        pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pTMP[(nGameHeight - x - 1) * nBurnPitch + y * nBurnBpp + i];
++                    x++;
++                }
++            } else {
++                while (x < newGameWidth)
++                {
++                    for (int i = 0; i < nBurnBpp; i++)
++                        pBurnDraw[x * nBurnBpp + y * newBurnPitch + i] = pTMP[x * nBurnPitch + (nGameWidth - y - 1) * nBurnBpp + i];
++                    x++;
++                }
++            }
++            y++;
++        }
++        free(pTMP);
++	    video_cb(pBurnDraw, newGameWidth, newGameHeight, newBurnPitch);
++    } else {
++	    video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
++    }
+ 
+-	video_cb(pBurnDraw, nGameWidth, nGameHeight, nBurnPitch);
+ 
+ 	bool updated = false;
+ 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+@@ -1567,7 +1605,7 @@ void retro_run()
+ 		// change orientation/geometry if vertical mode was toggled on/off
+ 		if (old_nVerticalMode != nVerticalMode)
+ 		{
+-			SetRotation();
++			//SetRotation();
+ 			struct retro_system_av_info av_info;
+ 			retro_get_system_av_info(&av_info);
+ 			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
+@@ -2184,7 +2222,7 @@ static bool retro_load_game_common()
+ 
+ 		// Initializing display, autorotate if needed
+ 		BurnDrvGetFullSize(&nGameWidth, &nGameHeight);
+-		SetRotation();
++		//SetRotation();
+ 		SetColorDepth();
+ 
+ 		VideoBufferInit();
