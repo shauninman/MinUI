@@ -179,6 +179,8 @@ typedef struct
     int updated;
     int colorFrames[255];
     int trigger;
+    int inbrightness;
+    int cycles;
 
 } LightSettings;
 
@@ -355,6 +357,7 @@ int PWR_getBattery(void);
 void LEDS_updateLeds();
 void LEDS_SaveSettings();
 void LEDS_setEffect();
+void LEDS_setIndicator(int effect,int cycles);
 
 enum {
 	CPU_SPEED_MENU,
@@ -414,6 +417,9 @@ void PLAT_initLeds(LightSettings *lights);
 void PLAT_setLedEffect(LightSettings *led);
 void PLAT_setLedColor(LightSettings *led);
 void PLAT_setLedBrightness(LightSettings *led);
+void PLAT_setLedInbrightness(LightSettings *led);
+void PLAT_setLedEffectSpeed(LightSettings *led);
+void PLAT_setLedEffectCycles(LightSettings *led);
 
 
 #endif

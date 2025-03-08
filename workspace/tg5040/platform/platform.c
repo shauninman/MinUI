@@ -727,6 +727,7 @@ void PLAT_chmod(const char *file, int writable)
 }
 
 void PLAT_initDefaultLeds() {
+
 	lights[0] = (LightSettings) {
 		"FN 1 key",
 		"f1",
@@ -737,7 +738,9 @@ void PLAT_initDefaultLeds() {
 		0xFFFFFF,
 		0,
 		{},
-		1
+		1,
+		100,
+		0
 	};
 	lights[1] = (LightSettings) {
 		"FN 2 key",
@@ -749,7 +752,9 @@ void PLAT_initDefaultLeds() {
 		0xFFFFFF,
 		0,
 		{},
-		1
+		1,
+		100,
+		0
 	};
 	lights[2] = (LightSettings) {
 		"Topbar",
@@ -761,7 +766,9 @@ void PLAT_initDefaultLeds() {
 		0xFFFFFF,
 		0,
 		{},
-		1
+		1,
+		100,
+		0
 	};
 	lights[3] = (LightSettings) {
 		"L/R triggers",
@@ -773,7 +780,9 @@ void PLAT_initDefaultLeds() {
 		0xFFFFFF,
 		0,
 		{},
-		1
+		1,
+		100,
+		0
 	};
 }
 void PLAT_initLeds(LightSettings *lights) {
@@ -801,6 +810,7 @@ void PLAT_initLeds(LightSettings *lights) {
 					{
 						strncpy(lights[current_light].name, light_name, 255 - 1);
 						lights[current_light].name[255 - 1] = '\0'; // Ensure null-termination
+						lights[current_light].cycles = -1; // cycles (times animation loops) should basically always be -1 for unlimited unless specifically set
 					}
 					else
 					{
@@ -849,6 +859,11 @@ void PLAT_initLeds(LightSettings *lights) {
 					lights[current_light].trigger = temp_value;
 					continue;
 				}
+				if (sscanf(line, "inbrightness=%d", &temp_value) == 1)
+				{
+					lights[current_light].inbrightness = temp_value;
+					continue;
+				}
 			}
 		}
 
@@ -861,6 +876,30 @@ void PLAT_initLeds(LightSettings *lights) {
 
 
 
+void PLAT_setLedInbrightness(LightSettings *led)
+{
+    char filepath[256];
+    FILE *file;
+    // first set brightness
+	if (strcmp(led->filename, "m") == 0) {
+        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
+    } else if (strcmp(led->filename, "f1") == 0) {
+        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
+    } else  {
+        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
+    }
+	if (strcmp(led->filename, "f2") != 0) {
+		// do nothhing for f2
+		PLAT_chmod(filepath, 1);
+		file = fopen(filepath, "w");
+		if (file != NULL)
+		{
+			fprintf(file, "%i\n", led->inbrightness);
+			fclose(file);
+		}
+		PLAT_chmod(filepath, 0);
+	}
+}
 void PLAT_setLedBrightness(LightSettings *led)
 {
     char filepath[256];
@@ -896,6 +935,36 @@ void PLAT_setLedEffect(LightSettings *led)
     if (file != NULL)
     {
         fprintf(file, "%i\n", led->effect);
+        fclose(file);
+    }
+    PLAT_chmod(filepath, 0);
+}
+void PLAT_setLedEffectCycles(LightSettings *led)
+{
+    char filepath[256];
+    FILE *file;
+    // first set brightness
+    snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/effect_cycles_%s", led->filename);
+    PLAT_chmod(filepath, 1);
+    file = fopen(filepath, "w");
+    if (file != NULL)
+    {
+        fprintf(file, "%i\n", led->cycles);
+        fclose(file);
+    }
+    PLAT_chmod(filepath, 0);
+}
+void PLAT_setLedEffectSpeed(LightSettings *led)
+{
+    char filepath[256];
+    FILE *file;
+    // first set brightness
+    snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/effect_duration_%s", led->filename);
+    PLAT_chmod(filepath, 1);
+    file = fopen(filepath, "w");
+    if (file != NULL)
+    {
+        fprintf(file, "%i\n", led->speed);
         fclose(file);
     }
     PLAT_chmod(filepath, 0);

@@ -51,7 +51,9 @@ const char *lr_effect_names[] = {
                 fprintf(file, "speed=%d\n", lights[i].speed);
                 fprintf(file, "brightness=%d\n", lights[i].brightness);
                 fprintf(file, "trigger=%d\n", lights[i].trigger);
-                fprintf(file, "filename=%s\n\n", lights[i].filename);
+                fprintf(file, "filename=%s\n", lights[i].filename);
+                fprintf(file, "inbrightness=%i\n", lights[i].inbrightness);
+                fprintf(file, "\n"); // added last extra break seperate because everytime i add another option i forget to change it lol
             }
     
             fclose(file);
@@ -129,36 +131,36 @@ void handle_light_input(LightSettings *light, SDL_Event *event, int selected_set
             light->color1 = bright_colors[(current_index - 1 + num_bright_colors) % num_bright_colors];
         }
         break;
-    case 2: // Color2
-        if (PAD_justPressed(BTN_RIGHT))
-        {
-            int current_index = -1;
-            for (int i = 0; i < num_bright_colors; i++)
-            {
-                if (bright_colors[i] == light->color2)
-                {
-                    current_index = i;
-                    break;
-                }
-            }
-            SDL_Log("saved settings to disk and shm %d", current_index);
-            light->color2 = bright_colors[(current_index + 1) % num_bright_colors];
-        }
-        else if (PAD_justPressed(BTN_LEFT))
-        {
-            int current_index = -1;
-            for (int i = 0; i < num_bright_colors; i++)
-            {
-                if (bright_colors[i] == light->color2)
-                {
-                    current_index = i;
-                    break;
-                }
-            }
-            light->color2 = bright_colors[(current_index - 1 + num_bright_colors) % num_bright_colors];
-        }
-        break;
-    case 3: // Duration
+    // case 2: // Color2
+    //     if (PAD_justPressed(BTN_RIGHT))
+    //     {
+    //         int current_index = -1;
+    //         for (int i = 0; i < num_bright_colors; i++)
+    //         {
+    //             if (bright_colors[i] == light->color2)
+    //             {
+    //                 current_index = i;
+    //                 break;
+    //             }
+    //         }
+    //         SDL_Log("saved settings to disk and shm %d", current_index);
+    //         light->color2 = bright_colors[(current_index + 1) % num_bright_colors];
+    //     }
+    //     else if (PAD_justPressed(BTN_LEFT))
+    //     {
+    //         int current_index = -1;
+    //         for (int i = 0; i < num_bright_colors; i++)
+    //         {
+    //             if (bright_colors[i] == light->color2)
+    //             {
+    //                 current_index = i;
+    //                 break;
+    //             }
+    //         }
+    //         light->color2 = bright_colors[(current_index - 1 + num_bright_colors) % num_bright_colors];
+    //     }
+    //     break;
+    case 2: // Duration
     if (PAD_justPressed(BTN_RIGHT))
         {
             light->speed = (light->speed + 100) % 5000; // Increase duration
@@ -168,7 +170,7 @@ void handle_light_input(LightSettings *light, SDL_Event *event, int selected_set
             light->speed = (light->speed - 100 + 5000) % 5000; // Decrease duration
         }
         break;
-    case 4: // Brightness
+    case 3: // Brightness
     if (PAD_justPressed(BTN_RIGHT))
         {
             light->brightness = (light->brightness + 5) % 105; // Increase duration
@@ -176,6 +178,16 @@ void handle_light_input(LightSettings *light, SDL_Event *event, int selected_set
         else if (PAD_justPressed(BTN_LEFT))
         {
             light->brightness = (light->brightness - 5 + 105) % 105; // Decrease duration
+        }
+        break;
+    case 4: // Info Brightness
+    if (PAD_justPressed(BTN_RIGHT))
+        {
+            light->inbrightness = (light->inbrightness + 5) % 105; // Increase duration
+        }
+        else if (PAD_justPressed(BTN_LEFT))
+        {
+            light->inbrightness = (light->inbrightness - 5 + 105) % 105; // Decrease duration
         }
         break;
     case 5: // trigger
@@ -203,14 +215,12 @@ void handle_light_input(LightSettings *light, SDL_Event *event, int selected_set
 
 int main(int argc, char *argv[])
 {
-    LOG_debug("Unatetst testtsttf\n");
     PWR_setCPUSpeed(CPU_SPEED_MENU);
 
     SDL_Surface* screen = GFX_init(MODE_MAIN);
     TTF_Font *font_med = TTF_OpenFont("main.ttf", SCALE1(FONT_MEDIUM));
     if (!font_med)
     {
-        LOG_debug("Unable to load main.ttf\n");
         GFX_quit();
         return EXIT_FAILURE;
     }
@@ -218,9 +228,6 @@ int main(int argc, char *argv[])
 	PAD_init();
 	PWR_init();
 	InitSettings();
-
-
-
 
     SDL_Color hex_to_sdl_color(uint32_t hex)
     {
@@ -287,12 +294,13 @@ int main(int argc, char *argv[])
             if (show_setting) GFX_blitHardwareHints(screen, show_setting);
 
             GFX_blitButtonGroup((char*[]){ "B","BACK", NULL }, 1, screen, 1);
+            GFX_blitButtonGroup((char*[]){ "L/R","Select light", NULL }, 0, screen, 0);
 
 
             int max_width = screen->w - SCALE1(PADDING * 2) - ow;
             // Display light name
             char light_name_text[256];
-            snprintf(light_name_text, sizeof(light_name_text), "%s", lights[selected_light].name);
+            snprintf(light_name_text, sizeof(light_name_text), "%s", lightnames[selected_light]);
 
             char title[256];
             int text_width = GFX_truncateText(font_med, light_name_text, title, max_width, SCALE1(BUTTON_PADDING * 2));
@@ -305,17 +313,17 @@ int main(int argc, char *argv[])
             SDL_FreeSurface(text);
 
             // Display settings
-            const char *settings_labels[6] = {"Effect", "Color", "Color2", "Speed", "Brightness", "Trigger"};
+            // const char *settings_labels[6] = {"Effect", "Color", "Color2", "Speed", "Brightness", "Trigger"};
+            const char *settings_labels[6] = {"Effect", "Color", "Speed", "Brightness", "Info brightness"};
             int settings_values[6] = {
                 lights[selected_light].effect,
                 lights[selected_light].color1,
-                lights[selected_light].color2,
                 lights[selected_light].speed,
                 lights[selected_light].brightness,
-                lights[selected_light].trigger,
+                lights[selected_light].inbrightness
             };
 
-            for (int j = 0; j < 6; ++j)
+            for (int j = 0; j < 5; ++j)
             {
                 char setting_text[256];
                 bool selected = (j == selected_setting);
@@ -335,7 +343,7 @@ int main(int argc, char *argv[])
                         &(SDL_Rect){SCALE1(PADDING + BUTTON_PADDING), y + SCALE1(4)});
                     SDL_FreeSurface(text);
                 }
-                else if (j < 3)
+                else if (j == 1)
                 { // Display color as hex code
                     snprintf(setting_text, sizeof(setting_text), "%s", settings_labels[j]);
 
@@ -352,19 +360,6 @@ int main(int argc, char *argv[])
                             SCALE1(PADDING) + text_width,
                             y + SCALE1(BUTTON_MARGIN)
                         }, settings_values[j]);
-                }
-                else if (j == 5)
-                { // Display effect name instead of number
-                    snprintf(setting_text, sizeof(setting_text), "%s: %s", settings_labels[j], triggernames[settings_values[j] - 1]);
-
-                    SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
-                    int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
-                    GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen, 
-                        &(SDL_Rect){SCALE1(PADDING), y, text_width, SCALE1(PILL_SIZE)});
-                    SDL_BlitSurface(text, 
-                        &(SDL_Rect){0, 0, text->w, text->h}, screen, 
-                        &(SDL_Rect){SCALE1(PADDING + BUTTON_PADDING), y + SCALE1(4)});
-                    SDL_FreeSurface(text);
                 }
                 else
                 {
