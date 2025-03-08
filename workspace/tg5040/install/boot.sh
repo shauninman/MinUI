@@ -11,6 +11,14 @@ CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
 CPU_SPEED_PERF=2000000
 echo $CPU_SPEED_PERF > $CPU_PATH
 
+##REmove Old Led Daemon
+LCDAEMON_PATH="/etc/LedControl"
+
+cd $(dirname "$0")
+rm -R $LCDAEMON_PATH
+/etc/init.d/lcservice disable
+rm /etc/init.d/lcservice
+
 # install/update
 if [ -f "$UPDATE_PATH" ]; then 
 	echo ok

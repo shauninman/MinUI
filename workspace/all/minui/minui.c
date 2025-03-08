@@ -1415,21 +1415,16 @@ int main (int argc, char *argv[]) {
 				switcher_selected = 0;
 				dirty = 1;
 			}
-			else if (recents->count > 0 && can_resume && PAD_justReleased(BTN_RESUME)) {
+			else if (recents->count > 0 && PAD_justReleased(BTN_A)) {
 				// TODO: This is crappy af - putting this here since it works, but
 				// super inefficient. Why are Recents not decorated with type, and need
 				// to be remade into Entries via getRecents()? - need to understand the 
 				// architecture more...
 				Entry *selectedEntry = entryFromRecent(recents->items[switcher_selected]);
-				should_resume = 1;
+				should_resume = can_resume;
 				Entry_open(selectedEntry);
 				dirty = 1;
 				Entry_free(selectedEntry);
-			}
-			else if (recents->count > 0 && PAD_justReleased(BTN_A)) {
-				Entry *selectedEntry = entryFromRecent(recents->items[switcher_selected]);
-				Entry_open(selectedEntry);
-				dirty = 1;
 			}
 			else if (PAD_justPressed(BTN_RIGHT)) {
 				switcher_selected++;
@@ -1750,10 +1745,10 @@ int main (int argc, char *argv[]) {
 
 					}
 
-					if(can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, 0, screen, 0);
+					if(can_resume) GFX_blitButtonGroup((char*[]){ "A","RESUME",  NULL }, 0, screen, 0);
 					else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, 0, screen, 0);
 
-					GFX_blitButtonGroup((char*[]){ "B","BACK", "A", "OPEN", NULL }, 1, screen, 1);
+					GFX_blitButtonGroup((char*[]){ "B","BACK", NULL }, 1, screen, 1);
 					
 					Entry_free(selectedEntry);
 				}
