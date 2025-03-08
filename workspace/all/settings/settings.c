@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
                 int max_width = screen->w - SCALE1(PADDING * 2) - ow;
 
                 char display_name[256];
-                sprintf(display_name, "%s", "MinUI Next Settings");
+                sprintf(display_name, "%s", "NextUI Settings");
                 char title[256];
                 int text_width = GFX_truncateText(font_med, display_name, title, max_width, SCALE1(BUTTON_PADDING * 2));
                 max_width = MIN(max_width, text_width);

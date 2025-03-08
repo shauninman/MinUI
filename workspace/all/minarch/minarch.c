@@ -4404,9 +4404,11 @@ static void Menu_loop(void) {
 	int menu_start = 0;
 	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
 
-
+	LEDS_initLeds();
+	LEDS_updateLeds();
 	
 	while (show_menu) {
+
 		GFX_startFrame();
 		uint32_t now = SDL_GetTicks();
 
