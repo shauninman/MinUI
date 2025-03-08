@@ -260,7 +260,7 @@ SDL_Surface* GFX_init(int mode) {
 	// tried adding to PWR_init() but that was no good (not sure why)
 
 	PLAT_initLid();
-	PLAT_initLeds(lights);
+	LEDS_initLeds();
 	LEDS_updateLeds();
 	
 	gfx.screen = PLAT_initVideo();
@@ -1964,8 +1964,13 @@ static void PWR_initOverlay(void) {
 }
 
 static void PWR_updateBatteryStatus(void) {
-	PLAT_getBatteryStatus(&pwr.is_charging, &pwr.charge);
+	PLAT_getBatteryStatusFine(&pwr.is_charging, &pwr.charge);
 	PLAT_enableOverlay(pwr.should_warn && pwr.charge<=PWR_LOW_CHARGE);
+	
+	// low power warn on all leds 
+	if(pwr.charge < PWR_LOW_CHARGE) {
+		LEDS_setIndicator(3,0xFF0000,-1);
+	}
 }
 
 static void* PWR_monitorBattery(void *arg) {
@@ -2027,7 +2032,12 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	if (was_muted==-1) was_muted = GetMute();
 	
 	static int was_charging = -1;
-	if (was_charging==-1) was_charging = pwr.is_charging;
+	if (was_charging==-1) {
+		was_charging = pwr.is_charging;
+		if(pwr.is_charging) {
+			LED_setIndicator(2,0xFF0000,-1,2);
+		}
+	}
 
 	uint32_t now = SDL_GetTicks();
 	if (was_charging || PAD_anyPressed() || last_input_at==0) last_input_at = now;
@@ -2036,9 +2046,15 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	if (dirty || now-checked_charge_at>=CHARGE_DELAY) {
 		int is_charging = pwr.is_charging;
 		if (was_charging!=is_charging) {
+			if(is_charging) {
+				LED_setIndicator(2,0xFF0000,-1,2);
+			} else {
+				PLAT_initLeds(lights);
+				LEDS_updateLeds();
+			}
 			was_charging = is_charging;
 			dirty = 1;
-		}
+		} 
 		checked_charge_at = now;
 	}
 	
@@ -2160,7 +2176,7 @@ void PWR_powerOff(void) {
 
 static void PWR_enterSleep(void) {
 	SDL_PauseAudio(1);
-	LEDS_setIndicator(2,5);
+	LEDS_setIndicator(2,0,5);
 	if (GetHDMI()) {
 		PLAT_clearVideo(gfx.screen);
 		PLAT_flip(gfx.screen, 0);
@@ -2177,6 +2193,9 @@ static void PWR_enterSleep(void) {
 static void PWR_exitSleep(void) {
 	PLAT_initLeds(lights);
 	LEDS_updateLeds();
+	if(pwr.is_charging) {
+		LED_setIndicator(2,0xFF0000,-1,2);
+	}
 	system("killall -CONT keymon.elf");
 	system("killall -CONT batmon.elf");
 	if (GetHDMI()) {
@@ -2290,40 +2309,84 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	return 0; // why does this return an int?
 }
 
-
-void LEDS_setIndicator(int effect,int cycles) {
+// only indicator leds may work when battery is below PWR_LOW_CHARGE
+void LED_setIndicator(int effect,uint32_t color, int cycles,int ledindex) {
+	int lightsize = sizeof(lights) / sizeof(lights[0]);
+		lights[ledindex].effect = effect;
+		lights[ledindex].color1 = color;
+		lights[ledindex].cycles = cycles;
+		
+		PLAT_setLedInbrightness(&lights[ledindex]);
+		PLAT_setLedEffectCycles(&lights[ledindex]);
+		PLAT_setLedColor(&lights[ledindex]);
+		PLAT_setLedEffect(&lights[ledindex]);
+}
+void LEDS_setIndicator(int effect,uint32_t color, int cycles) {
 	int lightsize = sizeof(lights) / sizeof(lights[0]);
 	for (int i = 0; i < lightsize; i++)
 	{
 		lights[i].effect = effect;
+		if(color) {
+			lights[i].color1 = color;
+		}
 		lights[i].cycles = cycles;
+
 		PLAT_setLedInbrightness(&lights[i]);
 		PLAT_setLedEffectCycles(&lights[i]);
+		PLAT_setLedColor(&lights[i]);
 		PLAT_setLedEffect(&lights[i]);
 		
 	}
 }
 void LEDS_setEffect(int effect) {
-	int lightsize = sizeof(lights) / sizeof(lights[0]);
-	for (int i = 0; i < lightsize; i++)
-	{
-		lights[i].effect = effect;
-		PLAT_setLedEffect(&lights[i]);
+	if(pwr.charge > PWR_LOW_CHARGE) {
+		int lightsize = sizeof(lights) / sizeof(lights[0]);
+		for (int i = 0; i < lightsize; i++)
+		{
+			lights[i].effect = effect;
+			PLAT_setLedEffect(&lights[i]);
+		}
+	}
+}
+void LEDS_setColor(uint32_t color) {
+	if(pwr.charge > PWR_LOW_CHARGE) {
+		int lightsize = sizeof(lights) / sizeof(lights[0]);
+		for (int i = 0; i < lightsize; i++)
+		{
+			lights[i].color1 = color;
+			PLAT_setLedColor(&lights[i]);
+			PLAT_setLedEffect(&lights[i]);
+		}
+	}
+}
+
+void LED_setColor(uint32_t color,int ledindex) {
+	if(pwr.charge > PWR_LOW_CHARGE) {
+		lights[ledindex].color1 = color;
+		PLAT_setLedColor(&lights[ledindex]);
+		PLAT_setLedEffect(&lights[ledindex]);
 	}
 }
 
 void LEDS_updateLeds() {
-	int lightsize = sizeof(lights) / sizeof(lights[0]);
-	for (int i = 0; i < lightsize; i++)
-	{
-		PLAT_setLedBrightness(&lights[i]); // set brightness of each led
-		PLAT_setLedEffectCycles(&lights[i]); // set how many times animation should loop
-		PLAT_setLedEffectSpeed(&lights[i]); // set animation speed
-		PLAT_setLedColor(&lights[i]); // set color
-		PLAT_setLedEffect(&lights[i]); // finally set the effect, on trimui devices this also applies the settings
-	
+	if(pwr.charge > PWR_LOW_CHARGE) {
+		int lightsize = sizeof(lights) / sizeof(lights[0]);
+		for (int i = 0; i < lightsize; i++)
+		{
+			PLAT_setLedBrightness(&lights[i]); // set brightness of each led
+			PLAT_setLedEffectCycles(&lights[i]); // set how many times animation should loop
+			PLAT_setLedEffectSpeed(&lights[i]); // set animation speed
+			PLAT_setLedColor(&lights[i]); // set color
+			PLAT_setLedEffect(&lights[i]); // finally set the effect, on trimui devices this also applies the settings
 		
+			
+		}
 	}
+}
+
+void LEDS_initLeds() {
+	PLAT_getBatteryStatusFine(&pwr.is_charging, &pwr.charge);
+	PLAT_initLeds(lights);
 }
 
 

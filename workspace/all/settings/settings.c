@@ -7,6 +7,7 @@
 #include "utils.h"
 
 #define NUM_OPTIONS 3
+#define NUM_MAIN_OPTIONS 4
 #define MAX_NAME_LEN 50
 
 #define fontcount 2
@@ -275,11 +276,11 @@ int main(int argc, char *argv[])
             quit = 1;
         }
         else if(PAD_justPressed(BTN_DOWN)) {
-            selected_setting = (selected_setting + 1) % 6;
+            selected_setting = (selected_setting + 1) % NUM_MAIN_OPTIONS;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_UP)) {
-            selected_setting = (selected_setting - 1 + 6) % 6;
+            selected_setting = (selected_setting - 1 + NUM_MAIN_OPTIONS) % NUM_MAIN_OPTIONS;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_L1)) {

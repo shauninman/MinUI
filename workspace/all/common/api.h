@@ -354,10 +354,14 @@ int PWR_preventAutosleep(void);
 int PWR_isCharging(void);
 int PWR_getBattery(void);
 
+void LEDS_initLeds();
 void LEDS_updateLeds();
 void LEDS_SaveSettings();
 void LEDS_setEffect();
-void LEDS_setIndicator(int effect,int cycles);
+void LEDS_setColor(uint32_t color);
+void LED_setColor(uint32_t color,int ledindex);
+void LEDS_setIndicator(int effect,uint32_t color, int cycles);
+void LED_setIndicator(int effect,uint32_t color,int cycles,int ledindex);
 
 enum {
 	CPU_SPEED_MENU,
