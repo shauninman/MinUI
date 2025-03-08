@@ -1,7 +1,7 @@
 # NextUI (formerly MinUI Next)
 MinUI with a rebuild emulation engine and tons of added features
 - Fixed both screen tearing and sync stutter problems of original MinUI by rebuilding the emulator engine core
-- Game switcher menu (Onion OS style) contributed by [@frysee](https://github.com/frysee)
+- Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
 - Much higher audio quality, due to advanced resampling engine using libsamplerate (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Color and font options to customize the MinUI screens
