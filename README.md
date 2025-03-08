@@ -1,4 +1,4 @@
-# MinUI Next   
+# NextUI
 MinUI with a rebuild emulation engine, includes all original MinUI Features plus:
 - Game switcher menu (Onion OS style) contributed by [@frysee](https://github.com/frysee)
 - Fixed both screen tearing and sync problems of the original MinUI
