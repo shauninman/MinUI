@@ -9,7 +9,7 @@ MinUI with a rebuild emulation engine and tons of added features
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
 - Screen color temperature and brightness controls
 - Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
-- Battery Monitoring including history graph and time left predicition
+- Battery Monitoring including history graph and time left prediction
 - Updated and optimized build emulation cores
 - Rumble strength fixed and is now variable as used by the games
 - FBNeo Arcade screen rotation
