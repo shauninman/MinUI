@@ -57,10 +57,13 @@ While in game:
 Deep sleep:   
 - First the device goes into light sleep mode the screen turns off and the Leds will pulse 5 times to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off. 
 
+![418299147-62d1a24b-1db1-4c70-aedf-baf4e42d0894](https://github.com/user-attachments/assets/76fa04c5-8530-49fe-87c5-2ced027f02a6)
+![screen2](https://github.com/user-attachments/assets/8d41b5a6-f14c-44bc-a272-59904cc1d4d9)
+
 # Original MinUI's readme:
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
 
-<img src="github/minui-main.png" width=320 /> <img src="github/minui-menu-gbc.png" width=320 /> 
+ 
 
 ## Features
 
@@ -70,6 +73,7 @@ MinUI is a focused, custom launcher and libretro frontend for [a variety of retr
 - Automatically hides hidden files
   and extension and region/version 
   cruft in display names
+
 - Consistent in-emulator menu with
   quick access to save states, disc
   changing, and emulator options
