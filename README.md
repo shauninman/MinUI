@@ -57,8 +57,12 @@ While in game:
 Deep sleep:   
 - First the device goes into light sleep mode the screen turns off and the Leds will pulse 5 times to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off. 
 
-![418299147-62d1a24b-1db1-4c70-aedf-baf4e42d0894](https://github.com/user-attachments/assets/76fa04c5-8530-49fe-87c5-2ced027f02a6)
-![screen2](https://github.com/user-attachments/assets/8d41b5a6-f14c-44bc-a272-59904cc1d4d9)
+![gameswitcher](https://github.com/user-attachments/assets/4c71dc26-d071-48cf-836e-83bd9a248a32)
+![battery](https://github.com/user-attachments/assets/5f8a6f85-7bb7-41b0-95ab-468229a7f443)
+![battery](https://github.com/user-attachments/assets/9e7c14b3-757d-4e01-b381-71897e6dc4e2)
+![ingamesettings](https://github.com/user-attachments/assets/73fbed30-7aaa-420b-bb53-74dd50160434)
+![gamelist](https://github.com/user-attachments/assets/ed0d2552-04c1-40a3-9eb2-14406e83b09a)
+![gameoverlay](https://github.com/user-attachments/assets/a7c99784-fa48-4d3e-a64b-28e7149d929a)
 
 # Original MinUI's readme:
 MinUI is a focused, custom launcher and libretro frontend for [a variety of retro handhelds](#supported-devices).
