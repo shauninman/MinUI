@@ -6,7 +6,7 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 - Much higher audio quality, due to much more advanced resampling engine (with selectable quality setting)
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Color and font options to customize the MinUI screens
-- Integrated LEDS control, change colors, effects, brightness etc
+- Fully Integrated LEDS control, change colors, effects, brightness and also LED indicators for example standby mode indicator
 - Ambient light mode (Leds color based on whats on your screen)
 - Lot of fixes on original like inputs sometimes not registering etc.
 - Screen color temperature controls, besides the standard brightness control.
