@@ -2160,7 +2160,7 @@ void PWR_powerOff(void) {
 
 static void PWR_enterSleep(void) {
 	SDL_PauseAudio(1);
-	LEDS_setEffect(2);
+	LEDS_setIndicator(2,5);
 	if (GetHDMI()) {
 		PLAT_clearVideo(gfx.screen);
 		PLAT_flip(gfx.screen, 0);
@@ -2291,6 +2291,18 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 }
 
 
+void LEDS_setIndicator(int effect,int cycles) {
+	int lightsize = sizeof(lights) / sizeof(lights[0]);
+	for (int i = 0; i < lightsize; i++)
+	{
+		lights[i].effect = effect;
+		lights[i].cycles = cycles;
+		PLAT_setLedInbrightness(&lights[i]);
+		PLAT_setLedEffectCycles(&lights[i]);
+		PLAT_setLedEffect(&lights[i]);
+		
+	}
+}
 void LEDS_setEffect(int effect) {
 	int lightsize = sizeof(lights) / sizeof(lights[0]);
 	for (int i = 0; i < lightsize; i++)
@@ -2304,9 +2316,12 @@ void LEDS_updateLeds() {
 	int lightsize = sizeof(lights) / sizeof(lights[0]);
 	for (int i = 0; i < lightsize; i++)
 	{
-		PLAT_setLedBrightness(&lights[i]);
-		PLAT_setLedColor(&lights[i]);
-		PLAT_setLedEffect(&lights[i]);
+		PLAT_setLedBrightness(&lights[i]); // set brightness of each led
+		PLAT_setLedEffectCycles(&lights[i]); // set how many times animation should loop
+		PLAT_setLedEffectSpeed(&lights[i]); // set animation speed
+		PLAT_setLedColor(&lights[i]); // set color
+		PLAT_setLedEffect(&lights[i]); // finally set the effect, on trimui devices this also applies the settings
+	
 		
 	}
 }

@@ -12,7 +12,7 @@ rm /etc/init.d/lcservice
 
 TARGET_PATH="/mnt/SDCARD/.userdata/shared/ledsettings.txt"
 if [ ! -f "$TARGET_PATH" ]; then
-    cp ./settings.txt /mnt/SDCARD/.userdata/shared/ledsettings.txt >> launch.log
+    cp ./ledsettings.txt /mnt/SDCARD/.userdata/shared/ledsettings.txt >> launch.log
     echo "File copied to $TARGET_PATH" >> launch.log
 else
     echo "File already exists in TARGET_PATH" >> launch.log
