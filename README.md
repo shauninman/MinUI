@@ -7,7 +7,7 @@ MinUI with a rebuild emulation engine, includes all original MinUI Features plus
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Color and font options to customize the MinUI screens
 - Fully Integrated LEDS control, change colors, effects, brightness and also LED indicators for example standby mode indicator
-- Ambient light mode (Leds color based on whats on your screen)
+- Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
 - Lot of fixes on original like inputs sometimes not registering etc.
 - Screen color temperature controls, besides the standard brightness control.
 - Fully working Deep Sleep mode instead of complete power off after 2 minutes (instant on) by [@zhaofengli](https://github.com/zhaofengli)
