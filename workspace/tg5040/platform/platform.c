@@ -608,22 +608,18 @@ void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
 	online = prefixMatch("up", status);
 }
 
-#define LED_PATH1 "/sys/class/led_anim/max_scale"
-#define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
-#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
+
+// moving these to LED functions so keeping them closer to eachother for overview for now
+// #define LED_PATH1 "/sys/class/led_anim/max_scale"
+// #define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
+// #define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		if (is_brick) SetRawBrightness(8);
 		SetBrightness(GetBrightness());
-		putInt(LED_PATH1,0);
-		if (is_brick) putInt(LED_PATH2,0);
-		if (is_brick) putInt(LED_PATH3,0);
 	}
 	else {
 		SetRawBrightness(0);
-		putInt(LED_PATH1,60);
-		if (is_brick) putInt(LED_PATH2,60);
-		if (is_brick) putInt(LED_PATH3,60);
 	}
 }
 
@@ -729,6 +725,9 @@ void PLAT_chmod(const char *file, int writable)
     }
 }
 
+
+
+
 void PLAT_initDefaultLeds() {
 
 	lights[0] = (LightSettings) {
@@ -789,8 +788,18 @@ void PLAT_initDefaultLeds() {
 	};
 }
 void PLAT_initLeds(LightSettings *lights) {
+	char* device = getenv("DEVICE");
+	is_brick = exactMatch("brick", device);
+
 	PLAT_initDefaultLeds();
-	FILE *file = PLAT_OpenSettings("ledsettings.txt");
+	FILE *file;
+	if(is_brick) {
+		file = PLAT_OpenSettings("ledsettings_brick.txt");
+	}
+	else {
+		file = PLAT_OpenSettings("ledsettings.txt");
+	}
+
     if (file == NULL)
     {
 		
@@ -877,20 +886,26 @@ void PLAT_initLeds(LightSettings *lights) {
 	LOG_info("lights setup\n");
 }
 
-
+#define LED_PATH1 "/sys/class/led_anim/max_scale"
+#define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
+#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" 
 
 void PLAT_setLedInbrightness(LightSettings *led)
 {
     char filepath[256];
     FILE *file;
     // first set brightness
-	if (strcmp(led->filename, "m") == 0) {
-        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
-    } else if (strcmp(led->filename, "f1") == 0) {
-        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
-    } else  {
-        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
-    }
+	if(is_brick) {
+		if (strcmp(led->filename, "m") == 0) {
+			snprintf(filepath, sizeof(filepath), LED_PATH1);
+		} else if (strcmp(led->filename, "f1") == 0) {
+			snprintf(filepath, sizeof(filepath),LED_PATH3);
+		} else  {
+			snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
+		}
+	} else {
+		snprintf(filepath, sizeof(filepath), LED_PATH1);
+	}
 	if (strcmp(led->filename, "f2") != 0) {
 		// do nothhing for f2
 		PLAT_chmod(filepath, 1);
@@ -908,13 +923,17 @@ void PLAT_setLedBrightness(LightSettings *led)
     char filepath[256];
     FILE *file;
     // first set brightness
-	if (strcmp(led->filename, "m") == 0) {
-        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
-    } else if (strcmp(led->filename, "f1") == 0) {
-        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
-    } else  {
-        snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
-    }
+	if(is_brick) {
+		if (strcmp(led->filename, "m") == 0) {
+			snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
+		} else if (strcmp(led->filename, "f1") == 0) {
+			snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_f1f2");
+		} else  {
+			snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale_%s", led->filename);
+		}
+	} else {
+		snprintf(filepath, sizeof(filepath), "/sys/class/led_anim/max_scale");
+	}
 	if (strcmp(led->filename, "f2") != 0) {
 		// do nothhing for f2
 		PLAT_chmod(filepath, 1);
