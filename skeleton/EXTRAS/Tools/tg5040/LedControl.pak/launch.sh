@@ -20,7 +20,7 @@ fi
 
 TARGET_PATH="/mnt/SDCARD/.userdata/shared/ledsettings_brick.txt"
 if [ ! -f "$TARGET_PATH" ]; then
-    cp ./ledsettings.txt /mnt/SDCARD/.userdata/shared/ledsettings.txt >> launch.log
+    cp ./ledsettings_brick.txt /mnt/SDCARD/.userdata/shared/ledsettings_brick.txt >> launch.log
     echo "File copied to $TARGET_PATH" >> launch.log
 else
     echo "File already exists in TARGET_PATH" >> launch.log
