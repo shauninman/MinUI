@@ -1968,6 +1968,9 @@ static void PWR_updateBatteryStatus(void) {
 	PLAT_enableOverlay(pwr.should_warn && pwr.charge<=PWR_LOW_CHARGE);
 	
 	// low power warn on all leds 
+	if(pwr.charge < PWR_LOW_CHARGE+10) {
+		LEDS_setIndicator(3,0xFF3300,-1);
+	}
 	if(pwr.charge < PWR_LOW_CHARGE) {
 		LEDS_setIndicator(3,0xFF0000,-1);
 	}
