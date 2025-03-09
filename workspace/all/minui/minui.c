@@ -1626,7 +1626,7 @@ int main (int argc, char *argv[]) {
 					}
 
 					if (bmp) {  // Ensure the image was loaded successfully
-						SDL_Rect dest_rect = {screen->w-(bmp->w*2), (int)screen->h*0.1, (int)screen->w*0.5,(int)screen->h*0.5};  // Resize to 500x500 pixels
+						SDL_Rect dest_rect = {screen->w*0.52, (int)screen->h*0.1, (int)screen->w*0.45,(int)screen->h*0.5};  // Resize to 500x500 pixels
 						SDL_BlitScaled(bmp, NULL, screen, &dest_rect);
 						ox = (int)screen->w*0.5;
 						had_thumb = 1;
