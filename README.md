@@ -4,6 +4,7 @@ MinUI with a rebuild emulation engine and tons of added features
 - Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
+- Game art/media support
 - Color and font settings to customize the NextUI interface
 - LED control, change colors, effects, brightness
 - LED indicators, low battery, stand by, charging (brightness can be set seperately)
@@ -11,6 +12,7 @@ MinUI with a rebuild emulation engine and tons of added features
 - Screen color temperature and brightness controls
 - Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
 - Battery Monitoring including history graph and time left prediction
+- Scrolling animated titles for longer game names
 - Updated and optimized build emulation cores
 - Rumble strength fixed and is now variable as used by the games
 - FBNeo Arcade screen rotation
