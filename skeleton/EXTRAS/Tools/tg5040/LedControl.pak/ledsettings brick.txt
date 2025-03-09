@@ -1,4 +1,4 @@
-[l]
+[f1]
 effect=4
 color1=0x440044
 color2=0x440044
@@ -8,7 +8,7 @@ trigger=1
 filename=f1
 inbrightness=100
 
-[r]
+[f2]
 effect=4
 color1=0x440044
 color2=0x440044

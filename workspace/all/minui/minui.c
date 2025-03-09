@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
-
+#include <libgen.h>  // For dirname()
 #include "defines.h"
 #include "api.h"
 #include "utils.h"
@@ -1595,15 +1595,44 @@ int main (int argc, char *argv[]) {
 				char* tmp = strrchr(res_root, '/');
 				tmp[0] = '\0';
 				
+				char path_copy[1024];  // Make sure it's large enough
+				strncpy(path_copy, entry->path, sizeof(path_copy) - 1);
+				path_copy[sizeof(path_copy) - 1] = '\0';  // Ensure null termination
+
 				sprintf(res_path, "%s/.res/%s.png", res_root, res_name);
 				LOG_info("res_path: %s\n", res_path);
-				if (exists(res_path)) {
-					had_thumb = 1;
-					SDL_Surface* thumb = IMG_Load(res_path);
-					ox = MAX(FIXED_WIDTH - FIXED_HEIGHT, (FIXED_WIDTH - thumb->w));
-					oy = (FIXED_HEIGHT - thumb->h) / 2;
-					SDL_BlitSurface(thumb, NULL, screen, &(SDL_Rect){ox,oy});
-					SDL_FreeSurface(thumb);
+
+				
+
+				char *rompath = dirname(path_copy); 
+				char thumbpath[255];
+				char res_copy[1024];  // Make sure it's large enough
+				strncpy(res_copy, res_name, sizeof(path_copy) - 1);
+				char *dot = strrchr(res_copy, '.');  // Find last dot
+					if (dot) {
+						*dot = '\0';  // Truncate at the dot
+					}
+				sprintf(thumbpath, "%s/.media/%s.png",rompath,res_copy);
+				LOG_info("thumbpath: %s\n", thumbpath);
+
+				if (exists(thumbpath)) {
+
+					
+					SDL_Surface* bmp = IMG_Load(thumbpath);
+					SDL_Surface* optimized = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA32, 0);
+					if (optimized) {
+						SDL_FreeSurface(bmp);  // Free the old image
+						bmp = optimized;  // Use the new converted image
+					}
+
+					if (bmp) {  // Ensure the image was loaded successfully
+						SDL_Rect dest_rect = {screen->w*0.52, (int)screen->h*0.1, (int)screen->w*0.45,(int)screen->h*0.5};  // Resize to 500x500 pixels
+						SDL_BlitScaled(bmp, NULL, screen, &dest_rect);
+						ox = (int)screen->w*0.5;
+						had_thumb = 1;
+
+					}
+
 				}
 			}
 			
@@ -1767,17 +1796,18 @@ int main (int argc, char *argv[]) {
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
 						char* entry_unique = entry->unique;
-						int available_width = (had_thumb && j!=selected_row ? ox : screen->w) - SCALE1(PADDING * 2);
-						if (i==top->start && !(had_thumb && j!=selected_row)) available_width -= ow; // 
+						int available_width = (had_thumb ? ox : screen->w) - SCALE1(PADDING * 2);
+						if (i==top->start && !(had_thumb)) available_width -= ow; // 
 					
 						SDL_Color text_color = COLOR_WHITE;
 					
 						trimSortingMeta(&entry_name);
 					
 						char display_name[256];
-						int text_width = GFX_truncateText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+						int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						int max_width = MIN(available_width, text_width);
 						if (j==selected_row) {
+							GFX_scrollText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING),
 								SCALE1(PADDING+(j*PILL_SIZE)),
@@ -1846,9 +1876,20 @@ int main (int argc, char *argv[]) {
 			}
 
 			GFX_flip(screen);
+
 			dirty = 0;
+			
 		}
-		else GFX_sync();
+		else { 
+			// is it time for another animation update?
+			static Uint32 last_anim = 0;
+			Uint32 currentanim = SDL_GetTicks();  
+			if (currentanim - last_anim >= 100) {  
+				last_anim = currentanim;
+				dirty = 1;
+			}
+			GFX_sync(); 
+		}
 		
 		// if (!first_draw) {
 		// 	first_draw = SDL_GetTicks();

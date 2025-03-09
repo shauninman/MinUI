@@ -297,6 +297,7 @@ int main(int argc, char *argv[])
         }
 
         if (dirty) {
+            loadSettings();
             GFX_clear(screen);
 
             int ow = GFX_blitHardwareGroup(screen, show_setting);

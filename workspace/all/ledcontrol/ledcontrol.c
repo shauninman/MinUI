@@ -11,8 +11,7 @@
 #define NUM_MAIN_OPTIONS 5
 #define MAX_NAME_LEN 255
 
-const char *lightnames[] = {
-    "F1 key", "F2 key", "Top bar", "L&R triggers"};
+const char *lightnames[4];
 #define NROF_TRIGGERS 14
 const char *triggernames[] = {
     "B", "A", "Y", "X", "L", "R", "FN1", "FN2", "MENU", "SELECT", "START", "ALL", "LR", "DPAD"};
@@ -35,7 +34,13 @@ const char *lr_effect_names[] = {
     void save_settings() {
         LOG_info("saving settings plat");
         char diskfilename[256];
-        snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/ledsettings.txt");
+        if(is_brick) {
+            snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/ledsettings_brick.txt");
+        }
+        else {
+            snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/ledsettings.txt");
+        }
+
         FILE *file = fopen(diskfilename, "w");
 
         if (file == NULL)
@@ -216,6 +221,17 @@ void handle_light_input(LightSettings *light, SDL_Event *event, int selected_set
 
 int main(int argc, char *argv[])
 {
+    char* device = getenv("DEVICE");
+    is_brick = exactMatch("brick", device);
+    
+    if (is_brick) {
+        const char *brick_names[] = {"F1 key", "F2 key", "Top bar", "L&R triggers"};
+        memcpy(lightnames, brick_names, sizeof(brick_names)); // Copy values
+    } else {
+        const char *default_names[] = {"L", "R", "Logo", "L&R triggers"};
+        memcpy(lightnames, default_names, sizeof(default_names)); // Copy values
+    }
+    PLAT_initLeds(lights);
     PWR_setCPUSpeed(CPU_SPEED_MENU);
 
     SDL_Surface* screen = GFX_init(MODE_MAIN);
@@ -261,16 +277,18 @@ int main(int argc, char *argv[])
         int is_online = PLAT_isOnline();
 		if (was_online!=is_online) dirty = 1;
 		was_online = is_online;
-        
+        // this stuff is really not multiplatform at all, need to figure out a way so its not so TrimUI specific
+        int numMainOptons = NUM_MAIN_OPTIONS;
+        if(selected_light==1) numMainOptons = 3;
         if (PAD_justPressed(BTN_B)) {
             quit = 1;
         }
         else if(PAD_justPressed(BTN_DOWN)) {
-            selected_setting = (selected_setting + 1) % NUM_MAIN_OPTIONS;
+            selected_setting = (selected_setting + 1) % numMainOptons;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_UP)) {
-            selected_setting = (selected_setting - 1 + NUM_MAIN_OPTIONS) % NUM_MAIN_OPTIONS;
+            selected_setting = (selected_setting - 1 + numMainOptons) % numMainOptons;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_L1)) {
@@ -315,7 +333,15 @@ int main(int argc, char *argv[])
 
             // Display settings
             // const char *settings_labels[6] = {"Effect", "Color", "Color2", "Speed", "Brightness", "Trigger"};
-            const char *settings_labels[6] = {"Effect", "Color", "Speed", "Brightness", "Info brightness"};
+            // this stuff is really not multiplatform at all, need to figure out a way so its not so TrimUI specific
+            const char *settings_labels[5]; // Define array with correct size
+            if (is_brick) {
+                const char *brick_labels[] = {"Effect", "Color", "Speed", "Brightness", "Info brightness"};
+                memcpy(settings_labels, brick_labels, sizeof(brick_labels)); // Copy values
+            } else {
+                const char *non_brick_labels[] = {"Effect", "Color", "Speed", "Brightness (All Leds)", "Info brightness (All Leds)"};
+                memcpy(settings_labels, non_brick_labels, sizeof(non_brick_labels)); // Copy values
+            }
             int settings_values[5] = {
                 lights[selected_light].effect,
                 lights[selected_light].color1,
@@ -332,8 +358,7 @@ int main(int argc, char *argv[])
 
                 int y = SCALE1(PADDING + PILL_SIZE * (j + 1));
 
-                if (j == 0)
-                { // Display effect name instead of number
+                if (j == 0) { // Display effect name instead of number
                     snprintf(setting_text, sizeof(setting_text), "%s: %s", settings_labels[j], selected_light == 3 ? lr_effect_names[settings_values[j] - 1] : selected_light == 2 ? topbar_effect_names[settings_values[j] - 1] : effect_names[settings_values[j] - 1]);
                     SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
                     int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
@@ -343,29 +368,23 @@ int main(int argc, char *argv[])
                         &(SDL_Rect){0, 0, text->w, text->h}, screen, 
                         &(SDL_Rect){SCALE1(PADDING + BUTTON_PADDING), y + SCALE1(4)});
                     SDL_FreeSurface(text);
-                }
-                else if (j == 1)
-                { // Display color as hex code
+                } else if (j == 1) { // Display color as hex code
                     snprintf(setting_text, sizeof(setting_text), "%s", settings_labels[j]);
+                    SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
+                    int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
+                    GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen, 
+                        &(SDL_Rect){SCALE1(PADDING), y, text_width + SCALE1(BUTTON_MARGIN + BUTTON_SIZE), SCALE1(PILL_SIZE)});
+                    SDL_BlitSurface(text, 
+                        &(SDL_Rect){0, 0, text->w, text->h}, screen, 
+                        &(SDL_Rect){SCALE1(PADDING + BUTTON_PADDING), y + SCALE1(4)});
+                    SDL_FreeSurface(text);
 
-                        SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
-                        int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
-                        GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen, 
-                            &(SDL_Rect){SCALE1(PADDING), y, text_width + SCALE1(BUTTON_MARGIN + BUTTON_SIZE), SCALE1(PILL_SIZE)});
-                        SDL_BlitSurface(text, 
-                            &(SDL_Rect){0, 0, text->w, text->h}, screen, 
-                            &(SDL_Rect){SCALE1(PADDING + BUTTON_PADDING), y + SCALE1(4)});
-                        SDL_FreeSurface(text);
-
-                        GFX_blitAssetColor(ASSET_BUTTON, NULL, screen, &(SDL_Rect){
-                            SCALE1(PADDING) + text_width,
-                            y + SCALE1(BUTTON_MARGIN)
-                        }, settings_values[j]);
-                }
-                else
-                {
+                    GFX_blitAssetColor(ASSET_BUTTON, NULL, screen, &(SDL_Rect){
+                        SCALE1(PADDING) + text_width,
+                        y + SCALE1(BUTTON_MARGIN)
+                    }, settings_values[j]);
+                } else if (!((strcmp(lights[selected_light].name, "f2") == 0) || (!is_brick && strcmp(lights[selected_light].name, "l") != 0)) || !(j == 3 || j == 4)) {
                     snprintf(setting_text, sizeof(setting_text), "%s: %d", settings_labels[j], settings_values[j]);
-
                     SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
                     int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
                     GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen, 
