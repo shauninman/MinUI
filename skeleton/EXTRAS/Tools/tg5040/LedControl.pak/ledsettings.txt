@@ -1,21 +1,11 @@
-[l]
+[lr]
 effect=4
 color1=0x440044
 color2=0x440044
 speed=1000
 brightness=100
 trigger=1
-filename=f1
-inbrightness=100
-
-[r]
-effect=4
-color1=0x440044
-color2=0x440044
-speed=1000
-brightness=100
-trigger=1
-filename=f2
+filename=lr
 inbrightness=100
 
 [m]
@@ -26,15 +16,5 @@ speed=1000
 brightness=100
 trigger=1
 filename=m
-inbrightness=100
-
-[lr]
-effect=4
-color1=0x440044
-color2=0x440044
-speed=1000
-brightness=100
-trigger=1
-filename=lr
 inbrightness=100
 

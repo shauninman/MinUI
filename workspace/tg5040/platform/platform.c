@@ -790,8 +790,8 @@ void PLAT_initDefaultLeds() {
 	};
 } else {
 	lights[0] = (LightSettings) {
-		"R joystick",
-		"f1",
+		"Joysticks",
+		"lr",
 		4,
 		1000,
 		100,
@@ -804,36 +804,8 @@ void PLAT_initDefaultLeds() {
 		0
 	};
 	lights[1] = (LightSettings) {
-		"L joystick",
-		"f2",
-		4,
-		1000,
-		100,
-		0xFFFFFF,
-		0xFFFFFF,
-		0,
-		{},
-		1,
-		100,
-		0
-	};
-	lights[2] = (LightSettings) {
 		"Logo",
 		"m",
-		4,
-		1000,
-		100,
-		0xFFFFFF,
-		0xFFFFFF,
-		0,
-		{},
-		1,
-		100,
-		0
-	};
-	lights[3] = (LightSettings) {
-		"L/R triggers",
-		"lr",
 		4,
 		1000,
 		100,

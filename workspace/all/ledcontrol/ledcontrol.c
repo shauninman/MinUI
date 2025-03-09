@@ -34,10 +34,14 @@ const char *lr_effect_names[] = {
     void save_settings() {
         LOG_info("saving settings plat");
         char diskfilename[256];
+        char* device = getenv("DEVICE");
+        is_brick = exactMatch("brick", device);
+        int maxlights = 4;
         if(is_brick) {
             snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/ledsettings_brick.txt");
         }
         else {
+            maxlights = 2;
             snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/ledsettings.txt");
         }
 
@@ -48,7 +52,7 @@ const char *lr_effect_names[] = {
             perror("Unable to open settings file for writing");
         } else {
             LOG_info("saving leds!");
-            for (int i = 0; i < MAX_LIGHTS; ++i)
+            for (int i = 0; i < maxlights; ++i)
             {
                 fprintf(file, "[%s]\n", lights[i].name);
                 fprintf(file, "effect=%d\n", lights[i].effect);
@@ -228,7 +232,7 @@ int main(int argc, char *argv[])
         const char *brick_names[] = {"F1 key", "F2 key", "Top bar", "L&R triggers"};
         memcpy(lightnames, brick_names, sizeof(brick_names)); // Copy values
     } else {
-        const char *default_names[] = {"L", "R", "Logo", "L&R triggers"};
+        const char *default_names[] = {"Joysticks", "Logo"};
         memcpy(lightnames, default_names, sizeof(default_names)); // Copy values
     }
     PLAT_initLeds(lights);
@@ -277,26 +281,28 @@ int main(int argc, char *argv[])
         int is_online = PLAT_isOnline();
 		if (was_online!=is_online) dirty = 1;
 		was_online = is_online;
-        // this stuff is really not multiplatform at all, need to figure out a way so its not so TrimUI specific
-        int numMainOptons = NUM_MAIN_OPTIONS;
-        if(selected_light==1) numMainOptons = 3;
+        int numOfLights = 2;
+        if(is_brick) numOfLights = 4;
+
+
+    
         if (PAD_justPressed(BTN_B)) {
             quit = 1;
         }
         else if(PAD_justPressed(BTN_DOWN)) {
-            selected_setting = (selected_setting + 1) % numMainOptons;
+            selected_setting = (selected_setting + 1) % NUM_MAIN_OPTIONS;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_UP)) {
-            selected_setting = (selected_setting - 1 + numMainOptons) % numMainOptons;
+            selected_setting = (selected_setting - 1 + NUM_MAIN_OPTIONS) % NUM_MAIN_OPTIONS;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_L1)) {
-            selected_light = (selected_light - 1 + NUM_OPTIONS) % NUM_OPTIONS;
+            selected_light = (selected_light - 1 + numOfLights) % numOfLights;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_R1)) {
-            selected_light = (selected_light + 1) % NUM_OPTIONS;
+            selected_light = (selected_light + 1) % numOfLights;
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_LEFT) || PAD_justPressed(BTN_RIGHT)) {
@@ -383,7 +389,7 @@ int main(int argc, char *argv[])
                         SCALE1(PADDING) + text_width,
                         y + SCALE1(BUTTON_MARGIN)
                     }, settings_values[j]);
-                } else if (!((strcmp(lights[selected_light].name, "f2") == 0) || (!is_brick && strcmp(lights[selected_light].name, "l") != 0)) || !(j == 3 || j == 4)) {
+                } else  {
                     snprintf(setting_text, sizeof(setting_text), "%s: %d", settings_labels[j], settings_values[j]);
                     SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
                     int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
