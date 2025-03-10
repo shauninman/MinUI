@@ -857,6 +857,29 @@ void GFX_freeAAScaler(void) {
 
 ///////////////////////////////
 
+void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius) {
+	if (!surface) return;
+
+    Uint32* pixels = (Uint32*)surface->pixels;
+    int width = surface->w;
+    int height = surface->h;
+    SDL_PixelFormat* fmt = surface->format;
+    
+    Uint32 transparent_black = SDL_MapRGBA(fmt, 0, 0, 0, 0);  // Fully transparent black
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int dx = (x < radius) ? radius - x : (x >= width - radius) ? x - (width - radius - 1) : 0;
+            int dy = (y < radius) ? radius - y : (y >= height - radius) ? y - (height - radius - 1) : 0;
+            if (dx * dx + dy * dy > radius * radius) {
+                pixels[y * width + x] = transparent_black;  // Set to fully transparent black
+            }
+        }
+    }
+}
+
+
+
 void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t asset_color) {
 
 	SDL_Rect* rect = &asset_rects[asset];

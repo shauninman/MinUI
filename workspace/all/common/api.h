@@ -253,6 +253,9 @@ int GFX_blitButtonGroup(char** hints, int primary, SDL_Surface* dst, int align_r
 void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h);
 void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode);
+
+void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius);
+
 ///////////////////////////////
 
 typedef struct SND_Frame {
