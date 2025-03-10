@@ -19,7 +19,7 @@ index 2197946c..df72d03d
 +		# LDFLAGS += -s
 +	endif
 +	CPU_ARCH := arm64
-+	OPTIMIZE := -O3 -Ofast -DNDEBUG=1
++	OPTIMIZE := -O3 -Ofast -DNDEBUG
 +	HAVE_NEON = 1
 +	BUILTIN_GPU = neon
 +	ARCH = arm64
