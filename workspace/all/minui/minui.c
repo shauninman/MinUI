@@ -1629,6 +1629,7 @@ int main (int argc, char *argv[]) {
 						SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
 						GFX_ApplyRounderCorners(bmp,20);
 						SDL_BlitScaled(bmp, NULL, screen, &dest_rect);
+						SDL_FreeSurface(bmp);
 						ox = (int)screen->w*0.5;
 						had_thumb = 1;
 
@@ -1781,10 +1782,10 @@ int main (int argc, char *argv[]) {
 
 					}
 
-					if(can_resume) GFX_blitButtonGroup((char*[]){ "A","RESUME",  NULL }, 0, screen, 0);
+					if(can_resume) GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, 0, screen, 0);
 					else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, 0, screen, 0);
 
-					GFX_blitButtonGroup((char*[]){ "B","BACK", NULL }, 1, screen, 1);
+					GFX_blitButtonGroup((char*[]){ "A","RESUME", NULL }, 1, screen, 1);
 					
 					Entry_free(selectedEntry);
 				}
