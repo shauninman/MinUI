@@ -1621,12 +1621,13 @@ int main (int argc, char *argv[]) {
 					SDL_Surface* bmp = IMG_Load(thumbpath);
 					SDL_Surface* optimized = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA32, 0);
 					if (optimized) {
-						SDL_FreeSurface(bmp);  // Free the old image
-						bmp = optimized;  // Use the new converted image
+						SDL_FreeSurface(bmp); 
+						bmp = optimized; 
 					}
 
-					if (bmp) {  // Ensure the image was loaded successfully
-						SDL_Rect dest_rect = {screen->w*0.52, (int)screen->h*0.1, (int)screen->w*0.45,(int)screen->h*0.5};  // Resize to 500x500 pixels
+					if (bmp) { 
+						SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
+						GFX_ApplyRounderCorners(bmp,20);
 						SDL_BlitScaled(bmp, NULL, screen, &dest_rect);
 						ox = (int)screen->w*0.5;
 						had_thumb = 1;
@@ -1716,7 +1717,7 @@ int main (int argc, char *argv[]) {
 				oy = 0; // (screen->h - ph) / 2;
 
 				// window
-				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
+				// GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
 
 				if(recents->count > 0) {
 					Entry *selectedEntry = entryFromRecent(recents->items[switcher_selected]);
@@ -1725,14 +1726,20 @@ int main (int argc, char *argv[]) {
 					if(has_preview) {
 						// lotta memory churn here
 						SDL_Surface* bmp = IMG_Load(preview_path);
-						SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
-						SDL_Rect image_rect = {0, 0, raw_preview->w, raw_preview->h};
-						SDL_Rect preview_rect = {ox, oy, hw, hh};
-						SDL_Rect scaled_rect = GFX_scaled_rect(preview_rect, image_rect);
-						SDL_FillRect(screen, NULL, 0);
-						SDL_BlitScaled(raw_preview, NULL, screen, &scaled_rect);
-						SDL_FreeSurface(raw_preview);
-						SDL_FreeSurface(bmp);
+						SDL_Surface* raw_preview = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA32, 0);
+						if (raw_preview) {
+							SDL_FreeSurface(bmp); 
+							bmp = raw_preview; 
+						}
+						if(bmp) {
+							SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGBA32);					
+							SDL_Rect image_rect = {0, 0, screen->w, screen->h};
+							SDL_BlitScaled(bmp, NULL, scaled, &image_rect);
+							SDL_FreeSurface(bmp);
+							GFX_ApplyRounderCorners(scaled,30);
+							SDL_BlitSurface(scaled, NULL, screen, &image_rect);
+        					SDL_FreeSurface(scaled);  // Free after rendering
+						}
 					}
 					else {
 						SDL_Rect preview_rect = {ox,oy,hw,hh};
