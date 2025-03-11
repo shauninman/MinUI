@@ -1355,7 +1355,7 @@ void updateSelectionAnimation(int selected) {
 	}
 		
     if (selection_offset < 1.0f) {
-        selection_offset += 0.5f; 
+        selection_offset += 0.4f; 
         if (selection_offset >= 1.0f) {
             selection_offset = 1.0f;
             previous_selected = selected;
@@ -1832,8 +1832,9 @@ int main (int argc, char *argv[]) {
 						
 						float targetY = SCALE1(PADDING + (j * PILL_SIZE));
 						float previousY = SCALE1(PADDING + ((previous_selected - top->start) * PILL_SIZE));
+					
 						float highlightY = lerp(previousY, targetY, selection_offset);
-
+						
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
 						char* entry_unique = entry->unique;
@@ -1848,11 +1849,14 @@ int main (int argc, char *argv[]) {
 						int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						int max_width = MIN(available_width, text_width);
 						if (j==selected_row) {
+							LOG_info("topend %i\n",top->end);
+							LOG_info("topstart %i\n",top->start);
+							LOG_info("topselected %i\n",top->selected);
 							GFX_scrollText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 							});
-							if (selection_offset >= 1.0f) {
+							if (selection_offset >= 0.5f) {
 								text_color = COLOR_BLACK;
 							}
 						}
