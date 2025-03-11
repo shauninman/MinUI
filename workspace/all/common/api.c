@@ -568,38 +568,58 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 	
 	return text_width;
 }
-int GFX_scrollText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding) {
+
+void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int padding) {
     static int text_offset = 0;
-    static int frame_counter = 0; 
-    int text_width;
-    int len = strlen(in_name);
+    static int frame_counter = 0;
+    int text_width, text_height;
 
-    TTF_SizeUTF8(font, out_name, &text_width, NULL);
-    text_width += padding;
+    TTF_SizeUTF8(font, in_name, &text_width, &text_height);
 
-    if (text_width < max_width) {
-        text_offset = 0;
+    int full_text_width = text_width + padding-15; 
+
+   
+    char scroll_text[1024]; 
+    snprintf(scroll_text, sizeof(scroll_text), "%s  %s", in_name, in_name); 
+
+  
+    SDL_Color color = {255, 255, 255, 255};  
+    SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, color);
+    if (!full_text_surface) {
+        printf("Text rendering failed: %s\n", TTF_GetError());
+        return;
     }
 
-    char scroll_text[512];
-    snprintf(scroll_text, sizeof(scroll_text), "%s %s", in_name, in_name);
-
-    if (text_offset >= len + 1) {  
-        text_offset = 0;
+ 
+    if (text_width + padding*2 < max_width) {
+        text_offset = 0;  
     }
 
-    strncpy(out_name, scroll_text + text_offset, len);
+    
+    SDL_Rect src_rect = { text_offset, 0, max_width, full_text_surface->h };
+    SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, full_text_surface->h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+    SDL_BlitSurface(full_text_surface, &src_rect, scrolling_surface, NULL);
+    SDL_FreeSurface(full_text_surface);
 
-    if (text_width > max_width) {
+    if (*out_surface) {
+        SDL_FreeSurface(*out_surface);
+    }
+    *out_surface = scrolling_surface;
+
+    if (text_width + padding*2 > max_width) {
         frame_counter++;
-        if (frame_counter >= 3) { // Scroll only once per 3 frames
-            text_offset++;
-            frame_counter = 0; 
+        if (frame_counter >= 0) {  
+            text_offset += 6;  
+            if (text_offset >= full_text_width) {
+                text_offset = 0; 
+            }
+            frame_counter = 0;
         }
     }
-
-    return text_width;
 }
+
+
+
 
 
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {

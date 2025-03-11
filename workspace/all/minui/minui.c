@@ -1351,7 +1351,7 @@ static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
 static float selection_offset = 1.0f; 
 static int previous_selected = -1; 
 static int dirty = 1;
-
+static int last_selection = -1;
 // functionooos for like animation haha
 float lerp(float a, float b, float t) {
     return a + (b - a) * t;
@@ -1369,6 +1369,7 @@ void updateSelectionAnimation(int selected) {
         if (selection_offset >= 1.0f) {
             selection_offset = 1.0f;
             previous_selected = selected;
+			
         }
     } 
 }
@@ -1840,38 +1841,49 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		else {
-			if(previous_selected==-1) {
-				previous_selected = top->selected;
-			}
+			
 			updateSelectionAnimation(top->selected);
 			// list
-			if (total>0) {
+			if (total > 0) {
 				int selected_row = top->selected - top->start;
-				for (int i=top->start,j=0; i<top->end; i++,j++) {
-					
-					float targetY = SCALE1(PADDING + (j * PILL_SIZE));
+				float targetY = SCALE1(PADDING + (selected_row * PILL_SIZE));
 					float previousY = SCALE1(PADDING + ((previous_selected - top->start) * PILL_SIZE));
-				
-					float highlightY = lerp(previousY, targetY, selection_offset);
+			
+					float highlightY;
+					if (last_selection!=selected_row) {
+						highlightY = lerp(previousY, targetY, selection_offset);
+					} else {
+						highlightY = targetY;
+					}
+					if(selection_offset>=1.0f) {
+						last_selection=selected_row;
+					}
+				for (int i = top->start, j = 0; i < top->end; i++, j++) {
+			
+					
 					
 					Entry* entry = top->entries->items[i];
 					char* entry_name = entry->name;
 					char* entry_unique = entry->unique;
 					int available_width = (had_thumb ? ox : screen->w) - SCALE1(PADDING * 2);
-					if (i==top->start && !(had_thumb)) available_width -= ow; // 
-				
+					if (i == top->start && !(had_thumb)) available_width -= ow; // 
+			
 					SDL_Color text_color = COLOR_WHITE;
-				
+			
 					trimSortingMeta(&entry_name);
-				
+			
 					char display_name[256];
-					int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+					int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
 					int max_width = MIN(available_width, text_width);
-					if (j==selected_row) {
-						GFX_scrollText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
+					SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
+			
+					if (j == selected_row) {
+						GFX_scrollTextSurface(font.large, entry_unique ? entry_unique : entry_name, &text, available_width, SCALE1(BUTTON_PADDING));
+			
 						GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 						});
+			
 						if (selection_offset >= 0.5f) {
 							text_color = COLOR_BLACK;
 						}
@@ -1894,7 +1906,7 @@ int main (int argc, char *argv[]) {
 					
 						GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 					}
-					SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
+				
 					SDL_BlitSurface(text, &(SDL_Rect){
 						0,
 						0,
@@ -1935,7 +1947,7 @@ int main (int argc, char *argv[]) {
 				}
 			}
 		}
-
+		
 		GFX_flip(screen);
 		dirty = 0;
 		
