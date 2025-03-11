@@ -1339,8 +1339,8 @@ static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
     return scaled_rect;
 }
 
-static float selection_offset = 1.0f; // 1.0 = fully transitioned
-static int previous_selected = -1;     // Track last selected row
+static float selection_offset = 1.0f; 
+static int previous_selected = -1; 
 
 // functionooos for like animation haha
 float lerp(float a, float b, float t) {
