@@ -6,6 +6,7 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Game art/media support
 - Color and font settings to customize the NextUI interface
+- Menu animations
 - LED control, change colors, effects, brightness
 - LED indicators, low battery, stand by, charging (brightness can be set seperately)
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
