@@ -1847,17 +1847,17 @@ int main (int argc, char *argv[]) {
 			if (total > 0) {
 				int selected_row = top->selected - top->start;
 				float targetY = SCALE1(PADDING + (selected_row * PILL_SIZE));
-					float previousY = SCALE1(PADDING + ((previous_selected - top->start) * PILL_SIZE));
-			
-					float highlightY;
-					if (last_selection!=selected_row) {
-						highlightY = lerp(previousY, targetY, selection_offset);
-					} else {
-						highlightY = targetY;
-					}
-					if(selection_offset>=1.0f) {
-						last_selection=selected_row;
-					}
+				float previousY = SCALE1(PADDING + ((previous_selected - top->start) * PILL_SIZE));
+		
+				float highlightY;
+				if (last_selection!=selected_row) {
+					highlightY = lerp(previousY, targetY, selection_offset);
+				} else {
+					highlightY = targetY;
+				}
+				if(selection_offset>=1.0f) {
+					last_selection=selected_row;
+				}
 				for (int i = top->start, j = 0; i < top->end; i++, j++) {
 			
 					
@@ -1878,15 +1878,15 @@ int main (int argc, char *argv[]) {
 					SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 			
 					if (j == selected_row) {
-						GFX_scrollTextSurface(font.large, entry_unique ? entry_unique : entry_name, &text, available_width, SCALE1(BUTTON_PADDING));
-			
+						
 						GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 						});
 			
-						if (selection_offset >= 0.5f) {
-							text_color = COLOR_BLACK;
-						}
+						GFX_scrollTextSurface(font.large, entry_unique ? entry_unique : entry_name, &text, available_width, SCALE1(BUTTON_PADDING), COLOR_BLACK,highlightY == targetY ? 1:selection_offset);
+						
+			
+						
 					}
 					else if (entry->unique) {
 						trimSortingMeta(&entry_unique);
@@ -1918,7 +1918,6 @@ int main (int argc, char *argv[]) {
 					});
 					SDL_FreeSurface(text);
 				}
-				
 			}
 			else {
 				// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...

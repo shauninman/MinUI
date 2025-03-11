@@ -569,7 +569,7 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 	return text_width;
 }
 
-void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int padding) {
+void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int padding, SDL_Color color, float heightratio) {
     static int text_offset = 0;
     static int frame_counter = 0;
     int text_width, text_height;
@@ -583,7 +583,6 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     snprintf(scroll_text, sizeof(scroll_text), "%s  %s", in_name, in_name); 
 
   
-    SDL_Color color = {255, 255, 255, 255};  
     SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, color);
     if (!full_text_surface) {
         printf("Text rendering failed: %s\n", TTF_GetError());
@@ -597,7 +596,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
 
     
     SDL_Rect src_rect = { text_offset, 0, max_width, full_text_surface->h };
-    SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, full_text_surface->h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+    SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, full_text_surface->h * heightratio, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
     SDL_BlitSurface(full_text_surface, &src_rect, scrolling_surface, NULL);
     SDL_FreeSurface(full_text_surface);
 
@@ -609,7 +608,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     if (text_width + padding*2 > max_width) {
         frame_counter++;
         if (frame_counter >= 0) {  
-            text_offset += 6;  
+            text_offset += 4;  
             if (text_offset >= full_text_width) {
                 text_offset = 0; 
             }
