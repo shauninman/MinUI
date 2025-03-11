@@ -1341,6 +1341,8 @@ static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
 
 static float selection_offset = 1.0f; 
 static int previous_selected = -1; 
+static int dirty = 1;
+static int animdirty = 1;
 
 // functionooos for like animation haha
 float lerp(float a, float b, float t) {
@@ -1355,12 +1357,14 @@ void updateSelectionAnimation(int selected) {
 	}
 		
     if (selection_offset < 1.0f) {
+		animdirty = 1;
         selection_offset += 0.4f; 
         if (selection_offset >= 1.0f) {
             selection_offset = 1.0f;
             previous_selected = selected;
+			animdirty = 0;
         }
-    }
+    } 
 }
 
 ///////////////////////////////////////
@@ -1405,7 +1409,7 @@ int main (int argc, char *argv[]) {
 	// GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
-	int dirty = 1;
+	
 	int show_version = 0;
 	int show_setting = 0; // 1=brightness,2=volume
 	int was_online = PLAT_isOnline();
@@ -1597,7 +1601,7 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		
-		// if (dirty) { 
+		if (dirty || animdirty) { 
 			GFX_clear(screen);
 			
 			int ox;
@@ -1638,27 +1642,25 @@ int main (int argc, char *argv[]) {
 						*dot = '\0';  // Truncate at the dot
 					}
 				sprintf(thumbpath, "%s/.media/%s.png",rompath,res_copy);
-
-				if (exists(thumbpath)) {
-
-					if (dirty) {
+				if (dirty) {
+					if (exists(thumbpath)) {
 						thumbbmp = IMG_Load(thumbpath);
-					}
-					
-
-					if (thumbbmp) { 
-						SDL_Surface* optimized = SDL_ConvertSurfaceFormat(thumbbmp, SDL_PIXELFORMAT_RGBA32, 0);
-						if (optimized) {
-							SDL_FreeSurface(thumbbmp); 
-							thumbbmp = optimized; 
+						if (thumbbmp) { 
+							SDL_Surface* optimized = SDL_ConvertSurfaceFormat(thumbbmp, SDL_PIXELFORMAT_RGBA32, 0);
+							if (optimized) {
+								SDL_FreeSurface(thumbbmp); 
+								thumbbmp = optimized; 
+							}
+							GFX_ApplyRounderCorners(thumbbmp,20);
+							ox = (int)screen->w*0.5;
+							had_thumb = 1;
 						}
-						SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
-						GFX_ApplyRounderCorners(thumbbmp,20);
-						SDL_BlitScaled(thumbbmp, NULL, screen, &dest_rect);
-						ox = (int)screen->w*0.5;
-						had_thumb = 1;
-					}
 
+					}
+				}
+				if(had_thumb) {
+					SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
+					SDL_BlitScaled(thumbbmp, NULL, screen, &dest_rect);
 				}
 			}
 			
@@ -1849,9 +1851,6 @@ int main (int argc, char *argv[]) {
 						int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 						int max_width = MIN(available_width, text_width);
 						if (j==selected_row) {
-							LOG_info("topend %i\n",top->end);
-							LOG_info("topstart %i\n",top->start);
-							LOG_info("topselected %i\n",top->selected);
 							GFX_scrollText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
@@ -1922,19 +1921,13 @@ int main (int argc, char *argv[]) {
 
 			GFX_flip(screen);
 			
-			dirty = 0;
 			
-		// }
-		// else { 
-		// 	// is it time for another animation update?
-		// 	static Uint32 last_anim = 0;
-		// 	Uint32 currentanim = SDL_GetTicks();  
-		// 	if (currentanim - last_anim >= 100) {  
-		// 		last_anim = currentanim;
-		// 		dirty = 1;
-		// 	}
-		// 	GFX_sync(); 
-		// }
+			
+		}
+		else { 
+
+			GFX_sync(); 
+		}
 		
 		// if (!first_draw) {
 		// 	first_draw = SDL_GetTicks();
