@@ -212,114 +212,116 @@ static void getUniqueName(Entry* entry, char* out_name) {
 }
 
 static void Directory_index(Directory* self) {
-	int is_collection = prefixMatch(COLLECTIONS_PATH, self->path);
-	int skip_index = exactMatch(FAUX_RECENT_PATH, self->path) || is_collection; // not alphabetized
-	
-	Hash* map = NULL;
-	char map_path[256];
-	sprintf(map_path, "%s/map.txt", is_collection ? COLLECTIONS_PATH : self->path);
-	if (exists(map_path)) {
-		FILE* file = fopen(map_path, "r");
-		if (file) {
-			map = Hash_new();
-			char line[256];
-			while (fgets(line,256,file)!=NULL) {
-				normalizeNewline(line);
-				trimTrailingNewlines(line);
-				if (strlen(line)==0) continue; // skip empty lines
+    int is_collection = prefixMatch(COLLECTIONS_PATH, self->path);
+    int skip_index = exactMatch(FAUX_RECENT_PATH, self->path) || is_collection; // not alphabetized
+    
+    Hash* map = NULL;
+    char map_path[256];
+    sprintf(map_path, "%s/map.txt", is_collection ? COLLECTIONS_PATH : self->path);
 
-				char* tmp = strchr(line,'\t');
-				if (tmp) {
-					tmp[0] = '\0';
-					char* key = line;
-					char* value = tmp+1;
-					Hash_set(map, key, value);
-				}
-			}
-			fclose(file);
-			
-			int resort = 0;
-			int filter = 0;
-			for (int i=0; i<self->entries->count; i++) {
-				Entry* entry = self->entries->items[i];
-				char* filename = strrchr(entry->path, '/')+1;
-				char* alias = Hash_get(map, filename);
-				if (alias) {
-					free(entry->name);
-					entry->name = strdup(alias);
-					resort = 1;
-					if (!filter && hide(entry->name)) filter = 1;
-				}
-			}
-			
-			if (filter) {
-				Array* entries = Array_new();
-				for (int i=0; i<self->entries->count; i++) {
-					Entry* entry = self->entries->items[i];
-					if (hide(entry->name)) {
-						Entry_free(entry);
-					}
-					else {
-						Array_push(entries, entry);
-					}
-				}
-				Array_free(self->entries); // not EntryArray_free because we've just moved the entries from the original to the filtered one!
-				self->entries = entries;
-			}
-			if (resort) EntryArray_sort(self->entries);
-		}
-	}
-	
-	Entry* prior = NULL;
-	int alpha = -1;
-	int index = 0;
-	for (int i=0; i<self->entries->count; i++) {
-		Entry* entry = self->entries->items[i];
-		if (map) {
-			char* filename = strrchr(entry->path, '/')+1;
-			char* alias = Hash_get(map, filename);
-			if (alias) {
-				free(entry->name);
-				entry->name = strdup(alias);
-			}
-		}
-		
-		if (prior!=NULL && exactMatch(prior->name, entry->name)) {
-			if (prior->unique) free(prior->unique);
-			if (entry->unique) free(entry->unique);
-			
-			char* prior_filename = strrchr(prior->path, '/')+1;
-			char* entry_filename = strrchr(entry->path, '/')+1;
-			if (exactMatch(prior_filename, entry_filename)) {
-				char prior_unique[256];
-				char entry_unique[256];
-				getUniqueName(prior, prior_unique);
-				getUniqueName(entry, entry_unique);
-				
-				prior->unique = strdup(prior_unique);
-				entry->unique = strdup(entry_unique);
-			}
-			else {
-				prior->unique = strdup(prior_filename);
-				entry->unique = strdup(entry_filename);
-			}
-		}
+    if (exists(map_path)) {
+        FILE* file = fopen(map_path, "r");
+        if (file) {
+            map = Hash_new();
+            char line[256];
+            while (fgets(line, 256, file) != NULL) {
+                normalizeNewline(line);
+                trimTrailingNewlines(line);
+                if (strlen(line) == 0) continue; // skip empty lines
 
-		if (!skip_index) {
-			int a = getIndexChar(entry->name);
-			if (a!=alpha) {
-				index = self->alphas->count;
-				IntArray_push(self->alphas, i);
-				alpha = a;
-			}
-			entry->alpha = index;
-		}
-		
-		prior = entry;
-	}
-	
-	if (map) Hash_free(map);
+                char* tmp = strchr(line, '\t');
+                if (tmp) {
+                    tmp[0] = '\0';
+                    char* key = line;
+                    char* value = tmp + 1;
+                    Hash_set(map, key, strdup(value)); // Ensure strdup to store value properly
+                }
+            }
+            fclose(file);
+            
+            int resort = 0;
+            int filter = 0;
+            for (int i = 0; i < self->entries->count; i++) {
+                Entry* entry = self->entries->items[i];
+                char* filename = strrchr(entry->path, '/') + 1;
+                char* alias = Hash_get(map, filename);
+                if (alias) {
+                    free(entry->name);  // Free before overwriting
+                    entry->name = strdup(alias);
+                    resort = 1;
+                    if (!filter && hide(entry->name)) filter = 1;
+                }
+            }
+            
+            if (filter) {
+                Array* entries = Array_new();
+                for (int i = 0; i < self->entries->count; i++) {
+                    Entry* entry = self->entries->items[i];
+                    if (hide(entry->name)) {
+                        Entry_free(entry); // Ensure Entry_free handles all memory cleanup
+                    } else {
+                        Array_push(entries, entry);
+                    }
+                }
+                Array_free(self->entries);
+                self->entries = entries;
+            }
+            if (resort) EntryArray_sort(self->entries);
+        }
+    }
+    
+    Entry* prior = NULL;
+    int alpha = -1;
+    int index = 0;
+    for (int i = 0; i < self->entries->count; i++) {
+        Entry* entry = self->entries->items[i];
+        if (map) {
+            char* filename = strrchr(entry->path, '/') + 1;
+            char* alias = Hash_get(map, filename);
+            if (alias) {
+                free(entry->name);  // Free before overwriting
+                entry->name = strdup(alias);
+            }
+        }
+        
+        if (prior != NULL && exactMatch(prior->name, entry->name)) {
+            free(prior->unique);
+            free(entry->unique);
+            prior->unique = NULL;
+            entry->unique = NULL;
+
+            char* prior_filename = strrchr(prior->path, '/') + 1;
+            char* entry_filename = strrchr(entry->path, '/') + 1;
+            if (exactMatch(prior_filename, entry_filename)) {
+                char prior_unique[256];
+                char entry_unique[256];
+                getUniqueName(prior, prior_unique);
+                getUniqueName(entry, entry_unique);
+
+                prior->unique = strdup(prior_unique);
+                entry->unique = strdup(entry_unique);
+            } else {
+                prior->unique = strdup(prior_filename);
+                entry->unique = strdup(entry_filename);
+            }
+        }
+
+        if (!skip_index) {
+            int a = getIndexChar(entry->name);
+            if (a != alpha) {
+                index = self->alphas->count;
+                IntArray_push(self->alphas, i);
+                alpha = a;
+            }
+            entry->alpha = index;
+        }
+        
+        prior = entry;
+    }
+
+    if (map) Hash_free(map);  // Free the map at the end
 }
+
 
 static Array* getRoot(void);
 static Array* getRecents(void);
@@ -641,120 +643,127 @@ static int hasRoms(char* dir_name) {
 	return has;
 }
 static Array* getRoot(void) {
-	Array* root = Array_new();
-	
-	if (hasRecents()) Array_push(root, Entry_new(FAUX_RECENT_PATH, ENTRY_DIR));
-	
-	Array* entries = Array_new();
-	DIR* dh = opendir(ROMS_PATH);
-	if (dh!=NULL) {
-		struct dirent *dp;
-		char* tmp;
-		char full_path[256];
-		sprintf(full_path, "%s/", ROMS_PATH);
-		tmp = full_path + strlen(full_path);
-		Array* emus = Array_new();
-		while((dp = readdir(dh)) != NULL) {
-			if (hide(dp->d_name)) continue;
-			if (hasRoms(dp->d_name)) {
-				strcpy(tmp, dp->d_name);
-				Array_push(emus, Entry_new(full_path, ENTRY_DIR));
-			}
-		}
-		EntryArray_sort(emus);
-		Entry* prev_entry = NULL;
-		for (int i=0; i<emus->count; i++) {
-			Entry* entry = emus->items[i];
-			if (prev_entry!=NULL) {
-				if (exactMatch(prev_entry->name, entry->name)) {
-					Entry_free(entry);
-					continue;
-				}
-			}
-			Array_push(entries, entry);
-			prev_entry = entry;
-		}
-		Array_free(emus); // just free the array part, entries now owns emus entries
-		closedir(dh);
-	}
-	
-	// copied/modded from Directory_index
-	// we don't support hidden remaps here
-	char map_path[256];
-	sprintf(map_path, "%s/map.txt", ROMS_PATH);
-	if (entries->count>0 && exists(map_path)) {
-		FILE* file = fopen(map_path, "r");
-		if (file) {
-			Hash* map = Hash_new();
-			char line[256];
-			while (fgets(line,256,file)!=NULL) {
-				normalizeNewline(line);
-				trimTrailingNewlines(line);
-				if (strlen(line)==0) continue; // skip empty lines
+    Array* root = Array_new();
 
-				char* tmp = strchr(line,'\t');
-				if (tmp) {
-					tmp[0] = '\0';
-					char* key = line;
-					char* value = tmp+1;
-					Hash_set(map, key, value);
-				}
-			}
-			fclose(file);
-			
-			int resort = 0;
-			for (int i=0; i<entries->count; i++) {
-				Entry* entry = entries->items[i];
-				char* filename = strrchr(entry->path, '/')+1;
-				char* alias = Hash_get(map, filename);
-				if (alias) {
-					free(entry->name);
-					entry->name = strdup(alias);
-					resort = 1;
-				}
-			} 
-			if (resort) EntryArray_sort(entries);
-			Hash_free(map);
-		}
-	}
-	
-	if (hasCollections()) {
-		if (entries->count) Array_push(root, Entry_new(COLLECTIONS_PATH, ENTRY_DIR));
-		else { // no visible systems, promote collections to root
-			dh = opendir(COLLECTIONS_PATH);
-			if (dh!=NULL) {
-				struct dirent *dp;
-				char* tmp;
-				char full_path[256];
-				sprintf(full_path, "%s/", COLLECTIONS_PATH);
-				tmp = full_path + strlen(full_path);
-				Array* collections = Array_new();
-				while((dp = readdir(dh)) != NULL) {
-					if (hide(dp->d_name)) continue;
-					strcpy(tmp, dp->d_name);
-					Array_push(collections, Entry_new(full_path, ENTRY_DIR)); // yes, collections are fake directories
-				}
-				EntryArray_sort(collections);
-				for (int i=0; i<collections->count; i++) {
-					Array_push(entries, collections->items[i]);
-				}
-				Array_free(collections); // just free the array part, entries now owns collections entries
-				closedir(dh);
-			}
-		}
-	}
-	
-	// add systems to root
-	for (int i=0; i<entries->count; i++) {
-		Array_push(root, entries->items[i]);
-	}
-	Array_free(entries); // root now owns entries' entries
-	
-	char* tools_path = SDCARD_PATH "/Tools/" PLATFORM;
-	if (exists(tools_path) && !simple_mode) Array_push(root, Entry_new(tools_path, ENTRY_DIR));
-	
-	return root;
+    if (hasRecents()) Array_push(root, Entry_new(FAUX_RECENT_PATH, ENTRY_DIR));
+
+    Array* entries = Array_new();
+    DIR* dh = opendir(ROMS_PATH);
+    if (dh) {
+        struct dirent* dp;
+        char full_path[256];
+        snprintf(full_path, sizeof(full_path), "%s/", ROMS_PATH);
+        char* tmp = full_path + strlen(full_path);
+
+        Array* emus = Array_new();
+        while ((dp = readdir(dh)) != NULL) {
+            if (hide(dp->d_name)) continue;
+            if (hasRoms(dp->d_name)) {
+                strcpy(tmp, dp->d_name);
+                Array_push(emus, Entry_new(full_path, ENTRY_DIR));
+            }
+        }
+        closedir(dh); // Ensure directory is closed immediately after use
+
+        EntryArray_sort(emus);
+        Entry* prev_entry = NULL;
+        for (int i = 0; i < emus->count; i++) {
+            Entry* entry = emus->items[i];
+            if (prev_entry && exactMatch(prev_entry->name, entry->name)) {
+                Entry_free(entry);
+                continue;
+            }
+            Array_push(entries, entry);
+            prev_entry = entry;
+        }
+        Array_free(emus); // Only frees container, entries now owns the items
+    }
+
+    // Handle mapping logic
+    char map_path[256];
+    snprintf(map_path, sizeof(map_path), "%s/map.txt", ROMS_PATH);
+    if (entries->count > 0 && exists(map_path)) {
+        FILE* file = fopen(map_path, "r");
+        if (file) {
+            Hash* map = Hash_new();
+            char line[256];
+
+            while (fgets(line, sizeof(line), file)) {
+                normalizeNewline(line);
+                trimTrailingNewlines(line);
+                if (strlen(line) == 0) continue; // Skip empty lines
+
+                char* tmp = strchr(line, '\t');
+                if (tmp) {
+                    *tmp = '\0';
+                    char* key = line;
+                    char* value = tmp + 1;
+                    Hash_set(map, key, strdup(value)); // Ensure strdup
+                }
+            }
+            fclose(file);
+
+            int resort = 0;
+            for (int i = 0; i < entries->count; i++) {
+                Entry* entry = entries->items[i];
+                char* filename = strrchr(entry->path, '/') + 1;
+                char* alias = Hash_get(map, filename);
+                if (alias) {
+                    free(entry->name);  // Free before overwriting
+                    entry->name = strdup(alias);
+                    resort = 1;
+                }
+            }
+            if (resort) EntryArray_sort(entries);
+            Hash_free(map);
+        }
+    }
+
+    // Handle collections
+    if (hasCollections()) {
+        if (entries->count) {
+            Array_push(root, Entry_new(COLLECTIONS_PATH, ENTRY_DIR));
+        } else { // No visible systems, promote collections to root
+            dh = opendir(COLLECTIONS_PATH);
+            if (dh) {
+                struct dirent* dp;
+                char full_path[256];
+                snprintf(full_path, sizeof(full_path), "%s/", COLLECTIONS_PATH);
+                char* tmp = full_path + strlen(full_path);
+
+                Array* collections = Array_new();
+                while ((dp = readdir(dh)) != NULL) {
+                    if (hide(dp->d_name)) continue;
+                    strcpy(tmp, dp->d_name);
+                    Array_push(collections, Entry_new(full_path, ENTRY_DIR)); // Collections are fake directories
+                }
+                closedir(dh); // Close immediately after use
+                EntryArray_sort(collections);
+
+                for (int i = 0; i < collections->count; i++) {
+                    Array_push(entries, collections->items[i]);
+                }
+                Array_free(collections); // Only free the container, `entries` owns the items now
+            }
+        }
+    }
+
+    // Move entries to root
+    for (int i = 0; i < entries->count; i++) {
+        Array_push(root, entries->items[i]);
+    }
+    Array_free(entries); // `root` now owns the entries
+
+    // Add tools if applicable
+    char tools_path[256];
+    snprintf(tools_path, sizeof(tools_path), "%s/Tools/%s", SDCARD_PATH, PLATFORM);
+    if (exists(tools_path) && !simple_mode) {
+        Array_push(root, Entry_new(tools_path, ENTRY_DIR));
+    }
+
+    return root;
 }
+
 static Entry* entryFromRecent(Recent* recent)
 {
 	if(!recent || !recent->available)
