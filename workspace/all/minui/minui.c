@@ -1340,7 +1340,7 @@ static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
 }
 
 static float selection_offset = 1.0f; // 1.0 = fully transitioned
-static int previous_selected = 0;     // Track last selected row
+static int previous_selected = -1;     // Track last selected row
 
 // functionooos for like animation haha
 float lerp(float a, float b, float t) {
@@ -1348,15 +1348,25 @@ float lerp(float a, float b, float t) {
 }
 
 void updateSelectionAnimation(int selected) {
-    if (selected == previous_selected+1 || selected == previous_selected-1) {
-        selection_offset = 0.0f; // Start animation
-    }
+    // Start animation only if moving one step up or down
+    if ((selected == previous_selected + 1 || selected == previous_selected - 1) && selection_offset >= 1.0f) {
+        selection_offset = 0.0f; // Reset animation only if previous one is done
+    }  else if(selection_offset >= 1.0f) {
+		previous_selected = selected;
+	}
+		
+	
 
+    // Continue animation until it completes
     if (selection_offset < 1.0f) {
-        selection_offset += 0.5f; // Adjust speed (0.15 = faster, 0.05 = slower)
-        if (selection_offset > 1.0f) selection_offset = 1.0f;
+        selection_offset += 0.4f; // Adjust speed (0.15 = faster, 0.05 = slower)
+        if (selection_offset >= 1.0f) {
+            selection_offset = 1.0f;
+            previous_selected = selected; // Update only when animation finishes
+        }
     }
 }
+
 ///////////////////////////////////////
 
 int main (int argc, char *argv[]) {
@@ -1638,13 +1648,14 @@ int main (int argc, char *argv[]) {
 					if (dirty) {
 						thumbbmp = IMG_Load(thumbpath);
 					}
-					SDL_Surface* optimized = SDL_ConvertSurfaceFormat(thumbbmp, SDL_PIXELFORMAT_RGBA32, 0);
-					if (optimized) {
-						SDL_FreeSurface(thumbbmp); 
-						thumbbmp = optimized; 
-					}
+					
 
 					if (thumbbmp) { 
+						SDL_Surface* optimized = SDL_ConvertSurfaceFormat(thumbbmp, SDL_PIXELFORMAT_RGBA32, 0);
+						if (optimized) {
+							SDL_FreeSurface(thumbbmp); 
+							thumbbmp = optimized; 
+						}
 						SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
 						GFX_ApplyRounderCorners(thumbbmp,20);
 						SDL_BlitScaled(thumbbmp, NULL, screen, &dest_rect);
@@ -1814,13 +1825,15 @@ int main (int argc, char *argv[]) {
 				}
 			}
 			else {
-
+				if(previous_selected==-1) {
+					previous_selected = top->selected;
+				}
 				updateSelectionAnimation(top->selected);
 				// list
 				if (total>0) {
 					int selected_row = top->selected - top->start;
 					for (int i=top->start,j=0; i<top->end; i++,j++) {
-
+						
 						float targetY = SCALE1(PADDING + (j * PILL_SIZE));
 						float previousY = SCALE1(PADDING + ((previous_selected - top->start) * PILL_SIZE));
 						float highlightY = lerp(previousY, targetY, selection_offset);
@@ -1843,7 +1856,7 @@ int main (int argc, char *argv[]) {
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 							});
-							if (selection_offset >= 1.0f) {
+							if (selection_offset >= 0.5f) {
 								text_color = COLOR_BLACK;
 							}
 						}
@@ -1883,7 +1896,7 @@ int main (int argc, char *argv[]) {
 					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
 					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
-				previous_selected = top->selected;
+		
 				// buttons
 				if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
 				else if (can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, 0, screen, 0);
@@ -1908,7 +1921,7 @@ int main (int argc, char *argv[]) {
 			}
 
 			GFX_flip(screen);
-
+			
 			dirty = 0;
 			
 		// }
@@ -1941,6 +1954,9 @@ int main (int argc, char *argv[]) {
 			sleep(4);
 			quit = 1;
 		}
+
+
+		
 	}
 	
 	if (version) SDL_FreeSurface(version);
