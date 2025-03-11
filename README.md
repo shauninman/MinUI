@@ -1,5 +1,5 @@
 # NextUI (formerly MinUI Next)
-MinUI with a rebuild emulation engine and tons of added features
+MinUI with a rebuild emulation engine and tons of added features for the TrimUI Brick and Smart Pro. For other devices we recommend checking out [MinUI](https://github.com/shauninman/MinUI)
 - Fixed both screen tearing and sync stutter problems of original MinUI by rebuilding the emulator engine core
 - Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
@@ -99,11 +99,6 @@ NextUI is based of [MinUI](https://github.com/shauninman/MinUI) which is an amaz
   multiple devices from different
   manufacturers
 
-> Devices with a physical power switch
-> use MENU to sleep and wake instead of
-> POWER. Once asleep the device can safely
-> be powered off manually with the switch.
-
 ## Supported consoles
 
 Base:
@@ -127,21 +122,4 @@ Extras:
 - TurboGrafx-16 (and TurboGrafx-CD)
 - Virtual Boy
 - Arcade (cps, mame etc)
-
-## Supported Devices
-
-| Device | Added | Status |
-| -- | -- | -- |
-| Anbernic RG40xxH | MinUI-20240717-1 | WIP |
-| Anbernic RG40xxV | MinUI-20240831-0 | WIP | 
-| Anbernic RG CubeXX | MinUI-202401028-0 | WIP | 
-| Miyoo Flip | MinUI-20250111-0 | WIP |
-| Miyoo Mini (plus) | MinUI-20250111-0 | Questionable |
-| Trimui Brick | MinUI-20241028-0 | Working |
-| Trimui Smart Pro | MinUI-20231111b-2 | Working |
-
-> [!NOTE]
-> **Working** Works! will still profit from future updates  
-> **WIP** Working on getting it ready for this device   
-> **Questionable** I want to get it working on this device, but might not be possible due to HW limitations
    
