@@ -1348,21 +1348,17 @@ float lerp(float a, float b, float t) {
 }
 
 void updateSelectionAnimation(int selected) {
-    // Start animation only if moving one step up or down
     if ((selected == previous_selected + 1 || selected == previous_selected - 1) && selection_offset >= 1.0f) {
-        selection_offset = 0.0f; // Reset animation only if previous one is done
+        selection_offset = 0.0f; 
     }  else if(selection_offset >= 1.0f) {
 		previous_selected = selected;
 	}
 		
-	
-
-    // Continue animation until it completes
     if (selection_offset < 1.0f) {
-        selection_offset += 0.4f; // Adjust speed (0.15 = faster, 0.05 = slower)
+        selection_offset += 0.5f; 
         if (selection_offset >= 1.0f) {
             selection_offset = 1.0f;
-            previous_selected = selected; // Update only when animation finishes
+            previous_selected = selected;
         }
     }
 }
@@ -1856,7 +1852,7 @@ int main (int argc, char *argv[]) {
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 							});
-							if (selection_offset >= 0.5f) {
+							if (selection_offset >= 1.0f) {
 								text_color = COLOR_BLACK;
 							}
 						}
