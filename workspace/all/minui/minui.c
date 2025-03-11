@@ -1348,7 +1348,7 @@ float lerp(float a, float b, float t) {
 }
 
 void updateSelectionAnimation(int selected) {
-    if (selected != previous_selected) {
+    if (selected == previous_selected+1 || selected == previous_selected-1) {
         selection_offset = 0.0f; // Start animation
     }
 
@@ -1591,7 +1591,7 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		
-		// if (dirty) {
+		// if (dirty) { 
 			GFX_clear(screen);
 			
 			int ox;
