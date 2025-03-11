@@ -26,13 +26,11 @@ Trimui Smart Pro | MinUI-20231111b-2
 # Future plans roadmap
 - Pal rom mode
 - Bluetooth and wifi integrated
-- Optional game art/media
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
-- Menu animations
-- Configurable sleep mode or default auto shutdown
 - Retroachievements
 - Shaders
+- Probably we think of a lot of other stuff a long the way to add :D
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc. 
 
