@@ -569,32 +569,38 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 	return text_width;
 }
 int GFX_scrollText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding) {
-    static int text_offset = 0; 
+    static int text_offset = 0;
+    static int frame_counter = 0; 
     int text_width;
     int len = strlen(in_name);
 
     TTF_SizeUTF8(font, out_name, &text_width, NULL);
     text_width += padding;
-	if(text_width < max_width) {
-		text_offset = 0;
-	}
-   
-    char scroll_text[512]; 
-    snprintf(scroll_text, sizeof(scroll_text), "%s %s", in_name, in_name);  
 
-   
+    if (text_width < max_width) {
+        text_offset = 0;
+    }
+
+    char scroll_text[512];
+    snprintf(scroll_text, sizeof(scroll_text), "%s %s", in_name, in_name);
+
     if (text_offset >= len + 1) {  
         text_offset = 0;
     }
 
-    strncpy(out_name, scroll_text + text_offset, len);  
+    strncpy(out_name, scroll_text + text_offset, len);
 
-	if(text_width > max_width) {
-		text_offset++;
-	} 
+    if (text_width > max_width) {
+        frame_counter++;
+        if (frame_counter >= 3) { // Scroll only once per 3 frames
+            text_offset++;
+            frame_counter = 0; 
+        }
+    }
 
     return text_width;
 }
+
 
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {
 	if (!str) return 0;

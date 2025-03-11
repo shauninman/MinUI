@@ -1339,6 +1339,24 @@ static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
     return scaled_rect;
 }
 
+static float selection_offset = 1.0f; // 1.0 = fully transitioned
+static int previous_selected = 0;     // Track last selected row
+
+// functionooos for like animation haha
+float lerp(float a, float b, float t) {
+    return a + (b - a) * t;
+}
+
+void updateSelectionAnimation(int selected) {
+    if (selected != previous_selected) {
+        selection_offset = 0.0f; // Start animation
+    }
+
+    if (selection_offset < 1.0f) {
+        selection_offset += 0.5f; // Adjust speed (0.15 = faster, 0.05 = slower)
+        if (selection_offset > 1.0f) selection_offset = 1.0f;
+    }
+}
 ///////////////////////////////////////
 
 int main (int argc, char *argv[]) {
@@ -1377,8 +1395,8 @@ int main (int argc, char *argv[]) {
 	}
 	
 	// now that (most of) the heavy lifting is done, take a load off
-	PWR_setCPUSpeed(CPU_SPEED_MENU);
-	GFX_setVsync(VSYNC_STRICT);
+	// PWR_setCPUSpeed(CPU_SPEED_MENU);
+	// GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
 	int dirty = 1;
@@ -1387,6 +1405,7 @@ int main (int argc, char *argv[]) {
 	int was_online = PLAT_isOnline();
 	
 	// LOG_info("- loop start: %lu\n", SDL_GetTicks() - main_begin);
+	SDL_Surface* thumbbmp;
 	while (!quit) {
 		GFX_startFrame();
 		unsigned long now = SDL_GetTicks();
@@ -1572,7 +1591,7 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		
-		if (dirty) {
+		// if (dirty) {
 			GFX_clear(screen);
 			
 			int ox;
@@ -1583,6 +1602,7 @@ int main (int argc, char *argv[]) {
 			int had_thumb = 0;
 			if (!show_version && total>0) {
 				Entry* entry = top->entries->items[top->selected];
+				
 				char res_path[MAX_PATH];
 				
 				char res_root[MAX_PATH];
@@ -1600,7 +1620,6 @@ int main (int argc, char *argv[]) {
 				path_copy[sizeof(path_copy) - 1] = '\0';  // Ensure null termination
 
 				sprintf(res_path, "%s/.res/%s.png", res_root, res_name);
-				LOG_info("res_path: %s\n", res_path);
 
 				
 
@@ -1613,26 +1632,24 @@ int main (int argc, char *argv[]) {
 						*dot = '\0';  // Truncate at the dot
 					}
 				sprintf(thumbpath, "%s/.media/%s.png",rompath,res_copy);
-				LOG_info("thumbpath: %s\n", thumbpath);
 
 				if (exists(thumbpath)) {
 
-					
-					SDL_Surface* bmp = IMG_Load(thumbpath);
-					SDL_Surface* optimized = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA32, 0);
+					if (dirty) {
+						thumbbmp = IMG_Load(thumbpath);
+					}
+					SDL_Surface* optimized = SDL_ConvertSurfaceFormat(thumbbmp, SDL_PIXELFORMAT_RGBA32, 0);
 					if (optimized) {
-						SDL_FreeSurface(bmp); 
-						bmp = optimized; 
+						SDL_FreeSurface(thumbbmp); 
+						thumbbmp = optimized; 
 					}
 
-					if (bmp) { 
+					if (thumbbmp) { 
 						SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
-						GFX_ApplyRounderCorners(bmp,20);
-						SDL_BlitScaled(bmp, NULL, screen, &dest_rect);
-						SDL_FreeSurface(bmp);
+						GFX_ApplyRounderCorners(thumbbmp,20);
+						SDL_BlitScaled(thumbbmp, NULL, screen, &dest_rect);
 						ox = (int)screen->w*0.5;
 						had_thumb = 1;
-
 					}
 
 				}
@@ -1797,10 +1814,17 @@ int main (int argc, char *argv[]) {
 				}
 			}
 			else {
+
+				updateSelectionAnimation(top->selected);
 				// list
 				if (total>0) {
 					int selected_row = top->selected - top->start;
 					for (int i=top->start,j=0; i<top->end; i++,j++) {
+
+						float targetY = SCALE1(PADDING + (j * PILL_SIZE));
+						float previousY = SCALE1(PADDING + ((previous_selected - top->start) * PILL_SIZE));
+						float highlightY = lerp(previousY, targetY, selection_offset);
+
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
 						char* entry_unique = entry->unique;
@@ -1817,12 +1841,11 @@ int main (int argc, char *argv[]) {
 						if (j==selected_row) {
 							GFX_scrollText(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-								SCALE1(PADDING),
-								SCALE1(PADDING+(j*PILL_SIZE)),
-								max_width,
-								SCALE1(PILL_SIZE)
+								SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 							});
-							text_color = COLOR_BLACK;
+							if (selection_offset >= 1.0f) {
+								text_color = COLOR_BLACK;
+							}
 						}
 						else if (entry->unique) {
 							trimSortingMeta(&entry_unique);
@@ -1854,12 +1877,13 @@ int main (int argc, char *argv[]) {
 						});
 						SDL_FreeSurface(text);
 					}
+					
 				}
 				else {
 					// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
 					GFX_blitMessage(font.large, "Empty folder", screen, &(SDL_Rect){0,0,screen->w,screen->h}); //, NULL);
 				}
-			
+				previous_selected = top->selected;
 				// buttons
 				if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
 				else if (can_resume) GFX_blitButtonGroup((char*[]){ "X","RESUME",  NULL }, 0, screen, 0);
@@ -1887,17 +1911,17 @@ int main (int argc, char *argv[]) {
 
 			dirty = 0;
 			
-		}
-		else { 
-			// is it time for another animation update?
-			static Uint32 last_anim = 0;
-			Uint32 currentanim = SDL_GetTicks();  
-			if (currentanim - last_anim >= 100) {  
-				last_anim = currentanim;
-				dirty = 1;
-			}
-			GFX_sync(); 
-		}
+		// }
+		// else { 
+		// 	// is it time for another animation update?
+		// 	static Uint32 last_anim = 0;
+		// 	Uint32 currentanim = SDL_GetTicks();  
+		// 	if (currentanim - last_anim >= 100) {  
+		// 		last_anim = currentanim;
+		// 		dirty = 1;
+		// 	}
+		// 	GFX_sync(); 
+		// }
 		
 		// if (!first_draw) {
 		// 	first_draw = SDL_GetTicks();
