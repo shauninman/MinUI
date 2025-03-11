@@ -1642,14 +1642,18 @@ int main (int argc, char *argv[]) {
 				sprintf(thumbpath, "%s/.media/%s.png",rompath,res_copy);
 			
 				if (exists(thumbpath)) {
-					thumbbmp = IMG_Load(thumbpath);
-					if(thumbbmp) {
-						SDL_Surface* optimized = SDL_ConvertSurfaceFormat(thumbbmp, SDL_PIXELFORMAT_RGBA32, 0);
+					SDL_Surface* newThumb = IMG_Load(thumbpath);
+					if (newThumb) {
+						SDL_Surface* optimized = SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGBA32, 0);
+						SDL_FreeSurface(newThumb);  // Free original loaded surface
+						
 						if (optimized) {
-							SDL_FreeSurface(thumbbmp); 
-							thumbbmp = optimized; 
+							if (thumbbmp) {
+								SDL_FreeSurface(thumbbmp);  // Free previous surface before replacing it
+							}
+							thumbbmp = optimized;
 							had_thumb = 1;
-							ox = (int)screen->w*0.5;
+							ox = (int)screen->w * 0.5;
 						} else {
 							had_thumb = 0;
 						}
@@ -1659,6 +1663,7 @@ int main (int argc, char *argv[]) {
 				} else {
 					had_thumb = 0;
 				}
+				
 			}
 			if (had_thumb) { 
 				SDL_Rect dest_rect = {screen->w*0.51, SCALE1((3*PADDING)+PILL_SIZE), (int)screen->w*0.48,(int)screen->h*0.5}; 
