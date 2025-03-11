@@ -68,7 +68,7 @@ https://discord.gg/HKd7wqZk3h
 ![gameoverlay](https://github.com/user-attachments/assets/a7c99784-fa48-4d3e-a64b-28e7149d929a)
 
 # MinUI Readme:
-NextUI is based of [MinUI](https://github.com/shauninman/MinUI) which is an amazing CFW and works on many more devices than NextUI currently does so def check it out!
+NextUI is based of [MinUI](https://github.com/shauninman/MinUI) which is an amazing CFW and works on many more devices than NextUI currently does, so def check it out!
 
 ## Features
 
