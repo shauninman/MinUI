@@ -569,35 +569,46 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 	return text_width;
 }
 
-void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int padding, SDL_Color color, float heightratio) {
+void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int padding, SDL_Color color, float transparency) {
     static int text_offset = 0;
     static int frame_counter = 0;
     int text_width, text_height;
 
     TTF_SizeUTF8(font, in_name, &text_width, &text_height);
 
-    int full_text_width = text_width + padding-15; 
+    int full_text_width = text_width + padding - 15; 
 
-   
+    // Ensure transparency is within 0 to 1 range
+    if (transparency < 0.0f) transparency = 0.0f;
+    if (transparency > 1.0f) transparency = 1.0f;
+
+    // Convert transparency float (0 to 1) into an alpha value (0 to 255)
+    Uint8 alpha = (Uint8)(transparency * 255);
+    color.a = alpha;  // Apply transparency to text color
+
     char scroll_text[1024]; 
     snprintf(scroll_text, sizeof(scroll_text), "%s  %s", in_name, in_name); 
 
-  
     SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, color);
     if (!full_text_surface) {
         printf("Text rendering failed: %s\n", TTF_GetError());
         return;
     }
 
- 
-    if (text_width + padding*2 < max_width) {
+    if (text_width + padding * 2 < max_width) {
         text_offset = 0;  
     }
 
-    
     SDL_Rect src_rect = { text_offset, 0, max_width, full_text_surface->h };
-    SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, full_text_surface->h * heightratio, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+    SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, full_text_surface->h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+    
+    // Enable alpha blending on the new surface
+    SDL_SetSurfaceBlendMode(scrolling_surface, SDL_BLENDMODE_BLEND);
     SDL_BlitSurface(full_text_surface, &src_rect, scrolling_surface, NULL);
+    
+    // Apply transparency to the output surface
+    SDL_SetSurfaceAlphaMod(scrolling_surface, alpha);
+
     SDL_FreeSurface(full_text_surface);
 
     if (*out_surface) {
@@ -605,7 +616,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     }
     *out_surface = scrolling_surface;
 
-    if (text_width + padding*2 > max_width) {
+    if (text_width + padding * 2 > max_width) {
         frame_counter++;
         if (frame_counter >= 0) {  
             text_offset += 4;  
@@ -616,9 +627,6 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
         }
     }
 }
-
-
-
 
 
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {

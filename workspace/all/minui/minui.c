@@ -1351,6 +1351,7 @@ static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
 static float selection_offset = 1.0f; 
 static int previous_selected = -1; 
 static int dirty = 1;
+static int dirtyanim = 1;
 static int last_selection = -1;
 // functionooos for like animation haha
 float lerp(float a, float b, float t) {
@@ -1358,6 +1359,7 @@ float lerp(float a, float b, float t) {
 }
 
 void updateSelectionAnimation(int selected) {
+	dirtyanim=1;
     if ((selected == previous_selected + 1 || selected == previous_selected - 1) && selection_offset >= 1.0f) {
         selection_offset = 0.0f; 
     }  else if(selection_offset >= 1.0f) {
@@ -1369,6 +1371,7 @@ void updateSelectionAnimation(int selected) {
         if (selection_offset >= 1.0f) {
             selection_offset = 1.0f;
             previous_selected = selected;
+			dirtyanim = 0;
 			
         }
     } 
@@ -1860,8 +1863,6 @@ int main (int argc, char *argv[]) {
 				}
 				for (int i = top->start, j = 0; i < top->end; i++, j++) {
 			
-					
-					
 					Entry* entry = top->entries->items[i];
 					char* entry_name = entry->name;
 					char* entry_unique = entry->unique;
@@ -1876,37 +1877,6 @@ int main (int argc, char *argv[]) {
 					int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name, display_name, available_width, SCALE1(BUTTON_PADDING * 2));
 					int max_width = MIN(available_width, text_width);
 					SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
-			
-					if (j == selected_row) {
-						
-						GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-							SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
-						});
-			
-						GFX_scrollTextSurface(font.large, entry_unique ? entry_unique : entry_name, &text, available_width, SCALE1(BUTTON_PADDING), COLOR_BLACK,highlightY == targetY ? 1:selection_offset);
-						
-			
-						
-					}
-					else if (entry->unique) {
-						trimSortingMeta(&entry_unique);
-						char unique_name[256];
-						GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
-					
-						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
-						SDL_BlitSurface(text, &(SDL_Rect){
-							0,
-							0,
-							max_width-SCALE1(BUTTON_PADDING*2),
-							text->h
-						}, screen, &(SDL_Rect){
-							SCALE1(PADDING+BUTTON_PADDING),
-							SCALE1(PADDING+(j*PILL_SIZE)+4)
-						});
-					
-						GFX_truncateText(font.large, entry_name, display_name, available_width, SCALE1(BUTTON_PADDING*2));
-					}
-				
 					SDL_BlitSurface(text, &(SDL_Rect){
 						0,
 						0,
@@ -1917,6 +1887,35 @@ int main (int argc, char *argv[]) {
 						SCALE1(PADDING+(j*PILL_SIZE)+4)
 					});
 					SDL_FreeSurface(text);
+
+					int text_width2, text_height2;
+					TTF_SizeUTF8(font.large, display_name, &text_width2, &text_height2);
+					SDL_Surface* text2 = SDL_CreateRGBSurface(0, text_width2, text_height2, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+					
+					if (j == selected_row) {
+						GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+							SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
+						});
+						GFX_scrollTextSurface(font.large, entry_unique ? entry_unique : entry_name, &text2, available_width, SCALE1(BUTTON_PADDING), COLOR_BLACK,highlightY != targetY ? selection_offset:1);
+					}
+					else if (entry->unique) {
+						trimSortingMeta(&entry_unique);
+						char unique_name[256];
+						GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING*2));
+						SDL_FreeSurface(text2);
+						text2 = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
+						
+					}
+					SDL_BlitSurface(text2, &(SDL_Rect){
+						0,
+						0,
+						max_width-SCALE1(BUTTON_PADDING*2),
+						text->h
+					}, screen, &(SDL_Rect){
+						SCALE1(PADDING+BUTTON_PADDING),
+						SCALE1(PADDING+(j*PILL_SIZE)+4)
+					});
+					SDL_FreeSurface(text2);
 				}
 			}
 			else {
@@ -1949,15 +1948,7 @@ int main (int argc, char *argv[]) {
 		
 		GFX_flip(screen);
 		dirty = 0;
-		
-			
-		
-		
-		// if (!first_draw) {
-		// 	first_draw = SDL_GetTicks();
-		// 	LOG_info("- first draw: %lu\n", first_draw - main_begin);
-		// }
-		
+
 		// handle HDMI change
 		static int had_hdmi = -1;
 		int has_hdmi = GetHDMI();
