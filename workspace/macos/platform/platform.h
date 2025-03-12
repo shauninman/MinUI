@@ -106,9 +106,27 @@
 
 ///////////////////////////////
 
+// average smallish screen
+//#define FIXED_SCALE 	2
+//#define FIXED_WIDTH		640
+//#define FIXED_HEIGHT	480
+//#define MAIN_ROW_COUNT 6
+//#define PADDING 10
+
+// emulate Brick
+//#define FIXED_SCALE 	3
+//#define FIXED_WIDTH		1024
+//#define FIXED_HEIGHT	768
+//#define MAIN_ROW_COUNT 7
+//#define PADDING 5
+
+// emulate TSP
 #define FIXED_SCALE 	2
-#define FIXED_WIDTH		640
-#define FIXED_HEIGHT	480
+#define FIXED_WIDTH		1280
+#define FIXED_HEIGHT	720
+#define MAIN_ROW_COUNT 10
+#define PADDING 10
+
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
@@ -122,13 +140,14 @@
 
 ///////////////////////////////
 
-#define MAIN_ROW_COUNT 6
-#define PADDING 10
+
 
 ///////////////////////////////
 
 #define SDCARD_PATH "/Library/Developer/Projects/private/MinUI_FAKESD"
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
+
+#define MAX_LIGHTS 0
 
 // this should be set to the devices native screen refresh rate
 #define SCREEN_FPS 60.0

@@ -373,3 +373,35 @@ char* PLAT_getModel(void) {
 int PLAT_isOnline(void) {
 	return online;
 }
+
+void PLAT_initLeds(LightSettings *lights) {
+
+}
+
+void PLAT_setLedBrightness(LightSettings *led)
+{
+    
+}
+void PLAT_setLedEffect(LightSettings *led)
+{
+    
+}
+void PLAT_setLedColor(LightSettings *led)
+{
+    
+}
+
+void PLAT_setLedInbrightness(LightSettings *led)
+{
+
+}
+
+void PLAT_setLedEffectCycles(LightSettings *led)
+{
+
+}
+
+void PLAT_setLedEffectSpeed(LightSettings *led)
+{
+	
+}

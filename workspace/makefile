@@ -24,11 +24,14 @@ all:
 	cd ./all/clock/ && make
 	cd ./all/libbatmondb/ && make
 	cd ./all/batmon/ && make
+	cd ./all/libgametimedb/ && make
+	cd ./all/gametime/ && make
+	cd ./all/gametimectl/ && make
 	cd ./all/syncsettings/ && make
 	cd ./all/settings/ && make
 	cd ./all/ledcontrol/ && make
 # BUILDOPTION: don't forget to uncomment this to rebuild cores from  source, idk if this was left commented by mistake, but I actually agree on leaving this commented out by default as they take a long while to build and only really need building if someone bothered to pull the repo's manually and there are actually updates to any core worth including in new MinUI Next releases.
-	# cd ./$(PLATFORM)/cores && make
+# cd ./$(PLATFORM)/cores && make
 	cd ./$(PLATFORM) && make
 
 clean:
@@ -40,6 +43,9 @@ clean:
 	cd ./all/clock/ && make clean
 	cd ./all/libbatmondb/ && make clean
 	cd ./all/batmon/ && make clean
+	cd ./all/libgametimedb/ && make clean
+	cd ./all/gametimectl/ && make clean
+	cd ./all/gametime/ && make clean
 	cd ./all/minput/ && make clean
 	cd ./all/syncsettings/ && make clean
 	cd ./all/settings/ && make

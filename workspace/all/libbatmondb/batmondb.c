@@ -7,7 +7,7 @@
 #include <utils.h>
 #include <sqlite3.h>
 
-#include <batmondb.h>
+#include "batmondb.h"
 
 #define BATTERY_LOG_PATH SHARED_USERDATA_PATH
 #define BATTERY_LOG_FILE BATTERY_LOG_PATH "/battery_logs.sqlite"
@@ -23,8 +23,7 @@ sqlite3* open_battery_log_db(void)
 
     if (sqlite3_open(BATTERY_LOG_FILE, &bat_log_db) != SQLITE_OK) {
         printf("%s\n", sqlite3_errmsg(bat_log_db));
-        sqlite3_close(bat_log_db);
-        bat_log_db = NULL;
+        close_battery_log_db(bat_log_db);
         return NULL;
     }
 
