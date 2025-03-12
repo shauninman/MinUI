@@ -16,8 +16,31 @@
 
 ///////////////////////////////////////
 
-#define SETTINGS_VERSION 5
-typedef struct Settings {
+// Legacy MinUI settings
+typedef struct SettingsV3 {
+	int version; // future proofing
+	int brightness;
+	int headphones;
+	int speaker;
+	int mute;
+	int unused[2];
+	int jack;
+} SettingsV3;
+
+// First NextUI settings format
+typedef struct SettingsV4 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature; // 0-20
+	int headphones;
+	int speaker;
+	int mute;
+	int unused[2];
+	int jack; 
+} SettingsV4;
+
+// Current NextUI settings format
+typedef struct SettingsV5 {
 	int version; // future proofing
 	int brightness;
 	int colortemperature;
@@ -27,7 +50,12 @@ typedef struct Settings {
 	int unused[2]; // for future use
 	// NOTE: doesn't really need to be persisted but still needs to be shared
 	int jack; 
-} Settings;
+} SettingsV5;
+
+// When incrementing SETTINGS_VERSION, update the Settings typedef and add
+// backwards compatibility to InitSettings!
+#define SETTINGS_VERSION 5
+typedef SettingsV5 Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = 2,
@@ -86,12 +114,43 @@ void InitSettings(void) {
 		// we created it so set initial size and populate
 		ftruncate(shm_fd, shm_size);
 		settings = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-		
-		int fd = open(SettingsPath, O_RDONLY);
-		if (fd>=0) {
-			read(fd, settings, shm_size);
-			// TODO: use settings->version for future proofing?
-			close(fd);
+
+		// peek the first int from fd, it's the version
+		int version = getInt(SettingsPath);
+		if(version > 0) {
+			int fd = open(SettingsPath, O_RDONLY);
+			if (fd>=0) {
+				if (version == SETTINGS_VERSION)
+				{
+					// changes: colortemp 0-40
+					// read the rest
+					read(fd, settings, shm_size);
+				}
+				else if(version==4) {
+					SettingsV4 old;
+					read(fd, &old, sizeof(SettingsV4));
+					// colortemp was 0-20 here
+					settings->colortemperature = old.colortemperature * 2;
+				}
+				else if(version==3) {
+					SettingsV3 old;
+					read(fd, &old, sizeof(SettingsV3));
+					// no colortemp setting yet, default value used. 
+					// copy the rest
+					settings->brightness = old.brightness;
+					settings->headphones = old.headphones;
+					settings->speaker = old.speaker;
+					settings->mute = old.mute;
+					settings->jack = old.jack;
+					settings->colortemperature = 20;
+				}
+				
+				close(fd);
+			}
+			else {
+				// load defaults
+				memcpy(settings, &DefaultSettings, shm_size);
+			}
 		}
 		else {
 			// load defaults
