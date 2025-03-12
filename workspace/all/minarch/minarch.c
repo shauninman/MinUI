@@ -4359,6 +4359,8 @@ static void Menu_loop(void) {
 		screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	}
 	
+	system("gametimectl.elf stop_all &");
+
 	SRAM_write();
 	RTC_write();
 	PWR_warn(0);
@@ -4692,6 +4694,8 @@ static void Menu_loop(void) {
 			should_run_core = 1;
 			pthread_mutex_unlock(&core_mx);
 		}
+
+		system("gametimectl.elf resume &");
 	}
 	else if (exists(NOUI_PATH)) PWR_powerOff(); // TODO: won't work with threaded core, only check this once per launch
 	

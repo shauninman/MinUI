@@ -2,12 +2,24 @@
 #define UTILS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 int prefixMatch(char* pre, char* str);
 int suffixMatch(char* suf, char* str);
 int exactMatch(char* str1, char* str2);
 int containsString(char* haystack, char* needle);
 int hide(char* file_name);
+
+char *splitString(char *str, const char *delim);
+char *replaceString2(char *orig, char *rep, char *with);
+size_t trimString(char *out, size_t len, const char *str, bool first);
+void removeParentheses(char *str_out, const char *str_in);
+void serializeTime(char *dest_str, int nTime);
+int countChar(const char *str, char ch);
+char *removeExtension(const char *myStr);
+const char *baseName(const char *filename);
+void cleanName(char *name_out, const char *file_name);
+bool pathRelativeTo(char *path_out, const char *dir_from, const char *file_to);
 
 void getDisplayName(const char* in_name, char* out_name);
 void getEmuName(const char* in_name, char* out_name);

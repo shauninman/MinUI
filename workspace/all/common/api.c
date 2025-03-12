@@ -315,6 +315,7 @@ SDL_Surface* GFX_init(int mode) {
 	asset_rects[ASSET_SCROLL_DOWN]		= (SDL_Rect){SCALE4(97,31,24, 6)};
 	asset_rects[ASSET_WIFI]				= (SDL_Rect){SCALE4(95,39,14,10)};
 	asset_rects[ASSET_HOLE]				= (SDL_Rect){SCALE4( 1,63,20,20)};
+	asset_rects[ASSET_GAMEPAD]			= (SDL_Rect){SCALE4(92,51,18,10)};
 	
 	char asset_path[MAX_PATH];
 	sprintf(asset_path, RES_PATH "/assets@%ix.png", FIXED_SCALE);
@@ -2155,6 +2156,7 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	
 	if (PAD_justReleased(BTN_POWEROFF) || (power_pressed_at && now-power_pressed_at>=1000)) {
 		if (before_sleep) before_sleep();
+		system("gametimectl.elf stop_all");
 		PWR_powerOff();
 	}
 	
@@ -2342,6 +2344,8 @@ static void PWR_waitForWake(void) {
 }
 void PWR_sleep(void) {
 	LOG_info("Entering hybrid sleep\n");
+	
+	system("gametimectl.elf stop_all");
 
 	GFX_clear(gfx.screen);
 	PAD_reset();
@@ -2349,6 +2353,8 @@ void PWR_sleep(void) {
 	PWR_waitForWake();
 	PWR_exitSleep();
 	PAD_reset();
+
+	system("gametimectl.elf resume");
 
 	pwr.resume_tick = SDL_GetTicks();
 }

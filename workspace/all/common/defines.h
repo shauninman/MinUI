@@ -10,6 +10,7 @@
 #define COLORTEMP_MIN 	0
 #define COLORTEMP_MAX 	40
 
+#define STR_MAX 256
 #define MAX_PATH 512
 
 #define ROMS_PATH SDCARD_PATH "/Roms"

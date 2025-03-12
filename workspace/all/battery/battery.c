@@ -584,7 +584,7 @@ void initLayout()
     graph.layout.graph_display_start_y = SCALE1(PADDING + PILL_SIZE + BUTTON_MARGIN + GRAPH_MARGIN);
 
     // x: stretch whole width inside default padding + extra margin (see above), leaving space top the right for icons.
-    // y: stretch whole height below graph_display_start_y, leaving room at the bottom for padding, button hints, stats, axis labels (TODO)
+    // y: stretch whole height below graph_display_start_y, leaving room at the bottom for padding, button hints, stats, axis labels
     graph.layout.graph_display_size_x = hw - SCALE1(PADDING * 2 + BUTTON_MARGIN * 2 + AXIS_MARGIN + AXIS_WIDTH);
     graph.layout.graph_display_size_y = hh - SCALE1(PADDING * 2 + PILL_SIZE * 2 + BUTTON_MARGIN * 2 + GRAPH_MARGIN * 2 + STATS_MARGIN * 2 + STATS_HEIGHT);
 
@@ -643,8 +643,6 @@ int main(int argc, char *argv[])
     screen = GFX_init(MODE_MAIN);
     PAD_init();
     PWR_init();
-    // TODO: remove. Just a crutch to keep it from sleeping for validation!
-    PWR_disableAutosleep();
 
     signal(SIGINT, sigHandler);
     signal(SIGTERM, sigHandler);

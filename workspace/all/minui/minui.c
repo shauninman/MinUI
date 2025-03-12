@@ -1081,6 +1081,10 @@ static int autoResume(void) {
 	if (!exists(emu_path)) return 0;
 	
 	// putFile(LAST_PATH, FAUX_RECENT_PATH); // saveLast() will crash here because top is NULL
+
+	char act[256];
+	sprintf(act, "gametimectl.elf start '%s'", escapeSingleQuotes(sd_path));
+	system(act);
 	
 	char cmd[256];
 	sprintf(cmd, "'%s' '%s'", escapeSingleQuotes(emu_path), escapeSingleQuotes(sd_path));
@@ -1156,7 +1160,11 @@ static void openRom(char* path, char* last) {
 	// so we need to save the path before we call that
 	addRecent(recent_path, recent_alias); // yiiikes
 	saveLast(last==NULL ? sd_path : last);
-	
+
+	char act[256];
+	sprintf(act, "gametimectl.elf start '%s'", escapeSingleQuotes(sd_path));
+	system(act);
+
 	char cmd[256];
 	sprintf(cmd, "'%s' '%s'", escapeSingleQuotes(emu_path), escapeSingleQuotes(sd_path));
 	queueNext(cmd);
@@ -1413,6 +1421,9 @@ int main (int argc, char *argv[]) {
 		unlink(GAME_SWITCHER_PERSIST_PATH);
 		// todo: map recent slot to last used game
 	}
+
+	// make sure we have no running games logged as active anymore (we might be launching back into the UI here)
+	system("gametimectl.elf stop_all");
 	
 	// now that (most of) the heavy lifting is done, take a load off
 	// PWR_setCPUSpeed(CPU_SPEED_MENU);

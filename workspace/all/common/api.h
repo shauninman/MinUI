@@ -73,6 +73,10 @@ extern uint32_t RGB_DARK_GRAY;
 extern uint32_t THEME_COLOR1;
 extern uint32_t THEME_COLOR2;
 extern uint32_t THEME_COLOR3;
+extern uint32_t THEME_COLOR1_255;
+extern uint32_t THEME_COLOR2_255;
+extern uint32_t THEME_COLOR3_255;
+
 extern float currentratio;
 extern int currentbufferfree;
 extern int currentframecount;
@@ -117,6 +121,8 @@ enum {
 	ASSET_SCROLL_DOWN,
 	
 	ASSET_WIFI,
+
+	ASSET_GAMEPAD,
 	
 	ASSET_COUNT,
 };
@@ -362,7 +368,7 @@ int PWR_getBattery(void);
 void LEDS_initLeds();
 void LEDS_updateLeds();
 void LEDS_SaveSettings();
-void LEDS_setEffect();
+void LEDS_setEffect(int);
 void LEDS_setColor(uint32_t color);
 void LED_setColor(uint32_t color,int ledindex);
 void LEDS_setIndicator(int effect,uint32_t color, int cycles);
