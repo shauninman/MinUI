@@ -160,13 +160,15 @@ SDL_Surface *loadRomImage(char *image_path)
         return NULL;
 
     SDL_Surface *img = IMG_Load(image_path);
-    SDL_Surface* optimized = (img->format->format == SDL_PIXELFORMAT_RGBA32) ? img : SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_RGBA32, 0);
-						
-    if (optimized) {
-        if (img) SDL_FreeSurface(img); 
-        img = optimized;
+    if(!img)
+        return NULL;
 
+    if(img->format->format != SDL_PIXELFORMAT_RGBA32) {
+        SDL_Surface *optimized = SDL_ConvertSurfaceFormat(img, SDL_PIXELFORMAT_RGBA32, 0);
+        SDL_FreeSurface(img); 
+        img = optimized;
     }
+    
     double sw = (double)SCALE1(IMG_MAX_WIDTH) / img->w;
     double sh = (double)SCALE1(IMG_MAX_HEIGHT) / img->h;
     double s = MIN(sw, sh);
