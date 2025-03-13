@@ -1161,11 +1161,9 @@ static void openRom(char* path, char* last) {
 	// so we need to save the path before we call that
 	addRecent(recent_path, recent_alias); // yiiikes
 	saveLast(last==NULL ? sd_path : last);
-	LOG_info("sd path 1 %s\n",sd_path);
 	char act[256];
 	sprintf(act, "gametimectl.elf start '%s'", escapeSingleQuotes(sd_path));
 	system(act);
-	LOG_info("sd path 2 %s\n",sd_path);
 	char cmd[256];
 	// dont escape sd_path again because it was already escaped for gametimectl and function modifies input str aswell
 	sprintf(cmd, "'%s' '%s'", escapeSingleQuotes(emu_path), sd_path);
