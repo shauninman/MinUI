@@ -213,6 +213,18 @@ const char *baseName(const char *filename)
     char *p = strrchr(filename, '/');
     return p ? p + 1 : (char *)filename;
 }
+void folderPath(const char *path, char *result) {
+    char pathCopy[256];  
+    strcpy(pathCopy, path);
+
+    char *lastSlash = strrchr(pathCopy, '/');  // Find the last slash
+    if (lastSlash != NULL) {
+        *lastSlash = '\0';  // Cut off the filename
+        strcpy(result, pathCopy);  // Copy the remaining path
+    } else {
+        strcpy(result, "");  // No folder found
+    }
+}
 void cleanName(char *name_out, const char *file_name)
 {
     char *name_without_ext = removeExtension(file_name);

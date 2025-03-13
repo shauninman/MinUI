@@ -69,11 +69,18 @@ void get_rom_image_path(char *rom_file, char *out_image_path)
     if (suffixMatch(rom_file, ".p8") || suffixMatch(rom_file, ".png")) {
         snprintf(out_image_path, STR_MAX - 1, ROMS_PATH "/%s", rom_file);
     }
-
+    
     char *clean_rom_name = removeExtension(baseName(rom_file));
-    char *rom_folder = strtok(rom_file, "/");
+    // this assumes all media resides in a top-level .media folder
+    //char *rom_folder = strtok(rom_file, "/");
+    //snprintf(out_image_path, STR_MAX - 1, ROMS_PATH "/%s/.media/%s.png", rom_folder, clean_rom_name);
+    // this assumes that roms in subfolders have corresponding game art in
+    // a .media folder in the respective subfolder
+    char rom_folder_path[MAX_PATH];
+    folderPath(rom_file, rom_folder_path);
 
-    snprintf(out_image_path, STR_MAX - 1, ROMS_PATH "/%s/.media/%s.png", rom_folder, clean_rom_name);
+    snprintf(out_image_path, STR_MAX - 1, ROMS_PATH "/%s/.media/%s.png", rom_folder_path, clean_rom_name);
+    printf("out_image_path: %s\n", out_image_path);
     free(clean_rom_name);
 }
 
