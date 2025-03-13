@@ -18,6 +18,7 @@ void serializeTime(char *dest_str, int nTime);
 int countChar(const char *str, char ch);
 char *removeExtension(const char *myStr);
 const char *baseName(const char *filename);
+void folderPath(const char *filePath, char *folder_path);
 void cleanName(char *name_out, const char *file_name);
 bool pathRelativeTo(char *path_out, const char *dir_from, const char *file_to);
 
