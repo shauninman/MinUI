@@ -18,8 +18,137 @@
 
 #include "scaler.h"
 
-void InitSettings(void){}
-void QuitSettings(void){}
+
+///////////////////////////////////////
+
+// Legacy MinUI settings
+typedef struct SettingsV3 {
+	int version; // future proofing
+	int brightness;
+	int headphones;
+	int speaker;
+	int mute;
+	int unused[2];
+	int jack;
+} SettingsV3;
+
+// First NextUI settings format
+typedef struct SettingsV4 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature; // 0-20
+	int headphones;
+	int speaker;
+	int mute;
+	int unused[2];
+	int jack; 
+} SettingsV4;
+
+// Current NextUI settings format
+typedef struct SettingsV5 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV5;
+
+// When incrementing SETTINGS_VERSION, update the Settings typedef and add
+// backwards compatibility to InitSettings!
+#define SETTINGS_VERSION 5
+typedef SettingsV5 Settings;
+static Settings DefaultSettings = {
+	.version = SETTINGS_VERSION,
+	.brightness = 2,
+	.colortemperature = 20,
+	.headphones = 4,
+	.speaker = 8,
+	.mute = 0,
+	.jack = 0,
+};
+static Settings* msettings;
+
+static char SettingsPath[256];
+
+///////////////////////////////////////
+
+int peekVersion(const char *filename) {
+	int version = 0;
+	FILE *file = fopen(filename, "r");
+	if (file) {
+		fread(&version, sizeof(int), 1, file);
+		fclose(file);
+	}
+	return version;
+}
+
+void InitSettings(void){
+	// We are not really using them, but we should be able to debug them
+	sprintf(SettingsPath, "%s/msettings.bin", SDCARD_PATH "/.userdata");
+	msettings = malloc(sizeof(Settings));
+	
+	int version = peekVersion(SettingsPath);
+	if(version > 0) {
+		// fopen file pointer
+		int fd = open(SettingsPath, O_RDONLY);
+		if(fd) {
+			if (version == SETTINGS_VERSION)
+			{
+				printf("Found settings v5.\n");
+				// changes: colortemp 0-40
+				// read the rest
+				read(fd, msettings, sizeof(SettingsV5));
+			}
+			else if(version==4) {
+				printf("Found settings v4.\n");
+				SettingsV4 old;
+				// read old settings from fd
+				read(fd, &old, sizeof(SettingsV4));
+				// colortemp was 0-20 here
+				msettings->colortemperature = old.colortemperature * 2;
+			}
+			else if(version==3) {
+				printf("Found settings v3.\n");
+				SettingsV3 old;
+				read(fd, &old, sizeof(SettingsV3));
+				// no colortemp setting yet, default value used. 
+				// copy the rest
+				msettings->brightness = old.brightness;
+				msettings->headphones = old.headphones;
+				msettings->speaker = old.speaker;
+				msettings->mute = old.mute;
+				msettings->jack = old.jack;
+				msettings->colortemperature = 20;
+			}
+			else {
+				printf("Found unsupported settings version: %i.\n", version);
+				// load defaults
+				memcpy(msettings, &DefaultSettings, sizeof(Settings));
+			}
+
+			close(fd);
+		}
+		else {
+			printf("Unable to read settings, using defaults\n");
+			// load defaults
+			memcpy(msettings, &DefaultSettings, sizeof(Settings));
+		}
+	}
+	else {
+		printf("No settings found, using defaults\n");
+		// load defaults
+		memcpy(msettings, &DefaultSettings, sizeof(Settings));
+	}
+}
+void QuitSettings(void){
+	// dealloc settings
+	free(msettings);
+	msettings = NULL;
+}
 
 int GetBrightness(void) { return 0; }
 int GetColortemp(void) { return 0; }

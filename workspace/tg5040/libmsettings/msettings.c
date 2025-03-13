@@ -94,6 +94,16 @@ int exactMatch(char* str1, char* str2) {
 	return (strncmp(str1,str2,len1)==0);
 }
 
+int peekVersion(const char *filename) {
+	int version = 0;
+	FILE *file = fopen(filename, "r");
+	if (file) {
+		fread(&version, sizeof(int), 1, file);
+		fclose(file);
+	}
+	return version;
+}
+
 static int is_brick = 0;
 
 void InitSettings(void) {	
@@ -116,7 +126,7 @@ void InitSettings(void) {
 		settings = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
 		// peek the first int from fd, it's the version
-		int version = getInt(SettingsPath);
+		int version = peekVersion(SettingsPath);
 		if(version > 0) {
 			int fd = open(SettingsPath, O_RDONLY);
 			if (fd>=0) {
