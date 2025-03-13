@@ -80,7 +80,7 @@ void get_rom_image_path(char *rom_file, char *out_image_path)
     folderPath(rom_file, rom_folder_path);
 
     snprintf(out_image_path, STR_MAX - 1, ROMS_PATH "/%s/.media/%s.png", rom_folder_path, clean_rom_name);
-    printf("out_image_path: %s\n", out_image_path);
+    //LOG_debug("out_image_path: %s\n", out_image_path);
     free(clean_rom_name);
 }
 
