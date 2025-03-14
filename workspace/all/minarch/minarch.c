@@ -4358,8 +4358,10 @@ static void Menu_loop(void) {
 	if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
 		screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
 	}
-	
-	system("gametimectl.elf stop_all &");
+
+	char act[PATH_MAX];
+	sprintf(act, "gametimectl.elf stop '%s' &", replaceString2(game.path, "'", "'\\''"));
+	system(act);
 
 	SRAM_write();
 	RTC_write();
@@ -4695,7 +4697,9 @@ static void Menu_loop(void) {
 			pthread_mutex_unlock(&core_mx);
 		}
 
-		system("gametimectl.elf resume &");
+		char act[PATH_MAX];
+		sprintf(act, "gametimectl.elf start '%s' &", replaceString2(game.path, "'", "'\\''"));
+		system(act);
 	}
 	else if (exists(NOUI_PATH)) PWR_powerOff(); // TODO: won't work with threaded core, only check this once per launch
 	
