@@ -561,6 +561,14 @@ int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int ma
 	
 	return text_width;
 }
+int GFX_getTextHeight(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding) {
+	int text_height;
+	strcpy(out_name, in_name);
+	TTF_SizeUTF8(font, out_name, NULL, &text_height);
+	text_height += padding;
+	
+	return text_height;
+}
 int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding) {
 	int text_width;
 	strcpy(out_name, in_name);
@@ -570,8 +578,14 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 	return text_width;
 }
 
+// scrolling text stuff
+static int text_offset = 0;
+
+void GFX_resetScrollText() {
+	text_offset = 0;
+}
 void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int padding, SDL_Color color, float transparency) {
-    static int text_offset = 0;
+    
     static int frame_counter = 0;
     int text_width, text_height;
 
@@ -596,7 +610,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
         return;
     }
 
-    if (text_width + padding * 2 < max_width) {
+    if (text_width < max_width) {
         text_offset = 0;  
     }
 
@@ -620,7 +634,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     if (text_width + padding * 2 > max_width) {
         frame_counter++;
         if (frame_counter >= 0) {  
-            text_offset += 4;  
+            text_offset += 2;  
             if (text_offset >= full_text_width) {
                 text_offset = 0; 
             }
@@ -1647,7 +1661,8 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
 	currentreqfps = frame_rate;
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
-	
+
+		
 #if defined(USE_SDL2)
 	LOG_info("Available audio drivers:\n");
 	for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
@@ -2316,7 +2331,7 @@ static void PWR_waitForWake(void) {
 			break;
 		}
 		SDL_Delay(200);
-		if (SDL_GetTicks()-sleep_ticks>=120000) { // increased to two minutes
+		if (SDL_GetTicks()-sleep_ticks>=30000) { // increased to two minutes
 			if (pwr.is_charging) {
 				sleep_ticks += 60000; // check again in a minute
 				continue;
