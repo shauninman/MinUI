@@ -1900,19 +1900,16 @@ int main (int argc, char *argv[]) {
 						SDL_Rect text_rect = { 0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h };
 						SDL_Rect dest_rect = { SCALE1(PADDING + BUTTON_PADDING), SCALE1(PADDING + (j * PILL_SIZE) + 4) };
 				
-						SDL_BlitSurface(text, &text_rect, screen, &dest_rect);
-						SDL_FreeSurface(text); // Free after use
-
 						if (j == selected_row) {
 							GFX_resetScrollText();
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(PADDING), highlightY, max_width, SCALE1(PILL_SIZE)
 							});
-							text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
-							if(highlightY == targetY) {
-								SDL_BlitSurface(text, &text_rect, screen, &dest_rect);
-								SDL_FreeSurface(text); // Free after use
+							if( highlightY == targetY || selection_offset > 0.5) {
+								text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
 							}
+							
+							
 							// GFX_scrollTextSurface(font.large, entry_unique ? entry_unique : entry_name, &text2, available_width, SCALE1(BUTTON_PADDING), COLOR_BLACK, (highlightY != targetY) ? selection_offset : 1);
 						} 
 						else if (entry_unique) { // Only render if a unique name exists
@@ -1920,6 +1917,8 @@ int main (int argc, char *argv[]) {
 							GFX_truncateText(font.large, entry_unique, unique_name, available_width, SCALE1(BUTTON_PADDING * 2));
 							text = TTF_RenderUTF8_Blended(font.large, unique_name, COLOR_DARK_TEXT);
 						}
+						SDL_BlitSurface(text, &text_rect, screen, &dest_rect);
+						SDL_FreeSurface(text); // Free after use
 
 					
 					}
