@@ -1981,6 +1981,7 @@ int main (int argc, char *argv[]) {
 			GFX_flip(screen);
 			dirty = 0;
 		} else {
+			if(!show_switcher && !show_version) {
 			// nondirty
 			int ox = (int)(screen->w * 0.5);
 			Entry* entry = top->entries->items[top->selected];
@@ -2007,6 +2008,9 @@ int main (int argc, char *argv[]) {
 			SDL_BlitSurface(text2, NULL, screen, &dest_rect);
 			SDL_FreeSurface(text2);
 			GFX_flip(screen);
+			} else {
+				GFX_sync();
+			}
 			dirty = 0;
 		}
 		// handle HDMI change
