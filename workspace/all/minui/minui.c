@@ -1989,7 +1989,7 @@ int main (int argc, char *argv[]) {
 			char* entry_name = entry->name;
 			char* entry_unique = entry->unique;
 			trimSortingMeta(&entry_name);
-			int available_width = (had_thumb ? ox : screen->w);
+			int available_width = (had_thumb ? ox : screen->w - SCALE1(BUTTON_MARGIN));
 			if (top->selected == top->start && !(had_thumb)) available_width -= ow;
 			char display_name[256];
 			
