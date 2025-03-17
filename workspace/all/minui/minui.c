@@ -1677,9 +1677,9 @@ int main (int argc, char *argv[]) {
 					if (exists(thumbpath)) {
 						SDL_Surface* newThumb = IMG_Load(thumbpath);
 						if (newThumb) {
-							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGBA32) 
+							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGB888) 
 													? newThumb 
-													: SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGBA32, 0);
+													: SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGB888, 0);
 							
 							if (newThumb != optimized) {
 								SDL_FreeSurface(newThumb);
@@ -1731,8 +1731,8 @@ int main (int argc, char *argv[]) {
 						new_w,
 						new_h
 					};
-					SDL_Surface *tempsur = SDL_CreateRGBSurface(0, scale_rect.w, scale_rect.h, 32, 
-						0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+					SDL_Surface *tempsur = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 32, SDL_PIXELFORMAT_RGB888);
+
 					SDL_BlitScaled(thumbbmp, NULL, tempsur, &scale_rect);
 					GFX_ApplyRounderCorners(tempsur, 20);
 					SDL_BlitScaled(tempsur, NULL, screen, &dest_rect);
