@@ -386,9 +386,27 @@ static void Game_changeDisc(char* path) {
 
 ///////////////////////////////////////
 
-static void SRAM_getPath(char* filename) {
-	sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
+static void formatSRMPath(char* work_name, char* filename) {
+	char* tmp = strrchr(work_name, '.');
+	if (tmp != NULL && strlen(tmp) > 2 && strlen(tmp) <= 5) {
+		tmp[0] = '\0';
+	}
+	sprintf(filename, "%s/%s.srm", core.saves_dir, work_name);
 }
+
+static void SRAM_getPath(char* filename) {
+	char work_name[MAX_PATH];
+
+	if (exists(SHARED_USERDATA_PATH "/use_srm_saves")) {
+		strcpy(work_name, game.name);
+		formatSRMPath(work_name, filename);
+	} else {
+		sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
+	}
+
+	LOG_info("SRAM_getPath %s\n", filename);
+}
+
 static void SRAM_read(void) {
 	size_t sram_size = core.get_memory_size(RETRO_MEMORY_SAVE_RAM);
 	if (!sram_size) return;
