@@ -588,10 +588,8 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     
     static int frame_counter = 0;
     int text_width, text_height;
-
+	
     TTF_SizeUTF8(font, in_name, &text_width, &text_height);
-
-    int full_text_width = text_width + padding - 15; 
 
     // Ensure transparency is within 0 to 1 range
     if (transparency < 0.0f) transparency = 0.0f;
@@ -610,11 +608,13 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
         return;
     }
 
-    if (text_width < max_width) {
+    if (text_width <= max_width + padding) {
         text_offset = 0;  
     }
-
-    SDL_Rect src_rect = { text_offset, 0, max_width, full_text_surface->h };
+	char adj_in_name[1024]; 
+	snprintf(adj_in_name, sizeof(adj_in_name), "%s  ", in_name); 
+    TTF_SizeUTF8(font, adj_in_name, &text_width, &text_height);
+    SDL_Rect src_rect = { text_offset, 0, text_width, full_text_surface->h };
     SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, full_text_surface->h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
     
     // Enable alpha blending on the new surface
@@ -631,11 +631,11 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     }
     *out_surface = scrolling_surface;
 
-    if (text_width + padding * 2 > max_width) {
+    if (text_width >= max_width) {
         frame_counter++;
         if (frame_counter >= 0) {  
             text_offset += 2;  
-            if (text_offset >= full_text_width) {
+            if (text_offset >= text_width) {
                 text_offset = 0; 
             }
             frame_counter = 0;
