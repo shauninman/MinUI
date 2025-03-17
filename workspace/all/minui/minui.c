@@ -1735,7 +1735,7 @@ int main (int argc, char *argv[]) {
 
 					SDL_BlitScaled(thumbbmp, NULL, tempsur, &scale_rect);
 					GFX_ApplyRounderCorners(tempsur, 20);
-					SDL_BlitScaled(tempsur, NULL, screen, &dest_rect);
+					SDL_BlitSurface(tempsur, NULL, screen, &dest_rect);
 					SDL_FreeSurface(tempsur);
 				}
 			}
