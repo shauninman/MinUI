@@ -1696,11 +1696,34 @@ int main (int argc, char *argv[]) {
 				}
 			
 				if (had_thumb) { 
+					int img_w = thumbbmp->w;
+					int img_h = thumbbmp->h;
+					double aspect_ratio = (double)img_h / img_w; 
+
+					int max_w = (int)(screen->w * 0.45); 
+					int max_h = (int)(screen->h * 0.6);  
+
+					int new_w = max_w;
+					int new_h = (int)(new_w * aspect_ratio); 
+
+
+					if (new_h > max_h) {
+						new_h = max_h;
+						new_w = (int)(new_h / aspect_ratio);
+					}
+
+					int min_x = (int)(screen->w * 0.50);
+					int max_x = (int)(screen->w * 1.00);
+					int center_x = min_x + ((max_x - min_x - new_w) / 2);
+
+					int target_y = (int)(screen->h * 0.45);
+					int center_y = target_y - (new_h / 2);
+
 					SDL_Rect dest_rect = {
-						(int)(screen->w * 0.52), 
-						SCALE1((3 * PADDING) + PILL_SIZE), 
-						(int)(screen->w * 0.48),
-						(int)(screen->h * 0.5)
+						center_x,
+						center_y,
+						new_w,
+						new_h
 					};
 					GFX_ApplyRounderCorners(thumbbmp, 20);
 					SDL_BlitScaled(thumbbmp, NULL, screen, &dest_rect);
@@ -1883,7 +1906,7 @@ int main (int argc, char *argv[]) {
 						Entry* entry = top->entries->items[i];
 						char* entry_name = entry->name;
 						char* entry_unique = entry->unique;
-						int available_width = (had_thumb ? ox : screen->w) - SCALE1(PADDING * 2);
+						int available_width = (had_thumb ? ox : screen->w - SCALE1(BUTTON_PADDING)) - SCALE1(PADDING * 2);
 						if (i == top->start && !(had_thumb)) available_width -= ow;
 						SDL_Color text_color = COLOR_WHITE;
 						
@@ -1899,7 +1922,7 @@ int main (int argc, char *argv[]) {
 
 						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 				
-						SDL_Rect text_rect = { 0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h };
+						SDL_Rect text_rect = { 0, 0, max_width - SCALE1(BUTTON_PADDING), text->h };
 						SDL_Rect dest_rect = { SCALE1(PADDING + BUTTON_PADDING), SCALE1(PADDING + (j * PILL_SIZE) + 4) };
 						
 						
