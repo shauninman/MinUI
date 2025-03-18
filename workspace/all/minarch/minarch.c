@@ -3967,7 +3967,7 @@ static int OptionControls_openMenu(MenuList* list, int i) {
 			ButtonMapping* button = &config.controls[j];
 			if (button->ignore) continue;
 			
-			LOG_info("\t%s (%i:%i)\n", button->name, button->local, button->retro);
+			//LOG_info("\t%s (%i:%i)\n", button->name, button->local, button->retro);
 			
 			MenuItem* item = &OptionControls_menu.items[k++];
 			item->id = j;

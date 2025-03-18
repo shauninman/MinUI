@@ -139,13 +139,7 @@ extern int is_brick;
 // this should be set to the devices native screen refresh rate
 #define SCREEN_FPS 60.235
 
-
-#define LED_PATH "/sys/class/led_anim"
 #define MAX_LIGHTS 4
-
-
-
-
 
 ///////////////////////////////
 
