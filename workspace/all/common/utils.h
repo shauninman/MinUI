@@ -40,4 +40,6 @@ int getInt(char* path);
 
 uint64_t getMicroseconds(void);
 
+int clamp(int x, int lower, int upper);
+
 #endif
