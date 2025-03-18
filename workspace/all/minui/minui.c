@@ -1677,9 +1677,7 @@ int main (int argc, char *argv[]) {
 					if (exists(thumbpath)) {
 						SDL_Surface* newThumb = IMG_Load(thumbpath);
 						if (newThumb) {
-							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGB888) 
-													? newThumb 
-													: SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGB888, 0);
+							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGB888) ? newThumb : SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGB888, 0);
 							
 							if (newThumb != optimized) {
 								SDL_FreeSurface(newThumb);
@@ -1687,58 +1685,53 @@ int main (int argc, char *argv[]) {
 			
 							if (optimized) {
 								if (thumbbmp) SDL_FreeSurface(thumbbmp); 
-								thumbbmp = optimized;
+
+								int img_w = optimized->w;
+								int img_h = optimized->h;
+								double aspect_ratio = (double)img_h / img_w; 
+			
+								int max_w = (int)(screen->w * 0.45); 
+								int max_h = (int)(screen->h * 0.6);  
+			
+								int new_w = max_w;
+								int new_h = (int)(new_w * aspect_ratio); 
+			
+			
+								if (new_h > max_h) {
+									new_h = max_h;
+									new_w = (int)(new_h / aspect_ratio);
+								}
+			
+								SDL_Rect scale_rect = {
+									0,
+									0,
+									new_w,
+									new_h
+								};
+
+								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 32, SDL_PIXELFORMAT_RGB888);
+								SDL_BlitScaled(optimized, NULL, thumbbmp, &scale_rect);
+								GFX_ApplyRounderCorners(thumbbmp, 20);
+								SDL_FreeSurface(optimized);
 								had_thumb = 1;
-								
 							}
 						}
 					}
 				}
 			
 				if (had_thumb) { 
-					int img_w = thumbbmp->w;
-					int img_h = thumbbmp->h;
-					double aspect_ratio = (double)img_h / img_w; 
-
-					int max_w = (int)(screen->w * 0.45); 
-					int max_h = (int)(screen->h * 0.6);  
-
-					int new_w = max_w;
-					int new_h = (int)(new_w * aspect_ratio); 
-
-
-					if (new_h > max_h) {
-						new_h = max_h;
-						new_w = (int)(new_h / aspect_ratio);
-					}
-
-					int min_x = (int)(screen->w * 0.50);
-					int max_x = (int)(screen->w * 1.00);
-					int center_x = min_x + ((max_x - min_x - new_w) / 2);
-
 					int target_y = (int)(screen->h * 0.48);
-					int center_y = target_y - (new_h / 2);
-
-					SDL_Rect scale_rect = {
-						0,
-						0,
-						new_w,
-						new_h
-					};
+					int center_y = target_y - (thumbbmp->h / 2);
 					SDL_Rect dest_rect = {
-						screen->w-(new_w + SCALE1(BUTTON_MARGIN*3)),
+						screen->w-(thumbbmp->w + SCALE1(BUTTON_MARGIN*3)),
 						center_y,
-						new_w,
-						new_h
+						thumbbmp->w,
+						thumbbmp->h
 					};
+				
+					ox = (int)(screen->w - thumbbmp->w) - SCALE1(BUTTON_MARGIN*5);
+					SDL_BlitSurface(thumbbmp, NULL, screen, &dest_rect);
 					
-					SDL_Surface *tempsur = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 32, SDL_PIXELFORMAT_RGB888);
-
-					SDL_BlitScaled(thumbbmp, NULL, tempsur, &scale_rect);
-					GFX_ApplyRounderCorners(tempsur, 20);
-					ox = (int)(screen->w - tempsur->w) - SCALE1(BUTTON_MARGIN*5);
-					SDL_BlitSurface(tempsur, NULL, screen, &dest_rect);
-					SDL_FreeSurface(tempsur);
 					
 				}
 			}
