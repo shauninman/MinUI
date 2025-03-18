@@ -5,6 +5,7 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Game art/media support
+- Custom bootlogos contributed by [@Solvalou](https://github.com/Solvalou)
 - Color and font settings to customize the NextUI interface
 - Menu animations
 - LED control, change colors, effects, brightness
