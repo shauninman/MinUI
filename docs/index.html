@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextUI - Custom Firmware</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>NextUI (formerly MinUI Next)</h1>
+    <p>A CFW based on MinUI with a rebuilt emulation engine and tons of added features for the TrimUI Brick and Smart Pro. For other devices, we recommend checking out <a href="https://github.com/shauninman/MinUI">MinUI</a>.</p>
+    
+    <h2>Features:</h2>
+    <ul>
+        <li>Fixed screen tearing and sync stutter by rebuilding the emulator engine core</li>
+        <li>Game switcher menu (Onion OS style) by <a href="https://github.com/frysee">@frysee</a></li>
+        <li>High audio quality with <a href="https://github.com/libsndfile/libsamplerate">libsamplerate</a></li>
+        <li>Much lower latency (average 20ms, 1 frame of 60fps)</li>
+        <li>Game art/media support</li>
+        <li>Game time tracker</li>
+        <li>Custom boot logos by <a href="https://bsky.app/profile/solvalouart.bsky.social">@SolvalouArt</a></li>
+        <li>Color and font customization</li>
+        <li>Menu animations</li>
+        <li>LED control and ambient LED mode</li>
+        <li>Screen color temperature and brightness controls</li>
+        <li>Deep Sleep mode with instant ON and overheating fix</li>
+        <li>Battery Monitoring with history graph</li>
+        <li>Scrolling animated titles for long game names</li>
+        <li>Updated and optimized build emulation cores</li>
+        <li>FBNeo Arcade screen rotation</li>
+        <li>CJK font support for JP/CN rom names</li>
+        <li>Many smaller fixes and optimizations</li>
+    </ul>
+    
+    <h2>Current Supported Devices:</h2>
+    <ul>
+        <li>Trimui Brick | MinUI-20241028-0</li>
+        <li>Trimui Smart Pro | MinUI-20231111b-2</li>
+    </ul>
+    
+    <h2>Future Plans Roadmap:</h2>
+    <ul>
+        <li>PAL ROM mode</li>
+        <li>Bluetooth and WiFi integration</li>
+        <li>Configurable FN and switch buttons</li>
+        <li>More emulator compatibility testing and improvements</li>
+        <li>RetroAchievements</li>
+        <li>Shaders</li>
+        <li>More features as development progresses</li>
+        <li>Porting to additional devices</li>
+        <li>Code cleanup and legacy removal</li>
+    </ul>
+    
+    <h2>Super Awesome Contributions - Thank You!</h2>
+    <p>Special thanks to <a href="https://github.com/frysee">@frysee</a> for the amazing game switcher PR!</p>
+    
+    <h2>Installing:</h2>
+    <p>Copy <strong>MinUI.zip</strong> (do not unzip) and <strong>trimui</strong> to the root of your SD Card. Boot up your Trim UI device, and it will install/update automatically.</p>
+    
+    <h2>How to Use:</h2>
+    <h3>While in Menu:</h3>
+    <ul>
+        <li>Hold Start + Volume Up/Down to adjust brightness</li>
+        <li>Hold Select + Volume Up/Down to adjust color temperature</li>
+        <li>Press Select to open the game switcher menu</li>
+    </ul>
+    <h3>While in Game:</h3>
+    <ul>
+        <li>Press Menu to open in-game options</li>
+        <li>Hold Menu + Select to open the game switcher</li>
+    </ul>
+    
+    <h3>Deep Sleep Mode:</h3>
+    <p>First, the device enters light sleep (screen off, LEDs pulse 5 times). After 2 minutes, it enters full deep sleep (LEDs turn off).</p>
+    
+    <h2>Discord:</h2>
+    <p>Join us: <a href="https://discord.gg/HKd7wqZk3h">https://discord.gg/HKd7wqZk3h</a></p>
+    
+    <h2>Watch This Awesome Review by Play Retro:</h2>
+    <p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/m_7ObMHAFK4?si=xnW8z7RJgMDFTxq_" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </p>
+    
+    <h2>Media:</h2>
+    <img src="https://github.com/user-attachments/assets/4c71dc26-d071-48cf-836e-83bd9a248a32" alt="Game Switcher">
+    <img src="https://github.com/user-attachments/assets/5f8a6f85-7bb7-41b0-95ab-468229a7f443" alt="Battery Monitoring">
+    <img src="https://github.com/user-attachments/assets/9e7c14b3-757d-4e01-b381-71897e6dc4e2" alt="Battery Prediction">
+    <img src="https://github.com/user-attachments/assets/73fbed30-7aaa-420b-bb53-74dd50160434" alt="In-Game Settings">
+    <img src="https://github.com/user-attachments/assets/ed0d2552-04c1-40a3-9eb2-14406e83b09a" alt="Game List">
+    <img src="https://github.com/user-attachments/assets/a7c99784-fa48-4d3e-a64b-28e7149d929a" alt="Game Overlay">
+</body>
+</html>
