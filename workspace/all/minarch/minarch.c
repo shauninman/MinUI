@@ -4590,6 +4590,8 @@ static void Menu_loop(void) {
 			SDL_Color text_color = COLOR_WHITE;
 			
 			if (i==selected) {
+				text_color = COLOR_BLACK;
+
 				// disc change
 				if (menu.total_discs>1 && i==ITEM_CONT) {				
 					GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
@@ -4598,7 +4600,7 @@ static void Menu_loop(void) {
 						screen->w - SCALE1(PADDING * 2),
 						SCALE1(PILL_SIZE)
 					});
-					text = TTF_RenderUTF8_Blended(font.large, disc_name, COLOR_WHITE);
+					text = TTF_RenderUTF8_Blended(font.large, disc_name, text_color);
 					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
 						screen->w - SCALE1(PADDING + BUTTON_PADDING) - text->w,
 						SCALE1(oy + PADDING + 4)
@@ -4616,7 +4618,6 @@ static void Menu_loop(void) {
 					ow,
 					SCALE1(PILL_SIZE)
 				});
-				text_color = COLOR_BLACK;
 			}
 			else {
 				// shadow
