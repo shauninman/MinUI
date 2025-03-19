@@ -263,6 +263,7 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode);
 
 void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius);
+void GFX_ApplyRounderCorners16(SDL_Surface* surface, int radius);
 
 ///////////////////////////////
 

@@ -1443,9 +1443,21 @@ int main (int argc, char *argv[]) {
 	SDL_Surface* thumbbmp;
 	int ox;
 	int oy;
+	SDL_Surface* bgbmp = IMG_Load("/mnt/SDCARD/bg.png");
+	SDL_Surface* convertedbg = SDL_ConvertSurfaceFormat(bgbmp, SDL_PIXELFORMAT_RGB565, 0);
+	if (convertedbg) {
+		SDL_FreeSurface(bgbmp); 
+		SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);					
+		SDL_Rect image_rect = {0, 0, screen->w, screen->h};
+		SDL_BlitScaled(convertedbg, NULL, scaled, &image_rect);
+
+		bgbmp = scaled;
+	}
 	while (!quit) {
 		GFX_startFrame();
 		unsigned long now = SDL_GetTicks();
+		
+	
 		
 		PAD_poll();
 			
@@ -1630,7 +1642,13 @@ int main (int argc, char *argv[]) {
 		
 		if(dirty || dirtyanim) {
 			GFX_clear(screen);
-			
+			if(bgbmp) {
+				
+				SDL_Rect image_rect = {0, 0, screen->w, screen->h};
+	
+				SDL_BlitSurface(bgbmp, NULL, screen, &image_rect);
+
+			}
 			
 			
 			// simple thumbnail support a thumbnail for a file or folder named NAME.EXT needs a corresponding /.res/NAME.EXT.png 
@@ -1677,7 +1695,7 @@ int main (int argc, char *argv[]) {
 					if (exists(thumbpath)) {
 						SDL_Surface* newThumb = IMG_Load(thumbpath);
 						if (newThumb) {
-							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGB888) ? newThumb : SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGB888, 0);
+							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGB565) ? newThumb : SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGB565, 0);
 							
 							if (newThumb != optimized) {
 								SDL_FreeSurface(newThumb);
@@ -1709,9 +1727,9 @@ int main (int argc, char *argv[]) {
 									new_h
 								};
 
-								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 32, SDL_PIXELFORMAT_RGB888);
+								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 32, SDL_PIXELFORMAT_RGB565);
 								SDL_BlitScaled(optimized, NULL, thumbbmp, &scale_rect);
-								GFX_ApplyRounderCorners(thumbbmp, 20);
+								GFX_ApplyRounderCorners16(thumbbmp, 20);
 								SDL_FreeSurface(optimized);
 								had_thumb = 1;
 							}
@@ -1825,17 +1843,17 @@ int main (int argc, char *argv[]) {
 					if(has_preview) {
 						// lotta memory churn here
 						SDL_Surface* bmp = IMG_Load(preview_path);
-						SDL_Surface* raw_preview = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA32, 0);
+						SDL_Surface* raw_preview = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGB565, 0);
 						if (raw_preview) {
 							SDL_FreeSurface(bmp); 
 							bmp = raw_preview; 
 						}
 						if(bmp) {
-							SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGBA32);					
+							SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);					
 							SDL_Rect image_rect = {0, 0, screen->w, screen->h};
 							SDL_BlitScaled(bmp, NULL, scaled, &image_rect);
 							SDL_FreeSurface(bmp);
-							GFX_ApplyRounderCorners(scaled,30);
+							GFX_ApplyRounderCorners16(scaled,30);
 							SDL_BlitSurface(scaled, NULL, screen, &image_rect);
 							SDL_FreeSurface(scaled);  // Free after rendering
 						}
@@ -1956,19 +1974,14 @@ int main (int argc, char *argv[]) {
 							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
 							SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h };
 												
-							SDL_Rect text_rect = {  SCALE1(BUTTON_PADDING), SCALE1((last_selection != selected_row ? last_selection < selected_row ? (inverted_offset * PILL_SIZE):(inverted_offset * -PILL_SIZE):0) +4) };
-
-							SDL_Rect anim_rect = {  SCALE1(BUTTON_MARGIN),SCALE1(highlightY+PADDING) };
-							SDL_Surface *cool = SDL_CreateRGBSurface(SDL_SWSURFACE, max_width, SCALE1(PILL_SIZE), FIXED_DEPTH, RGBA_MASK_565);
+							SDL_Rect text_rect = {  SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(highlightY+PADDING +(last_selection != selected_row ? last_selection < selected_row ? (inverted_offset * PILL_SIZE):(inverted_offset * -PILL_SIZE):0) +4) };
+							
 							GFX_resetScrollText();
-							GFX_blitPillDark(ASSET_WHITE_PILL, cool, &(SDL_Rect){
-								0, 0, max_width, SCALE1(PILL_SIZE)
+							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+								SCALE1(BUTTON_MARGIN),SCALE1(highlightY+PADDING), max_width, SCALE1(PILL_SIZE)
 							});
 
-							SDL_BlitSurface(text, &src_text_rect, cool, &text_rect);
-							SDL_BlitSurface(cool, NULL, screen, &anim_rect);
-							
-							SDL_FreeSurface(cool);
+							SDL_BlitSurface(text, &src_text_rect, screen, &text_rect);
 							SDL_FreeSurface(text);
 						} 
 					}
@@ -2062,7 +2075,7 @@ int main (int argc, char *argv[]) {
 
 		
 	}
-	
+	if(bgbmp) 	SDL_FreeSurface(bgbmp);
 	if (version) SDL_FreeSurface(version);
 	if (preview) SDL_FreeSurface(preview);
 	if (thumbbmp) SDL_FreeSurface(thumbbmp);

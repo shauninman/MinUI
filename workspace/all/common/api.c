@@ -900,6 +900,31 @@ void GFX_freeAAScaler(void) {
 }
 
 ///////////////////////////////
+void GFX_ApplyRounderCorners16(SDL_Surface* surface, int radius) {
+    if (!surface) return;
+
+    int width = surface->w;
+    int height = surface->h;
+    SDL_PixelFormat* fmt = surface->format;
+
+    if (fmt->format != SDL_PIXELFORMAT_RGB565) {
+        SDL_Log("Unsupported pixel format: %s", SDL_GetPixelFormatName(fmt->format));
+        return;
+    }
+
+    Uint16* pixels = (Uint16*)surface->pixels;  // RGB565 uses 16-bit pixels
+    Uint16 transparent_black = 0x0000;  // RGB565 has no alpha, so use black (0)
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int dx = (x < radius) ? radius - x : (x >= width - radius) ? x - (width - radius - 1) : 0;
+            int dy = (y < radius) ? radius - y : (y >= height - radius) ? y - (height - radius - 1) : 0;
+            if (dx * dx + dy * dy > radius * radius) {
+                pixels[y * (surface->pitch / 2) + x] = transparent_black;  // Set to black (0)
+            }
+        }
+    }
+}
 
 void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius) {
 	if (!surface) return;
@@ -983,8 +1008,8 @@ void GFX_blitPillColor(int asset, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t
 	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y}, asset_color);
 	x += r;
 	if (w>0) {
-		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, UintMult(fill_color, asset_color));
-		//SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_color);
+		// SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, UintMult(fill_color, asset_color));
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_color);
 		x += w;
 	}
 	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y}, asset_color);
