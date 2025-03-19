@@ -1948,7 +1948,7 @@ int main (int argc, char *argv[]) {
 						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, entry_name, text_color);
 						SDL_Surface* text_unique = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_DARK_TEXT);
 						SDL_Rect text_rect = { 0, 0, max_width - SCALE1(BUTTON_PADDING), text->h };
-						SDL_Rect dest_rect = { SCALE1(PADDING + BUTTON_PADDING), SCALE1(PADDING + (j * PILL_SIZE))+4 };
+						SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN + BUTTON_PADDING), SCALE1(PADDING + (j * PILL_SIZE)+4) };
 						
 						
 						SDL_BlitSurface(text_unique, &text_rect, screen, &dest_rect);
@@ -1974,15 +1974,21 @@ int main (int argc, char *argv[]) {
 							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
 							SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h };
 												
-							SDL_Rect text_rect = {  SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(highlightY+PADDING +(last_selection != selected_row ? last_selection < selected_row ? (inverted_offset * PILL_SIZE):(inverted_offset * -PILL_SIZE):0) +4) };
-							
+							SDL_Rect text_rect = {  SCALE1(BUTTON_PADDING), SCALE1((last_selection != selected_row ? last_selection < selected_row ? (inverted_offset * PILL_SIZE):(inverted_offset * -PILL_SIZE):0) +4) };
+							SDL_Rect anim_rect = {  SCALE1(BUTTON_MARGIN),SCALE1(highlightY+PADDING) };
+
+							SDL_Surface *cool = SDL_CreateRGBSurfaceWithFormat(
+								SDL_SWSURFACE, max_width, SCALE1(PILL_SIZE), 32, SDL_PIXELFORMAT_RGBA8888
+							);
 							GFX_resetScrollText();
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(BUTTON_MARGIN),SCALE1(highlightY+PADDING), max_width, SCALE1(PILL_SIZE)
 							});
 
-							SDL_BlitSurface(text, &src_text_rect, screen, &text_rect);
+							SDL_BlitSurface(text, &src_text_rect, cool, &text_rect);
 							SDL_FreeSurface(text);
+							SDL_BlitSurface(cool, NULL, screen, &anim_rect);
+							SDL_FreeSurface(cool);
 						} 
 					}
 		
@@ -2039,9 +2045,9 @@ int main (int argc, char *argv[]) {
 
 			
 			SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
-			SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN) + SCALE1(BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - ((SCALE1(BUTTON_PADDING*2))),text2->h};
+			SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-4),text2->h};
 	
-			SDL_Rect dest_rect = { SCALE1(BUTTON_PADDING + BUTTON_MARGIN), SCALE1(PADDING + ((remember_selection) * PILL_SIZE) +4) };
+			SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(PADDING + ((remember_selection) * PILL_SIZE) +4) };
 			
 
 			SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text2->h };
