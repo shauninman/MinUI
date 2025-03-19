@@ -1008,8 +1008,8 @@ void GFX_blitPillColor(int asset, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t
 	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y}, asset_color);
 	x += r;
 	if (w>0) {
-		// SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, UintMult(fill_color, asset_color));
-		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_color);
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, UintMult(fill_color, asset_color));
+		// SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_color);
 		x += w;
 	}
 	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y}, asset_color);
