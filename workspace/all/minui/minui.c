@@ -1428,7 +1428,7 @@ int main (int argc, char *argv[]) {
 	
 	// now that (most of) the heavy lifting is done, take a load off
 	// PWR_setCPUSpeed(CPU_SPEED_MENU);
-	// GFX_setVsync(VSYNC_STRICT);
+	GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
 	
@@ -1638,6 +1638,7 @@ int main (int argc, char *argv[]) {
 				// can_resume = 0;
 				if (total>0) readyResume(top->entries->items[top->selected]);
 			}
+
 		}
 		
 		if(dirty || dirtyanim) {
@@ -2024,43 +2025,43 @@ int main (int argc, char *argv[]) {
 			
 			GFX_flip(screen);
 			dirty = 0;
-		} else {
+		} else  {
 			int ow = GFX_blitHardwareGroup(screen, show_setting);
 			if(!show_switcher && !show_version) {
-			// nondirty
-			
-			Entry* entry = top->entries->items[top->selected];
-			char* entry_name = entry->name;
-			char* entry_unique = entry->unique;
-			trimSortingMeta(&entry_name);
-			int available_width = (had_thumb ? ox + SCALE1(BUTTON_MARGIN) : screen->w - SCALE1(BUTTON_PADDING)) - SCALE1(PADDING * 2);
-			if (top->selected == top->start && !(had_thumb)) available_width -= ow;
-	 
-			if (entry_unique) { // Only render if a unique name exists
-				trimSortingMeta(&entry_unique);
-			} 
-			char display_name[256];
-			int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name,display_name, available_width, SCALE1(BUTTON_PADDING * 2));
-			int max_width = MIN(available_width, text_width);
-
-			
-			SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
-			SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-4),text2->h};
-	
-			SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(PADDING + ((remember_selection) * PILL_SIZE) +4) };
-			
-
-			SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text2->h };
-
-			SDL_FillRect(screen, &clear_rect, THEME_COLOR1);
-			GFX_scrollTextSurface(font.large, display_name, &text2,max_width - ((SCALE1(BUTTON_PADDING*2))),text2->h, 0, COLOR_BLACK, 1);
-			
+				// nondirty
+				GFX_delay();
+				Entry* entry = top->entries->items[top->selected];
+				char* entry_name = entry->name;
+				char* entry_unique = entry->unique;
+				trimSortingMeta(&entry_name);
+				int available_width = (had_thumb ? ox + SCALE1(BUTTON_MARGIN) : screen->w - SCALE1(BUTTON_PADDING)) - SCALE1(PADDING * 2);
+				if (top->selected == top->start && !(had_thumb)) available_width -= ow;
 		
-			SDL_BlitSurface(text2, &src_text_rect, screen, &dest_rect);
-			SDL_FreeSurface(text2);
-			GFX_flip(screen);
+				if (entry_unique) { // Only render if a unique name exists
+					trimSortingMeta(&entry_unique);
+				} 
+				char display_name[256];
+				int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name,display_name, available_width, SCALE1(BUTTON_PADDING * 2));
+				int max_width = MIN(available_width, text_width);
+
+				
+				SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
+				SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-4),text2->h};
+		
+				SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(PADDING + ((remember_selection) * PILL_SIZE) +4) };
+				
+
+				SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text2->h };
+
+				SDL_FillRect(screen, &clear_rect, THEME_COLOR1);
+				GFX_scrollTextSurface(font.large, display_name, &text2,max_width - ((SCALE1(BUTTON_PADDING*2))),text2->h, 0, COLOR_BLACK, 1);
+				
+				
+				SDL_BlitSurface(text2, &src_text_rect, screen, &dest_rect);
+				SDL_FreeSurface(text2);
+				GFX_flip(screen);
 			} else {
-				GFX_sync();
+				GFX_delay();
 			}
 			dirty = 0;
 		}

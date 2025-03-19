@@ -332,7 +332,7 @@ SDL_Surface* GFX_init(int mode) {
 	TTF_SetFontStyle(font.medium, TTF_STYLE_BOLD);
 	TTF_SetFontStyle(font.small, TTF_STYLE_BOLD);
 	TTF_SetFontStyle(font.tiny, TTF_STYLE_BOLD);
-	
+
 	return gfx.screen;
 }
 void GFX_quit(void) {
