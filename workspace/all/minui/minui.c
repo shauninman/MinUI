@@ -1937,8 +1937,6 @@ int main (int argc, char *argv[]) {
 						if (i == top->start && !(had_thumb)) available_width -= ow;
 						SDL_Color text_color = COLOR_WHITE;
 						
-
-						
 						trimSortingMeta(&entry_name);
 
 						if (entry_unique) { // Only render if a unique name exists
