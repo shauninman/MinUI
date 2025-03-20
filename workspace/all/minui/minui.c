@@ -1696,7 +1696,7 @@ int main (int argc, char *argv[]) {
 					if (exists(thumbpath)) {
 						SDL_Surface* newThumb = IMG_Load(thumbpath);
 						if (newThumb) {
-							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGB565) ? newThumb : SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGB565, 0);
+							SDL_Surface* optimized = (newThumb->format->format == SDL_PIXELFORMAT_RGBA4444) ? newThumb : SDL_ConvertSurfaceFormat(newThumb, SDL_PIXELFORMAT_RGBA4444, 0);
 							
 							if (newThumb != optimized) {
 								SDL_FreeSurface(newThumb);
@@ -1728,9 +1728,9 @@ int main (int argc, char *argv[]) {
 									new_h
 								};
 
-								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 32, SDL_PIXELFORMAT_RGB565);
+								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
 								SDL_BlitScaled(optimized, NULL, thumbbmp, &scale_rect);
-								GFX_ApplyRounderCorners16(thumbbmp, 20);
+								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, 40); // i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
 								SDL_FreeSurface(optimized);
 								had_thumb = 1;
 							}
@@ -1749,7 +1749,7 @@ int main (int argc, char *argv[]) {
 					};
 				
 					ox = (int)(screen->w - thumbbmp->w) - SCALE1(BUTTON_MARGIN*5);
-					SDL_BlitSurface(thumbbmp, NULL, screen, &dest_rect);
+					BlitRGBA4444toRGB565(thumbbmp, screen, &dest_rect);
 					
 					
 				}

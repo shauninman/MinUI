@@ -947,6 +947,61 @@ void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius) {
     }
 }
 
+// Need a roundercorners for rgba4444 now too to have transparant rounder corners :D
+void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, int radius) {
+    if (!surface || surface->format->format != SDL_PIXELFORMAT_RGBA4444) return;
+
+    Uint16* pixels = (Uint16*)surface->pixels; 
+    int width = surface->w;
+    int height = surface->h;
+    int pitch = surface->pitch / 2;  
+
+    Uint16 transparent_black = 0x0000; 
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int dx = (x < radius) ? radius - x : (x >= width - radius) ? x - (width - radius - 1) : 0;
+            int dy = (y < radius) ? radius - y : (y >= height - radius) ? y - (height - radius - 1) : 0;
+
+            if (dx * dx + dy * dy > radius * radius) {
+                pixels[y * pitch + x] = transparent_black; 
+            }
+        }
+    }
+}
+
+// i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
+void BlitRGBA4444toRGB565(SDL_Surface* src, SDL_Surface* dest, SDL_Rect* dest_rect) {
+    Uint16* srcPixels = (Uint16*)src->pixels;
+    Uint16* destPixels = (Uint16*)dest->pixels;
+    int width = src->w;
+    int height = src->h;
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            Uint16 srcPixel = srcPixels[y * src->w + x];
+
+            Uint8 r = (srcPixel >> 12) & 0xF; 
+            Uint8 g = (srcPixel >> 8)  & 0xF;  
+            Uint8 b = (srcPixel >> 4)  & 0xF;  
+            Uint8 a = (srcPixel)       & 0xF; 
+
+
+            r = (r * 255 / 15) >> 3; 
+            g = (g * 255 / 15) >> 2;  
+            b = (b * 255 / 15) >> 3; 
+            
+            Uint16 rgb565 = (r << 11) | (g << 5) | b;
+
+            if (a > 0) {  
+                destPixels[(y + dest_rect->y) * dest->w + (x + dest_rect->x)] = rgb565;
+            }
+        }
+    }
+}
+
+
+
 
 
 void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t asset_color) {

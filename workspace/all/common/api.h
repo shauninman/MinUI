@@ -264,7 +264,8 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 
 void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius);
 void GFX_ApplyRounderCorners16(SDL_Surface* surface, int radius);
-
+void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, int radius);
+void BlitRGBA4444toRGB565(SDL_Surface* src, SDL_Surface* dest, SDL_Rect* dest_rect);
 ///////////////////////////////
 
 typedef struct SND_Frame {
