@@ -1869,7 +1869,7 @@ int main (int argc, char *argv[]) {
 
 					// title pill
 					{
-						int ow = GFX_blitHardwareGroup(screen, show_setting);
+						
 						int max_width = screen->w - SCALE1(PADDING * 2) - ow;
 						
 						char display_name[256];
