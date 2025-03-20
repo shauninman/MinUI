@@ -2029,10 +2029,9 @@ int main (int argc, char *argv[]) {
 			dirty = 0;
 		} else {
 			PWR_setCPUSpeed(CPU_SPEED_MENU);
-			int ow = GFX_blitHardwareGroup(screen, show_setting);
 			if(!show_switcher && !show_version && is_scrolling) {
 				// nondirty
-				
+				int ow = GFX_blitHardwareGroup(screen, show_setting);
 				Entry* entry = top->entries->items[top->selected];
 				char* entry_name = entry->name;
 				char* entry_unique = entry->unique;

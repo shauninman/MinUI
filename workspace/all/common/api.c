@@ -983,33 +983,58 @@ void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, int radius) {
 
 // i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
 void BlitRGBA4444toRGB565(SDL_Surface* src, SDL_Surface* dest, SDL_Rect* dest_rect) {
-    Uint16* srcPixels = (Uint16*)src->pixels;
-    Uint16* destPixels = (Uint16*)dest->pixels;
+    Uint8* srcPixels = (Uint8*)src->pixels;
+    Uint8* destPixels = (Uint8*)dest->pixels;
+
     int width = src->w;
     int height = src->h;
 
     for (int y = 0; y < height; ++y) {
+        Uint16* srcRow = (Uint16*)(srcPixels + y * src->pitch);
+        Uint16* destRow = (Uint16*)(destPixels + (y + dest_rect->y) * dest->pitch);
+
         for (int x = 0; x < width; ++x) {
-            Uint16 srcPixel = srcPixels[y * src->w + x];
+            Uint16 srcPixel = srcRow[x];
 
-            Uint8 r = (srcPixel >> 12) & 0xF; 
-            Uint8 g = (srcPixel >> 8)  & 0xF;  
-            Uint8 b = (srcPixel >> 4)  & 0xF;  
-            Uint8 a = (srcPixel)       & 0xF; 
+            Uint8 r = (srcPixel >> 12) & 0xF;
+            Uint8 g = (srcPixel >> 8)  & 0xF;
+            Uint8 b = (srcPixel >> 4)  & 0xF;
+            Uint8 a = (srcPixel)       & 0xF;
 
-
+  
             r = (r * 255 / 15) >> 3; 
-            g = (g * 255 / 15) >> 2;  
-            b = (b * 255 / 15) >> 3; 
-            
-            Uint16 rgb565 = (r << 11) | (g << 5) | b;
+            g = (g * 255 / 15) >> 2;
+            b = (b * 255 / 15) >> 3;
 
-            if (a > 0) {  
-                destPixels[(y + dest_rect->y) * dest->w + (x + dest_rect->x)] = rgb565;
+ 
+            int destX = x + dest_rect->x;
+            int destY = y + dest_rect->y;
+
+            if (destX >= 0 && destX < dest->w && destY >= 0 && destY < dest->h) {
+                Uint16* destPixelPtr = &destRow[destX];
+
+                if (a == 0) continue;  
+
+                if (a == 15) {
+                    *destPixelPtr = (r << 11) | (g << 5) | b;  
+                } else {
+                    Uint16 existingPixel = *destPixelPtr;
+                    
+                    Uint8 destR = (existingPixel >> 11) & 0x1F;
+                    Uint8 destG = (existingPixel >> 5)  & 0x3F;
+                    Uint8 destB = existingPixel & 0x1F;
+
+                    destR = ((r * a) + (destR * (15 - a))) / 15;
+                    destG = ((g * a) + (destG * (15 - a))) / 15;
+                    destB = ((b * a) + (destB * (15 - a))) / 15;
+
+                    *destPixelPtr = (destR << 11) | (destG << 5) | destB;
+                }
             }
         }
     }
 }
+
 
 
 
