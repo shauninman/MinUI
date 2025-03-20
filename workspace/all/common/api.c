@@ -2271,7 +2271,8 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		}
 	}
 	
-	#define SLEEP_DELAY 30000 // 30 seconds
+	#define SLEEP_DELAY 60000 // 60 seconds
+	// #define SLEEP_DELAY 2400000 // sleep time for testing
 	if (now-last_input_at>=SLEEP_DELAY && PWR_preventAutosleep()) last_input_at = now;
 	
 	if (
