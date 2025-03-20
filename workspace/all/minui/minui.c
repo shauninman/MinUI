@@ -1427,7 +1427,7 @@ int main (int argc, char *argv[]) {
 	system("gametimectl.elf stop_all");
 	
 	// now that (most of) the heavy lifting is done, take a load off
-	PWR_setCPUSpeed(CPU_SPEED_MENU);
+	PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
 	GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
@@ -1454,7 +1454,9 @@ int main (int argc, char *argv[]) {
 
 		bgbmp = scaled;
 	}
+	unsigned long cputimer = SDL_GetTicks();
 	while (!quit) {
+
 		GFX_startFrame();
 		unsigned long now = SDL_GetTicks();
 		
@@ -1643,7 +1645,7 @@ int main (int argc, char *argv[]) {
 		}
 		
 		if(dirty || dirtyanim) {
-			PWR_setCPUSpeed(CPU_SPEED_NORMAL);
+			PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
 			GFX_clear(screen);
 			if(bgbmp) {
 				
@@ -2026,7 +2028,11 @@ int main (int argc, char *argv[]) {
 			GFX_flip(screen);
 			dirty = 0;
 		} else {
-			PWR_setCPUSpeed(CPU_SPEED_MENU);
+			if(cputimer <= (SDL_GetTicks()-200)) {
+				PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
+				cputimer = SDL_GetTicks();
+			}
+		
 			if(!show_switcher && !show_version && is_scrolling) {
 				// nondirty
 				int ow = GFX_blitHardwareGroup(screen, show_setting);
