@@ -1443,6 +1443,7 @@ int main (int argc, char *argv[]) {
 	SDL_Surface* thumbbmp;
 	int ox;
 	int oy;
+	int is_scrolling = 1;
 	SDL_Surface* bgbmp = IMG_Load("/mnt/SDCARD/bg.png");
 	SDL_Surface* convertedbg = SDL_ConvertSurfaceFormat(bgbmp, SDL_PIXELFORMAT_RGB565, 0);
 	if (convertedbg) {
@@ -1981,7 +1982,7 @@ int main (int argc, char *argv[]) {
 							SDL_Surface *cool = SDL_CreateRGBSurfaceWithFormat(
 								SDL_SWSURFACE, max_width, SCALE1(PILL_SIZE), 32, SDL_PIXELFORMAT_RGBA8888
 							);
-							GFX_resetScrollText();
+							is_scrolling = GFX_resetScrollText(font.large,display_name, max_width - SCALE1(BUTTON_PADDING*2));
 							GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 								SCALE1(BUTTON_MARGIN),SCALE1(highlightY+PADDING), max_width, SCALE1(PILL_SIZE)
 							});
@@ -2025,9 +2026,9 @@ int main (int argc, char *argv[]) {
 			
 			GFX_flip(screen);
 			dirty = 0;
-		} else  {
+		} else {
 			int ow = GFX_blitHardwareGroup(screen, show_setting);
-			if(!show_switcher && !show_version) {
+			if(!show_switcher && !show_version && is_scrolling) {
 				// nondirty
 				GFX_delay();
 				Entry* entry = top->entries->items[top->selected];
@@ -2046,7 +2047,7 @@ int main (int argc, char *argv[]) {
 
 				
 				SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
-				SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-4),text2->h};
+				SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-6),text2->h};
 		
 				SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(PADDING + ((remember_selection) * PILL_SIZE) +4) };
 				

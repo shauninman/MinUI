@@ -581,8 +581,18 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 // scrolling text stuff
 static int text_offset = 0;
 
-void GFX_resetScrollText() {
+int GFX_resetScrollText(TTF_Font* font, const char* in_name,int max_width) {
+	int text_width, text_height;
+	
+    TTF_SizeUTF8(font, in_name, &text_width, &text_height);
+
 	text_offset = 0;
+
+	if (text_width <= max_width) {
+		return 0;
+	} else {
+		return 1;
+	}
 }
 void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width,int height, int padding, SDL_Color color, float transparency) {
     
