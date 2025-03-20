@@ -623,12 +623,13 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
 	snprintf(adj_in_name, sizeof(adj_in_name), "%s  ", in_name); 
     TTF_SizeUTF8(font, adj_in_name, &text_width, &text_height);
     SDL_Rect src_rect = { text_offset, 0, text_width, height };
-    SDL_Surface* scrolling_surface = SDL_CreateRGBSurface(0, max_width, height, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
-    
-    SDL_SetSurfaceBlendMode(scrolling_surface, SDL_BLENDMODE_BLEND);
+	SDL_Surface *scrolling_surface = SDL_CreateRGBSurfaceWithFormat(
+		SDL_SWSURFACE, max_width, SCALE1(PILL_SIZE), 16, SDL_PIXELFORMAT_RGBA4444
+	);
+
     SDL_BlitSurface(full_text_surface, &src_rect, scrolling_surface, NULL);
     
-    SDL_SetSurfaceAlphaMod(scrolling_surface, alpha);
+
 
     SDL_FreeSurface(full_text_surface);
 
