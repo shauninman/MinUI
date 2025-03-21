@@ -3364,8 +3364,8 @@ void Core_load(void) {
 
 	char cheats_path[MAX_PATH] = {0};
 	Cheat_getPath(cheats_path);
-	//content_based_name(content, cheats_path, sizeof(cheats_path), config_dir, "cheats/", ".cht");
 	if (cheats_path[0] != '\0') {
+		LOG_info("cheat file path: %s\n", cheats_path);
 		Cheats_load(cheats_path);
 		Core_applyCheats(&cheatcodes);
 	}
@@ -3965,27 +3965,18 @@ static int OptionQuicksave_onConfirm(MenuList* list, int i) {
 }
 
 static int OptionCheats_optionChanged(MenuList* list, int i) {
-	LOG_info("OptionCheats_optionChanged\n");
 	MenuItem* item = &list->items[i];
-	LOG_info("item %i\n", i);
 	struct Cheat *cheat = &cheatcodes.cheats[i];
-	LOG_info("cheat %i %i -> %i\n", i, cheat->enabled, item->value);
-	//LOG_info("%s changed from `%s` (%i) to `%s` (%i)\n", cheat->name, 
-	//	item->values[cheat->enabled], cheat->enabled, 
-	//	item->values[item->value], item->value
-	//);
 	cheat->enabled = item->value;
-	LOG_info("Core_applyCheats\n");
 	Core_applyCheats(&cheatcodes);
-	LOG_info("Exit OptionCheats_optionChanged\n");
-
 	return MENU_CALLBACK_NOP;
 }
 
 static int OptionCheats_optionDetail(MenuList* list, int i) {
 	MenuItem* item = &list->items[i];
 	struct Cheat *cheat = &cheatcodes.cheats[i];
-	if (cheat->info) return Menu_message((char*)cheat->info, (char*[]){ "B","BACK", NULL });
+	if (cheat->info) 
+		return Menu_message((char*)cheat->info, (char*[]){ "B","BACK", NULL });
 	else return MENU_CALLBACK_NOP;
 }
 
@@ -3998,13 +3989,10 @@ static MenuList OptionCheats_menu = {
 static int OptionCheats_openMenu(MenuList* list, int i) {
 	if (OptionCheats_menu.items == NULL) {
 		// populate
-		LOG_info("populating cheats menu with %d items\n", cheatcodes.count);
 		OptionCheats_menu.items = calloc(cheatcodes.count + 1, sizeof(MenuItem));
 		for (int i = 0; i<cheatcodes.count; i++) {
 			struct Cheat *cheat = &cheatcodes.cheats[i];
 			MenuItem *item = &OptionCheats_menu.items[i];
-
-			LOG_info("%s\n", cheat->name);
 
 			// this stuff gets actually copied around.. what year is it?
 			int len = strlen(cheat->name) + 1;
@@ -4012,8 +4000,6 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 			strcpy(item->name, cheat->name);
 
 			if(cheat->info) {
-				LOG_info("%s\n", cheat->info);
-	
 				len = strlen(cheat->info) + 1;
 				item->desc = calloc(len, sizeof(char));
 				strncpy(item->desc, cheat->info, len);
@@ -4027,11 +4013,8 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 			item->value = cheat->enabled;
 			item->values = onoff_labels;
 		}
-
-		//list->desc =
 	}
 	else {
-		LOG_info("Update cheat menu\n");
 		// update
 		for (int j = 0; j < cheatcodes.count; j++) {
 			struct Cheat *cheat = &cheatcodes.cheats[i];
@@ -4041,13 +4024,10 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 				continue;
 			item->value = cheat->enabled;
 		}
-		LOG_info("Done updating cheat menu\n");
 	}
 
 	if (OptionCheats_menu.items[0].name) {
-		LOG_info("Draw cheat menu\n");
 		Menu_options(&OptionCheats_menu);
-		LOG_info("Done drawing cheat menu\n");
 	}
 	else {
 		Menu_message("This core has no cheats.", (char*[]){ "B","BACK", NULL });
