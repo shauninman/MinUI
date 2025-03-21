@@ -303,10 +303,10 @@ int main(int argc , char* argv[]) {
 			}
 			blitBar(x,y, (select_cursor==CURSOR_YEAR ? SCALE1(40) : (select_cursor==CURSOR_AMPM ? ampm_w : SCALE1(20))));
 		
-			GFX_flip(screen);
+			GFX_flip(screen, 0);
 			dirty = 0;
 		}
-		else GFX_sync();
+		else GFX_sync(0);
 	}
 	
 	SDL_FreeSurface(digits);

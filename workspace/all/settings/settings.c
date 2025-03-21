@@ -388,10 +388,10 @@ int main(int argc, char *argv[])
                 }
             }
 
-            GFX_flip(screen);
+            GFX_flip(screen, 0);
             dirty = 0;
         }
-        else GFX_sync();
+        else GFX_sync(0);
     }
 
     QuitSettings();

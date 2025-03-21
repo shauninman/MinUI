@@ -3148,7 +3148,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	
 	// debug
-	if (show_debug && !isnan(currentratio) && !isnan(currentfps) && !isnan(currentreqfps)  && !isnan(currentbufferms) &&
+	if (show_debug && !isnan(currentratio) && !isnan(currentbufferms) &&
 	currentbuffersize >= 0  && currentbufferfree >= 0 && SDL_GetTicks() > 5000) {
 		int x = 2 + renderer.src_x;
 		int y = 2 + renderer.src_y;
@@ -3159,8 +3159,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 		
-		sprintf(debug_text, "%.03f/%.03f/%.03f/%i/%.1f/%i", currentratio,
-				currentfps,currentreqfps,currentbuffersize,currentbufferms, currentbufferfree);
+		sprintf(debug_text, "%.03f/%i/%.1f/%i", currentratio,
+				currentbuffersize,currentbufferms, currentbufferfree);
 		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
 					height);
 		
@@ -3172,7 +3172,13 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
-		sprintf(debug_text, "%.01f/%.01f/%i/%.01f%%", fps_double, cpu_double,currentcpuspeed,currentcpuse);
+		if (fps_double > 0.0) {
+			sprintf(debug_text, "%.01f", fps_double);
+		}
+		else {
+			strcpy(debug_text, "-");
+		}
+		sprintf(debug_text + strlen(debug_text), "/%.1f/%.01f/%i/%.01f%%", core.fps,cpu_double,currentcpuspeed,currentcpuse);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
@@ -3192,7 +3198,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 
 	GFX_blitRenderer(&renderer);
 
-	if (!thread_video) GFX_flip(screen);
+	if (!thread_video) GFX_flip(screen, core.fps);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
@@ -3359,6 +3365,7 @@ void Core_init(void) {
 	core.init();
 	core.initialized = 1;
 }
+
 void Core_applyCheats(struct Cheats *cheats)
 {
 	if (!cheats)
@@ -3374,6 +3381,25 @@ void Core_applyCheats(struct Cheats *cheats)
 		}
 	}
 }
+
+int Core_updateAVInfo(void) {
+	struct retro_system_av_info av_info = {};
+	core.get_system_av_info(&av_info);
+
+	double a = av_info.geometry.aspect_ratio;
+	if (a<=0) a = (double)av_info.geometry.base_width / av_info.geometry.base_height;
+
+	int changed = (core.fps != av_info.timing.fps || core.sample_rate != av_info.timing.sample_rate || core.aspect_ratio != a);
+
+	core.fps = av_info.timing.fps;
+	core.sample_rate = av_info.timing.sample_rate;
+	core.aspect_ratio = a;
+
+	if (changed) LOG_info("aspect_ratio: %f (%ix%i) fps: %f\n", a, av_info.geometry.base_width,av_info.geometry.base_height, core.fps);
+
+	return changed;
+}
+
 void Core_load(void) {
 	LOG_info("Core_load\n");
 	struct retro_game_info game_info;
@@ -3394,17 +3420,8 @@ void Core_load(void) {
 	SRAM_read();
 	RTC_read();
 	// NOTE: must be called after core.load_game!
-	struct retro_system_av_info av_info = {};
-	core.get_system_av_info(&av_info);
 	core.set_controller_port_device(0, RETRO_DEVICE_JOYPAD); // set a default, may update after loading configs
-
-	core.fps = av_info.timing.fps;
-	core.sample_rate = av_info.timing.sample_rate;
-	double a = av_info.geometry.aspect_ratio;
-	if (a<=0) a = (double)av_info.geometry.base_width / av_info.geometry.base_height;
-	core.aspect_ratio = a;
-	
-	LOG_info("aspect_ratio: %f (%ix%i) fps: %f\n", a, av_info.geometry.base_width,av_info.geometry.base_height, core.fps);
+	Core_updateAVInfo();
 }
 void Core_reset(void) {
 	core.reset();
@@ -3596,7 +3613,7 @@ static int Menu_message(char* message, char** pairs) {
 		GFX_clear(screen);
 		GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
 		GFX_blitButtonGroup(pairs, 0, screen, 1);
-		GFX_flip(screen);
+		GFX_flip(screen, core.fps);
 		dirty = 0;
 		
 		
@@ -4451,14 +4468,14 @@ static int Menu_options(MenuList* list) {
 			});
 		}
 		
-		GFX_flip(screen);
+		GFX_flip(screen, core.fps);
 		dirty = 0;
 		
 		hdmimon();
 	}
 	
 	// GFX_clearAll();
-	// GFX_flip(screen);
+	// GFX_flip(screen, core.fps);
 	
 	return 0;
 }
@@ -5036,7 +5053,7 @@ static void Menu_loop(void) {
 			}
 		}
 
-		GFX_flip(screen);
+		GFX_flip(screen, core.fps);
 		dirty = 0;
 
 		hdmimon();
@@ -5105,6 +5122,12 @@ finish:
 	return ticks;
 }
 
+static void resetFPSCounter() {
+	sec_start = SDL_GetTicks();
+	fps_ticks = 0.0;
+	fps_double = 0.0;
+}
+
 static void trackFPS(void) {
 	cpu_ticks += 1;
 	static int last_use_ticks = 0;
@@ -5157,7 +5180,7 @@ static void* coreThread(void *arg) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen);
+	GFX_flip(screen, core.fps);
 	
 	while (!quit) {
 		int run = 0;
@@ -5250,13 +5273,26 @@ int main(int argc , char* argv[]) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen);
+	GFX_flip(screen, core.fps);
 	
 	Special_init(); // after config
 	
-	sec_start = SDL_GetTicks();
+	resetFPSCounter();
 	
 	while (!quit) {
+		#if 0
+		// This code allows a core to change its settings regarding
+		// region and video ratio on the fly.
+		// It works with most core, but FBNeo doesn't like its get_system_av_info
+		// function to be called too often...
+		// Commenting for now...
+		if (Core_updateAVInfo()) {
+			LOG_info("AV info changed, reset sound system");
+			SND_quit();
+			SND_init(core.sample_rate, core.fps);
+			resetFPSCounter();
+		}
+		#endif
 
 		GFX_startFrame();
 	
@@ -5273,13 +5309,16 @@ int main(int argc , char* argv[]) {
 			
 			if (backbuffer) {
 				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
-				GFX_flip(screen);
+				GFX_flip(screen, core.fps);
 			}
 			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 			pthread_mutex_unlock(&core_mx);
 		}
 		
-		if (show_menu) Menu_loop();
+		if (show_menu) {
+			Menu_loop();
+			resetFPSCounter();
+		}
 		
 		if (toggle_thread) {
 			toggle_thread = 0;
@@ -5305,7 +5344,7 @@ int main(int argc , char* argv[]) {
 				// force a vsync immediately before loop
 				// for better frame pacing?
 				GFX_clearAll();
-				GFX_flip(screen);
+				GFX_flip(screen, core.fps);
 			}
 		}
 		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);

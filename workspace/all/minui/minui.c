@@ -2034,7 +2034,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-
+			
 			GFX_flip(screen);
 			dirty = 0;
 			readytoscroll = 0;
@@ -2073,7 +2073,7 @@ int main (int argc, char *argv[]) {
 				
 				SDL_BlitSurface(text2, &src_text_rect, screen, &dest_rect);
 				SDL_FreeSurface(text2);
-				GFX_flip(screen);
+				GFX_flip(screen, 0);
 			} else {
 				GFX_delay();
 				if(cputimer <= (SDL_GetTicks()-CPU_SWITCH_DELAY_MS)) {
