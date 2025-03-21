@@ -158,6 +158,16 @@ Bios file names are case-sensitive:
    PS: psxonpsp660.bin
 
 ----------------------------------------
+Cheats
+
+### Cheats
+
+Cheats use RetroArch .cht file format. Many cheat files are here <https://github.com/libretro/libretro-database/tree/master/cht>
+
+Cheat file name needs to match ROM name, and go underneath the "Cheats" directory. For example, `/Cheats/GB/Super Mario Land (World).zip.cht`. When a cheat file is detected, it will show up in the "cheats" menu item ingame. Not all cheats work with all cores, may want to clean up files to just the cheats you want.
+
+----------------------------------------
+
 Disc-based games
 
 To streamline launching multi-file disc-based games with MinUI place your bin/cue (and/or iso/wav files) in a folder with the same name as the cue file. MinUI will automatically launch the cue file instead of navigating into the folder when selected, eg. 

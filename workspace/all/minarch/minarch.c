@@ -573,8 +573,10 @@ void Cheats_load(const char *filename) {
 	size_t i;
 
 	file = fopen(filename, "r");
-	if (!file)
+	if (!file) {
+		LOG_error("Error opening cheat file: %s\n\t%s\n", filename, strerror(errno));
 		goto finish;
+	}
 
 	LOG_info("Loading cheats from %s\n", filename);
 
@@ -600,6 +602,8 @@ void Cheats_load(const char *filename) {
 		LOG_error("Error reading cheat %d\n", i);
 		goto finish;
 	}
+
+	LOG_info("Found %i cheats for the current game.\n", cheatcodes.count);
 
 	success = 1;
 finish:
@@ -1736,7 +1740,6 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 		config.core.options = calloc(count+1, sizeof(Option));
 		
 		for (int i=0; i<config.core.count; i++) {
-			LOG_info("optie\n");
 			int len;
 			const struct retro_core_option_definition *def = &defs[i];
 			Option* item = &config.core.options[i];
@@ -2126,11 +2129,11 @@ static void Input_init(const struct retro_input_descriptor *vars) {
 
 			// TODO: don't ignore unavailable buttons, just override them to BTN_ID_NONE!
 			if (var->id>=RETRO_BUTTON_COUNT) {
-				printf("UNAVAILABLE: %s\n", var->description); fflush(stdout);
+				//printf("UNAVAILABLE: %s\n", var->description); fflush(stdout);
 				continue;
 			}
 			else {
-				printf("PRESENT    : %s\n", var->description); fflush(stdout);
+				//printf("PRESENT    : %s\n", var->description); fflush(stdout);
 			}
 			present[var->id] = 1;
 			core_button_names[var->id] = var->description;
@@ -2141,7 +2144,7 @@ static void Input_init(const struct retro_input_descriptor *vars) {
 
 	for (int i=0;default_button_mapping[i].name; i++) {
 		ButtonMapping* mapping = &default_button_mapping[i];
-		LOG_info("DEFAULT %s (%s): <%s>\n", core_button_names[mapping->retro], mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]));
+		//LOG_info("DEFAULT %s (%s): <%s>\n", core_button_names[mapping->retro], mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]));
 		if (core_button_names[mapping->retro]) mapping->name = (char*)core_button_names[mapping->retro];
 	}
 	
@@ -2156,7 +2159,7 @@ static void Input_init(const struct retro_input_descriptor *vars) {
 			mapping->ignore = 1;
 			continue;
 		}
-		LOG_info("%s: <%s> (%i:%i)\n", mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]), mapping->local, mapping->retro);
+		//LOG_info("%s: <%s> (%i:%i)\n", mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]), mapping->local, mapping->retro);
 	}
 	
 	puts("---------------------------------");
@@ -2357,7 +2360,6 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS: { /* 53 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS");
-		LOG_info("dit dan a");
 		if (data) {
 			OptionList_reset();
 			OptionList_init((const struct retro_core_option_definition *)data); 
@@ -2366,7 +2368,6 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL: { /* 54 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL");
-		LOG_info("dit dan b");
 		const struct retro_core_options_intl *options = (const struct retro_core_options_intl *)data;
 		if (options && options->us) {
 			OptionList_reset();
@@ -3963,15 +3964,109 @@ static int OptionQuicksave_onConfirm(MenuList* list, int i) {
 	PWR_powerOff();
 }
 
+static int OptionCheats_optionChanged(MenuList* list, int i) {
+	LOG_info("OptionCheats_optionChanged\n");
+	MenuItem* item = &list->items[i];
+	LOG_info("item %i\n", i);
+	struct Cheat *cheat = &cheatcodes.cheats[i];
+	LOG_info("cheat %i %i -> %i\n", i, cheat->enabled, item->value);
+	//LOG_info("%s changed from `%s` (%i) to `%s` (%i)\n", cheat->name, 
+	//	item->values[cheat->enabled], cheat->enabled, 
+	//	item->values[item->value], item->value
+	//);
+	cheat->enabled = item->value;
+	LOG_info("Core_applyCheats\n");
+	Core_applyCheats(&cheatcodes);
+	LOG_info("Exit OptionCheats_optionChanged\n");
+
+	return MENU_CALLBACK_NOP;
+}
+
+static int OptionCheats_optionDetail(MenuList* list, int i) {
+	MenuItem* item = &list->items[i];
+	struct Cheat *cheat = &cheatcodes.cheats[i];
+	if (cheat->info) return Menu_message((char*)cheat->info, (char*[]){ "B","BACK", NULL });
+	else return MENU_CALLBACK_NOP;
+}
+
+static MenuList OptionCheats_menu = {
+	.type = MENU_FIXED,
+	.on_confirm = OptionCheats_optionDetail, // TODO: this needs pagination to be truly useful
+	.on_change = OptionCheats_optionChanged,
+	.items = NULL,
+};
+static int OptionCheats_openMenu(MenuList* list, int i) {
+	if (OptionCheats_menu.items == NULL) {
+		// populate
+		LOG_info("populating cheats menu with %d items\n", cheatcodes.count);
+		OptionCheats_menu.items = calloc(cheatcodes.count + 1, sizeof(MenuItem));
+		for (int i = 0; i<cheatcodes.count; i++) {
+			struct Cheat *cheat = &cheatcodes.cheats[i];
+			MenuItem *item = &OptionCheats_menu.items[i];
+
+			LOG_info("%s\n", cheat->name);
+
+			// this stuff gets actually copied around.. what year is it?
+			int len = strlen(cheat->name) + 1;
+			item->name = calloc(len, sizeof(char));
+			strcpy(item->name, cheat->name);
+
+			if(cheat->info) {
+				LOG_info("%s\n", cheat->info);
+	
+				len = strlen(cheat->info) + 1;
+				item->desc = calloc(len, sizeof(char));
+				strncpy(item->desc, cheat->info, len);
+				
+				// these magic numbers are more about chars per line than pixel width 
+				// so it's not going to be relative to the screen size, only the scale
+				// what does that even mean?
+				GFX_wrapText(font.tiny, item->desc, SCALE1(240), 2); // TODO magic number!
+			}
+
+			item->value = cheat->enabled;
+			item->values = onoff_labels;
+		}
+
+		//list->desc =
+	}
+	else {
+		LOG_info("Update cheat menu\n");
+		// update
+		for (int j = 0; j < cheatcodes.count; j++) {
+			struct Cheat *cheat = &cheatcodes.cheats[i];
+			MenuItem *item = &OptionCheats_menu.items[i];
+			// I guess that makes sense, nobody is changing these but us - what about state restore?
+			if(!cheat->enabled)
+				continue;
+			item->value = cheat->enabled;
+		}
+		LOG_info("Done updating cheat menu\n");
+	}
+
+	if (OptionCheats_menu.items[0].name) {
+		LOG_info("Draw cheat menu\n");
+		Menu_options(&OptionCheats_menu);
+		LOG_info("Done drawing cheat menu\n");
+	}
+	else {
+		Menu_message("This core has no cheats.", (char*[]){ "B","BACK", NULL });
+	}
+	
+	return MENU_CALLBACK_NOP;
+}
+
+
 static MenuList options_menu = {
 	.type = MENU_LIST,
 	.items = (MenuItem[]) {
 		{"Frontend", "MinUI (" BUILD_DATE " " BUILD_HASH ")",.on_confirm=OptionFrontend_openMenu},
 		{"Emulator",.on_confirm=OptionEmulator_openMenu},
+		// TODO: this should be hidden with no cheats available
+		{"Cheats",.on_confirm=OptionCheats_openMenu},
 		{"Controls",.on_confirm=OptionControls_openMenu},
 		{"Shortcuts",.on_confirm=OptionShortcuts_openMenu}, 
 		{"Save Changes",.on_confirm=OptionSaveChanges_openMenu},
-		{NULL},
 		{NULL},
 		{NULL},
 	}
@@ -5130,27 +5225,16 @@ int main(int argc , char* argv[]) {
 	// why not move to Core_init()?
 	// ah, because it's defined before options_menu...
 	options_menu.items[1].desc = (char*)core.version;
-	LOG_info("stap 1\n");
 	Core_load();
-	LOG_info("stap 2\n");
 	Input_init(NULL);
-	LOG_info("stap 3\n");
 	Config_readOptions(); // but others load and report options later (eg. nes)
-	LOG_info("stap 4\n");
 	Config_readControls(); // restore controls (after the core has reported its defaults)
-	LOG_info("stap 5\n");
 	Config_free();
-	LOG_info("stap 6\n");
 	SND_init(core.sample_rate, core.fps);
-	LOG_info("stap 7\n");
 	InitSettings(); // after we initialize audio
-	LOG_info("stap 8\n");
 	Menu_init();
-	LOG_info("stap 9\n");
 	State_resume();
-	LOG_info("stap 10\n");
 	Menu_initState(); // make ready for state shortcuts
-	LOG_info("stap 11\n");
 	if (thread_video) {
 		core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 		core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;

@@ -150,7 +150,7 @@ void loadSettings() {
 				uint32_t temp_color;
 				if (sscanf(line, "font=%i", &temp_value) == 1)
 				{
-					LOG_info("ditte? %i \n",temp_value);
+					//LOG_info("ditte? %i \n",temp_value);
 					if(temp_value==1) {
 						FONT_PATH = RES_PATH "/chillroundm.ttf";
 					} else {
