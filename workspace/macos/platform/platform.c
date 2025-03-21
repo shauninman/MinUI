@@ -343,6 +343,9 @@ void PLAT_setNearestNeighbor(int enabled) {
 void PLAT_setSharpness(int sharpness) {
 	// buh
 }
+void PLAT_setEffect(int next_type) {
+}
+
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
@@ -364,7 +367,6 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
 		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
