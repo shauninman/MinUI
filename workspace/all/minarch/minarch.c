@@ -65,8 +65,6 @@ static int DEVICE_PITCH = 0; // FIXED_PITCH;
 
 GFX_Renderer renderer;
 
-struct Cheats;
-
 ///////////////////////////////////////
 
 static struct Core {
@@ -88,8 +86,6 @@ static struct Core {
 	double sample_rate;
 	double aspect_ratio;
 
-	Cheats cheats;
-
 	void* handle;
 	void (*init)(void);
 	void (*deinit)(void);
@@ -104,7 +100,7 @@ static struct Core {
 	bool (*serialize)(void *data, size_t size);
 	bool (*unserialize)(const void *data, size_t size);
 	void (*cheat_reset)(void);
-	void (*cheat_set)(unsigned id, bool enabled);
+	void (*cheat_set)(unsigned id, bool enabled, const char*);
 	bool (*load_game)(const struct retro_game_info *game);
 	bool (*load_game_special)(unsigned game_type, const struct retro_game_info *info, size_t num_info);
 	void (*unload_game)(void);
@@ -189,242 +185,6 @@ static int Zip_inflate(FILE* zip, FILE* dst, size_t size) { // compressed
 	} else {
 		return Z_DATA_ERROR;
 	}
-}
-
-///////////////////////////////////////
-// based on picoarch/cheat.c
-
-struct Cheat {
-	const char *name;
-	const char *info;
-	int enabled;
-	const char *code;
-};
-
-struct Cheats {
-	int enabled;
-	size_t count;
-	struct Cheat *cheats;
-};
-
-#define CHEAT_MAX_DESC_LEN 27
-#define CHEAT_MAX_LINE_LEN 52
-#define CHEAT_MAX_LINES 3
-
-static size_t parse_count(FILE *file) {
-	size_t count = 0;
-	fscanf(file, " cheats = %lu\n", (unsigned long *)&count);
-	return count;
-}
-
-static const char *find_val(const char *start) {
-	start--;
-	while(!isspace(*++start))
-		;
-
-	while(isspace(*++start))
-		;
-
-	if (*start != '=')
-		return NULL;
-
-	while(isspace(*++start))
-		;
-
-	return start;
-}
-
-static int parse_bool(const char *ptr, int *out) {
-	if (!strncasecmp(ptr, "true", 4)) {
-		*out = 1;
-	} else if (!strncasecmp(ptr, "false", 5)) {
-		*out = 0;
-	} else {
-		return -1;
-	}
-	return 0;
-}
-
-static int parse_string(const char *ptr, char *buf, size_t len) {
-	int index = 0;
-	size_t input_len = strlen(ptr);
-
-	buf[0] = '\0';
-
-	if (*ptr++ != '"')
-		return -1;
-
-	while (*ptr != '\0' && *ptr != '"' && index < len - 1) {
-		if (*ptr == '\\' && index < input_len - 1) {
-			ptr++;
-			buf[index++] = *ptr++;
-		} else if (*ptr == '&' && !strncmp(ptr, "&quot;", 6)) {
-			buf[index++] = '"';
-			ptr += 6;
-		} else {
-			buf[index++] = *ptr++;
-		}
-	}
-
-	if (*ptr != '"') {
-		buf[0] = '\0';
-		return -1;
-	}
-
-	buf[index] = '\0';
-	return 0;
-}
-
-static int parse_cheats(struct Cheats *cheats, FILE *file) {
-	int ret = -1;
-	char line[512];
-	char buf[512];
-	const char *ptr;
-
-	do {
-		if (!fgets(line, sizeof(line), file)) {
-			ret = 0;
-			break;
-		}
-
-		if (line[strlen(line) - 1] != '\n' && !feof(file)) {
-			LOG_warn("Cheat line too long\n");
-			continue;
-		}
-
-		if ((ptr = strstr(line, "cheat"))) {
-			int index = -1;
-			struct Cheat *cheat;
-			size_t len;
-			sscanf(ptr, "cheat%d", &index);
-
-			if (index >= cheats->count)
-				continue;
-			cheat = &cheats->cheats[index];
-
-			if (strstr(ptr, "_desc")) {
-				ptr = find_val(ptr);
-				if (!ptr || parse_string(ptr, buf, sizeof(buf))) {
-					LOG_warn("Couldn't parse cheat %d description\n", index);
-					continue;
-				}
-
-				len = strlen(buf);
-				if (len == 0)
-					continue;
-
-				cheat->name = calloc(len+1, sizeof(char));
-				if (!cheat->name)
-					goto finish;
-
-				strncpy((char *)cheat->name, buf, len);
-				truncateString((char *)cheat->name, CHEAT_MAX_DESC_LEN);
-
-				if (len >= CHEAT_MAX_DESC_LEN) {
-					cheat->info = calloc(len+1, sizeof(char));
-					if (!cheat->info)
-						goto finish;
-
-					strncpy((char *)cheat->info, buf, len);
-					wrapString((char *)cheat->info, CHEAT_MAX_LINE_LEN, CHEAT_MAX_LINES);
-				}
-			} else if (strstr(ptr, "_code")) {
-				ptr = find_val(ptr);
-				if (!ptr || parse_string(ptr, buf, sizeof(buf))) {
-					LOG_warn("Couldn't parse cheat %d code\n", index);
-					continue;
-				}
-
-				len = strlen(buf);
-				if (len == 0)
-					continue;
-
-				cheat->code = calloc(len+1, sizeof(char));
-				if (!cheat->code)
-					goto finish;
-
-				strncpy((char *)cheat->code, buf, len);
-			} else if (strstr(ptr, "_enable")) {
-				ptr = find_val(ptr);
-				if (!ptr || parse_bool(ptr, &cheat->enabled)) {
-					LOG_warn("Couldn't parse cheat %d enabled\n", index);
-					continue;
-				}
-			}
-		}
-	} while(1);
-
-finish:
-	return ret;
-}
-
-void Cheats_free(struct Cheats *cheats) {
-	size_t i;
-	if (cheats) {
-		for (i = 0; i < cheats->count; i++) {
-			struct Cheat *cheat = &cheats->cheats[i];
-			if (cheat) {
-				free((char *)cheat->name);
-				free((char *)cheat->info);
-				free((char *)cheat->code);
-			}
-		}
-		free(cheats->cheats);
-	}
-	free(cheats);
-}
-
-struct Cheats *Cheats_load(const char *filename) {
-	int success = 0;
-	struct Cheats *cheats = NULL;
-	FILE *file = NULL;
-	size_t i;
-
-	file = fopen(filename, "r");
-	if (!file)
-		goto finish;
-
-	LOG_info("Loading cheats from %s\n", filename);
-
-	cheats = calloc(1, sizeof(struct Cheats));
-	if (!cheats) {
-		LOG_error("Couldn't allocate memory for cheats\n");
-		goto finish;
-	}
-
-	cheats->count = parse_count(file);
-	if (cheats->count <= 0) {
-		LOG_error("Couldn't read cheat count\n");
-		goto finish;
-	}
-
-	cheats->cheats = calloc(cheats->count, sizeof(struct Cheat));
-	if (!cheats->cheats) {
-		LOG_error("Couldn't allocate memory for cheats\n");
-		goto finish;
-	}
-
-	if (parse_cheats(cheats, file)) {
-		LOG_error("Error reading cheat %d\n", i);
-		goto finish;
-	}
-
-	success = 1;
-finish:
-	if (!success) {
-		Cheats_free(cheats);
-		cheats = NULL;
-	}
-
-	if (file)
-		fclose(file);
-
-	return cheats;
-}
-
-static void Cheat_getPath(char* filename) {
-	sprintf(filename, "%s/%s.cht", core.cheats_dir, game.name);
-	LOG_info("Cheat_getPath %s\n", filename);
 }
 
 ///////////////////////////////////////
@@ -623,6 +383,237 @@ static void Game_changeDisc(char* path) {
 	
 	disk_control_ext.replace_image_index(0, &game_info);
 	putFile(CHANGE_DISC_PATH, path); // MinUI still needs to know this to update recents.txt
+}
+
+///////////////////////////////////////
+// based on picoarch/cheat.c
+
+struct Cheat {
+	const char *name;
+	const char *info;
+	int enabled;
+	const char *code;
+};
+
+static struct Cheats {
+	int enabled;
+	size_t count;
+	struct Cheat *cheats;
+} cheatcodes;
+
+#define CHEAT_MAX_DESC_LEN 27
+#define CHEAT_MAX_LINE_LEN 52
+#define CHEAT_MAX_LINES 3
+
+static size_t parse_count(FILE *file) {
+	size_t count = 0;
+	fscanf(file, " cheats = %lu\n", (unsigned long *)&count);
+	return count;
+}
+
+static const char *find_val(const char *start) {
+	start--;
+	while(!isspace(*++start))
+		;
+
+	while(isspace(*++start))
+		;
+
+	if (*start != '=')
+		return NULL;
+
+	while(isspace(*++start))
+		;
+
+	return start;
+}
+
+static int parse_bool(const char *ptr, int *out) {
+	if (!strncasecmp(ptr, "true", 4)) {
+		*out = 1;
+	} else if (!strncasecmp(ptr, "false", 5)) {
+		*out = 0;
+	} else {
+		return -1;
+	}
+	return 0;
+}
+
+static int parse_string(const char *ptr, char *buf, size_t len) {
+	int index = 0;
+	size_t input_len = strlen(ptr);
+
+	buf[0] = '\0';
+
+	if (*ptr++ != '"')
+		return -1;
+
+	while (*ptr != '\0' && *ptr != '"' && index < len - 1) {
+		if (*ptr == '\\' && index < input_len - 1) {
+			ptr++;
+			buf[index++] = *ptr++;
+		} else if (*ptr == '&' && !strncmp(ptr, "&quot;", 6)) {
+			buf[index++] = '"';
+			ptr += 6;
+		} else {
+			buf[index++] = *ptr++;
+		}
+	}
+
+	if (*ptr != '"') {
+		buf[0] = '\0';
+		return -1;
+	}
+
+	buf[index] = '\0';
+	return 0;
+}
+
+static int parse_cheats(struct Cheats *cheats, FILE *file) {
+	int ret = -1;
+	char line[512];
+	char buf[512];
+	const char *ptr;
+
+	do {
+		if (!fgets(line, sizeof(line), file)) {
+			ret = 0;
+			break;
+		}
+
+		if (line[strlen(line) - 1] != '\n' && !feof(file)) {
+			LOG_warn("Cheat line too long\n");
+			continue;
+		}
+
+		if ((ptr = strstr(line, "cheat"))) {
+			int index = -1;
+			struct Cheat *cheat;
+			size_t len;
+			sscanf(ptr, "cheat%d", &index);
+
+			if (index >= cheats->count)
+				continue;
+			cheat = &cheats->cheats[index];
+
+			if (strstr(ptr, "_desc")) {
+				ptr = find_val(ptr);
+				if (!ptr || parse_string(ptr, buf, sizeof(buf))) {
+					LOG_warn("Couldn't parse cheat %d description\n", index);
+					continue;
+				}
+
+				len = strlen(buf);
+				if (len == 0)
+					continue;
+
+				cheat->name = calloc(len+1, sizeof(char));
+				if (!cheat->name)
+					goto finish;
+
+				strncpy((char *)cheat->name, buf, len);
+				truncateString((char *)cheat->name, CHEAT_MAX_DESC_LEN);
+
+				if (len >= CHEAT_MAX_DESC_LEN) {
+					cheat->info = calloc(len+1, sizeof(char));
+					if (!cheat->info)
+						goto finish;
+
+					strncpy((char *)cheat->info, buf, len);
+					wrapString((char *)cheat->info, CHEAT_MAX_LINE_LEN, CHEAT_MAX_LINES);
+				}
+			} else if (strstr(ptr, "_code")) {
+				ptr = find_val(ptr);
+				if (!ptr || parse_string(ptr, buf, sizeof(buf))) {
+					LOG_warn("Couldn't parse cheat %d code\n", index);
+					continue;
+				}
+
+				len = strlen(buf);
+				if (len == 0)
+					continue;
+
+				cheat->code = calloc(len+1, sizeof(char));
+				if (!cheat->code)
+					goto finish;
+
+				strncpy((char *)cheat->code, buf, len);
+			} else if (strstr(ptr, "_enable")) {
+				ptr = find_val(ptr);
+				if (!ptr || parse_bool(ptr, &cheat->enabled)) {
+					LOG_warn("Couldn't parse cheat %d enabled\n", index);
+					continue;
+				}
+			}
+		}
+	} while(1);
+
+finish:
+	return ret;
+}
+
+void Cheats_free() {
+	size_t i;
+	for (i = 0; i < cheatcodes.count; i++) {
+		struct Cheat *cheat = &cheatcodes.cheats[i];
+		if (cheat) {
+			free((char *)cheat->name);
+			free((char *)cheat->info);
+			free((char *)cheat->code);
+		}
+	}
+	free(cheatcodes.cheats);
+	cheatcodes.count = 0;
+}
+
+void Cheats_load(const char *filename) {
+	int success = 0;
+	struct Cheats *cheats = &cheatcodes;
+	FILE *file = NULL;
+	size_t i;
+
+	file = fopen(filename, "r");
+	if (!file)
+		goto finish;
+
+	LOG_info("Loading cheats from %s\n", filename);
+
+	//cheats = calloc(1, sizeof(struct Cheats));
+	//if (!cheats) {
+	//	LOG_error("Couldn't allocate memory for cheats\n");
+	//	goto finish;
+	//}
+
+	cheatcodes.count = parse_count(file);
+	if (cheatcodes.count <= 0) {
+		LOG_error("Couldn't read cheat count\n");
+		goto finish;
+	}
+
+	cheatcodes.cheats = calloc(cheatcodes.count, sizeof(struct Cheat));
+	if (!cheatcodes.cheats) {
+		LOG_error("Couldn't allocate memory for cheats\n");
+		goto finish;
+	}
+
+	if (parse_cheats(&cheatcodes, file)) {
+		LOG_error("Error reading cheat %d\n", i);
+		goto finish;
+	}
+
+	success = 1;
+finish:
+	if (!success) {
+		Cheats_free();
+	}
+
+	if (file)
+		fclose(file);
+}
+
+static void Cheat_getPath(char* filename) {
+	sprintf(filename, "%s/%s.cht", core.cheats_dir, game.name);
+	LOG_info("Cheat_getPath %s\n", filename);
 }
 
 ///////////////////////////////////////
@@ -3346,6 +3337,21 @@ void Core_init(void) {
 	core.init();
 	core.initialized = 1;
 }
+void Core_applyCheats(struct Cheats *cheats)
+{
+	if (!cheats)
+		return;
+
+	if (!core.cheat_reset || !core.cheat_set)
+		return;
+
+	core.cheat_reset();
+	for (int i = 0; i < cheats->count; i++) {
+		if (cheats->cheats[i].enabled) {
+			core.cheat_set(i, cheats->cheats[i].enabled, cheats->cheats[i].code);
+		}
+	}
+}
 void Core_load(void) {
 	LOG_info("Core_load\n");
 	struct retro_game_info game_info;
@@ -3359,8 +3365,8 @@ void Core_load(void) {
 	Cheat_getPath(cheats_path);
 	//content_based_name(content, cheats_path, sizeof(cheats_path), config_dir, "cheats/", ".cht");
 	if (cheats_path[0] != '\0') {
-		core.cheats = Cheats_load(cheats_path);
-		Core_applyCheats(&core.cheats);
+		Cheats_load(cheats_path);
+		Core_applyCheats(&cheatcodes);
 	}
 
 	SRAM_read();
@@ -3387,8 +3393,7 @@ void Core_unload(void) {
 void Core_quit(void) {
 	if (core.initialized) {
 		SRAM_write();
-		Cheats_free(cheats);
-		cheats = NULL;
+		Cheats_free();
 		RTC_write();
 		core.unload_game();
 		core.deinit();
@@ -3397,21 +3402,6 @@ void Core_quit(void) {
 }
 void Core_close(void) {
 	if (core.handle) dlclose(core.handle);
-}
-void Core_applyCheats(struct Cheats *cheats)
-{
-	if (!cheats)
-		return;
-
-	if (!current_core.retro_cheat_reset || !current_core.retro_cheat_set)
-		return;
-
-	current_core.retro_cheat_reset();
-	for (int i = 0; i < cheats->count; i++) {
-		if (cheats->cheats[i].enabled) {
-			current_core.retro_cheat_set(i, cheats->cheats[i].enabled, cheats->cheats[i].code);
-		}
-	}
 }
 
 ///////////////////////////////////////
