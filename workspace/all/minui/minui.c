@@ -10,6 +10,8 @@
 #include "defines.h"
 #include "api.h"
 #include "utils.h"
+#include <sys/resource.h>
+#include <pthread.h>
 
 ///////////////////////////////////////
 
@@ -1388,6 +1390,9 @@ void updateSelectionAnimation(int selected) {
 
 ///////////////////////////////////////
 
+
+
+
 int main (int argc, char *argv[]) {
 	// LOG_info("time from launch to:\n");
 	// unsigned long main_begin = SDL_GetTicks();
@@ -1427,7 +1432,7 @@ int main (int argc, char *argv[]) {
 	system("gametimectl.elf stop_all");
 	
 	// now that (most of) the heavy lifting is done, take a load off
-	PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
+	// PWR_setCPUSpeed(CPU_SPEED_MENU);
 	GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
@@ -1455,6 +1460,11 @@ int main (int argc, char *argv[]) {
 		bgbmp = scaled;
 	}
 	unsigned long cputimer = SDL_GetTicks();
+	int readytoscroll = 0;
+
+	pthread_t cpucheckthread;
+    pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
+
 	while (!quit) {
 
 		GFX_startFrame();
@@ -1645,7 +1655,7 @@ int main (int argc, char *argv[]) {
 		}
 		
 		if(dirty || dirtyanim) {
-			PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
+			// PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
 			GFX_clear(screen);
 			if(bgbmp) {
 				
@@ -2024,17 +2034,15 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-			
+
 			GFX_flip(screen);
 			dirty = 0;
+			readytoscroll = 0;
+			cputimer = SDL_GetTicks();
 		} else {
-			if(cputimer <= (SDL_GetTicks()-200)) {
-				PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
-				cputimer = SDL_GetTicks();
-			}
-		
-			if(!show_switcher && !show_version && is_scrolling) {
+			if(!show_switcher && !show_version && is_scrolling && cputimer <= (SDL_GetTicks()-CPU_SWITCH_DELAY_MS)) {
 				// nondirty
+				// PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
 				int ow = GFX_blitHardwareGroup(screen, show_setting);
 				Entry* entry = top->entries->items[top->selected];
 				char* entry_name = entry->name;
@@ -2068,6 +2076,9 @@ int main (int argc, char *argv[]) {
 				GFX_flip(screen);
 			} else {
 				GFX_delay();
+				if(cputimer <= (SDL_GetTicks()-CPU_SWITCH_DELAY_MS)) {
+					// PWR_setCPUSpeed(CPU_SPEED_MENU);
+				}
 			}
 			dirty = 0;
 		}

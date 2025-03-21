@@ -249,6 +249,8 @@ static double current_fps = SCREEN_FPS;
 static int fps_counter = 0;
 double currentfps = 0.0;
 double currentreqfps = 0.0;
+int currentcpuspeed = 0;
+double currentcpuse = 0;
 
 int currentbuffersize = 0;
 int currentsampleratein = 0;
@@ -594,6 +596,7 @@ int GFX_resetScrollText(TTF_Font* font, const char* in_name,int max_width) {
 		return 1;
 	}
 }
+
 void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width,int height, int padding, SDL_Color color, float transparency) {
     
     static int frame_counter = 0;

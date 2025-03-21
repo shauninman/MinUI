@@ -32,6 +32,7 @@ static int should_run_core = 1; // used by threaded video
 static pthread_t		core_pt;
 static pthread_mutex_t	core_mx;
 static pthread_cond_t	core_rq; // not sure this is required
+
 static SDL_Surface*	backbuffer = NULL;
 static void* coreThread(void *arg);
 
@@ -697,7 +698,7 @@ enum {
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
-	FE_OPT_OVERCLOCK,
+	// FE_OPT_OVERCLOCK,
 	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
 	FE_OPT_MAXFF,
@@ -939,16 +940,16 @@ static struct Config {
 				.values = tearing_labels,
 				.labels = tearing_labels,
 			},
-			[FE_OPT_OVERCLOCK] = {
-				.key	= "minarch_cpu_speed",
-				.name	= "CPU Speed",
-				.desc	= "Over- or underclock the CPU to prioritize\npure performance or power savings.",
-				.default_value = 1,
-				.value = 1,
-				.count = 3,
-				.values = overclock_labels,
-				.labels = overclock_labels,
-			},
+			// [FE_OPT_OVERCLOCK] = {
+			// 	.key	= "minarch_cpu_speed",
+			// 	.name	= "CPU Speed",
+			// 	.desc	= "Over- or underclock the CPU to prioritize\npure performance or power savings.",
+			// 	.default_value = 1,
+			// 	.value = 1,
+			// 	.count = 3,
+			// 	.values = overclock_labels,
+			// 	.labels = overclock_labels,
+			// },
 			[FE_OPT_THREAD] = {
 				.key	= "minarch_thread_video",
 				.name	= "Prioritize Audio",
@@ -1023,11 +1024,11 @@ static int Config_getValue(char* cfg, const char* key, char* out_value, int* loc
 
 static void setOverclock(int i) {
 	overclock = i;
-	switch (i) {
-		case 0: PWR_setCPUSpeed(CPU_SPEED_POWERSAVE); break;
-		case 1: PWR_setCPUSpeed(CPU_SPEED_NORMAL); break;
-		case 2: PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
-	}
+	// switch (i) {
+	// 	case 0: PWR_setCPUSpeed(CPU_SPEED_POWERSAVE); break;
+	// 	case 1: PWR_setCPUSpeed(CPU_SPEED_NORMAL); break;
+	// 	case 2: PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
+	// }
 }
 static int toggle_thread = 0;
 static void Config_syncFrontend(char* key, int value) {
@@ -1074,10 +1075,10 @@ static void Config_syncFrontend(char* key, int value) {
 		toggle_thread = old_value!=value;
 		i = FE_OPT_THREAD;
 	}
-	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
-		overclock = value;
-		i = FE_OPT_OVERCLOCK;
-	}
+	// else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
+	// 	overclock = value;
+	// 	i = FE_OPT_OVERCLOCK;
+	// }
 	else if (exactMatch(key,config.frontend.options[FE_OPT_DEBUG].key)) {
 		show_debug = value;
 		i = FE_OPT_DEBUG;
@@ -2918,7 +2919,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
-		sprintf(debug_text, "%.01f/%.01f %i%%", fps_double, cpu_double, (int)use_double);
+		sprintf(debug_text, "%.01f/%.01f %i%%/%i/%.01f", fps_double, cpu_double, (int)use_double,currentcpuspeed,currentcpuse);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
@@ -4824,6 +4825,8 @@ static void* coreThread(void *arg) {
 
 int main(int argc , char* argv[]) {
 	LOG_info("MinArch\n");
+	pthread_t cpucheckthread;
+    pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
 
 	setOverclock(overclock); // default to normal
 	// force a stack overflow to ensure asan is linked and actually working

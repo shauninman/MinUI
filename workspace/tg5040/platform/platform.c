@@ -4,6 +4,8 @@
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -18,7 +20,8 @@
 #include "utils.h"
 
 #include "scaler.h"
-
+#include <time.h>
+#include <pthread.h>
 
 int is_brick = 0;
 
@@ -646,6 +649,202 @@ void PLAT_powerOff(void) {
 int PLAT_supportsDeepSleep(void) { return 1; }
 
 ///////////////////////////////
+
+int PLAT_get_core_count() {
+    FILE *fp = fopen("/proc/stat", "r");
+    if (!fp) return 1;
+    int cores = 0;
+    char line[256];
+
+    while (fgets(line, sizeof(line), fp)) {
+        if (strncmp(line, "cpu", 3) == 0 && line[3] >= '0' && line[3] <= '9')
+            cores++;
+    }
+    fclose(fp);
+    return cores;
+}
+
+void PLAT_get_cpu_times(long *idle_times, long *total_times, int core_count) {
+    FILE *fp = fopen("/proc/stat", "r");
+    if (!fp) {
+        perror("Failed to open /proc/stat");
+        return;
+    }
+
+    char line[256];
+    fgets(line, sizeof(line), fp);  
+
+    for (int i = 0; i < core_count; i++) {
+        long user, nice, system, idle, iowait, irq, softirq, steal;
+        if (fgets(line, sizeof(line), fp) == NULL) break;
+
+        sscanf(line, "cpu%*d %ld %ld %ld %ld %ld %ld %ld %ld",
+               &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal);
+
+        idle_times[i] = idle + iowait;
+        total_times[i] = user + nice + system + idle + iowait + irq + softirq + steal;
+    }
+
+    fclose(fp);
+}
+static pthread_mutex_t currentcpuinfo;
+#define AVERAGE_WINDOW 2 
+
+void *PLAT_cpu_monitor(void *arg) {
+    int tmpcpuspeed = 0;
+    int tmpcpusahe = 0;
+    int core_count = PLAT_get_core_count();
+    long *prev_idle_times = malloc(core_count * sizeof(long));
+    long *prev_total_times = malloc(core_count * sizeof(long));
+
+    PLAT_get_cpu_times(prev_idle_times, prev_total_times, core_count);
+
+    struct timespec start_time, curr_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+    int downscale_counter = 0;
+    const int DOWNSCALE_DELAY = 5;
+    int dowscaled = 0;
+
+    double **usage_buffer = malloc(core_count * sizeof(double *));
+    int *buffer_index = malloc(core_count * sizeof(int));
+    int *valid_count = malloc(core_count * sizeof(int)); 
+
+    for (int i = 0; i < core_count; i++) {
+        usage_buffer[i] = malloc(AVERAGE_WINDOW * sizeof(double));
+        buffer_index[i] = 0;
+        valid_count[i] = 0; 
+        for (int j = 0; j < AVERAGE_WINDOW; j++) {
+            usage_buffer[i][j] = 0.0;
+        }
+    }
+
+    double *total_usage_per_core = malloc(core_count * sizeof(double));
+
+    for (int i = 0; i < core_count; i++) {
+        total_usage_per_core[i] = 0.0;
+    }
+
+    while (1) {
+        clock_gettime(CLOCK_MONOTONIC, &curr_time);
+        double elapsed_time_sec = (curr_time.tv_sec - start_time.tv_sec) + 
+                                  (curr_time.tv_nsec - start_time.tv_nsec) / 1000000000.0;
+
+        if (elapsed_time_sec >= 0.1) {
+            start_time = curr_time;
+
+            long *curr_idle_times = malloc(core_count * sizeof(long));
+            long *curr_total_times = malloc(core_count * sizeof(long));
+            PLAT_get_cpu_times(curr_idle_times, curr_total_times, core_count);
+
+            double highest_usage = 0.0;
+
+            for (int i = 0; i < core_count; i++) {
+                long idle_diff = curr_idle_times[i] - prev_idle_times[i];
+                long total_diff = curr_total_times[i] - prev_total_times[i];
+
+                if (total_diff > 0) {
+                    double core_usage = (1.0 - ((double)idle_diff / total_diff)) * 100.0;
+					if(core_usage) {
+                    if (core_usage > highest_usage) {
+                        highest_usage = core_usage;
+                    }
+					if(downscale_counter >= DOWNSCALE_DELAY) {
+                    usage_buffer[i][buffer_index[i]] = core_usage;
+
+                    if (core_usage > 0.0) {
+                        valid_count[i]++;
+                    }
+
+                    buffer_index[i] = (buffer_index[i] + 1) % AVERAGE_WINDOW;
+
+                    double sum = 0.0;
+                    int non_zero_count = 0;
+                    for (int j = 0; j < AVERAGE_WINDOW; j++) {
+                        if (usage_buffer[i][j] > 0) {
+                            sum += usage_buffer[i][j];
+                            non_zero_count++;
+                        }
+                    }
+
+                    if (non_zero_count > 0) {
+                        total_usage_per_core[i] = sum / non_zero_count;
+                    } else {
+                        total_usage_per_core[i] = 0.0;  
+                    }
+				}
+				}
+                }
+            }
+
+            if ((highest_usage > 20.00 && dowscaled == 1) || (highest_usage > 80.00 && dowscaled == 0)) {
+                PLAT_setCPUSpeed(CPU_SPEED_PERFORMANCE);
+				pthread_mutex_lock(&currentcpuinfo);
+				currentcpuspeed = 1992;
+				pthread_mutex_unlock(&currentcpuinfo);
+				downscale_counter = 0;
+                dowscaled = 0;
+            } 
+
+            else {
+                downscale_counter++;
+				
+                if (downscale_counter >= DOWNSCALE_DELAY) {
+                    double highest_average_usage = 0.0;
+                    for (int i = 0; i < core_count; i++) {
+                        if (total_usage_per_core[i] > highest_average_usage) {
+                            highest_average_usage = total_usage_per_core[i];
+                        }
+                    }
+
+                    if (highest_average_usage > 0) {
+						pthread_mutex_lock(&currentcpuinfo);
+						currentcpuse = highest_average_usage;
+						pthread_mutex_unlock(&currentcpuinfo);
+                        if (highest_average_usage < 15.00) {
+                            PLAT_setCPUSpeed(CPU_SPEED_MENU);
+                            pthread_mutex_lock(&currentcpuinfo);
+                            currentcpuspeed = 600;
+                            pthread_mutex_unlock(&currentcpuinfo);
+                            dowscaled = 1;
+                        } else if (highest_average_usage < 35.00) {
+                            PLAT_setCPUSpeed(CPU_SPEED_POWERSAVE);
+                            pthread_mutex_lock(&currentcpuinfo);
+                            currentcpuspeed = 1200;
+                            pthread_mutex_unlock(&currentcpuinfo);
+                        } else {
+                            PLAT_setCPUSpeed(CPU_SPEED_NORMAL);
+                            pthread_mutex_lock(&currentcpuinfo);
+                            currentcpuspeed = 1608;
+                            pthread_mutex_unlock(&currentcpuinfo);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < core_count; i++) {
+                prev_idle_times[i] = curr_idle_times[i];
+                prev_total_times[i] = curr_total_times[i];
+            }
+        }
+
+        usleep(100); 
+    }
+
+    for (int i = 0; i < core_count; i++) {
+        free(usage_buffer[i]);
+    }
+    free(usage_buffer);
+    free(buffer_index);
+    free(valid_count);
+    free(total_usage_per_core);
+    free(prev_idle_times);
+    free(prev_total_times);
+}
+
+
+
+
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
 void PLAT_setCPUSpeed(int speed) {
