@@ -150,7 +150,7 @@ void loadSettings() {
 				uint32_t temp_color;
 				if (sscanf(line, "font=%i", &temp_value) == 1)
 				{
-					LOG_info("ditte? %i \n",temp_value);
+					//LOG_info("ditte? %i \n",temp_value);
 					if(temp_value==1) {
 						FONT_PATH = RES_PATH "/chillroundm.ttf";
 					} else {
@@ -248,6 +248,8 @@ static int _;
 static int fps_counter = 0;
 static double instant_fps = 0.0;
 static double average_fps = 0.0;
+int currentcpuspeed = 0;
+double currentcpuse = 0;
 
 int currentbuffersize = 0;
 int currentsampleratein = 0;
@@ -613,6 +615,7 @@ int GFX_resetScrollText(TTF_Font* font, const char* in_name,int max_width) {
 		return 1;
 	}
 }
+
 void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width,int height, int padding, SDL_Color color, float transparency) {
     
     static int frame_counter = 0;

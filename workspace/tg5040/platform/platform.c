@@ -4,6 +4,8 @@
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -18,7 +20,8 @@
 #include "utils.h"
 
 #include "scaler.h"
-
+#include <time.h>
+#include <pthread.h>
 
 int is_brick = 0;
 
@@ -647,7 +650,139 @@ int PLAT_supportsDeepSleep(void) { return 1; }
 
 ///////////////////////////////
 
+void PLAT_get_process_cpu_time(long *proc_time) {
+    FILE *fp = fopen("/proc/self/stat", "r");
+    if (!fp) {
+        perror("Failed to open /proc/self/stat");
+        return;
+    }
+
+    long utime, stime;
+    char buffer[1024];
+    fgets(buffer, sizeof(buffer), fp);
+    fclose(fp);
+
+
+    sscanf(buffer, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %ld %ld", &utime, &stime);
+
+    *proc_time = utime + stime;  
+}
+
+static pthread_mutex_t currentcpuinfo;
+static pthread_mutex_t stop_mutex;
+#define AVERAGE_WINDOW 2
+#define DOWNSCALE_DELAY 100 
+
+
+void *PLAT_cpu_monitor(void *arg) {
+    long prev_proc_time = 0;
+    PLAT_get_process_cpu_time(&prev_proc_time); 
+
+    struct timespec start_time, curr_time;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start_time); 
+
+    int downscale_counter = 0;
+    int downscaled = 0;
+
+    long clock_ticks_per_sec = sysconf(_SC_CLK_TCK);  
+
+    while (true) {
+
+        clock_gettime(CLOCK_MONOTONIC_RAW, &curr_time);
+        double elapsed_time_sec = (curr_time.tv_sec - start_time.tv_sec) + 
+                                  (curr_time.tv_nsec - start_time.tv_nsec) / 1.0e9;
+
+
+        if (elapsed_time_sec >= 0.05) {  
+            start_time = curr_time;
+
+            long curr_proc_time = 0;
+            PLAT_get_process_cpu_time(&curr_proc_time);  
+            
+            long proc_diff = curr_proc_time - prev_proc_time; 
+
+
+            double proc_time_sec = (double)proc_diff / clock_ticks_per_sec;  
+
+		
+            if (proc_time_sec >= 0.075 || (downscaled && proc_time_sec > 0.03)) {  
+                PLAT_setCustomCPUSpeed(2000000);
+                pthread_mutex_lock(&currentcpuinfo);
+                currentcpuspeed = 2000;
+                pthread_mutex_unlock(&currentcpuinfo);
+                downscaled = 0;
+                downscale_counter = 0;
+            } 
+            else if (proc_time_sec < 0.75) {  
+                downscale_counter++;
+                if (downscale_counter >= DOWNSCALE_DELAY) {
+                    pthread_mutex_lock(&currentcpuinfo);
+
+					if (proc_time_sec < 0.01) {
+						PLAT_setCustomCPUSpeed(600000);
+						currentcpuspeed = 600;
+						downscaled = 1;
+					} 
+					else if (proc_time_sec < 0.015) {
+						PLAT_setCustomCPUSpeed(800000);
+						currentcpuspeed = 800;
+						downscaled = 1;
+					} 
+					else if (proc_time_sec < 0.015) {
+						PLAT_setCustomCPUSpeed(1000000);
+						currentcpuspeed = 1000;
+						downscaled = 1;
+					} 
+					else if (proc_time_sec < 0.025) {
+						PLAT_setCustomCPUSpeed(1200000);
+						currentcpuspeed = 1200;
+					} 
+					else if (proc_time_sec < 0.03) {
+						PLAT_setCustomCPUSpeed(1400000);
+						currentcpuspeed = 1400;
+					} 
+					else if (proc_time_sec < 0.04) {
+						PLAT_setCustomCPUSpeed(1500000);
+						currentcpuspeed = 1600;
+					} 
+					else if (proc_time_sec < 0.05) {
+						PLAT_setCustomCPUSpeed(1600000);
+						currentcpuspeed = 1600;
+					} 
+					else if (proc_time_sec < 0.06) {
+						PLAT_setCustomCPUSpeed(1700000);
+						currentcpuspeed = 1600;
+					} 
+					else  {
+						PLAT_setCustomCPUSpeed(1800000);
+						currentcpuspeed = 1800;
+					} 
+				
+                    pthread_mutex_unlock(&currentcpuinfo);
+                }
+            }
+
+            prev_proc_time = curr_proc_time;  
+        }
+
+        usleep(50000); 
+    }
+}
+
+
+
+
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
+void PLAT_setCustomCPUSpeed(int speed) {
+    FILE *fp = fopen(GOVERNOR_PATH, "w");
+    if (fp == NULL) {
+        perror("Failed to open scaling_setspeed");
+        return;
+    }
+
+    fprintf(fp, "%d\n", speed);
+    fclose(fp);
+}
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {

@@ -12,6 +12,8 @@ int hide(char* file_name);
 
 char *splitString(char *str, const char *delim);
 char *replaceString2(const char *orig, char *rep, char *with);
+void truncateString(char *string, size_t max_len);
+void wrapString(char *string, size_t max_len, size_t max_lines);
 size_t trimString(char *out, size_t len, const char *str, bool first);
 void removeParentheses(char *str_out, const char *str_in);
 void serializeTime(char *dest_str, int nTime);

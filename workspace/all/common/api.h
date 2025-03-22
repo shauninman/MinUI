@@ -84,6 +84,8 @@ extern float currentbufferms;
 extern int currentbuffersize;
 extern int currentsampleratein;
 extern int currentsamplerateout;
+extern int currentcpuspeed;
+extern double currentcpuse;
 extern int should_rotate;
 extern MinUISettings settings;
 
@@ -382,6 +384,7 @@ enum {
 	CPU_SPEED_NORMAL,
 	CPU_SPEED_PERFORMANCE,
 };
+#define CPU_SWITCH_DELAY_MS 500
 #define PWR_setCPUSpeed PLAT_setCPUSpeed
 
 ///////////////////////////////
@@ -421,8 +424,10 @@ void PLAT_enableBacklight(int enable);
 int PLAT_supportsDeepSleep(void);
 int PLAT_deepSleep(void);
 void PLAT_powerOff(void);
-	
+
+void *PLAT_cpu_monitor(void *arg);
 void PLAT_setCPUSpeed(int speed); // enum
+void PLAT_setCustomCPUSpeed(int speed);
 void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 

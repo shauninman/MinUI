@@ -32,6 +32,7 @@ static int should_run_core = 1; // used by threaded video
 static pthread_t		core_pt;
 static pthread_mutex_t	core_mx;
 static pthread_cond_t	core_rq; // not sure this is required
+
 static SDL_Surface*	backbuffer = NULL;
 static void* coreThread(void *arg);
 
@@ -42,8 +43,6 @@ enum {
 	SCALE_CROPPED,
 	SCALE_COUNT,
 };
-
-
 
 // default frontend options
 static int screen_scaling = SCALE_ASPECT;
@@ -82,11 +81,12 @@ static struct Core {
 	const char states_dir[MAX_PATH]; // eg. /mnt/sdcard/.userdata/arm-480/GB-gambatte
 	const char saves_dir[MAX_PATH]; // eg. /mnt/sdcard/Saves/GB
 	const char bios_dir[MAX_PATH]; // eg. /mnt/sdcard/Bios/GB
+	const char cheats_dir[MAX_PATH]; // eg. /mnt/sdcard/Cheats/GB
 	
 	double fps;
 	double sample_rate;
 	double aspect_ratio;
-	
+
 	void* handle;
 	void (*init)(void);
 	void (*deinit)(void);
@@ -100,6 +100,8 @@ static struct Core {
 	size_t (*serialize_size)(void);
 	bool (*serialize)(void *data, size_t size);
 	bool (*unserialize)(const void *data, size_t size);
+	void (*cheat_reset)(void);
+	void (*cheat_set)(unsigned id, bool enabled, const char*);
 	bool (*load_game)(const struct retro_game_info *game);
 	bool (*load_game_special)(unsigned game_type, const struct retro_game_info *info, size_t num_info);
 	void (*unload_game)(void);
@@ -382,6 +384,241 @@ static void Game_changeDisc(char* path) {
 	
 	disk_control_ext.replace_image_index(0, &game_info);
 	putFile(CHANGE_DISC_PATH, path); // MinUI still needs to know this to update recents.txt
+}
+
+///////////////////////////////////////
+// based on picoarch/cheat.c
+
+struct Cheat {
+	const char *name;
+	const char *info;
+	int enabled;
+	const char *code;
+};
+
+static struct Cheats {
+	int enabled;
+	size_t count;
+	struct Cheat *cheats;
+} cheatcodes;
+
+#define CHEAT_MAX_DESC_LEN 27
+#define CHEAT_MAX_LINE_LEN 52
+#define CHEAT_MAX_LINES 3
+
+static size_t parse_count(FILE *file) {
+	size_t count = 0;
+	fscanf(file, " cheats = %lu\n", (unsigned long *)&count);
+	return count;
+}
+
+static const char *find_val(const char *start) {
+	start--;
+	while(!isspace(*++start))
+		;
+
+	while(isspace(*++start))
+		;
+
+	if (*start != '=')
+		return NULL;
+
+	while(isspace(*++start))
+		;
+
+	return start;
+}
+
+static int parse_bool(const char *ptr, int *out) {
+	if (!strncasecmp(ptr, "true", 4)) {
+		*out = 1;
+	} else if (!strncasecmp(ptr, "false", 5)) {
+		*out = 0;
+	} else {
+		return -1;
+	}
+	return 0;
+}
+
+static int parse_string(const char *ptr, char *buf, size_t len) {
+	int index = 0;
+	size_t input_len = strlen(ptr);
+
+	buf[0] = '\0';
+
+	if (*ptr++ != '"')
+		return -1;
+
+	while (*ptr != '\0' && *ptr != '"' && index < len - 1) {
+		if (*ptr == '\\' && index < input_len - 1) {
+			ptr++;
+			buf[index++] = *ptr++;
+		} else if (*ptr == '&' && !strncmp(ptr, "&quot;", 6)) {
+			buf[index++] = '"';
+			ptr += 6;
+		} else {
+			buf[index++] = *ptr++;
+		}
+	}
+
+	if (*ptr != '"') {
+		buf[0] = '\0';
+		return -1;
+	}
+
+	buf[index] = '\0';
+	return 0;
+}
+
+static int parse_cheats(struct Cheats *cheats, FILE *file) {
+	int ret = -1;
+	char line[512];
+	char buf[512];
+	const char *ptr;
+
+	do {
+		if (!fgets(line, sizeof(line), file)) {
+			ret = 0;
+			break;
+		}
+
+		if (line[strlen(line) - 1] != '\n' && !feof(file)) {
+			LOG_warn("Cheat line too long\n");
+			continue;
+		}
+
+		if ((ptr = strstr(line, "cheat"))) {
+			int index = -1;
+			struct Cheat *cheat;
+			size_t len;
+			sscanf(ptr, "cheat%d", &index);
+
+			if (index >= cheats->count)
+				continue;
+			cheat = &cheats->cheats[index];
+
+			if (strstr(ptr, "_desc")) {
+				ptr = find_val(ptr);
+				if (!ptr || parse_string(ptr, buf, sizeof(buf))) {
+					LOG_warn("Couldn't parse cheat %d description\n", index);
+					continue;
+				}
+
+				len = strlen(buf);
+				if (len == 0)
+					continue;
+
+				cheat->name = calloc(len+1, sizeof(char));
+				if (!cheat->name)
+					goto finish;
+
+				strncpy((char *)cheat->name, buf, len);
+				truncateString((char *)cheat->name, CHEAT_MAX_DESC_LEN);
+
+				if (len >= CHEAT_MAX_DESC_LEN) {
+					cheat->info = calloc(len+1, sizeof(char));
+					if (!cheat->info)
+						goto finish;
+
+					strncpy((char *)cheat->info, buf, len);
+					wrapString((char *)cheat->info, CHEAT_MAX_LINE_LEN, CHEAT_MAX_LINES);
+				}
+			} else if (strstr(ptr, "_code")) {
+				ptr = find_val(ptr);
+				if (!ptr || parse_string(ptr, buf, sizeof(buf))) {
+					LOG_warn("Couldn't parse cheat %d code\n", index);
+					continue;
+				}
+
+				len = strlen(buf);
+				if (len == 0)
+					continue;
+
+				cheat->code = calloc(len+1, sizeof(char));
+				if (!cheat->code)
+					goto finish;
+
+				strncpy((char *)cheat->code, buf, len);
+			} else if (strstr(ptr, "_enable")) {
+				ptr = find_val(ptr);
+				if (!ptr || parse_bool(ptr, &cheat->enabled)) {
+					LOG_warn("Couldn't parse cheat %d enabled\n", index);
+					continue;
+				}
+			}
+		}
+	} while(1);
+
+finish:
+	return ret;
+}
+
+void Cheats_free() {
+	size_t i;
+	for (i = 0; i < cheatcodes.count; i++) {
+		struct Cheat *cheat = &cheatcodes.cheats[i];
+		if (cheat) {
+			free((char *)cheat->name);
+			free((char *)cheat->info);
+			free((char *)cheat->code);
+		}
+	}
+	free(cheatcodes.cheats);
+	cheatcodes.count = 0;
+}
+
+void Cheats_load(const char *filename) {
+	int success = 0;
+	struct Cheats *cheats = &cheatcodes;
+	FILE *file = NULL;
+	size_t i;
+
+	file = fopen(filename, "r");
+	if (!file) {
+		LOG_error("Error opening cheat file: %s\n\t%s\n", filename, strerror(errno));
+		goto finish;
+	}
+
+	LOG_info("Loading cheats from %s\n", filename);
+
+	//cheats = calloc(1, sizeof(struct Cheats));
+	//if (!cheats) {
+	//	LOG_error("Couldn't allocate memory for cheats\n");
+	//	goto finish;
+	//}
+
+	cheatcodes.count = parse_count(file);
+	if (cheatcodes.count <= 0) {
+		LOG_error("Couldn't read cheat count\n");
+		goto finish;
+	}
+
+	cheatcodes.cheats = calloc(cheatcodes.count, sizeof(struct Cheat));
+	if (!cheatcodes.cheats) {
+		LOG_error("Couldn't allocate memory for cheats\n");
+		goto finish;
+	}
+
+	if (parse_cheats(&cheatcodes, file)) {
+		LOG_error("Error reading cheat %d\n", i);
+		goto finish;
+	}
+
+	LOG_info("Found %i cheats for the current game.\n", cheatcodes.count);
+
+	success = 1;
+finish:
+	if (!success) {
+		Cheats_free();
+	}
+
+	if (file)
+		fclose(file);
+}
+
+static void Cheat_getPath(char* filename) {
+	sprintf(filename, "%s/%s.cht", core.cheats_dir, game.name);
+	LOG_info("Cheat_getPath %s\n", filename);
 }
 
 ///////////////////////////////////////
@@ -945,7 +1182,7 @@ static struct Config {
 				.desc	= "Over- or underclock the CPU to prioritize\npure performance or power savings.",
 				.default_value = 1,
 				.value = 1,
-				.count = 3,
+				.count = 4,
 				.values = overclock_labels,
 				.labels = overclock_labels,
 			},
@@ -1021,13 +1258,24 @@ static int Config_getValue(char* cfg, const char* key, char* out_value, int* loc
 	return 1;
 }
 
+
+
 static void setOverclock(int i) {
-	overclock = i;
-	switch (i) {
-		case 0: PWR_setCPUSpeed(CPU_SPEED_POWERSAVE); break;
-		case 1: PWR_setCPUSpeed(CPU_SPEED_NORMAL); break;
-		case 2: PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
-	}
+    overclock = i;
+    switch (i) {
+        case 0: {
+            PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
+            break;
+		}
+        case 1:  {
+            PWR_setCPUSpeed(CPU_SPEED_NORMAL);
+            break;
+		}
+        case 2:  {
+            PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
+            break;
+		}
+    }
 }
 static int toggle_thread = 0;
 static void Config_syncFrontend(char* key, int value) {
@@ -1504,7 +1752,6 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 		config.core.options = calloc(count+1, sizeof(Option));
 		
 		for (int i=0; i<config.core.count; i++) {
-			LOG_info("optie\n");
 			int len;
 			const struct retro_core_option_definition *def = &defs[i];
 			Option* item = &config.core.options[i];
@@ -1894,11 +2141,11 @@ static void Input_init(const struct retro_input_descriptor *vars) {
 
 			// TODO: don't ignore unavailable buttons, just override them to BTN_ID_NONE!
 			if (var->id>=RETRO_BUTTON_COUNT) {
-				printf("UNAVAILABLE: %s\n", var->description); fflush(stdout);
+				//printf("UNAVAILABLE: %s\n", var->description); fflush(stdout);
 				continue;
 			}
 			else {
-				printf("PRESENT    : %s\n", var->description); fflush(stdout);
+				//printf("PRESENT    : %s\n", var->description); fflush(stdout);
 			}
 			present[var->id] = 1;
 			core_button_names[var->id] = var->description;
@@ -1909,7 +2156,7 @@ static void Input_init(const struct retro_input_descriptor *vars) {
 
 	for (int i=0;default_button_mapping[i].name; i++) {
 		ButtonMapping* mapping = &default_button_mapping[i];
-		LOG_info("DEFAULT %s (%s): <%s>\n", core_button_names[mapping->retro], mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]));
+		//LOG_info("DEFAULT %s (%s): <%s>\n", core_button_names[mapping->retro], mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]));
 		if (core_button_names[mapping->retro]) mapping->name = (char*)core_button_names[mapping->retro];
 	}
 	
@@ -1924,7 +2171,7 @@ static void Input_init(const struct retro_input_descriptor *vars) {
 			mapping->ignore = 1;
 			continue;
 		}
-		LOG_info("%s: <%s> (%i:%i)\n", mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]), mapping->local, mapping->retro);
+		//LOG_info("%s: <%s> (%i:%i)\n", mapping->name, (mapping->local==BTN_ID_NONE ? "NONE" : device_button_names[mapping->local]), mapping->local, mapping->retro);
 	}
 	
 	puts("---------------------------------");
@@ -2125,7 +2372,6 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS: { /* 53 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS");
-		LOG_info("dit dan a");
 		if (data) {
 			OptionList_reset();
 			OptionList_init((const struct retro_core_option_definition *)data); 
@@ -2134,7 +2380,6 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL: { /* 54 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL");
-		LOG_info("dit dan b");
 		const struct retro_core_options_intl *options = (const struct retro_core_options_intl *)data;
 		if (options && options->us) {
 			OptionList_reset();
@@ -3051,6 +3296,8 @@ void Core_open(const char* core_path, const char* tag_name) {
 	core.serialize_size = dlsym(core.handle, "retro_serialize_size");
 	core.serialize = dlsym(core.handle, "retro_serialize");
 	core.unserialize = dlsym(core.handle, "retro_unserialize");
+	core.cheat_reset = dlsym(core.handle, "retro_cheat_reset");
+	core.cheat_set = dlsym(core.handle, "retro_cheat_set");
 	core.load_game = dlsym(core.handle, "retro_load_game");
 	core.load_game_special = dlsym(core.handle, "retro_load_game_special");
 	core.unload_game = dlsym(core.handle, "retro_unload_game");
@@ -3091,6 +3338,7 @@ void Core_open(const char* core_path, const char* tag_name) {
 	sprintf((char*)core.states_dir, SHARED_USERDATA_PATH "/%s-%s", core.tag, core.name);
 	sprintf((char*)core.saves_dir, SDCARD_PATH "/Saves/%s", core.tag);
 	sprintf((char*)core.bios_dir, SDCARD_PATH "/Bios/%s", core.tag);
+	sprintf((char*)core.cheats_dir, SDCARD_PATH "/Cheats/%s", core.tag);
 	
 	char cmd[512];
 	sprintf(cmd, "mkdir -p \"%s\"; mkdir -p \"%s\"", core.config_dir, core.states_dir);
@@ -3108,6 +3356,23 @@ void Core_init(void) {
 	core.init();
 	core.initialized = 1;
 }
+
+void Core_applyCheats(struct Cheats *cheats)
+{
+	if (!cheats)
+		return;
+
+	if (!core.cheat_reset || !core.cheat_set)
+		return;
+
+	core.cheat_reset();
+	for (int i = 0; i < cheats->count; i++) {
+		if (cheats->cheats[i].enabled) {
+			core.cheat_set(i, cheats->cheats[i].enabled, cheats->cheats[i].code);
+		}
+	}
+}
+
 int Core_updateAVInfo(void) {
 	struct retro_system_av_info av_info = {};
 	core.get_system_av_info(&av_info);
@@ -3125,6 +3390,7 @@ int Core_updateAVInfo(void) {
 
 	return changed;
 }
+
 void Core_load(void) {
 	LOG_info("Core_load\n");
 	struct retro_game_info game_info;
@@ -3132,13 +3398,18 @@ void Core_load(void) {
 	game_info.data = game.data;
 	game_info.size = game.size;
 	LOG_info("game path: %s (%i)\n", game_info.path, game.size);
-	
-	LOG_info("gamepje laden\n");
 	core.load_game(&game_info);
-	LOG_info("gamepje laden gedaan\n");
+
+	char cheats_path[MAX_PATH] = {0};
+	Cheat_getPath(cheats_path);
+	if (cheats_path[0] != '\0') {
+		LOG_info("cheat file path: %s\n", cheats_path);
+		Cheats_load(cheats_path);
+		Core_applyCheats(&cheatcodes);
+	}
+
 	SRAM_read();
 	RTC_read();
-	LOG_info("andere zooi gedaan?\n");
 	// NOTE: must be called after core.load_game!
 	core.set_controller_port_device(0, RETRO_DEVICE_JOYPAD); // set a default, may update after loading configs
 	Core_updateAVInfo();
@@ -3152,6 +3423,7 @@ void Core_unload(void) {
 void Core_quit(void) {
 	if (core.initialized) {
 		SRAM_write();
+		Cheats_free();
 		RTC_write();
 		core.unload_game();
 		core.deinit();
@@ -3721,15 +3993,89 @@ static int OptionQuicksave_onConfirm(MenuList* list, int i) {
 	PWR_powerOff();
 }
 
+static int OptionCheats_optionChanged(MenuList* list, int i) {
+	MenuItem* item = &list->items[i];
+	struct Cheat *cheat = &cheatcodes.cheats[i];
+	cheat->enabled = item->value;
+	Core_applyCheats(&cheatcodes);
+	return MENU_CALLBACK_NOP;
+}
+
+static int OptionCheats_optionDetail(MenuList* list, int i) {
+	MenuItem* item = &list->items[i];
+	struct Cheat *cheat = &cheatcodes.cheats[i];
+	if (cheat->info) 
+		return Menu_message((char*)cheat->info, (char*[]){ "B","BACK", NULL });
+	else return MENU_CALLBACK_NOP;
+}
+
+static MenuList OptionCheats_menu = {
+	.type = MENU_FIXED,
+	.on_confirm = OptionCheats_optionDetail, // TODO: this needs pagination to be truly useful
+	.on_change = OptionCheats_optionChanged,
+	.items = NULL,
+};
+static int OptionCheats_openMenu(MenuList* list, int i) {
+	if (OptionCheats_menu.items == NULL) {
+		// populate
+		OptionCheats_menu.items = calloc(cheatcodes.count + 1, sizeof(MenuItem));
+		for (int i = 0; i<cheatcodes.count; i++) {
+			struct Cheat *cheat = &cheatcodes.cheats[i];
+			MenuItem *item = &OptionCheats_menu.items[i];
+
+			// this stuff gets actually copied around.. what year is it?
+			int len = strlen(cheat->name) + 1;
+			item->name = calloc(len, sizeof(char));
+			strcpy(item->name, cheat->name);
+
+			if(cheat->info) {
+				len = strlen(cheat->info) + 1;
+				item->desc = calloc(len, sizeof(char));
+				strncpy(item->desc, cheat->info, len);
+				
+				// these magic numbers are more about chars per line than pixel width 
+				// so it's not going to be relative to the screen size, only the scale
+				// what does that even mean?
+				GFX_wrapText(font.tiny, item->desc, SCALE1(240), 2); // TODO magic number!
+			}
+
+			item->value = cheat->enabled;
+			item->values = onoff_labels;
+		}
+	}
+	else {
+		// update
+		for (int j = 0; j < cheatcodes.count; j++) {
+			struct Cheat *cheat = &cheatcodes.cheats[i];
+			MenuItem *item = &OptionCheats_menu.items[i];
+			// I guess that makes sense, nobody is changing these but us - what about state restore?
+			if(!cheat->enabled)
+				continue;
+			item->value = cheat->enabled;
+		}
+	}
+
+	if (OptionCheats_menu.items[0].name) {
+		Menu_options(&OptionCheats_menu);
+	}
+	else {
+		Menu_message("This core has no cheats.", (char*[]){ "B","BACK", NULL });
+	}
+	
+	return MENU_CALLBACK_NOP;
+}
+
+
 static MenuList options_menu = {
 	.type = MENU_LIST,
 	.items = (MenuItem[]) {
 		{"Frontend", "MinUI (" BUILD_DATE " " BUILD_HASH ")",.on_confirm=OptionFrontend_openMenu},
 		{"Emulator",.on_confirm=OptionEmulator_openMenu},
+		// TODO: this should be hidden with no cheats available
+		{"Cheats",.on_confirm=OptionCheats_openMenu},
 		{"Controls",.on_confirm=OptionControls_openMenu},
 		{"Shortcuts",.on_confirm=OptionShortcuts_openMenu}, 
 		{"Save Changes",.on_confirm=OptionSaveChanges_openMenu},
-		{NULL},
 		{NULL},
 		{NULL},
 	}
@@ -4845,6 +5191,7 @@ static void* coreThread(void *arg) {
 int main(int argc , char* argv[]) {
 	LOG_info("MinArch\n");
 
+
 	setOverclock(overclock); // default to normal
 	// force a stack overflow to ensure asan is linked and actually working
 	// char tmp[2];
@@ -4894,27 +5241,16 @@ int main(int argc , char* argv[]) {
 	// why not move to Core_init()?
 	// ah, because it's defined before options_menu...
 	options_menu.items[1].desc = (char*)core.version;
-	LOG_info("stap 1\n");
 	Core_load();
-	LOG_info("stap 2\n");
 	Input_init(NULL);
-	LOG_info("stap 3\n");
 	Config_readOptions(); // but others load and report options later (eg. nes)
-	LOG_info("stap 4\n");
 	Config_readControls(); // restore controls (after the core has reported its defaults)
-	LOG_info("stap 5\n");
 	Config_free();
-	LOG_info("stap 6\n");
 	SND_init(core.sample_rate, core.fps);
-	LOG_info("stap 7\n");
 	InitSettings(); // after we initialize audio
-	LOG_info("stap 8\n");
 	Menu_init();
-	LOG_info("stap 9\n");
 	State_resume();
-	LOG_info("stap 10\n");
 	Menu_initState(); // make ready for state shortcuts
-	LOG_info("stap 11\n");
 	if (thread_video) {
 		core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 		core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
