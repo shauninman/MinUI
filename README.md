@@ -60,7 +60,11 @@ While in game:
 Deep sleep:   
 - First the device goes into light sleep mode the screen turns off and the Leds will pulse 5 times to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off. 
 
-Discord:   
+# What about X feature? 
+While features still missing will be eventually be part native on NextUI, there are right now already some excellent Paks out there from other developers. For for example things like WiFI and syncthings we def recommend checking out the awesome work from [@josegonzalez](https://github.com/josegonzalez) He has an awesome Pak library with many things
+https://github.com/josegonzalez/pakman/
+
+# Discord:   
 [https://discord.gg/HKd7wqZk3h](https://discord.gg/HKd7wqZk3h)
 
 

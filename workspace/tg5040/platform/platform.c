@@ -24,7 +24,7 @@
 #include <pthread.h>
 
 int is_brick = 0;
-
+volatile int useAutoCpu = 1;
 ///////////////////////////////
 
 static SDL_Joystick *joystick;
@@ -650,34 +650,22 @@ int PLAT_supportsDeepSleep(void) { return 1; }
 
 ///////////////////////////////
 
-void PLAT_get_process_cpu_time(long *proc_time) {
-    FILE *fp = fopen("/proc/self/stat", "r");
-    if (!fp) {
-        perror("Failed to open /proc/self/stat");
-        return;
-    }
-
-    long utime, stime;
-    char buffer[1024];
-    fgets(buffer, sizeof(buffer), fp);
-    fclose(fp);
-
-
-    sscanf(buffer, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %ld %ld", &utime, &stime);
-
-    *proc_time = utime + stime;  
+double get_time_sec() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    return ts.tv_sec + ts.tv_nsec / 1e9; // Convert to seconds
+}
+double get_process_cpu_time_sec() {
+    struct timespec ts;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+    return ts.tv_sec + ts.tv_nsec / 1e9; // Convert to seconds
 }
 
 static pthread_mutex_t currentcpuinfo;
-static pthread_mutex_t stop_mutex;
 #define AVERAGE_WINDOW 2
-#define DOWNSCALE_DELAY 100 
-
+#define DOWNSCALE_DELAY 10 
 
 void *PLAT_cpu_monitor(void *arg) {
-    long prev_proc_time = 0;
-    PLAT_get_process_cpu_time(&prev_proc_time); 
-
     struct timespec start_time, curr_time;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start_time); 
 
@@ -686,70 +674,60 @@ void *PLAT_cpu_monitor(void *arg) {
 
     long clock_ticks_per_sec = sysconf(_SC_CLK_TCK);  
 
+	double prev_real_time = get_time_sec();
+    double prev_cpu_time = get_process_cpu_time_sec();
+
     while (true) {
+		if(useAutoCpu) {
+			double curr_real_time = get_time_sec();
+			double curr_cpu_time = get_process_cpu_time_sec();
 
-        clock_gettime(CLOCK_MONOTONIC_RAW, &curr_time);
-        double elapsed_time_sec = (curr_time.tv_sec - start_time.tv_sec) + 
-                                  (curr_time.tv_nsec - start_time.tv_nsec) / 1.0e9;
-
-
-        if (elapsed_time_sec >= 0.05) {  
-            start_time = curr_time;
-
-            long curr_proc_time = 0;
-            PLAT_get_process_cpu_time(&curr_proc_time);  
-            
-            long proc_diff = curr_proc_time - prev_proc_time; 
+			double elapsed_real_time = curr_real_time - prev_real_time;
+			double elapsed_cpu_time = curr_cpu_time - prev_cpu_time;
+			double cpu_usage = 0;
+			if (elapsed_real_time > 0) {
+				cpu_usage = (elapsed_cpu_time / elapsed_real_time) * 100.0;
+				currentcpuse = cpu_usage;
+			}
 
 
-            double proc_time_sec = (double)proc_diff / clock_ticks_per_sec;  
+			if (cpu_usage >= 90 || (downscaled && cpu_usage > 30)) {  
+				PLAT_setCustomCPUSpeed(2000000);
+				pthread_mutex_lock(&currentcpuinfo);
+				currentcpuspeed = 2000;
+				pthread_mutex_unlock(&currentcpuinfo);
+				downscaled = 0;
+				downscale_counter = 0;
+			} 
+			else if (cpu_usage < 90) {  
+				downscale_counter++;
+				if (downscale_counter >= DOWNSCALE_DELAY) {
+					pthread_mutex_lock(&currentcpuinfo);
 
-		
-            if (proc_time_sec >= 0.075 || (downscaled && proc_time_sec > 0.03)) {  
-                PLAT_setCustomCPUSpeed(2000000);
-                pthread_mutex_lock(&currentcpuinfo);
-                currentcpuspeed = 2000;
-                pthread_mutex_unlock(&currentcpuinfo);
-                downscaled = 0;
-                downscale_counter = 0;
-            } 
-            else if (proc_time_sec < 0.75) {  
-                downscale_counter++;
-                if (downscale_counter >= DOWNSCALE_DELAY) {
-                    pthread_mutex_lock(&currentcpuinfo);
-
-					if (proc_time_sec < 0.01) {
+					if (cpu_usage < 10) {
 						PLAT_setCustomCPUSpeed(600000);
 						currentcpuspeed = 600;
 						downscaled = 1;
 					} 
-					else if (proc_time_sec < 0.015) {
+					else if (cpu_usage < 20) {
 						PLAT_setCustomCPUSpeed(800000);
 						currentcpuspeed = 800;
 						downscaled = 1;
 					} 
-					else if (proc_time_sec < 0.015) {
+					else if (cpu_usage < 30) {
 						PLAT_setCustomCPUSpeed(1000000);
 						currentcpuspeed = 1000;
 						downscaled = 1;
 					} 
-					else if (proc_time_sec < 0.025) {
+					else if (cpu_usage < 40) {
 						PLAT_setCustomCPUSpeed(1200000);
 						currentcpuspeed = 1200;
 					} 
-					else if (proc_time_sec < 0.03) {
+					else if (cpu_usage < 60) {
 						PLAT_setCustomCPUSpeed(1400000);
 						currentcpuspeed = 1400;
 					} 
-					else if (proc_time_sec < 0.04) {
-						PLAT_setCustomCPUSpeed(1500000);
-						currentcpuspeed = 1600;
-					} 
-					else if (proc_time_sec < 0.05) {
-						PLAT_setCustomCPUSpeed(1600000);
-						currentcpuspeed = 1600;
-					} 
-					else if (proc_time_sec < 0.06) {
+					else if (cpu_usage < 80) {
 						PLAT_setCustomCPUSpeed(1700000);
 						currentcpuspeed = 1600;
 					} 
@@ -758,15 +736,32 @@ void *PLAT_cpu_monitor(void *arg) {
 						currentcpuspeed = 1800;
 					} 
 				
-                    pthread_mutex_unlock(&currentcpuinfo);
-                }
-            }
+					pthread_mutex_unlock(&currentcpuinfo);
+				}
+			}
+			prev_real_time = curr_real_time;
+			prev_cpu_time = curr_cpu_time;
+			usleep(50000);  // Sleep for 10ms, but measurement is independent of sleep
+		} else {
+			 
 
-            prev_proc_time = curr_proc_time;  
-        }
+			double curr_real_time = get_time_sec();
+			double curr_cpu_time = get_process_cpu_time_sec();
 
-        usleep(50000); 
-    }
+			double elapsed_real_time = curr_real_time - prev_real_time;
+			double elapsed_cpu_time = curr_cpu_time - prev_cpu_time;
+
+			if (elapsed_real_time > 0) {
+				double cpu_usage = (elapsed_cpu_time / elapsed_real_time) * 100.0;
+				currentcpuse = cpu_usage;
+			}
+
+			// Update previous values
+			prev_real_time = curr_real_time;
+			prev_cpu_time = curr_cpu_time;
+			usleep(100000);  // Sleep for 10ms, but measurement is independent of sleep
+		}
+	}
 }
 
 
@@ -786,10 +781,10 @@ void PLAT_setCustomCPUSpeed(int speed) {
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
-		case CPU_SPEED_MENU: 		freq =  600000; break;
-		case CPU_SPEED_POWERSAVE:	freq = 1200000; break;
-		case CPU_SPEED_NORMAL: 		freq = 1608000; break;
-		case CPU_SPEED_PERFORMANCE: freq = 2000000; break;
+		case CPU_SPEED_MENU: 		freq =  600000; currentcpuspeed = 600; break;
+		case CPU_SPEED_POWERSAVE:	freq = 1200000; currentcpuspeed = 1200; break;
+		case CPU_SPEED_NORMAL: 		freq = 1608000; currentcpuspeed = 1600; break;
+		case CPU_SPEED_PERFORMANCE: freq = 2000000; currentcpuspeed = 2000; break;
 	}
 	putInt(GOVERNOR_PATH, freq);
 }
