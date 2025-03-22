@@ -831,7 +831,6 @@ static char* overclock_labels[] = {
 	"Powersave",
 	"Normal",
 	"Performance",
-	"Auto",
 	NULL,
 };
 
@@ -1027,30 +1026,17 @@ static int Config_getValue(char* cfg, const char* key, char* out_value, int* loc
 
 static void setOverclock(int i) {
     overclock = i;
-	LOG_info("roept die dit aan?\n");
     switch (i) {
         case 0: {
-			LOG_info("kaas 0?\n");
             PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
-			PLAT_stop_cpu_monitor();
             break;
 		}
         case 1:  {
-			LOG_info("kaas 1?\n");
             PWR_setCPUSpeed(CPU_SPEED_NORMAL);
-			PLAT_stop_cpu_monitor();
             break;
 		}
         case 2:  {
-			LOG_info("kaas 2?\n");
             PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
-			PLAT_stop_cpu_monitor();
-            break;
-		}
-        case 3: {
-			LOG_info("kaas 3?\n");
-			pthread_t cpucheckthread;
-			pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
             break;
 		}
     }
