@@ -51,7 +51,8 @@ static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
-static int use_core_fps  = 0;
+static int use_core_fps = 0;
+static int sync_ref = 0;
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
@@ -914,6 +915,12 @@ static char* tearing_labels[] = {
 	"Strict",
 	NULL
 };
+static char* sync_ref_labels[] = {
+	"Auto",
+	"Screen",
+	"Core",
+	NULL
+};
 static char* max_ff_labels[] = {
 	"None",
 	"2x",
@@ -935,7 +942,7 @@ enum {
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
-	FE_OPT_CORE_FPS,
+	FE_OPT_SYNC_REFERENCE,
 	FE_OPT_OVERCLOCK,
 	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
@@ -953,6 +960,12 @@ enum {
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
 	SHORTCUT_COUNT,
+};
+
+enum {
+	SYNC_SRC_AUTO,
+	SYNC_SRC_SCREEN,
+	SYNC_SRC_CORE
 };
 
 #define LOCAL_BUTTON_COUNT 16 // depends on device
@@ -1178,15 +1191,15 @@ static struct Config {
 				.values = tearing_labels,
 				.labels = tearing_labels,
 			},
-			[FE_OPT_CORE_FPS] = {
-				.key	= "minarch_screen_sync",
-				.name	= "Use Core Refresh Rate",
-				.desc	= "Use the core provided refresh rate instead of\nusing the native screen refresh rate.",
-				.default_value = 0,
-				.value = 0,
-				.count = 2,
-				.values = onoff_labels,
-				.labels = onoff_labels,
+			[FE_OPT_SYNC_REFERENCE] = {
+				.key	= "minarch_sync_reference",
+				.name	= "Synchronization Reference",
+				.desc	= "Choose which source should be used as a\nreference for the frame rate.",
+				.default_value = SYNC_SRC_AUTO,
+				.value = SYNC_SRC_AUTO,
+				.count = 3,
+				.values = sync_ref_labels,
+				.labels = sync_ref_labels,
 			},
 			[FE_OPT_OVERCLOCK] = {
 				.key	= "minarch_cpu_speed",
@@ -1329,9 +1342,9 @@ static void Config_syncFrontend(char* key, int value) {
 		prevent_tearing = value;
 		i = FE_OPT_TEARING;
 	}
-	else if (exactMatch(key,config.frontend.options[FE_OPT_CORE_FPS].key)) {
-		use_core_fps = value;
-		i = FE_OPT_CORE_FPS;
+	else if (exactMatch(key,config.frontend.options[FE_OPT_SYNC_REFERENCE].key)) {
+		sync_ref = value;
+		i = FE_OPT_SYNC_REFERENCE;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_THREAD].key)) {
 		int old_value = thread_video || was_threaded;
@@ -5135,6 +5148,19 @@ static void resetFPSCounter() {
 	fps_double = 0.0;
 }
 
+static void chooseSyncRef(void) {
+	switch (sync_ref) {
+		case SYNC_SRC_AUTO:   use_core_fps = (core.get_region() == RETRO_REGION_PAL); break;
+		case SYNC_SRC_SCREEN: use_core_fps = 0; break;
+		case SYNC_SRC_CORE:   use_core_fps = 1; break;
+	}
+	LOG_info("%s: sync_ref is set to %s, game region is %s, use core fps = %s\n",
+		  __FUNCTION__,
+		  sync_ref_labels[sync_ref],
+		  core.get_region() == RETRO_REGION_NTSC ? "NTSC" : "PAL",
+		  use_core_fps ? "yes" : "no");
+}
+
 static void trackFPS(void) {
 	cpu_ticks += 1;
 	static int last_use_ticks = 0;
@@ -5284,6 +5310,7 @@ int main(int argc , char* argv[]) {
 	Special_init(); // after config
 	
 	resetFPSCounter();
+	chooseSyncRef();
 	
 	while (!quit) {
 		#if 0
@@ -5323,6 +5350,7 @@ int main(int argc , char* argv[]) {
 		
 		if (show_menu) {
 			Menu_loop();
+			chooseSyncRef();
 			resetFPSCounter();
 		}
 		
