@@ -51,6 +51,7 @@ static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
+static int use_core_fps  = 0;
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
@@ -934,6 +935,7 @@ enum {
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
+	FE_OPT_CORE_FPS,
 	FE_OPT_OVERCLOCK,
 	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
@@ -1177,6 +1179,16 @@ static struct Config {
 				.values = tearing_labels,
 				.labels = tearing_labels,
 			},
+			[FE_OPT_CORE_FPS] = {
+				.key	= "minarch_screen_sync",
+				.name	= "Use Core Refresh Rate",
+				.desc	= "Use the core provided refresh rate instead of\nusing the native screen refresh rate.",
+				.default_value = 0,
+				.value = 0,
+				.count = 2,
+				.values = onoff_labels,
+				.labels = onoff_labels,
+			},
 			[FE_OPT_OVERCLOCK] = {
 				.key	= "minarch_cpu_speed",
 				.name	= "CPU Speed",
@@ -1325,6 +1337,10 @@ static void Config_syncFrontend(char* key, int value) {
 	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
 		prevent_tearing = value;
 		i = FE_OPT_TEARING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_CORE_FPS].key)) {
+		use_core_fps = value;
+		i = FE_OPT_CORE_FPS;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_THREAD].key)) {
 		int old_value = thread_video || was_threaded;
@@ -3178,7 +3194,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		else {
 			strcpy(debug_text, "-");
 		}
-		sprintf(debug_text + strlen(debug_text), "/%.1f/%.01f/%i/%.01f%%", core.fps,cpu_double,currentcpuspeed,currentcpuse);
+		sprintf(debug_text + strlen(debug_text), "/%.1f/%.01f/%i/%.01f%%", use_core_fps ? core.fps : SCREEN_FPS,cpu_double,currentcpuspeed,currentcpuse);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
@@ -3198,7 +3214,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 
 	GFX_blitRenderer(&renderer);
 
-	if (!thread_video) GFX_flip(screen, core.fps);
+	if (!thread_video) GFX_flip(screen, use_core_fps ? core.fps : 0);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
@@ -3613,7 +3629,7 @@ static int Menu_message(char* message, char** pairs) {
 		GFX_clear(screen);
 		GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
 		GFX_blitButtonGroup(pairs, 0, screen, 1);
-		GFX_flip(screen, core.fps);
+		GFX_flip(screen, use_core_fps ? core.fps : 0);
 		dirty = 0;
 		
 		
@@ -4468,14 +4484,14 @@ static int Menu_options(MenuList* list) {
 			});
 		}
 		
-		GFX_flip(screen, core.fps);
+		GFX_flip(screen, use_core_fps ? core.fps : 0);
 		dirty = 0;
 		
 		hdmimon();
 	}
 	
 	// GFX_clearAll();
-	// GFX_flip(screen, core.fps);
+	// GFX_flip(screen, use_core_fps ? core.fps : 0);
 	
 	return 0;
 }
@@ -5053,7 +5069,7 @@ static void Menu_loop(void) {
 			}
 		}
 
-		GFX_flip(screen, core.fps);
+		GFX_flip(screen, use_core_fps ? core.fps : 0);
 		dirty = 0;
 
 		hdmimon();
@@ -5180,7 +5196,7 @@ static void* coreThread(void *arg) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen, core.fps);
+	GFX_flip(screen, use_core_fps ? core.fps : 0);
 	
 	while (!quit) {
 		int run = 0;
@@ -5273,7 +5289,7 @@ int main(int argc , char* argv[]) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen, core.fps);
+	GFX_flip(screen, use_core_fps ? core.fps : 0);
 	
 	Special_init(); // after config
 	
@@ -5309,7 +5325,7 @@ int main(int argc , char* argv[]) {
 			
 			if (backbuffer) {
 				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
-				GFX_flip(screen, core.fps);
+				GFX_flip(screen, use_core_fps ? core.fps : 0);
 			}
 			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 			pthread_mutex_unlock(&core_mx);
@@ -5344,7 +5360,7 @@ int main(int argc , char* argv[]) {
 				// force a vsync immediately before loop
 				// for better frame pacing?
 				GFX_clearAll();
-				GFX_flip(screen, core.fps);
+				GFX_flip(screen, use_core_fps ? core.fps : 0);
 			}
 		}
 		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);

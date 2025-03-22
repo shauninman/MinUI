@@ -144,10 +144,11 @@
 
 ///////////////////////////////
 
-#define SDCARD_PATH "/Library/Developer/Projects/private/MinUI_FAKESD"
+//#define SDCARD_PATH "/Library/Developer/Projects/private/MinUI_FAKESD"
+#define SDCARD_PATH "/Users/bsr/Downloads/MinUI-SD"
 #define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
 
-#define MAX_LIGHTS 0
+#define MAX_LIGHTS 4
 
 // this should be set to the devices native screen refresh rate
 #define SCREEN_FPS 60.0
