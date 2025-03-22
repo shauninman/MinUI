@@ -675,67 +675,50 @@ void PLAT_get_process_cpu_time(long *proc_time) {
     fgets(buffer, sizeof(buffer), fp);
     fclose(fp);
 
-    // Extracting 14th (utime) and 15th (stime) fields
+
     sscanf(buffer, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %ld %ld", &utime, &stime);
 
-    *proc_time = utime + stime;  // Total process CPU time (in clock ticks)
+    *proc_time = utime + stime;  
 }
 
 static pthread_mutex_t currentcpuinfo;
 static pthread_mutex_t stop_mutex;
 #define AVERAGE_WINDOW 2
-#define DOWNSCALE_DELAY 100 // Stability delay
+#define DOWNSCALE_DELAY 100 
 
- // Flag to control the thread's running state
-
-
-static int stop_cpu_monitoring = 0;
-void PLAT_stop_cpu_monitor() {
-	stop_cpu_monitoring = 1;
-}
 
 void *PLAT_cpu_monitor(void *arg) {
     long prev_proc_time = 0;
-    PLAT_get_process_cpu_time(&prev_proc_time);  // Initialize with the current process CPU time
+    PLAT_get_process_cpu_time(&prev_proc_time); 
 
     struct timespec start_time, curr_time;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start_time);  // Start time for monitoring
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start_time); 
 
     int downscale_counter = 0;
     int downscaled = 0;
 
-    long clock_ticks_per_sec = sysconf(_SC_CLK_TCK);  // Get clock ticks per second for conversion
+    long clock_ticks_per_sec = sysconf(_SC_CLK_TCK);  
 
     while (true) {
-		LOG_info("wat zegt die ? %i\n",stop_cpu_monitoring);
-		pthread_mutex_lock(&stop_mutex); // Lock to safely access the stop flag
-        if (stop_cpu_monitoring==1) {
-			LOG_info("stoppen22222\n");
-            pthread_mutex_unlock(&stop_mutex); // Unlock before exiting
-			break;
-            return NULL;  // Exit the loop if the stop flag is set
-        }
-        pthread_mutex_unlock(&stop_mutex);
 
         clock_gettime(CLOCK_MONOTONIC_RAW, &curr_time);
         double elapsed_time_sec = (curr_time.tv_sec - start_time.tv_sec) + 
                                   (curr_time.tv_nsec - start_time.tv_nsec) / 1.0e9;
 
-        // Reduce the sample time for faster response (e.g., 10ms instead of 100ms)
-        if (elapsed_time_sec >= 0.05) {  // 10ms sampling rate
+
+        if (elapsed_time_sec >= 0.05) {  
             start_time = curr_time;
 
             long curr_proc_time = 0;
-            PLAT_get_process_cpu_time(&curr_proc_time);  // Get current CPU time of the process
+            PLAT_get_process_cpu_time(&curr_proc_time);  
             
-            long proc_diff = curr_proc_time - prev_proc_time;  // Get the difference in CPU time
+            long proc_diff = curr_proc_time - prev_proc_time; 
 
-            // Calculate the absolute time spent on the CPU
-            double proc_time_sec = (double)proc_diff / clock_ticks_per_sec;  // Convert to seconds
 
-			// LOG_info("proc_time_sec: %d\n",proc_time_sec);
-            // Decision-making for CPU speed adjustment based on raw CPU time spent
-            if (proc_time_sec >= 0.075 || (downscaled && proc_time_sec > 0.03)) {  // If CPU usage in seconds exceeds 70ms, max out performance
+            double proc_time_sec = (double)proc_diff / clock_ticks_per_sec;  
+
+		
+            if (proc_time_sec >= 0.075 || (downscaled && proc_time_sec > 0.03)) {  
                 PLAT_setCustomCPUSpeed(2000000);
                 pthread_mutex_lock(&currentcpuinfo);
                 currentcpuspeed = 2000;
@@ -743,57 +726,47 @@ void *PLAT_cpu_monitor(void *arg) {
                 downscaled = 0;
                 downscale_counter = 0;
             } 
-            else if (proc_time_sec < 0.75) {  // If CPU usage is lower, downscale gradually
+            else if (proc_time_sec < 0.75) {  
                 downscale_counter++;
                 if (downscale_counter >= DOWNSCALE_DELAY) {
-                    // Only downscale after a delay to avoid rapid oscillation
                     pthread_mutex_lock(&currentcpuinfo);
 
 					if (proc_time_sec < 0.01) {
-						// If the CPU usage is extremely low, use the lowest speed
 						PLAT_setCustomCPUSpeed(600000);
 						currentcpuspeed = 600;
 						downscaled = 1;
 					} 
 					else if (proc_time_sec < 0.015) {
-						// Low CPU usage: Use a slightly higher speed than idle
 						PLAT_setCustomCPUSpeed(800000);
 						currentcpuspeed = 800;
 						downscaled = 1;
 					} 
 					else if (proc_time_sec < 0.015) {
-						// Moderate low CPU usage: Increase speed a bit more
 						PLAT_setCustomCPUSpeed(1000000);
 						currentcpuspeed = 1000;
 						downscaled = 1;
 					} 
 					else if (proc_time_sec < 0.025) {
-						// Mid-range CPU usage: Standard CPU speed
 						PLAT_setCustomCPUSpeed(1200000);
 						currentcpuspeed = 1200;
 					} 
 					else if (proc_time_sec < 0.03) {
-						// Slightly high CPU usage: Increase CPU speed
 						PLAT_setCustomCPUSpeed(1400000);
 						currentcpuspeed = 1400;
 					} 
 					else if (proc_time_sec < 0.04) {
-						// High CPU usage: Use a higher CPU speed
 						PLAT_setCustomCPUSpeed(1500000);
 						currentcpuspeed = 1600;
 					} 
 					else if (proc_time_sec < 0.05) {
-						// High CPU usage: Use a higher CPU speed
 						PLAT_setCustomCPUSpeed(1600000);
 						currentcpuspeed = 1600;
 					} 
 					else if (proc_time_sec < 0.06) {
-						// High CPU usage: Use a higher CPU speed
 						PLAT_setCustomCPUSpeed(1700000);
 						currentcpuspeed = 1600;
 					} 
 					else  {
-						// Very high CPU usage: Use almost maximum speed
 						PLAT_setCustomCPUSpeed(1800000);
 						currentcpuspeed = 1800;
 					} 
@@ -802,11 +775,10 @@ void *PLAT_cpu_monitor(void *arg) {
                 }
             }
 
-            prev_proc_time = curr_proc_time;  // Update previous process CPU time
+            prev_proc_time = curr_proc_time;  
         }
 
-        // Reduce sleep time to allow faster responsiveness (10ms delay)
-        usleep(50000); // 50ms sleep for quicker response
+        usleep(50000); 
     }
 }
 
