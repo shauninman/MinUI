@@ -698,7 +698,7 @@ enum {
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
-	// FE_OPT_OVERCLOCK,
+	FE_OPT_OVERCLOCK,
 	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
 	FE_OPT_MAXFF,
@@ -831,6 +831,7 @@ static char* overclock_labels[] = {
 	"Powersave",
 	"Normal",
 	"Performance",
+	"Auto",
 	NULL,
 };
 
@@ -940,16 +941,16 @@ static struct Config {
 				.values = tearing_labels,
 				.labels = tearing_labels,
 			},
-			// [FE_OPT_OVERCLOCK] = {
-			// 	.key	= "minarch_cpu_speed",
-			// 	.name	= "CPU Speed",
-			// 	.desc	= "Over- or underclock the CPU to prioritize\npure performance or power savings.",
-			// 	.default_value = 1,
-			// 	.value = 1,
-			// 	.count = 3,
-			// 	.values = overclock_labels,
-			// 	.labels = overclock_labels,
-			// },
+			[FE_OPT_OVERCLOCK] = {
+				.key	= "minarch_cpu_speed",
+				.name	= "CPU Speed",
+				.desc	= "Over- or underclock the CPU to prioritize\npure performance or power savings.",
+				.default_value = 1,
+				.value = 1,
+				.count = 4,
+				.values = overclock_labels,
+				.labels = overclock_labels,
+			},
 			[FE_OPT_THREAD] = {
 				.key	= "minarch_thread_video",
 				.name	= "Prioritize Audio",
@@ -1022,13 +1023,37 @@ static int Config_getValue(char* cfg, const char* key, char* out_value, int* loc
 	return 1;
 }
 
+
+
 static void setOverclock(int i) {
-	overclock = i;
-	// switch (i) {
-	// 	case 0: PWR_setCPUSpeed(CPU_SPEED_POWERSAVE); break;
-	// 	case 1: PWR_setCPUSpeed(CPU_SPEED_NORMAL); break;
-	// 	case 2: PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE); break;
-	// }
+    overclock = i;
+	LOG_info("roept die dit aan?\n");
+    switch (i) {
+        case 0: {
+			LOG_info("kaas 0?\n");
+            PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
+			PLAT_stop_cpu_monitor();
+            break;
+		}
+        case 1:  {
+			LOG_info("kaas 1?\n");
+            PWR_setCPUSpeed(CPU_SPEED_NORMAL);
+			PLAT_stop_cpu_monitor();
+            break;
+		}
+        case 2:  {
+			LOG_info("kaas 2?\n");
+            PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
+			PLAT_stop_cpu_monitor();
+            break;
+		}
+        case 3: {
+			LOG_info("kaas 3?\n");
+			pthread_t cpucheckthread;
+			pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
+            break;
+		}
+    }
 }
 static int toggle_thread = 0;
 static void Config_syncFrontend(char* key, int value) {
@@ -1075,10 +1100,10 @@ static void Config_syncFrontend(char* key, int value) {
 		toggle_thread = old_value!=value;
 		i = FE_OPT_THREAD;
 	}
-	// else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
-	// 	overclock = value;
-	// 	i = FE_OPT_OVERCLOCK;
-	// }
+	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
+		overclock = value;
+		i = FE_OPT_OVERCLOCK;
+	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_DEBUG].key)) {
 		show_debug = value;
 		i = FE_OPT_DEBUG;
@@ -4825,8 +4850,7 @@ static void* coreThread(void *arg) {
 
 int main(int argc , char* argv[]) {
 	LOG_info("MinArch\n");
-	pthread_t cpucheckthread;
-    pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
+
 
 	setOverclock(overclock); // default to normal
 	// force a stack overflow to ensure asan is linked and actually working

@@ -428,7 +428,10 @@ int PLAT_deepSleep(void);
 void PLAT_powerOff(void);
 
 void *PLAT_cpu_monitor(void *arg);
+void PLAT_stop_cpu_monitor();
+void PLAT_start_cpu_monitor();
 void PLAT_setCPUSpeed(int speed); // enum
+void PLAT_setCustomCPUSpeed(int speed);
 void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 
