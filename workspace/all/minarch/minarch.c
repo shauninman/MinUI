@@ -1067,6 +1067,7 @@ static char* overclock_labels[] = {
 	"Powersave",
 	"Normal",
 	"Performance",
+	"Auto",
 	NULL,
 };
 
@@ -1264,15 +1265,23 @@ static void setOverclock(int i) {
     overclock = i;
     switch (i) {
         case 0: {
+			useAutoCpu = 0;
             PWR_setCPUSpeed(CPU_SPEED_POWERSAVE);
             break;
 		}
         case 1:  {
+			useAutoCpu = 0;
             PWR_setCPUSpeed(CPU_SPEED_NORMAL);
             break;
 		}
         case 2:  {
+			useAutoCpu = 0;
             PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
+            break;
+		}
+        case 3:  {
+            PWR_setCPUSpeed(CPU_SPEED_NORMAL);
+			useAutoCpu = 1;
             break;
 		}
     }
@@ -3163,7 +3172,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
-		sprintf(debug_text, "%.01f/%.01f %i%%/%i/%.01f", fps_double, cpu_double, (int)use_double,currentcpuspeed,currentcpuse);
+		sprintf(debug_text, "%.01f/%.01f/%i/%.01f%%", fps_double, cpu_double,currentcpuspeed,currentcpuse);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
@@ -5104,11 +5113,11 @@ static void trackFPS(void) {
 		double last_time = (double)(now - sec_start) / 1000;
 		fps_double = fps_ticks / last_time;
 		cpu_double = cpu_ticks / last_time;
-		use_ticks = getUsage();
-		if (use_ticks && last_use_ticks) {
-			use_double = (use_ticks - last_use_ticks) / last_time;
-		}
-		last_use_ticks = use_ticks;
+		// use_ticks = getUsage();
+		// if (use_ticks && last_use_ticks) {
+		// 	use_double = (use_ticks - last_use_ticks) / last_time;
+		// }
+		// last_use_ticks = use_ticks;
 		sec_start = now;
 		cpu_ticks = 0;
 		fps_ticks = 0;
@@ -5167,7 +5176,8 @@ static void* coreThread(void *arg) {
 
 int main(int argc , char* argv[]) {
 	LOG_info("MinArch\n");
-
+	pthread_t cpucheckthread;
+    pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
 
 	setOverclock(overclock); // default to normal
 	// force a stack overflow to ensure asan is linked and actually working
