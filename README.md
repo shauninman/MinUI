@@ -64,7 +64,7 @@ Deep sleep:
 While many features still missing will be eventually be part native on NextUI, there are right now already some excellent Paks out there from other developers. For for example things like WiFI and syncthings we def recommend checking out the awesome work from @josegonzalez He has an awesome Pak library with many things
 https://github.com/josegonzalez/pakman/
 
-Discord:   
+# Discord:   
 [https://discord.gg/HKd7wqZk3h](https://discord.gg/HKd7wqZk3h)
 
 
