@@ -650,19 +650,6 @@ int PLAT_supportsDeepSleep(void) { return 1; }
 
 ///////////////////////////////
 
-int PLAT_get_core_count() {
-    FILE *fp = fopen("/proc/stat", "r");
-    if (!fp) return 1;
-    int cores = 0;
-    char line[256];
-
-    while (fgets(line, sizeof(line), fp)) {
-        if (strncmp(line, "cpu", 3) == 0 && line[3] >= '0' && line[3] <= '9')
-            cores++;
-    }
-    fclose(fp);
-    return cores;
-}
 void PLAT_get_process_cpu_time(long *proc_time) {
     FILE *fp = fopen("/proc/self/stat", "r");
     if (!fp) {
