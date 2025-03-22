@@ -90,7 +90,7 @@ extern int currentcpuspeed;
 extern double currentcpuse;
 extern int should_rotate;
 extern MinUISettings settings;
-
+volatile int useAutoCpu;
 
 enum {
 	ASSET_WHITE_PILL,
