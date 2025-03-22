@@ -482,7 +482,11 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 	}
 }
 
-void GFX_flip(SDL_Surface* screen, double target_fps) {
+void GFX_flip(SDL_Surface* screen) {
+	GFX_flip_fixed_rate(screen, 0);
+}
+
+void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 	if (target_fps == 0.0) target_fps = SCREEN_FPS;
 	double frame_budget_ms = 1000.0 / target_fps;
 
@@ -544,7 +548,10 @@ void GFX_flip(SDL_Surface* screen, double target_fps) {
 	per_frame_start = SDL_GetPerformanceCounter();
 }
 // eventually this function should be removed as its only here because of all the audio buffer based delay stuff
-void GFX_sync(double target_fps) {
+void GFX_sync() {
+	GFX_sync_fixed_rate(0);
+}
+void GFX_sync_fixed_rate(double target_fps) {
 	if (target_fps == 0.0) target_fps = SCREEN_FPS;
 	int frame_budget = (int) lrint(1000.0 / target_fps);
 	uint32_t frame_duration = SDL_GetTicks() - frame_start;
@@ -2422,7 +2429,7 @@ void PWR_powerOff(void) {
 		// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
 		PLAT_clearVideo(gfx.screen);
 		GFX_blitMessage(font.large, msg, gfx.screen,&(SDL_Rect){0,0,gfx.screen->w,gfx.screen->h}); //, NULL);
-		GFX_flip(gfx.screen, 0);
+		GFX_flip(gfx.screen);
 		PLAT_powerOff();
 	}
 }

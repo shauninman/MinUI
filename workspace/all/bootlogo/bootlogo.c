@@ -174,11 +174,11 @@ int main(int argc, char *argv[])
             GFX_blitButtonGroup((char *[]){"L/R", "SCROLL", NULL}, 0, screen, 0);
             GFX_blitButtonGroup((char *[]){"A", "SET", "B", "BACK", NULL}, 1, screen, 1);
 
-            GFX_flip(screen, 0);
+            GFX_flip(screen);
             dirty = 0;
         }
         else
-            GFX_sync(0);
+            GFX_sync();
     }
 
     unloadImages();

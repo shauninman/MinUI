@@ -3227,7 +3227,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 
 	GFX_blitRenderer(&renderer);
 
-	if (!thread_video) GFX_flip(screen, use_core_fps ? core.fps : 0);
+	if (!thread_video) GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
@@ -3642,7 +3642,7 @@ static int Menu_message(char* message, char** pairs) {
 		GFX_clear(screen);
 		GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
 		GFX_blitButtonGroup(pairs, 0, screen, 1);
-		GFX_flip(screen, use_core_fps ? core.fps : 0);
+		GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 		dirty = 0;
 		
 		
@@ -4497,14 +4497,14 @@ static int Menu_options(MenuList* list) {
 			});
 		}
 		
-		GFX_flip(screen, use_core_fps ? core.fps : 0);
+		GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 		dirty = 0;
 		
 		hdmimon();
 	}
 	
 	// GFX_clearAll();
-	// GFX_flip(screen, use_core_fps ? core.fps : 0);
+	// GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 	
 	return 0;
 }
@@ -5082,7 +5082,7 @@ static void Menu_loop(void) {
 			}
 		}
 
-		GFX_flip(screen, use_core_fps ? core.fps : 0);
+		GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 		dirty = 0;
 
 		hdmimon();
@@ -5222,7 +5222,7 @@ static void* coreThread(void *arg) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen, use_core_fps ? core.fps : 0);
+	GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 	
 	while (!quit) {
 		int run = 0;
@@ -5315,7 +5315,7 @@ int main(int argc , char* argv[]) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen, use_core_fps ? core.fps : 0);
+	GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 	
 	Special_init(); // after config
 	
@@ -5352,7 +5352,7 @@ int main(int argc , char* argv[]) {
 			
 			if (backbuffer) {
 				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
-				GFX_flip(screen, use_core_fps ? core.fps : 0);
+				GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 			}
 			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 			pthread_mutex_unlock(&core_mx);
@@ -5388,7 +5388,7 @@ int main(int argc , char* argv[]) {
 				// force a vsync immediately before loop
 				// for better frame pacing?
 				GFX_clearAll();
-				GFX_flip(screen, use_core_fps ? core.fps : 0);
+				GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
 			}
 		}
 		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);
