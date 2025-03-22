@@ -402,10 +402,10 @@ int main(int argc, char *argv[])
                 }
             }
 
-            GFX_flip(screen, 0);
+            GFX_flip(screen);
             dirty = 0;
         }
-    else GFX_sync(0);
+    else GFX_sync();
     }
     QuitSettings();
 	PWR_quit();
