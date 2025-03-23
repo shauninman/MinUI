@@ -3176,6 +3176,14 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	// }
 }
 
+static void screen_flip(SDL_Surface* screen) {
+	if (use_core_fps) {
+		GFX_flip_fixed_rate(screen, core.fps);
+	}
+	else {
+		GFX_flip(screen);
+	}
+}
 
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
@@ -3218,7 +3226,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	}
 	
 	// debug
-	if (show_debug && !isnan(currentratio) && !isnan(currentbufferms) &&
+	if (show_debug && !isnan(currentratio) && !isnan(currentfps) && !isnan(currentreqfps)  && !isnan(currentbufferms) &&
 	currentbuffersize >= 0  && currentbufferfree >= 0 && SDL_GetTicks() > 5000) {
 		int x = 2 + renderer.src_x;
 		int y = 2 + renderer.src_y;
@@ -3229,22 +3237,13 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%ix%i %ix %i/%i", renderer.src_w,renderer.src_h, scale,currentsampleratein,currentsamplerateout);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 		
-		sprintf(debug_text, "%.03f/%i/%.1f/%i", currentratio,
+		sprintf(debug_text, "%.03f/%i/%.0f/%i", currentratio,
 				currentbuffersize,currentbufferms, currentbufferfree);
-		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
+		blitBitmapText(debug_text, x, y + 14, (uint16_t*)data, pitch / 2, width,
 					height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
-	
-		if (fps_double > 0.0) {
-			sprintf(debug_text, "%.01f", fps_double);
-		}
-		else {
-			strcpy(debug_text, "-");
-		}
-		sprintf(debug_text + strlen(debug_text), "/%.1f/%.01f/%i/%.01f%%", use_core_fps ? core.fps : SCREEN_FPS,cpu_double,currentcpuspeed,currentcpuse);
-		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
@@ -3270,7 +3269,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 
 	GFX_blitRenderer(&renderer);
 
-	if (!thread_video) GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+	if (!thread_video) screen_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
@@ -3346,10 +3345,24 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
 // NOTE: sound must be disabled for fast forward to work...
 static void audio_sample_callback(int16_t left, int16_t right) {
-	if (!fast_forward) SND_batchSamples(&(const SND_Frame){left,right}, 1);
+	if (!fast_forward) {
+		if (use_core_fps) {
+			SND_batchSamples_fixed_rate(&(const SND_Frame){left,right}, 1);
+		}
+		else {
+			SND_batchSamples(&(const SND_Frame){left,right}, 1);
+		}
+	}
 }
 static size_t audio_sample_batch_callback(const int16_t *data, size_t frames) { 
-	if (!fast_forward) return SND_batchSamples((const SND_Frame*)data, frames);
+	if (!fast_forward) {
+		if (use_core_fps) {
+			return SND_batchSamples_fixed_rate((const SND_Frame*)data, frames);
+		}
+		else {
+			return SND_batchSamples((const SND_Frame*)data, frames);
+		}
+	}
 	else return frames;
 	// return frames;
 };
@@ -3685,7 +3698,7 @@ static int Menu_message(char* message, char** pairs) {
 		GFX_clear(screen);
 		GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
 		GFX_blitButtonGroup(pairs, 0, screen, 1);
-		GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+		screen_flip(screen);
 		dirty = 0;
 		
 		
@@ -4540,14 +4553,14 @@ static int Menu_options(MenuList* list) {
 			});
 		}
 		
-		GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+		screen_flip(screen);
 		dirty = 0;
 		
 		hdmimon();
 	}
 	
 	// GFX_clearAll();
-	// GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+	// screen_flip(screen);
 	
 	return 0;
 }
@@ -5125,7 +5138,7 @@ static void Menu_loop(void) {
 			}
 		}
 
-		GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+		screen_flip(screen);
 		dirty = 0;
 
 		hdmimon();
@@ -5265,7 +5278,7 @@ static void* coreThread(void *arg) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+	screen_flip(screen);
 	
 	while (!quit) {
 		int run = 0;
@@ -5358,10 +5371,11 @@ int main(int argc , char* argv[]) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+	screen_flip(screen);
 	
 	Special_init(); // after config
 	
+	sec_start = SDL_GetTicks();
 	resetFPSCounter();
 	chooseSyncRef();
 	
@@ -5393,7 +5407,7 @@ int main(int argc , char* argv[]) {
 			
 			if (backbuffer) {
 				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
-				GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+				screen_flip(screen);
 			}
 			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 			pthread_mutex_unlock(&core_mx);
@@ -5431,7 +5445,7 @@ int main(int argc , char* argv[]) {
 				// force a vsync immediately before loop
 				// for better frame pacing?
 				GFX_clearAll();
-				GFX_flip_fixed_rate(screen, use_core_fps ? core.fps : 0);
+				screen_flip(screen);
 			}
 		}
 		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);

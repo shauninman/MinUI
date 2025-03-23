@@ -245,12 +245,8 @@ static struct SND_Context {
 
 static int _;
 
-#define FPS_BUFFER_SIZE 50
+static double current_fps = SCREEN_FPS;
 static int fps_counter = 0;
-static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
-static int fps_buffer_index = 0;
-static double instant_fps = 0.0;
-static double average_fps = 0.0;
 double currentfps = 0.0;
 double currentreqfps = 0.0;
 int currentcpuspeed = 0;
@@ -377,9 +373,15 @@ int GFX_hdmiChanged(void) {
 	return 1;
 }
 
+#define FRAME_BUDGET 17 // 60fps
 static uint32_t frame_start = 0;
 
 static uint64_t per_frame_start = 0;
+#define FPS_BUFFER_SIZE 50
+// filling with  60.1 cause i'd rather underrun than overflow in start phase
+static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
+static int fps_buffer_index = 0;
+
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
@@ -488,7 +490,55 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 }
 
 void GFX_flip(SDL_Surface* screen) {
-	GFX_flip_fixed_rate(screen, 0);
+	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
+	PLAT_flip(screen, should_vsync);
+	
+	currentfps = current_fps;
+	fps_counter++;
+
+	uint64_t performance_frequency = SDL_GetPerformanceFrequency();
+	uint64_t frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
+	double elapsed_time_s = (double)frame_duration / performance_frequency;
+	double tempfps = 1.0 / elapsed_time_s;
+	if (!should_vsync) {
+		uint64_t frame_time = performance_frequency / snd.frame_rate;  // Time per frame in performance counter units
+		if (frame_duration < frame_time) {
+			uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
+			SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
+		}
+		per_frame_start = SDL_GetPerformanceCounter();
+		return;
+	}
+	if(tempfps < SCREEN_FPS * 0.8 || tempfps > SCREEN_FPS * 1.2) tempfps = SCREEN_FPS;
+	
+	fps_buffer[fps_buffer_index] = tempfps;
+	fps_buffer_index = (fps_buffer_index + 1) % FPS_BUFFER_SIZE;
+	// give it a little bit to stabilize and then use, meanwhile the buffer will
+	// cover it
+	if (fps_counter > 100) {
+		double average_fps = 0.0;
+		int fpsbuffersize = MIN(fps_counter, FPS_BUFFER_SIZE);
+		for (int i = 0; i < fpsbuffersize; i++) {
+			average_fps += fps_buffer[i];
+		}
+		average_fps /= fpsbuffersize;
+		current_fps = average_fps;
+	}
+	
+	per_frame_start = SDL_GetPerformanceCounter();
+}
+// eventually this function should be removed as its only here because of all the audio buffer based delay stuff
+void GFX_sync(void) {
+	uint32_t frame_duration = SDL_GetTicks() - frame_start;
+	if (gfx.vsync!=VSYNC_OFF) {
+		// this limiting condition helps SuperFX chip games
+		if (gfx.vsync==VSYNC_STRICT || frame_start==0 || frame_duration<FRAME_BUDGET) { // only wait if we're under frame budget
+			PLAT_vsync(FRAME_BUDGET-frame_duration);
+		}
+	}
+	else {
+		if (frame_duration<FRAME_BUDGET) SDL_Delay(FRAME_BUDGET-frame_duration);
+	}
 }
 
 void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
@@ -532,30 +582,24 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 
 	double tempfps = 1.0 / elapsed_time_s;
 	if(tempfps < target_fps * 0.8 || tempfps > target_fps * 1.2) tempfps = target_fps;
-	instant_fps = tempfps;
 	
-	// filling with  60.1 cause i'd rather underrun than overflow in start phase
-
 	fps_buffer[fps_buffer_index] = tempfps;
 	fps_buffer_index = (fps_buffer_index + 1) % FPS_BUFFER_SIZE;
 	// give it a little bit to stabilize and then use, meanwhile the buffer will
 	// cover it
 	if (fps_counter > 100) {
-		average_fps = 0.0;
+		double average_fps = 0.0;
 		int fpsbuffersize = MIN(fps_counter, FPS_BUFFER_SIZE);
 		for (int i = 0; i < fpsbuffersize; i++) {
 			average_fps += fps_buffer[i];
 		}
 		average_fps /= fpsbuffersize;
+		currentfps = average_fps;
 	}
-	currentfps = average_fps;
 	currentreqfps = target_fps;
 	per_frame_start = SDL_GetPerformanceCounter();
 }
-// eventually this function should be removed as its only here because of all the audio buffer based delay stuff
-void GFX_sync() {
-	GFX_sync_fixed_rate(0);
-}
+
 void GFX_sync_fixed_rate(double target_fps) {
 	if (target_fps == 0.0) target_fps = SCREEN_FPS;
 	int frame_budget = (int) lrint(1000.0 / target_fps);
@@ -1733,6 +1777,7 @@ float currentratio = 0.0;
 int currentbufferfree = 0;
 int currentframecount = 0;
 static double ratio = 1.0;
+
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	
 	int framecount = (int)frame_count;
@@ -1758,14 +1803,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	// My algorithm is fighting here with audio hardware. 
 	// It's like a person is trying to balance on a rope (my algorithm) and another person (the audio hardware and screen) is wiggling the rope and the balancing person got to keep countering and try to stay stable
 	float bufferadjustment = calculateBufferAdjustment(remaining_space, snd.frame_count*0.4, snd.frame_count,frame_count);
-	if (average_fps > 0.0) {
-		ratio = (tempratio * (snd.frame_rate / average_fps)) + bufferadjustment;
-		// printf("SND_batchSamples: fps is %g, ratio is %g\n", average_fps, ratio);
-	}
-	else {
-		ratio = 1.0;
-		// printf("SND_batchSamples: FPS measurement is still unknown, using ratio 1.0\n");
-	}
+	ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
 
 	currentratio = ratio;
 
@@ -1810,13 +1848,57 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	return total_consumed_frames;
 }
 
+size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) {
+	int framecount = (int)frame_count;
+
+	int consumed = 0;
+	int total_consumed_frames = 0;
+
+	currentratio = 1.0;
+
+	while (framecount > 0) {
+		
+		int amount = MIN(BATCH_SIZE, framecount);
+
+		for (int i = 0; i < amount; i++) {
+			tmpbuffer[i] = frames[consumed + i];
+		}
+		consumed += amount;
+		framecount -= amount;
+
+		ResampledFrames resampled = resample_audio(
+			tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, currentratio);
+
+		// Write resampled frames to the buffer
+		int written_frames = 0;
+		
+		for (int i = 0; i < resampled.frame_count; i++) {
+			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+				// Buffer is full, break. This should never happen tho, but just to be save
+				break;
+			}
+			pthread_mutex_lock(&audio_mutex);
+			snd.buffer[snd.frame_in] = resampled.frames[i];
+			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
+			pthread_mutex_unlock(&audio_mutex);
+			written_frames++;
+			
+		}
+		
+		total_consumed_frames += written_frames;
+		free(resampled.frames);
+	}
+
+	return total_consumed_frames;
+}
+
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
+	currentreqfps = frame_rate;
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 
 	fps_counter = 0;
 	fps_buffer_index = 0;
-	average_fps = 0.0;
 
 #if defined(USE_SDL2)
 	LOG_info("Available audio drivers:\n");
