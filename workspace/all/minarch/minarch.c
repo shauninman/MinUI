@@ -3156,23 +3156,18 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
 
-		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
+		sprintf(debug_text, "%ix%i %ix %i/%i", renderer.src_w,renderer.src_h, scale,currentsampleratein,currentsamplerateout);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 		
-		sprintf(debug_text, "%.03f/%.03f/%.03f/%i/%.1f/%i", currentratio,
-				currentfps,currentreqfps,currentbuffersize,currentbufferms, currentbufferfree);
-		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
+		sprintf(debug_text, "%.03f/%i/%.0f/%i", currentratio,
+				currentbuffersize,currentbufferms, currentbufferfree);
+		blitBitmapText(debug_text, x, y + 14, (uint16_t*)data, pitch / 2, width,
 					height);
-		
-
-		sprintf(debug_text, "%i/%i", currentsampleratein, currentsamplerateout);
-		blitBitmapText(debug_text, x, y + 40, (uint16_t*)data, pitch / 2, width,
-					   height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
-		sprintf(debug_text, "%.01f/%.01f/%i/%.01f%%", fps_double, cpu_double,currentcpuspeed,currentcpuse);
+		sprintf(debug_text, "%.01f/%.01f/%i/%.0f%%", currentfps, currentreqfps,currentcpuspeed,currentcpuse);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
