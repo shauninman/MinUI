@@ -540,3 +540,8 @@ void PLAT_setLedEffectSpeed(LightSettings *led)
 void *PLAT_cpu_monitor(void *arg) {
 
 }
+
+void PLAT_getCPUTemp() {
+	currentcputemp = 0;
+
+}

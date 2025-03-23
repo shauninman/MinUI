@@ -5381,8 +5381,7 @@ int main(int argc , char* argv[]) {
 			has_pending_opt_change = 0;
 			if (Core_updateAVInfo()) {
 				LOG_info("AV info changed, reset sound system");
-				SND_quit();
-				SND_init(core.sample_rate, core.fps);
+				SND_resetResampler(core.sample_rate, core.fps);
 			}
 			resetFPSCounter();
 			chooseSyncRef();
@@ -5405,6 +5404,7 @@ int main(int argc , char* argv[]) {
 			has_pending_opt_change = config.core.changed;
 			resetFPSCounter();
 			chooseSyncRef();
+			SND_resetResampler(core.sample_rate, core.fps);
 		}
 		
 		if (toggle_thread) {

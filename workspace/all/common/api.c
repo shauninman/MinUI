@@ -251,6 +251,8 @@ static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
 static int fps_buffer_index = 0;
 static double instant_fps = 0.0;
 static double average_fps = 0.0;
+double currentfps = 0.0;
+double currentreqfps = 0.0;
 int currentcpuspeed = 0;
 double currentcpuse = 0;
 
@@ -546,6 +548,8 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 		}
 		average_fps /= fpsbuffersize;
 	}
+	currentfps = average_fps;
+	currentreqfps = target_fps;
 	per_frame_start = SDL_GetPerformanceCounter();
 }
 // eventually this function should be removed as its only here because of all the audio buffer based delay stuff
@@ -1860,6 +1864,11 @@ void SND_quit(void) { // plat_sound_finish
 		free(snd.buffer);
 		snd.buffer = NULL;
 	}
+}
+
+void SND_resetResampler(double sample_rate, double frame_rate) {
+	SND_quit();
+	SND_init(sample_rate, frame_rate);
 }
 
 ///////////////////////////////

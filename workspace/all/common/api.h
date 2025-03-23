@@ -85,6 +85,8 @@ extern int currentbuffersize;
 extern int currentsampleratein;
 extern int currentsamplerateout;
 extern int currentcpuspeed;
+extern double currentfps;
+extern double currentreqfps;
 extern double currentcpuse;
 extern int currentcputemp;
 extern int should_rotate;
@@ -284,6 +286,7 @@ typedef struct {
 void SND_init(double sample_rate, double frame_rate);
 size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count);
 void SND_quit(void);
+void SND_resetResampler(double sample_rate, double frame_rate);
 void SND_setQuality(int quality);
 
 ///////////////////////////////
