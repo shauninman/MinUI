@@ -29,6 +29,9 @@ volatile int useAutoCpu = 1;
 
 static SDL_Joystick *joystick;
 void PLAT_initInput(void) {
+	char* device = getenv("DEVICE");
+	is_brick = exactMatch("brick", device);
+	
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	joystick = SDL_JoystickOpen(0);
 }
