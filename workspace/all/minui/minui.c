@@ -47,6 +47,15 @@ static void* Array_pop(Array* self) {
 	if (self->count==0) return NULL;
 	return self->items[--self->count];
 }
+static void Array_remove(Array* self, void* item) {
+	if (self->count==0 || item == NULL)
+		return;
+	int i = 0;
+	while (self->items[i] != item) i++;
+	for (int j = i; j < self->count-1; j++)
+		self->items[j] = self->items[j+1];
+	self->count--;
+}
 static void Array_reverse(Array* self) {
 	int end = self->count-1;
 	int mid = self->count/2;
@@ -1507,6 +1516,14 @@ int main (int argc, char *argv[]) {
 				dirty = 1;
 				Entry_free(selectedEntry);
 			}
+			else if (recents->count > 0 && PAD_justReleased(BTN_Y)) {
+				// remove
+				Recent* recentEntry = recents->items[switcher_selected];
+				Array_remove(recents, recentEntry);
+				Recent_free(recentEntry);
+				saveRecents();
+				dirty = 1;
+			}
 			else if (PAD_justPressed(BTN_RIGHT)) {
 				switcher_selected++;
 				if(switcher_selected == recents->count)
@@ -1916,7 +1933,7 @@ int main (int argc, char *argv[]) {
 					if(can_resume) GFX_blitButtonGroup((char*[]){ "B","BACK",  NULL }, 0, screen, 0);
 					else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP",  NULL }, 0, screen, 0);
 
-					GFX_blitButtonGroup((char*[]){ "A","RESUME", NULL }, 1, screen, 1);
+					GFX_blitButtonGroup((char*[]){ "Y", "REMOVE", "A","RESUME", NULL }, 1, screen, 1);
 					
 					Entry_free(selectedEntry);
 				}
