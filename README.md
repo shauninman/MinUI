@@ -7,7 +7,7 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - Game art/media support
 - Game time tracker!
 - Cheats support
-- Dynamic cpu speed scaling
+- Dynamic cpu speed scaling (keeps your device cool and extends battery life, but gives the performance right when needed)
 - Custom bootlogos contributed by [@SolvalouArt](https://bsky.app/profile/solvalouart.bsky.social)
 - Color and font settings to customize the NextUI interface
 - Menu animations
