@@ -662,7 +662,8 @@ double get_process_cpu_time_sec() {
 }
 
 static pthread_mutex_t currentcpuinfo;
-#define ROLLING_WINDOW 60  
+// a roling average for the display values of about 2 frames, otherwise they are unreadable jumping too fast up and down and stuff to read
+#define ROLLING_WINDOW 120  
 
 void *PLAT_cpu_monitor(void *arg) {
     struct timespec start_time, curr_time;
@@ -698,8 +699,8 @@ void *PLAT_cpu_monitor(void *arg) {
             pthread_mutex_lock(&currentcpuinfo);
 
             if (cpu_usage > 95) {
-                current_index = num_freqs - 1; // Jump directly to 2000MHz
-            } 
+                current_index = num_freqs - 1; // Instant power needed, cpu is above 95% Jump directly to max boost 2000MHz
+            } //otherwise move up and down in speed gradually bases on usage, going down is already at 75% cause the goal here is to use no more than needed to keep device cool and bettery usage low
             else if (cpu_usage > 85 && current_index < num_freqs - 1) {
                 current_index++; 
             } 

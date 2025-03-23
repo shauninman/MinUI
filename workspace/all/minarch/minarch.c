@@ -3167,11 +3167,14 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
 	
-		sprintf(debug_text, "%.01f/%.01f/%i/%.0f%%", currentfps, currentreqfps,currentcpuspeed,currentcpuse);
-		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
-	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
+
+		//want this to overwrite bottom right in case screen is too small this info more important tbh
+		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%i", currentfps, currentreqfps,currentcpuse,currentcpuspeed);
+		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
+	
+		
 	}
 	
 	if (downsample) {
