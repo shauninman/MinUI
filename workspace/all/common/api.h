@@ -91,7 +91,7 @@ extern double currentcpuse;
 extern int currentcputemp;
 extern int should_rotate;
 extern MinUISettings settings;
-volatile int useAutoCpu;
+extern volatile int useAutoCpu;
 
 enum {
 	ASSET_WHITE_PILL,
