@@ -656,6 +656,9 @@ double get_time_sec() {
     return ts.tv_sec + ts.tv_nsec / 1e9; // Convert to seconds
 }
 double get_process_cpu_time_sec() {
+	// this gives cpu time in nanoseconds needed to accurately calculate cpu usage in very short time frames. 
+	// unfortunately about 20ms between meassures seems the lowest i can go to get accurate results
+	// maybe in the future i will find and even more granual way to get cpu time, but might just be a limit of C or Linux alltogether
     struct timespec ts;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
     return ts.tv_sec + ts.tv_nsec / 1e9; // Convert to seconds
@@ -698,10 +701,15 @@ void *PLAT_cpu_monitor(void *arg) {
 
             pthread_mutex_lock(&currentcpuinfo);
 
+			// the goal here is is to keep cpu usage between 75% and 85% at the lowest possible speed so device stays cool and battery usage is at a minimum
+			// if usage falls out of this range it will either scale a step down or up 
+			// but if usage hits above 95% we need that max boost and we instant scale up to 2000mhz as long as needed
+			// all this happens very fast like 60 times per second, so i'm applying roling averages to display values, so debug screen is readable and gives a good estimate on whats happening cpu wise
+			// the roling averages are purely for displaying, the actual scaling is happening realtime each run. 
             if (cpu_usage > 95) {
                 current_index = num_freqs - 1; // Instant power needed, cpu is above 95% Jump directly to max boost 2000MHz
-            } //otherwise move up and down in speed gradually bases on usage, going down is already at 75% cause the goal here is to use no more than needed to keep device cool and bettery usage low
-            else if (cpu_usage > 85 && current_index < num_freqs - 1) {
+            }
+            else if (cpu_usage > 85 && current_index < num_freqs - 1) { // otherwise try to keep between 75 and 85 at lowest clock speed
                 current_index++; 
             } 
             else if (cpu_usage < 75 && current_index > 0) {
