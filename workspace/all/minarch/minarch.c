@@ -5322,21 +5322,9 @@ int main(int argc , char* argv[]) {
 	resetFPSCounter();
 	chooseSyncRef();
 	
-	while (!quit) {
-		#if 0
-		// This code allows a core to change its settings regarding
-		// region and video ratio on the fly.
-		// It works with most core, but FBNeo doesn't like its get_system_av_info
-		// function to be called too often...
-		// Commenting for now...
-		if (Core_updateAVInfo()) {
-			LOG_info("AV info changed, reset sound system");
-			SND_quit();
-			SND_init(core.sample_rate, core.fps);
-			resetFPSCounter();
-		}
-		#endif
+	int has_pending_opt_change = 0;
 
+	while (!quit) {
 		GFX_startFrame();
 	
 	
@@ -5344,6 +5332,17 @@ int main(int argc , char* argv[]) {
 			core.run();
 			limitFF();
 			trackFPS();
+		}
+
+		if (has_pending_opt_change) {
+			has_pending_opt_change = 0;
+			if (Core_updateAVInfo()) {
+				LOG_info("AV info changed, reset sound system");
+				SND_quit();
+				SND_init(core.sample_rate, core.fps);
+			}
+			resetFPSCounter();
+			chooseSyncRef();
 		}
 
 		if (thread_video && !quit) {
@@ -5360,8 +5359,9 @@ int main(int argc , char* argv[]) {
 		
 		if (show_menu) {
 			Menu_loop();
-			chooseSyncRef();
+			has_pending_opt_change = config.core.changed;
 			resetFPSCounter();
+			chooseSyncRef();
 		}
 		
 		if (toggle_thread) {

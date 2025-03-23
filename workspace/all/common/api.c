@@ -245,7 +245,10 @@ static struct SND_Context {
 
 static int _;
 
+#define FPS_BUFFER_SIZE 50
 static int fps_counter = 0;
+static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
+static int fps_buffer_index = 0;
 static double instant_fps = 0.0;
 static double average_fps = 0.0;
 int currentcpuspeed = 0;
@@ -374,7 +377,6 @@ int GFX_hdmiChanged(void) {
 static uint32_t frame_start = 0;
 
 static uint64_t per_frame_start = 0;
-#define FPS_BUFFER_SIZE 50
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
@@ -530,11 +532,9 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 	instant_fps = tempfps;
 	
 	// filling with  60.1 cause i'd rather underrun than overflow in start phase
-	static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
-	static int buffer_index = 0;
 
-	fps_buffer[buffer_index] = tempfps;
-	buffer_index = (buffer_index + 1) % FPS_BUFFER_SIZE;
+	fps_buffer[fps_buffer_index] = tempfps;
+	fps_buffer_index = (fps_buffer_index + 1) % FPS_BUFFER_SIZE;
 	// give it a little bit to stabilize and then use, meanwhile the buffer will
 	// cover it
 	if (fps_counter > 100) {
@@ -1809,7 +1809,10 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 
-		
+	fps_counter = 0;
+	fps_buffer_index = 0;
+	average_fps = 0.0;
+
 #if defined(USE_SDL2)
 	LOG_info("Available audio drivers:\n");
 	for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
