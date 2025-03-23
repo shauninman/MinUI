@@ -6,6 +6,8 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Game art/media support
 - Game time tracker!
+- Cheats support
+- Dynamic cpu speed scaling
 - Custom bootlogos contributed by [@SolvalouArt](https://bsky.app/profile/solvalouart.bsky.social)
 - Color and font settings to customize the NextUI interface
 - Menu animations
