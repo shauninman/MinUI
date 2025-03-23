@@ -673,7 +673,7 @@ void *PLAT_cpu_monitor(void *arg) {
     double prev_real_time = get_time_sec();
     double prev_cpu_time = get_process_cpu_time_sec();
 
-    const int cpu_frequencies[] = {600, 800, 1000,1100, 1200,1300, 1400,1500, 1600,1700, 1800,1900, 2000};
+    const int cpu_frequencies[] = {600, 800, 1000,1100, 1200,1250,1300,1350, 1400,1450,1500,1550, 1600,1650,1700,1750, 1800,1850,1900,1950, 2000};
     const int num_freqs = sizeof(cpu_frequencies) / sizeof(cpu_frequencies[0]);
     int current_index = 5; 
 
@@ -730,7 +730,7 @@ void *PLAT_cpu_monitor(void *arg) {
 
             prev_real_time = curr_real_time;
             prev_cpu_time = curr_cpu_time;
-            usleep(17000); // 17ms about 60fps
+            usleep(20000); // 20ms really seems lowest i can go, maybe one day I will find another even more granual way to check cpu ticks and lower this to 1ms haha
         } else {
             // Just measure CPU usage without changing frequency
             double curr_real_time = get_time_sec();
