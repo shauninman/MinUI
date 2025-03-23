@@ -594,7 +594,10 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	else if (*charge>10) *charge =  20;
 	else           		 *charge =  10;
 }
+void PLAT_getCPUTemp() {
+	currentcputemp = getInt("/sys/devices/virtual/thermal/thermal_zone0/temp")/1000;
 
+}
 void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
 {
 	// *is_charging = 0;
@@ -677,7 +680,7 @@ void *PLAT_cpu_monitor(void *arg) {
     double prev_real_time = get_time_sec();
     double prev_cpu_time = get_process_cpu_time_sec();
 
-    const int cpu_frequencies[] = {600, 800, 1000,1100, 1200,1250,1300,1350, 1400,1450,1500,1550, 1600,1650,1700,1750, 1800,1850,1900,1950, 2000};
+    const int cpu_frequencies[] = {600,650,700,750, 800,850,900,950, 1000,1050,1100,1150, 1200,1250,1300,1350, 1400,1450,1500,1550, 1600,1650,1700,1750, 1800,1850,1900,1950, 2000};
     const int num_freqs = sizeof(cpu_frequencies) / sizeof(cpu_frequencies[0]);
     int current_index = 5; 
 

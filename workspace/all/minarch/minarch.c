@@ -2788,6 +2788,47 @@ static const char* bitmap_font[] = {
 		"     "
 		"     "
 		"     ",
+	['c'] = 
+        "     "
+        "     "
+        " 111 "
+        "1   1"
+        "1    "
+        "1    "
+        "1    "
+        "1   1"
+        " 111 ",
+	['m'] = 
+        "     "
+        "     "
+        "11 11"
+        "1 1 1"
+        "1 1 1"
+        "1   1"
+        "1   1"
+        "1   1"
+        "1   1",
+	['z'] =
+		"     "
+        "     "
+        "     "
+        "11111"
+        "   1 "
+        "  1  "
+        " 1   "
+        "1    "
+        "11111",
+	['h'] =
+		"     "
+        "1    "
+        "1    "
+        "1    "
+        "1111 "
+        "1   1"
+        "1   1"
+        "1   1"
+        "1   1",
+
 	};
 static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int stride, int width, int height) {
 	#define CHAR_WIDTH 5
@@ -3171,7 +3212,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
 
 		//want this to overwrite bottom right in case screen is too small this info more important tbh
-		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%i", currentfps, currentreqfps,currentcpuse,currentcpuspeed);
+		PLAT_getCPUTemp();
+		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%ihz/%ic", currentfps, currentreqfps,currentcpuse,currentcpuspeed,currentcputemp);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
 		
