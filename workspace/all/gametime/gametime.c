@@ -47,6 +47,7 @@ static void sigHandler(int sig)
 #define IMG_MAX_HEIGHT BIG_PILL_SIZE - IMG_MARGIN
 
 static SDL_Surface *screen;
+static SDL_Surface **romImages;
 
 static PlayActivities *play_activities;
 
@@ -182,7 +183,28 @@ SDL_Surface *loadRomImage(char *image_path)
 
     SDL_FreeSurface(img);
 
+    GFX_ApplyRounderCorners(dst, SCALE1(18));
+
     return dst;
+}
+
+void preloadRomImages()
+{
+    // load all rom images into SDL_Surfaces
+    romImages = malloc(sizeof(SDL_Surface *) * play_activities->count);
+    for (int i = 0; i < play_activities->count; i++) {
+        PlayActivity *entry = play_activities->play_activity[i];
+        ROM *rom = entry->rom;
+        romImages[i] = loadRomImage(rom->image_path);
+    }
+}
+
+void freeRomImages()
+{
+    for (int i = 0; i < play_activities->count; i++) {
+        SDL_FreeSurface(romImages[i]);
+    }
+    free(romImages);
 }
 
 void renderList(int count, int start, int end, int selected)
@@ -213,7 +235,7 @@ void renderList(int count, int start, int end, int selected)
             elemHeight
         }, isSelected ? RGB_WHITE : RGB_BLACK, SCALE1(24));
 
-        SDL_Surface *romImage = loadRomImage(rom->image_path);
+        SDL_Surface *romImage = romImages[index];
         if (romImage) {
             SDL_Rect rectRomImage = {
                 layout.list_display_start_x + num_width + thumbMargin / 2 + (SCALE1(IMG_MAX_WIDTH) - romImage->w) / 2, 
@@ -221,9 +243,7 @@ void renderList(int count, int start, int end, int selected)
                 SCALE1(IMG_MAX_WIDTH), 
                 SCALE1(IMG_MAX_HEIGHT)
             };
-            GFX_ApplyRounderCorners(romImage, SCALE1(18));
             SDL_BlitSurface(romImage, NULL, screen, &rectRomImage);
-            SDL_FreeSurface(romImage);
         }
         else {
             SDL_Rect rectRomImage = {
@@ -335,6 +355,7 @@ int main(int argc, char *argv[])
     LOG_debug("found %d roms\n", play_activities->count);
 
     initLayout();
+    preloadRomImages();
     int count = play_activities->count;
     int selected = 0;
     int start = 0;
@@ -437,6 +458,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    freeRomImages();
     free_play_activities(play_activities);
 
     QuitSettings();
