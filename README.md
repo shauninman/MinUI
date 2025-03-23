@@ -1,4 +1,12 @@
-# NextUI (formerly MinUI Next)
+<div align="center">
+
+  <img src="github/logo.png">
+
+  (formerly MinUI Next)
+
+</div>
+
+<hr>
 
 <h4 align="center">
   <a href="https://github.com/LoveRetro/NextUI/wiki/Installation#installation--update">Install</a>
@@ -7,6 +15,27 @@
   ·
   <a href="https://discord.gg/HKd7wqZk3h">Discord</a>
 </h4>
+
+<div align="center"><p>
+    <a href="https://github.com/LoveRetro/NextUI/releases/latest">
+      <img alt="Latest release" src="https://img.shields.io/github/v/release/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=C9CBFF&logoColor=D9E0EE&labelColor=302D41&include_prerelease&sort=semver" />
+    </a>
+    <a href="https://github.com/LoveRetro/NextUI/pulse">
+      <img alt="Last commit" src="https://img.shields.io/github/last-commit/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=8bd5ca&logoColor=D9E0EE&labelColor=302D41"/>
+    </a>
+    <a href="https://github.com/LoveRetro/NextUI/blob/main/LICENSE">
+      <img alt="License" src="https://img.shields.io/github/license/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=ee999f&logoColor=D9E0EE&labelColor=302D41" />
+    </a>
+    <a href="https://github.com/LoveRetro/NextUI/stargazers">
+      <img alt="Stars" src="https://img.shields.io/github/stars/LoveRetro/NextUI?style=for-the-badge&logo=starship&color=c69ff5&logoColor=D9E0EE&labelColor=302D41" />
+    </a>
+    <a href="https://github.com/LoveRetro/NextUI/issues">
+      <img alt="Issues" src="https://img.shields.io/github/issues/LoveRetro/NextUI?style=for-the-badge&logo=bilibili&color=F5E0DC&logoColor=D9E0EE&labelColor=302D41" />
+    </a>
+    <a href="https://github.com/LoveRetro/NextUI">
+      <img alt="Repo Size" src="https://img.shields.io/github/repo-size/LoveRetro/NextUI?color=%23DDB6F2&label=SIZE&logo=codesandbox&style=for-the-badge&logoColor=D9E0EE&labelColor=302D41" />
+    </a>
+</div>
 
 A CFW based of MinUI with a rebuild emulation engine and tons of added features for the TrimUI Brick and Smart Pro. For other devices we recommend checking out [MinUI](https://github.com/shauninman/MinUI)
 
