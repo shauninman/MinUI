@@ -594,7 +594,10 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	else if (*charge>10) *charge =  20;
 	else           		 *charge =  10;
 }
+void PLAT_getCPUTemp() {
+	currentcputemp = getInt("/sys/devices/virtual/thermal/thermal_zone0/temp")/1000;
 
+}
 void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
 {
 	// *is_charging = 0;
@@ -656,115 +659,129 @@ double get_time_sec() {
     return ts.tv_sec + ts.tv_nsec / 1e9; // Convert to seconds
 }
 double get_process_cpu_time_sec() {
+	// this gives cpu time in nanoseconds needed to accurately calculate cpu usage in very short time frames. 
+	// unfortunately about 20ms between meassures seems the lowest i can go to get accurate results
+	// maybe in the future i will find and even more granual way to get cpu time, but might just be a limit of C or Linux alltogether
     struct timespec ts;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
     return ts.tv_sec + ts.tv_nsec / 1e9; // Convert to seconds
 }
 
 static pthread_mutex_t currentcpuinfo;
-#define AVERAGE_WINDOW 2
-#define DOWNSCALE_DELAY 10 
+// a roling average for the display values of about 2 frames, otherwise they are unreadable jumping too fast up and down and stuff to read
+#define ROLLING_WINDOW 120  
 
 void *PLAT_cpu_monitor(void *arg) {
     struct timespec start_time, curr_time;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start_time); 
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start_time);
 
-    int downscale_counter = 0;
-    int downscaled = 0;
+    long clock_ticks_per_sec = sysconf(_SC_CLK_TCK);
 
-    long clock_ticks_per_sec = sysconf(_SC_CLK_TCK);  
-
-	double prev_real_time = get_time_sec();
+    double prev_real_time = get_time_sec();
     double prev_cpu_time = get_process_cpu_time_sec();
 
+    const int cpu_frequencies[] = {600,650,700,750, 800,850,900,950, 1000,1050,1100,1150, 1200,1250,1300,1350, 1400,1450,1500,1550, 1600,1650,1700,1750, 1800,1850,1900,1950, 2000};
+    const int num_freqs = sizeof(cpu_frequencies) / sizeof(cpu_frequencies[0]);
+    int current_index = 5; 
+
+    double cpu_usage_history[ROLLING_WINDOW] = {0};
+    double cpu_speed_history[ROLLING_WINDOW] = {0};
+    int history_index = 0;
+    int history_count = 0; 
+
     while (true) {
-		if(useAutoCpu) {
-			double curr_real_time = get_time_sec();
-			double curr_cpu_time = get_process_cpu_time_sec();
+        if (useAutoCpu) {
+            double curr_real_time = get_time_sec();
+            double curr_cpu_time = get_process_cpu_time_sec();
 
-			double elapsed_real_time = curr_real_time - prev_real_time;
-			double elapsed_cpu_time = curr_cpu_time - prev_cpu_time;
-			double cpu_usage = 0;
-			if (elapsed_real_time > 0) {
-				cpu_usage = (elapsed_cpu_time / elapsed_real_time) * 100.0;
-				currentcpuse = cpu_usage;
-			}
+            double elapsed_real_time = curr_real_time - prev_real_time;
+            double elapsed_cpu_time = curr_cpu_time - prev_cpu_time;
+            double cpu_usage = 0;
 
+            if (elapsed_real_time > 0) {
+                cpu_usage = (elapsed_cpu_time / elapsed_real_time) * 100.0;
+            }
 
-			if (cpu_usage >= 90 || (downscaled && cpu_usage > 30)) {  
-				PLAT_setCustomCPUSpeed(2000000);
-				pthread_mutex_lock(&currentcpuinfo);
-				currentcpuspeed = 2000;
-				pthread_mutex_unlock(&currentcpuinfo);
-				downscaled = 0;
-				downscale_counter = 0;
-			} 
-			else if (cpu_usage < 90) {  
-				downscale_counter++;
-				if (downscale_counter >= DOWNSCALE_DELAY) {
-					pthread_mutex_lock(&currentcpuinfo);
+            pthread_mutex_lock(&currentcpuinfo);
 
-					if (cpu_usage < 10) {
-						PLAT_setCustomCPUSpeed(600000);
-						currentcpuspeed = 600;
-						downscaled = 1;
-					} 
-					else if (cpu_usage < 20) {
-						PLAT_setCustomCPUSpeed(800000);
-						currentcpuspeed = 800;
-						downscaled = 1;
-					} 
-					else if (cpu_usage < 30) {
-						PLAT_setCustomCPUSpeed(1000000);
-						currentcpuspeed = 1000;
-						downscaled = 1;
-					} 
-					else if (cpu_usage < 40) {
-						PLAT_setCustomCPUSpeed(1200000);
-						currentcpuspeed = 1200;
-					} 
-					else if (cpu_usage < 60) {
-						PLAT_setCustomCPUSpeed(1400000);
-						currentcpuspeed = 1400;
-					} 
-					else if (cpu_usage < 80) {
-						PLAT_setCustomCPUSpeed(1700000);
-						currentcpuspeed = 1600;
-					} 
-					else  {
-						PLAT_setCustomCPUSpeed(1800000);
-						currentcpuspeed = 1800;
-					} 
-				
-					pthread_mutex_unlock(&currentcpuinfo);
-				}
-			}
-			prev_real_time = curr_real_time;
-			prev_cpu_time = curr_cpu_time;
-			usleep(50000);  // Sleep for 10ms, but measurement is independent of sleep
-		} else {
-			 
+			// the goal here is is to keep cpu usage between 75% and 85% at the lowest possible speed so device stays cool and battery usage is at a minimum
+			// if usage falls out of this range it will either scale a step down or up 
+			// but if usage hits above 95% we need that max boost and we instant scale up to 2000mhz as long as needed
+			// all this happens very fast like 60 times per second, so i'm applying roling averages to display values, so debug screen is readable and gives a good estimate on whats happening cpu wise
+			// the roling averages are purely for displaying, the actual scaling is happening realtime each run. 
+            if (cpu_usage > 95) {
+                current_index = num_freqs - 1; // Instant power needed, cpu is above 95% Jump directly to max boost 2000MHz
+            }
+            else if (cpu_usage > 85 && current_index < num_freqs - 1) { // otherwise try to keep between 75 and 85 at lowest clock speed
+                current_index++; 
+            } 
+            else if (cpu_usage < 75 && current_index > 0) {
+                current_index--; 
+            }
 
-			double curr_real_time = get_time_sec();
-			double curr_cpu_time = get_process_cpu_time_sec();
+            PLAT_setCustomCPUSpeed(cpu_frequencies[current_index] * 1000);
 
-			double elapsed_real_time = curr_real_time - prev_real_time;
-			double elapsed_cpu_time = curr_cpu_time - prev_cpu_time;
+            cpu_usage_history[history_index] = cpu_usage;
+            cpu_speed_history[history_index] = cpu_frequencies[current_index];
 
-			if (elapsed_real_time > 0) {
-				double cpu_usage = (elapsed_cpu_time / elapsed_real_time) * 100.0;
-				currentcpuse = cpu_usage;
-			}
+            history_index = (history_index + 1) % ROLLING_WINDOW;
+            if (history_count < ROLLING_WINDOW) {
+                history_count++; 
+            }
 
-			// Update previous values
-			prev_real_time = curr_real_time;
-			prev_cpu_time = curr_cpu_time;
-			usleep(100000);  // Sleep for 10ms, but measurement is independent of sleep
-		}
-	}
+            double sum_cpu_usage = 0, sum_cpu_speed = 0;
+            for (int i = 0; i < history_count; i++) {
+                sum_cpu_usage += cpu_usage_history[i];
+                sum_cpu_speed += cpu_speed_history[i];
+            }
+
+            currentcpuse = sum_cpu_usage / history_count;
+            currentcpuspeed = sum_cpu_speed / history_count;
+
+            pthread_mutex_unlock(&currentcpuinfo);
+
+            prev_real_time = curr_real_time;
+            prev_cpu_time = curr_cpu_time;
+			// 20ms really seems lowest i can go, anything lower it becomes innacurate, maybe one day I will find another even more granual way to calculate usage accurately and lower this shit to 1ms haha, altough anything lower than 10ms causes cpu usage in itself so yeah
+			// Anyways screw it 20ms is pretty much on a frame by frame basis anyways, so will anything lower really make a difference specially if that introduces cpu usage by itself? 
+			// Who knows, maybe some CPU engineer will find my comment here one day and can explain, maybe this is looking for the limits of C and needs Assambler or whatever to call CPU instructions directly to go further, but all I know is PUSH and MOV, how did the orignal Roller Coaster Tycoon developer wrote a whole game like this anyways? Its insane..
+            usleep(20000);
+        } else {
+            // Just measure CPU usage without changing frequency
+            double curr_real_time = get_time_sec();
+            double curr_cpu_time = get_process_cpu_time_sec();
+
+            double elapsed_real_time = curr_real_time - prev_real_time;
+            double elapsed_cpu_time = curr_cpu_time - prev_cpu_time;
+
+            if (elapsed_real_time > 0) {
+                double cpu_usage = (elapsed_cpu_time / elapsed_real_time) * 100.0;
+
+                pthread_mutex_lock(&currentcpuinfo);
+
+                cpu_usage_history[history_index] = cpu_usage;
+
+                history_index = (history_index + 1) % ROLLING_WINDOW;
+                if (history_count < ROLLING_WINDOW) {
+                    history_count++;
+                }
+
+                double sum_cpu_usage = 0;
+                for (int i = 0; i < history_count; i++) {
+                    sum_cpu_usage += cpu_usage_history[i];
+                }
+
+                currentcpuse = sum_cpu_usage / history_count;
+
+                pthread_mutex_unlock(&currentcpuinfo);
+            }
+
+            prev_real_time = curr_real_time;
+            prev_cpu_time = curr_cpu_time;
+            usleep(100000); 
+        }
+    }
 }
-
-
 
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"

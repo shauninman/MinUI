@@ -258,6 +258,7 @@ int currentbuffersize = 0;
 int currentsampleratein = 0;
 int currentsamplerateout = 0;
 int should_rotate = 0;
+int currentcputemp = 0;
 
 SDL_Surface* GFX_init(int mode) {
 	// TODO: this doesn't really belong here...

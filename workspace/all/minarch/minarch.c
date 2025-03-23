@@ -56,7 +56,7 @@ static int sync_ref = 0;
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
-static int overclock = 1; // normal
+static int overclock = 3; // auto
 static int has_custom_controllers = 0;
 static int gamepad_type = 0; // index in gamepad_labels/gamepad_values
 static int downsample = 0; // set to 1 to convert from 8888 to 565
@@ -1206,8 +1206,8 @@ static struct Config {
 				.key	= "minarch_cpu_speed",
 				.name	= "CPU Speed",
 				.desc	= "Over- or underclock the CPU to prioritize\npure performance or power savings.",
-				.default_value = 1,
-				.value = 1,
+				.default_value = 3,
+				.value = 3,
 				.count = 4,
 				.values = overclock_labels,
 				.labels = overclock_labels,
@@ -2817,6 +2817,47 @@ static const char* bitmap_font[] = {
 		"     "
 		"     "
 		"     ",
+	['c'] = 
+        "     "
+        "     "
+        " 111 "
+        "1   1"
+        "1    "
+        "1    "
+        "1    "
+        "1   1"
+        " 111 ",
+	['m'] = 
+        "     "
+        "     "
+        "11 11"
+        "1 1 1"
+        "1 1 1"
+        "1   1"
+        "1   1"
+        "1   1"
+        "1   1",
+	['z'] =
+		"     "
+        "     "
+        "     "
+        "11111"
+        "   1 "
+        "  1  "
+        " 1   "
+        "1    "
+        "11111",
+	['h'] =
+		"     "
+        "1    "
+        "1    "
+        "1    "
+        "1111 "
+        "1   1"
+        "1   1"
+        "1   1"
+        "1   1",
+
 	};
 static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int stride, int width, int height) {
 	#define CHAR_WIDTH 5
@@ -3185,18 +3226,13 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		int scale = renderer.scale;
 		if (scale==-1) scale = 1; // nearest neighbor flag
 
-		sprintf(debug_text, "%ix%i %ix", renderer.src_w,renderer.src_h, scale);
+		sprintf(debug_text, "%ix%i %ix %i/%i", renderer.src_w,renderer.src_h, scale,currentsampleratein,currentsamplerateout);
 		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
 		
 		sprintf(debug_text, "%.03f/%i/%.1f/%i", currentratio,
 				currentbuffersize,currentbufferms, currentbufferfree);
 		blitBitmapText(debug_text, x, y + 20, (uint16_t*)data, pitch / 2, width,
 					height);
-		
-
-		sprintf(debug_text, "%i/%i", currentsampleratein, currentsamplerateout);
-		blitBitmapText(debug_text, x, y + 40, (uint16_t*)data, pitch / 2, width,
-					   height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
 		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
@@ -3212,6 +3248,13 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
 		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
+
+		//want this to overwrite bottom right in case screen is too small this info more important tbh
+		PLAT_getCPUTemp();
+		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%ihz/%ic", currentfps, currentreqfps,currentcpuse,currentcpuspeed,currentcputemp);
+		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
+	
+		
 	}
 	
 	if (downsample) {

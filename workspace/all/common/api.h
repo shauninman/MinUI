@@ -86,6 +86,7 @@ extern int currentsampleratein;
 extern int currentsamplerateout;
 extern int currentcpuspeed;
 extern double currentcpuse;
+extern int currentcputemp;
 extern int should_rotate;
 extern MinUISettings settings;
 volatile int useAutoCpu;
@@ -295,7 +296,7 @@ extern LID_Context lid;
 
 void PLAT_initLid(void);
 int PLAT_lidChanged(int* state);
-
+void PLAT_getCPUTemp();
 ///////////////////////////////
 
 typedef struct PAD_Axis {
