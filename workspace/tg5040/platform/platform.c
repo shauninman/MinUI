@@ -730,7 +730,10 @@ void *PLAT_cpu_monitor(void *arg) {
 
             prev_real_time = curr_real_time;
             prev_cpu_time = curr_cpu_time;
-            usleep(20000); // 20ms really seems lowest i can go, maybe one day I will find another even more granual way to check cpu ticks and lower this to 1ms haha
+			// 20ms really seems lowest i can go, anything lower it becomes innacurate, maybe one day I will find another even more granual way to calculate usage accurately and lower this shit to 1ms haha, altough anything lower than 10ms causes cpu usage in itself so yeah
+			// Anyways screw it 20ms is pretty much on a frame by frame basis anyways, so will anything lower really make a difference specially if that introduces cpu usage by itself? 
+			// Who knows, maybe some CPU engineer will find my comment here one day and can explain, maybe this is looking for the limits of C and needs Assambler or whatever to call CPU instructions directly to go further, but all I know is PUSH and MOV, how did the orignal Roller Coaster Tycoon developer wrote a whole game like this anyways? Its insane..
+            usleep(20000);
         } else {
             // Just measure CPU usage without changing frequency
             double curr_real_time = get_time_sec();
