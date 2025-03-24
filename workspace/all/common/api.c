@@ -1872,25 +1872,6 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	return total_consumed_frames;
 }
 
-size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) {
-	int consumed = 0;
-
-	currentratio = 1.0;
-
-	while (frame_count > 0) {
-		int amount = MIN(BATCH_SIZE, frame_count);
-		frame_count -= amount;
-		pthread_mutex_lock(&audio_mutex);
-		while (amount--) {
-			snd.buffer[snd.frame_in] = frames[consumed++];
-			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
-		}
-		pthread_mutex_unlock(&audio_mutex);
-	}
-
-	return consumed;
-}
-
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
 	currentreqfps = frame_rate;
