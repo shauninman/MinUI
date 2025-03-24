@@ -559,9 +559,9 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 	}
 
 	int64_t frame_duration = perf_freq / target_fps;
-	int64_t time_of_frame = first_frame_start_time + frame_index * frame_duration;
+	int64_t time_of_frame = first_frame_start_time + frame_index * perf_freq / target_fps;
 	int64_t offset = now - time_of_frame;
-	const int max_lost_frames = 25; // 0.5 second on PAL systems
+	const int max_lost_frames = 2;
 
 	// printf("%s: frame #%lld, time is %lld, scheduled at %lld, offset is %lld\n",
 	// 	__FUNCTION__,
@@ -1872,6 +1872,87 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	return total_consumed_frames;
 }
 
+enum {
+	SND_FF_ON_TIME,
+	SND_FF_LATE
+};
+
+size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) {
+	static int current_mode = SND_FF_ON_TIME;
+
+	int framecount = (int)frame_count;
+
+	int consumed = 0;
+	int total_consumed_frames = 0;
+
+	//printf("received %d audio frames\n", frame_count);
+
+	//int full = 0;
+
+	float remaining_space=snd.frame_count;
+	if (snd.frame_in >= snd.frame_out) {
+		remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
+	}
+	else {
+		remaining_space = snd.frame_out - snd.frame_in;
+	}
+	//printf("    actual free: %g\n", remaining_space);
+	currentbufferfree = remaining_space;
+	float tempdelay = ((snd.frame_count - remaining_space) / snd.sample_rate_out) * 1000;
+	currentbufferms = tempdelay;
+
+	float occupancy = (float) (snd.frame_count - currentbufferfree) / snd.frame_count;
+	switch(current_mode) {
+		case SND_FF_ON_TIME:
+			if (occupancy > 0.65) {
+				current_mode = SND_FF_LATE;
+			}
+			break;
+		case SND_FF_LATE:
+			if (occupancy < 0.25) {
+				current_mode = SND_FF_ON_TIME;
+			}
+			break;
+	}
+
+	currentratio = ratio = (current_mode == SND_FF_ON_TIME ? 1.0 : 0.995);
+
+	while (framecount > 0) {
+		
+		int amount = MIN(BATCH_SIZE, framecount);
+
+		for (int i = 0; i < amount; i++) {
+			tmpbuffer[i] = frames[consumed + i];
+		}
+		consumed += amount;
+		framecount -= amount;
+
+		ResampledFrames resampled = resample_audio(
+			tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, ratio);
+
+		// Write resampled frames to the buffer
+		int written_frames = 0;
+		
+		for (int i = 0; i < resampled.frame_count; i++) {
+			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+				// Buffer is full, break. This should never happen tho, but just to be safe
+				break;
+			}
+			pthread_mutex_lock(&audio_mutex);
+			snd.buffer[snd.frame_in] = resampled.frames[i];
+			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
+			pthread_mutex_unlock(&audio_mutex);
+			written_frames++;
+			
+		}
+		
+		total_consumed_frames += written_frames;
+		free(resampled.frames);
+	}
+
+	return total_consumed_frames;
+}
+
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
 	currentreqfps = frame_rate;
@@ -2727,5 +2808,4 @@ void LEDS_initLeds() {
 	PLAT_getBatteryStatusFine(&pwr.is_charging, &pwr.charge);
 	PLAT_initLeds(lights);
 }
-
 

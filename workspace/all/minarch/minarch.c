@@ -2891,6 +2891,39 @@ static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int strid
 	memset(row-1, 0, (w+2)*2);
 }
 
+void drawRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
+	for (int _x=x; _x<x+w; _x++) {
+		data[_x + y * stride] = c;
+	}
+	for (int _y=y; _y<y+h; _y++) {
+		data[x + _y * stride] = data[x + w - 1 + _y * stride] = c;
+	}
+	for (int _x=x; _x<x+w; _x++) {
+		data[_x + (y + h) * stride] = c;
+	}
+}
+
+void fillRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
+	for (int _y=y; _y<y+h; _y++) {
+		for (int _x=x; _x<x+w; _x++) {
+			data[_x + _y * stride] = c;
+		}
+	}
+}
+
+void drawGauge(int x, int y, float percent, int width, int height, uint16_t *data, int stride) {
+	// static float a = 0.0;
+	// percent = 0.5 + 0.5 * sin(a);
+	// a += 0.02;
+	int red   = (int) (percent * 31);
+	int green = (int) ((1.0 - percent) * 15);
+	int blue  = 0;
+	uint16_t color = (red << 11) | (green << 6) | blue;
+	fillRect(x, y, width, height, 0x0000, data, stride);
+	fillRect(x, y, (int) (percent * width), height, color, data, stride);
+	drawRect(x, y, width, height, 0xFFFF, data, stride);
+}
+
 ///////////////////////////////
 
 static int cpu_ticks = 0;
@@ -3253,7 +3286,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%ihz/%ic", currentfps, currentreqfps,currentcpuse,currentcpuspeed,currentcputemp);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
-		
+		double buffer_fill = (double) (currentbuffersize - currentbufferfree) / (double) currentbuffersize;
+		drawGauge(x, y + 28, buffer_fill, width / 4, 10, (uint16_t*)data, pitch/2);
 	}
 	
 	if (downsample) {
@@ -3345,10 +3379,24 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
 // NOTE: sound must be disabled for fast forward to work...
 static void audio_sample_callback(int16_t left, int16_t right) {
-	if (!fast_forward) SND_batchSamples(&(const SND_Frame){left,right}, 1);
+	if (!fast_forward) {
+		if (use_core_fps) {
+			SND_batchSamples_fixed_rate(&(const SND_Frame){left,right}, 1);
+		}
+		else {
+			SND_batchSamples(&(const SND_Frame){left,right}, 1);
+		}
+	}
 }
 static size_t audio_sample_batch_callback(const int16_t *data, size_t frames) { 
-	if (!fast_forward) return SND_batchSamples((const SND_Frame*)data, frames);
+	if (!fast_forward) {
+		if (use_core_fps) {
+			return SND_batchSamples_fixed_rate((const SND_Frame*)data, frames);
+		}
+		else {
+			return SND_batchSamples((const SND_Frame*)data, frames);
+		}
+	}
 	else return frames;
 	// return frames;
 };
@@ -3684,7 +3732,7 @@ static int Menu_message(char* message, char** pairs) {
 		GFX_clear(screen);
 		GFX_blitMessage(font.medium, message, screen, &(SDL_Rect){0,SCALE1(PADDING),screen->w,screen->h-SCALE1(PILL_SIZE+PADDING)});
 		GFX_blitButtonGroup(pairs, 0, screen, 1);
-		screen_flip(screen);
+		GFX_flip(screen);
 		dirty = 0;
 		
 		
@@ -4539,14 +4587,14 @@ static int Menu_options(MenuList* list) {
 			});
 		}
 		
-		screen_flip(screen);
+		GFX_flip(screen);
 		dirty = 0;
 		
 		hdmimon();
 	}
 	
 	// GFX_clearAll();
-	// screen_flip(screen);
+	// GFX_flip(screen);
 	
 	return 0;
 }
@@ -5124,7 +5172,7 @@ static void Menu_loop(void) {
 			}
 		}
 
-		screen_flip(screen);
+		GFX_flip(screen);
 		dirty = 0;
 
 		hdmimon();
@@ -5357,7 +5405,7 @@ int main(int argc , char* argv[]) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	screen_flip(screen);
+	GFX_flip(screen);
 	
 	Special_init(); // after config
 	
