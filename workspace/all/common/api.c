@@ -559,7 +559,7 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 	}
 
 	int64_t frame_duration = perf_freq / target_fps;
-	int64_t time_of_frame = first_frame_start_time + frame_index * perf_freq / target_fps;
+	int64_t time_of_frame = first_frame_start_time + frame_index * frame_duration;
 	int64_t offset = now - time_of_frame;
 	const int max_lost_frames = 2;
 
@@ -589,7 +589,7 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 			// The OS scheduling algorithm cannot guarantee that
 			// the sleep while last the exact amount of requested time.
 			// We sleep as much as we can using the OS primitive
-			const useconds_t min_waiting_time = 4000;
+			const useconds_t min_waiting_time = 2000;
 			if (time_to_sleep_us > min_waiting_time) {
 				usleep(time_to_sleep_us - min_waiting_time);
 			}
@@ -1874,7 +1874,8 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 enum {
 	SND_FF_ON_TIME,
-	SND_FF_LATE
+	SND_FF_LATE,
+	SND_FF_VERY_LATE
 };
 
 size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) {
@@ -1909,13 +1910,27 @@ size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) 
 			}
 			break;
 		case SND_FF_LATE:
-			if (occupancy < 0.25) {
+			if (occupancy > 0.85) {
+				current_mode = SND_FF_VERY_LATE;
+			}
+			else if (occupancy < 0.25) {
 				current_mode = SND_FF_ON_TIME;
+			}
+			break;
+		case SND_FF_VERY_LATE:
+			if (occupancy < 0.50) {
+				current_mode = SND_FF_LATE;
 			}
 			break;
 	}
 
-	currentratio = ratio = (current_mode == SND_FF_ON_TIME ? 1.0 : 0.995);
+	switch(current_mode) {
+		case SND_FF_ON_TIME:   ratio = 1.0; break;
+		case SND_FF_LATE:      ratio = 0.995; break;
+		case SND_FF_VERY_LATE: ratio = 0.980; break;
+		default: ratio = 1.0;
+	}
+	currentratio = ratio;
 
 	while (framecount > 0) {
 		
