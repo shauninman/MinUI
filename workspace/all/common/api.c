@@ -545,58 +545,81 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 	if (target_fps == 0.0) target_fps = SCREEN_FPS;
 	double frame_budget_ms = 1000.0 / target_fps;
 
-	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks() - frame_start < frame_budget_ms));
-	PLAT_flip(screen, should_vsync);
+	static int64_t frame_index = -1;
+	static int64_t first_frame_start_time = 0;
+	static double last_target_fps = 0.0;
 
-	fps_counter++;
+	int64_t perf_freq = SDL_GetPerformanceFrequency();
+	int64_t now = SDL_GetPerformanceCounter();
 
-	uint64_t performance_frequency = SDL_GetPerformanceFrequency();
-	uint64_t frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
-	double elapsed_time_s = (double)frame_duration / performance_frequency;
-	double elapsed_time_ms = elapsed_time_s * 1000.0;
-
-	if (should_vsync) {
-		useconds_t time_to_sleep = (useconds_t) ((frame_budget_ms - elapsed_time_ms) * 1000.0);
-		//printf("Elapsed time is %gms, need to wait for %gms\n", elapsed_time_ms, (double) time_to_sleep / 1000.0);
-		// The OS scheduling algorithm cannot guarantee that
-		// the sleep while last the exact amount of requested time.
-		// We sleep as much as we can using the OS primitive
-		const useconds_t min_waiting_time = 8000;
-		if (time_to_sleep > min_waiting_time) {
-			time_to_sleep -= min_waiting_time;
-			//printf("Waiting %gms using usleep\n", (double) time_to_sleep / 1000.0);
-			usleep(time_to_sleep);
-		}
-
-		// Then we use an active loop for the remaining time.
-		int active_loops = 0;
-		do {
-			frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
-			elapsed_time_s = (double)frame_duration / performance_frequency;
-			elapsed_time_ms = elapsed_time_s * 1000.0;
-			active_loops++;
-		} while(elapsed_time_ms < frame_budget_ms);
-
-		//printf("New elapsed time is %gms on a %gms budget after %d loops\n", elapsed_time_ms, frame_budget_ms, active_loops);
+	if (++frame_index == 0 || target_fps != last_target_fps) {
+		frame_index = 0;
+		first_frame_start_time = now;
+		last_target_fps = target_fps;
 	}
 
+	int64_t frame_duration = perf_freq / target_fps;
+	int64_t time_of_frame = first_frame_start_time + frame_index * frame_duration;
+	int64_t offset = now - time_of_frame;
+	const int max_lost_frames = 25; // 0.5 second on PAL systems
+
+	// printf("%s: frame #%lld, time is %lld, scheduled at %lld, offset is %lld\n",
+	// 	__FUNCTION__,
+	// 	frame_index,
+	// 	now,
+	// 	time_of_frame,
+	// 	now - time_of_frame);
+
+	if (offset > 0) {
+		if (offset > max_lost_frames * frame_duration) {
+			frame_index = -1;
+			last_target_fps = 0.0;
+			LOG_warn("%s: lost sync by more than %d frames (late) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
+		}
+	}
+	else {
+		if (offset < -max_lost_frames * frame_duration) {
+			frame_index = -1;
+			last_target_fps = 0.0;
+			LOG_warn("%s: lost sync by more than %d frames (early ?!) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
+		}
+		else if (offset < 0) {
+			useconds_t time_to_sleep_us = (useconds_t) ((time_of_frame - now) * 1e6 / perf_freq);
+
+			// The OS scheduling algorithm cannot guarantee that
+			// the sleep while last the exact amount of requested time.
+			// We sleep as much as we can using the OS primitive
+			const useconds_t min_waiting_time = 4000;
+			if (time_to_sleep_us > min_waiting_time) {
+				usleep(time_to_sleep_us - min_waiting_time);
+			}
+
+			while (SDL_GetPerformanceCounter() < time_of_frame) {
+				// nothing...
+			}
+		}
+	}
+	PLAT_flip(screen, 0);
+
+	double elapsed_time_s = (double)(SDL_GetPerformanceCounter() - per_frame_start) / perf_freq;
 	double tempfps = 1.0 / elapsed_time_s;
-	if(tempfps < target_fps * 0.8 || tempfps > target_fps * 1.2) tempfps = target_fps;
 	
 	fps_buffer[fps_buffer_index] = tempfps;
 	fps_buffer_index = (fps_buffer_index + 1) % FPS_BUFFER_SIZE;
 	// give it a little bit to stabilize and then use, meanwhile the buffer will
 	// cover it
-	if (fps_counter > 100) {
+	if (fps_counter++ > 100) {
 		double average_fps = 0.0;
 		int fpsbuffersize = MIN(fps_counter, FPS_BUFFER_SIZE);
 		for (int i = 0; i < fpsbuffersize; i++) {
 			average_fps += fps_buffer[i];
 		}
 		average_fps /= fpsbuffersize;
-		currentfps = average_fps;
+		currentfps = current_fps = average_fps;
 	}
-	currentreqfps = target_fps;
+	else {
+		currentfps = current_fps = target_fps;
+	}
 	per_frame_start = SDL_GetPerformanceCounter();
 }
 
@@ -1804,6 +1827,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	// It's like a person is trying to balance on a rope (my algorithm) and another person (the audio hardware and screen) is wiggling the rope and the balancing person got to keep countering and try to stay stable
 	float bufferadjustment = calculateBufferAdjustment(remaining_space, snd.frame_count*0.4, snd.frame_count,frame_count);
 	ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
+	// printf("%s: ratio=%g, tempratio=%g, snd.frame_rate=%g, current_fps=%g, bufferadjustment=%g\n", __FUNCTION__, ratio, tempratio, snd.frame_rate, current_fps, bufferadjustment);
 
 	currentratio = ratio;
 
@@ -1849,47 +1873,22 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 }
 
 size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) {
-	int framecount = (int)frame_count;
-
 	int consumed = 0;
-	int total_consumed_frames = 0;
 
 	currentratio = 1.0;
 
-	while (framecount > 0) {
-		
-		int amount = MIN(BATCH_SIZE, framecount);
-
-		for (int i = 0; i < amount; i++) {
-			tmpbuffer[i] = frames[consumed + i];
-		}
-		consumed += amount;
-		framecount -= amount;
-
-		ResampledFrames resampled = resample_audio(
-			tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, currentratio);
-
-		// Write resampled frames to the buffer
-		int written_frames = 0;
-		
-		for (int i = 0; i < resampled.frame_count; i++) {
-			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
-				// Buffer is full, break. This should never happen tho, but just to be save
-				break;
-			}
-			pthread_mutex_lock(&audio_mutex);
-			snd.buffer[snd.frame_in] = resampled.frames[i];
+	while (frame_count > 0) {
+		int amount = MIN(BATCH_SIZE, frame_count);
+		frame_count -= amount;
+		pthread_mutex_lock(&audio_mutex);
+		while (amount--) {
+			snd.buffer[snd.frame_in] = frames[consumed++];
 			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
-			pthread_mutex_unlock(&audio_mutex);
-			written_frames++;
-			
 		}
-		
-		total_consumed_frames += written_frames;
-		free(resampled.frames);
+		pthread_mutex_unlock(&audio_mutex);
 	}
 
-	return total_consumed_frames;
+	return consumed;
 }
 
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
@@ -1948,7 +1947,7 @@ void SND_quit(void) { // plat_sound_finish
 	}
 }
 
-void SND_resetResampler(double sample_rate, double frame_rate) {
+void SND_resetAudio(double sample_rate, double frame_rate) {
 	SND_quit();
 	SND_init(sample_rate, frame_rate);
 }
