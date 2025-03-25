@@ -959,6 +959,7 @@ enum {
 	SHORTCUT_CYCLE_EFFECT,
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
+	SHORTCUT_GAMESWITCHER,
 	SHORTCUT_COUNT,
 };
 
@@ -1261,6 +1262,7 @@ static struct Config {
 		[SHORTCUT_CYCLE_EFFECT]			= {"Cycle Effect",		-1, BTN_ID_NONE, 0},
 		[SHORTCUT_TOGGLE_FF]			= {"Toggle FF",			-1, BTN_ID_NONE, 0},
 		[SHORTCUT_HOLD_FF]				= {"Hold FF",			-1, BTN_ID_NONE, 0},
+		[SHORTCUT_GAMESWITCHER]			= {"Game Switcher",		-1, BTN_ID_NONE, 0},
 		{NULL}
 	},
 };
@@ -2076,6 +2078,11 @@ static void input_poll_callback(void) {
 					case SHORTCUT_RESET_GAME: core.reset(); break;
 					case SHORTCUT_SAVE_QUIT:
 						Menu_saveState();
+						quit = 1;
+						break;
+					case SHORTCUT_GAMESWITCHER:
+						Menu_saveState();
+						putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
 						quit = 1;
 						break;
 					case SHORTCUT_CYCLE_SCALE:
