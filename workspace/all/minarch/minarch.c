@@ -918,7 +918,7 @@ static char* tearing_labels[] = {
 static char* sync_ref_labels[] = {
 	"Auto",
 	"Screen",
-	"Core",
+	"Native",
 	NULL
 };
 static char* max_ff_labels[] = {
@@ -1194,8 +1194,8 @@ static struct Config {
 			},
 			[FE_OPT_SYNC_REFERENCE] = {
 				.key	= "minarch_sync_reference",
-				.name	= "Synchronization Reference",
-				.desc	= "Choose which source should be used as a\nreference for the frame rate.",
+				.name	= "Core Sync",
+				.desc	= "Choose what should be used as a\nreference for the frame rate.\n\"Native\" uses the emulator frame rate,\n\"Screen\" uses the frame rate of the screen.",
 				.default_value = SYNC_SRC_AUTO,
 				.value = SYNC_SRC_AUTO,
 				.count = 3,
