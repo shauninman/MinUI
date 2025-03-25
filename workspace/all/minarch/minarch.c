@@ -51,6 +51,8 @@ static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
 static int prevent_tearing = 1; // lenient
+static int use_core_fps = 0;
+static int sync_ref = 0;
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
 static int fast_forward = 0;
@@ -913,6 +915,12 @@ static char* tearing_labels[] = {
 	"Strict",
 	NULL
 };
+static char* sync_ref_labels[] = {
+	"Auto",
+	"Screen",
+	"Native",
+	NULL
+};
 static char* max_ff_labels[] = {
 	"None",
 	"2x",
@@ -934,6 +942,7 @@ enum {
 	FE_OPT_EFFECT,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
+	FE_OPT_SYNC_REFERENCE,
 	FE_OPT_OVERCLOCK,
 	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
@@ -951,6 +960,12 @@ enum {
 	SHORTCUT_TOGGLE_FF,
 	SHORTCUT_HOLD_FF,
 	SHORTCUT_COUNT,
+};
+
+enum {
+	SYNC_SRC_AUTO,
+	SYNC_SRC_SCREEN,
+	SYNC_SRC_CORE
 };
 
 #define LOCAL_BUTTON_COUNT 16 // depends on device
@@ -1129,7 +1144,7 @@ static struct Config {
 			},
 			[FE_OPT_RESAMPLING] = {
 				.key	= "minarch__resampling_quality", 
-				.name	= "Audio resampling quality",
+				.name	= "Audio Resampling Quality",
 				.desc	= "Resampling quality higher takes more CPU", // will call getScreenScalingDesc()
 				.default_value = 2,
 				.value = 2,
@@ -1139,7 +1154,7 @@ static struct Config {
 			},
 			[FE_OPT_AMBIENT] = {
 				.key	= "minarch_ambient", 
-				.name	= "Ambient mode",
+				.name	= "Ambient Mode",
 				.desc	= "Makes your leds follow on screen colors", // will call getScreenScalingDesc()
 				.default_value = 0,
 				.value = 0,
@@ -1176,6 +1191,16 @@ static struct Config {
 				.count = 3,
 				.values = tearing_labels,
 				.labels = tearing_labels,
+			},
+			[FE_OPT_SYNC_REFERENCE] = {
+				.key	= "minarch_sync_reference",
+				.name	= "Core Sync",
+				.desc	= "Choose what should be used as a\nreference for the frame rate.\n\"Native\" uses the emulator frame rate,\n\"Screen\" uses the frame rate of the screen.",
+				.default_value = SYNC_SRC_AUTO,
+				.value = SYNC_SRC_AUTO,
+				.count = 3,
+				.values = sync_ref_labels,
+				.labels = sync_ref_labels,
 			},
 			[FE_OPT_OVERCLOCK] = {
 				.key	= "minarch_cpu_speed",
@@ -1325,6 +1350,10 @@ static void Config_syncFrontend(char* key, int value) {
 	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
 		prevent_tearing = value;
 		i = FE_OPT_TEARING;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_SYNC_REFERENCE].key)) {
+		sync_ref = value;
+		i = FE_OPT_SYNC_REFERENCE;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_THREAD].key)) {
 		int old_value = thread_video || was_threaded;
@@ -2862,6 +2891,39 @@ static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int strid
 	memset(row-1, 0, (w+2)*2);
 }
 
+void drawRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
+	for (int _x=x; _x<x+w; _x++) {
+		data[_x + y * stride] = c;
+	}
+	for (int _y=y; _y<y+h; _y++) {
+		data[x + _y * stride] = data[x + w - 1 + _y * stride] = c;
+	}
+	for (int _x=x; _x<x+w; _x++) {
+		data[_x + (y + h) * stride] = c;
+	}
+}
+
+void fillRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
+	for (int _y=y; _y<y+h; _y++) {
+		for (int _x=x; _x<x+w; _x++) {
+			data[_x + _y * stride] = c;
+		}
+	}
+}
+
+void drawGauge(int x, int y, float percent, int width, int height, uint16_t *data, int stride) {
+	// static float a = 0.0;
+	// percent = 0.5 + 0.5 * sin(a);
+	// a += 0.02;
+	int red   = (int) (percent * 31);
+	int green = (int) ((1.0 - percent) * 15);
+	int blue  = 0;
+	uint16_t color = (red << 11) | (green << 6) | blue;
+	fillRect(x, y, width, height, 0x0000, data, stride);
+	fillRect(x, y, (int) (percent * width), height, color, data, stride);
+	drawRect(x, y, width, height, 0xFFFF, data, stride);
+}
+
 ///////////////////////////////
 
 static int cpu_ticks = 0;
@@ -3147,6 +3209,14 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	// }
 }
 
+static void screen_flip(SDL_Surface* screen) {
+	if (use_core_fps) {
+		GFX_flip_fixed_rate(screen, core.fps);
+	}
+	else {
+		GFX_flip(screen);
+	}
+}
 
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
@@ -3216,7 +3286,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%ihz/%ic", currentfps, currentreqfps,currentcpuse,currentcpuspeed,currentcputemp);
 		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
 	
-		
+		double buffer_fill = (double) (currentbuffersize - currentbufferfree) / (double) currentbuffersize;
+		drawGauge(x, y + 28, buffer_fill, width / 4, 10, (uint16_t*)data, pitch/2);
 	}
 	
 	if (downsample) {
@@ -3232,7 +3303,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 
 	GFX_blitRenderer(&renderer);
 
-	if (!thread_video) GFX_flip(screen);
+	if (!thread_video) screen_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
@@ -3308,10 +3379,24 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
 // NOTE: sound must be disabled for fast forward to work...
 static void audio_sample_callback(int16_t left, int16_t right) {
-	if (!fast_forward) SND_batchSamples(&(const SND_Frame){left,right}, 1);
+	if (!fast_forward) {
+		if (use_core_fps) {
+			SND_batchSamples_fixed_rate(&(const SND_Frame){left,right}, 1);
+		}
+		else {
+			SND_batchSamples(&(const SND_Frame){left,right}, 1);
+		}
+	}
 }
 static size_t audio_sample_batch_callback(const int16_t *data, size_t frames) { 
-	if (!fast_forward) return SND_batchSamples((const SND_Frame*)data, frames);
+	if (!fast_forward) {
+		if (use_core_fps) {
+			return SND_batchSamples_fixed_rate((const SND_Frame*)data, frames);
+		}
+		else {
+			return SND_batchSamples((const SND_Frame*)data, frames);
+		}
+	}
 	else return frames;
 	// return frames;
 };
@@ -3399,6 +3484,7 @@ void Core_init(void) {
 	core.init();
 	core.initialized = 1;
 }
+
 void Core_applyCheats(struct Cheats *cheats)
 {
 	if (!cheats)
@@ -3414,6 +3500,25 @@ void Core_applyCheats(struct Cheats *cheats)
 		}
 	}
 }
+
+int Core_updateAVInfo(void) {
+	struct retro_system_av_info av_info = {};
+	core.get_system_av_info(&av_info);
+
+	double a = av_info.geometry.aspect_ratio;
+	if (a<=0) a = (double)av_info.geometry.base_width / av_info.geometry.base_height;
+
+	int changed = (core.fps != av_info.timing.fps || core.sample_rate != av_info.timing.sample_rate || core.aspect_ratio != a);
+
+	core.fps = av_info.timing.fps;
+	core.sample_rate = av_info.timing.sample_rate;
+	core.aspect_ratio = a;
+
+	if (changed) LOG_info("aspect_ratio: %f (%ix%i) fps: %f\n", a, av_info.geometry.base_width,av_info.geometry.base_height, core.fps);
+
+	return changed;
+}
+
 void Core_load(void) {
 	LOG_info("Core_load\n");
 	struct retro_game_info game_info;
@@ -3434,17 +3539,8 @@ void Core_load(void) {
 	SRAM_read();
 	RTC_read();
 	// NOTE: must be called after core.load_game!
-	struct retro_system_av_info av_info = {};
-	core.get_system_av_info(&av_info);
 	core.set_controller_port_device(0, RETRO_DEVICE_JOYPAD); // set a default, may update after loading configs
-
-	core.fps = av_info.timing.fps;
-	core.sample_rate = av_info.timing.sample_rate;
-	double a = av_info.geometry.aspect_ratio;
-	if (a<=0) a = (double)av_info.geometry.base_width / av_info.geometry.base_height;
-	core.aspect_ratio = a;
-	
-	LOG_info("aspect_ratio: %f (%ix%i) fps: %f\n", a, av_info.geometry.base_width,av_info.geometry.base_height, core.fps);
+	Core_updateAVInfo();
 }
 void Core_reset(void) {
 	core.reset();
@@ -5145,6 +5241,25 @@ finish:
 	return ticks;
 }
 
+static void resetFPSCounter() {
+	sec_start = SDL_GetTicks();
+	fps_ticks = 0.0;
+	fps_double = 0.0;
+}
+
+static void chooseSyncRef(void) {
+	switch (sync_ref) {
+		case SYNC_SRC_AUTO:   use_core_fps = (core.get_region() == RETRO_REGION_PAL); break;
+		case SYNC_SRC_SCREEN: use_core_fps = 0; break;
+		case SYNC_SRC_CORE:   use_core_fps = 1; break;
+	}
+	LOG_info("%s: sync_ref is set to %s, game region is %s, use core fps = %s\n",
+		  __FUNCTION__,
+		  sync_ref_labels[sync_ref],
+		  core.get_region() == RETRO_REGION_NTSC ? "NTSC" : "PAL",
+		  use_core_fps ? "yes" : "no");
+}
+
 static void trackFPS(void) {
 	cpu_ticks += 1;
 	static int last_use_ticks = 0;
@@ -5197,7 +5312,7 @@ static void* coreThread(void *arg) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
-	GFX_flip(screen);
+	screen_flip(screen);
 	
 	while (!quit) {
 		int run = 0;
@@ -5295,9 +5410,12 @@ int main(int argc , char* argv[]) {
 	Special_init(); // after config
 	
 	sec_start = SDL_GetTicks();
+	resetFPSCounter();
+	chooseSyncRef();
 	
-	while (!quit) {
+	int has_pending_opt_change = 0;
 
+	while (!quit) {
 		GFX_startFrame();
 	
 	
@@ -5307,19 +5425,35 @@ int main(int argc , char* argv[]) {
 			trackFPS();
 		}
 
+		if (has_pending_opt_change) {
+			has_pending_opt_change = 0;
+			if (Core_updateAVInfo()) {
+				LOG_info("AV info changed, reset sound system");
+				SND_resetAudio(core.sample_rate, core.fps);
+			}
+			resetFPSCounter();
+			chooseSyncRef();
+		}
+
 		if (thread_video && !quit) {
 			pthread_mutex_lock(&core_mx);
 			pthread_cond_wait(&core_rq,&core_mx);
 			
 			if (backbuffer) {
 				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
-				GFX_flip(screen);
+				screen_flip(screen);
 			}
 			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 			pthread_mutex_unlock(&core_mx);
 		}
 		
-		if (show_menu) Menu_loop();
+		if (show_menu) {
+			Menu_loop();
+			has_pending_opt_change = config.core.changed;
+			resetFPSCounter();
+			chooseSyncRef();
+			SND_resetAudio(core.sample_rate, core.fps);
+		}
 		
 		if (toggle_thread) {
 			toggle_thread = 0;
@@ -5345,7 +5479,7 @@ int main(int argc , char* argv[]) {
 				// force a vsync immediately before loop
 				// for better frame pacing?
 				GFX_clearAll();
-				GFX_flip(screen);
+				screen_flip(screen);
 			}
 		}
 		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);

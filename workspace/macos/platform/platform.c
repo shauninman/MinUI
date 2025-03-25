@@ -343,6 +343,9 @@ void PLAT_setNearestNeighbor(int enabled) {
 void PLAT_setSharpness(int sharpness) {
 	// buh
 }
+void PLAT_setEffect(int next_type) {
+}
+
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
@@ -364,16 +367,15 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 }
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
 		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
 		if (rotate) {
-			LOG_info("rotated\n");
+			//LOG_info("rotated\n");
 			SDL_RenderCopyEx(vid.renderer,vid.texture,NULL,&(SDL_Rect){device_height,0,device_width,device_height},rotate*90,&(SDL_Point){0,0},SDL_FLIP_NONE);
 		}
 		else {
-			LOG_info("not rotated\n");
+			//LOG_info("not rotated\n");
 			SDL_RenderCopy(vid.renderer, vid.texture, NULL,NULL);
 		}
 		SDL_RenderPresent(vid.renderer);
@@ -533,4 +535,13 @@ void PLAT_setLedEffectCycles(LightSettings *led)
 void PLAT_setLedEffectSpeed(LightSettings *led)
 {
 	
+}
+
+void *PLAT_cpu_monitor(void *arg) {
+
+}
+
+void PLAT_getCPUTemp() {
+	currentcputemp = 0;
+
 }

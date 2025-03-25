@@ -2051,7 +2051,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 			}
-
+			
 			GFX_flip(screen);
 			dirty = 0;
 			readytoscroll = 0;

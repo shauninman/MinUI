@@ -378,6 +378,10 @@ static uint32_t frame_start = 0;
 
 static uint64_t per_frame_start = 0;
 #define FPS_BUFFER_SIZE 50
+// filling with  60.1 cause i'd rather underrun than overflow in start phase
+static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
+static int fps_buffer_index = 0;
+
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
@@ -507,12 +511,8 @@ void GFX_flip(SDL_Surface* screen) {
 	}
 	if(tempfps < SCREEN_FPS * 0.8 || tempfps > SCREEN_FPS * 1.2) tempfps = SCREEN_FPS;
 	
-	// filling with  60.1 cause i'd rather underrun than overflow in start phase
-	static double fps_buffer[FPS_BUFFER_SIZE] = {60.1};
-	static int buffer_index = 0;
-
-	fps_buffer[buffer_index] = tempfps;
-	buffer_index = (buffer_index + 1) % FPS_BUFFER_SIZE;
+	fps_buffer[fps_buffer_index] = tempfps;
+	fps_buffer_index = (fps_buffer_index + 1) % FPS_BUFFER_SIZE;
 	// give it a little bit to stabilize and then use, meanwhile the buffer will
 	// cover it
 	if (fps_counter > 100) {
@@ -538,6 +538,103 @@ void GFX_sync(void) {
 	}
 	else {
 		if (frame_duration<FRAME_BUDGET) SDL_Delay(FRAME_BUDGET-frame_duration);
+	}
+}
+
+void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
+	if (target_fps == 0.0) target_fps = SCREEN_FPS;
+	double frame_budget_ms = 1000.0 / target_fps;
+
+	static int64_t frame_index = -1;
+	static int64_t first_frame_start_time = 0;
+	static double last_target_fps = 0.0;
+
+	int64_t perf_freq = SDL_GetPerformanceFrequency();
+	int64_t now = SDL_GetPerformanceCounter();
+
+	if (++frame_index == 0 || target_fps != last_target_fps) {
+		frame_index = 0;
+		first_frame_start_time = now;
+		last_target_fps = target_fps;
+	}
+
+	int64_t frame_duration = perf_freq / target_fps;
+	int64_t time_of_frame = first_frame_start_time + frame_index * frame_duration;
+	int64_t offset = now - time_of_frame;
+	const int max_lost_frames = 2;
+
+	// printf("%s: frame #%lld, time is %lld, scheduled at %lld, offset is %lld\n",
+	// 	__FUNCTION__,
+	// 	frame_index,
+	// 	now,
+	// 	time_of_frame,
+	// 	now - time_of_frame);
+
+	if (offset > 0) {
+		if (offset > max_lost_frames * frame_duration) {
+			frame_index = -1;
+			last_target_fps = 0.0;
+			LOG_warn("%s: lost sync by more than %d frames (late) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
+		}
+	}
+	else {
+		if (offset < -max_lost_frames * frame_duration) {
+			frame_index = -1;
+			last_target_fps = 0.0;
+			LOG_warn("%s: lost sync by more than %d frames (early ?!) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
+		}
+		else if (offset < 0) {
+			useconds_t time_to_sleep_us = (useconds_t) ((time_of_frame - now) * 1e6 / perf_freq);
+
+			// The OS scheduling algorithm cannot guarantee that
+			// the sleep while last the exact amount of requested time.
+			// We sleep as much as we can using the OS primitive
+			const useconds_t min_waiting_time = 2000;
+			if (time_to_sleep_us > min_waiting_time) {
+				usleep(time_to_sleep_us - min_waiting_time);
+			}
+
+			while (SDL_GetPerformanceCounter() < time_of_frame) {
+				// nothing...
+			}
+		}
+	}
+	PLAT_flip(screen, 0);
+
+	double elapsed_time_s = (double)(SDL_GetPerformanceCounter() - per_frame_start) / perf_freq;
+	double tempfps = 1.0 / elapsed_time_s;
+	
+	fps_buffer[fps_buffer_index] = tempfps;
+	fps_buffer_index = (fps_buffer_index + 1) % FPS_BUFFER_SIZE;
+	// give it a little bit to stabilize and then use, meanwhile the buffer will
+	// cover it
+	if (fps_counter++ > 100) {
+		double average_fps = 0.0;
+		int fpsbuffersize = MIN(fps_counter, FPS_BUFFER_SIZE);
+		for (int i = 0; i < fpsbuffersize; i++) {
+			average_fps += fps_buffer[i];
+		}
+		average_fps /= fpsbuffersize;
+		currentfps = current_fps = average_fps;
+	}
+	else {
+		currentfps = current_fps = target_fps;
+	}
+	per_frame_start = SDL_GetPerformanceCounter();
+}
+
+void GFX_sync_fixed_rate(double target_fps) {
+	if (target_fps == 0.0) target_fps = SCREEN_FPS;
+	int frame_budget = (int) lrint(1000.0 / target_fps);
+	uint32_t frame_duration = SDL_GetTicks() - frame_start;
+	if (gfx.vsync!=VSYNC_OFF) {
+		// this limiting condition helps SuperFX chip games
+		if (gfx.vsync==VSYNC_STRICT || frame_start==0 || frame_duration<frame_budget) { // only wait if we're under frame budget
+			PLAT_vsync(frame_budget-frame_duration);
+		}
+	}
+	else {
+		if (frame_duration<frame_budget) SDL_Delay(frame_budget-frame_duration);
 	}
 }
 // if a fake vsycn delay is really needed 
@@ -729,7 +826,7 @@ struct blend_args {
 	uint16_t *blend_line;
 } blend_args;
 
-#if __ARM_ARCH >= 5
+#if __ARM_ARCH >= 5 && !defined(__APPLE__)
 static inline uint32_t average16(uint32_t c1, uint32_t c2) {
 	uint32_t ret, lowbits = 0x0821;
 	asm ("eor %0, %2, %3\r\n"
@@ -1703,6 +1800,7 @@ float currentratio = 0.0;
 int currentbufferfree = 0;
 int currentframecount = 0;
 static double ratio = 1.0;
+
 size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	
 	int framecount = (int)frame_count;
@@ -1729,6 +1827,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	// It's like a person is trying to balance on a rope (my algorithm) and another person (the audio hardware and screen) is wiggling the rope and the balancing person got to keep countering and try to stay stable
 	float bufferadjustment = calculateBufferAdjustment(remaining_space, snd.frame_count*0.4, snd.frame_count,frame_count);
 	ratio = (tempratio * (snd.frame_rate / current_fps)) + bufferadjustment;
+	// printf("%s: ratio=%g, tempratio=%g, snd.frame_rate=%g, current_fps=%g, bufferadjustment=%g\n", __FUNCTION__, ratio, tempratio, snd.frame_rate, current_fps, bufferadjustment);
 
 	currentratio = ratio;
 
@@ -1773,12 +1872,110 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 	return total_consumed_frames;
 }
 
+enum {
+	SND_FF_ON_TIME,
+	SND_FF_LATE,
+	SND_FF_VERY_LATE
+};
+
+size_t SND_batchSamples_fixed_rate(const SND_Frame *frames, size_t frame_count) {
+	static int current_mode = SND_FF_ON_TIME;
+
+	int framecount = (int)frame_count;
+
+	int consumed = 0;
+	int total_consumed_frames = 0;
+
+	//printf("received %d audio frames\n", frame_count);
+
+	//int full = 0;
+
+	float remaining_space=snd.frame_count;
+	if (snd.frame_in >= snd.frame_out) {
+		remaining_space = snd.frame_count - (snd.frame_in - snd.frame_out);
+	}
+	else {
+		remaining_space = snd.frame_out - snd.frame_in;
+	}
+	//printf("    actual free: %g\n", remaining_space);
+	currentbufferfree = remaining_space;
+	float tempdelay = ((snd.frame_count - remaining_space) / snd.sample_rate_out) * 1000;
+	currentbufferms = tempdelay;
+
+	float occupancy = (float) (snd.frame_count - currentbufferfree) / snd.frame_count;
+	switch(current_mode) {
+		case SND_FF_ON_TIME:
+			if (occupancy > 0.65) {
+				current_mode = SND_FF_LATE;
+			}
+			break;
+		case SND_FF_LATE:
+			if (occupancy > 0.85) {
+				current_mode = SND_FF_VERY_LATE;
+			}
+			else if (occupancy < 0.25) {
+				current_mode = SND_FF_ON_TIME;
+			}
+			break;
+		case SND_FF_VERY_LATE:
+			if (occupancy < 0.50) {
+				current_mode = SND_FF_LATE;
+			}
+			break;
+	}
+
+	switch(current_mode) {
+		case SND_FF_ON_TIME:   ratio = 1.0; break;
+		case SND_FF_LATE:      ratio = 0.995; break;
+		case SND_FF_VERY_LATE: ratio = 0.980; break;
+		default: ratio = 1.0;
+	}
+	currentratio = ratio;
+
+	while (framecount > 0) {
+		
+		int amount = MIN(BATCH_SIZE, framecount);
+
+		for (int i = 0; i < amount; i++) {
+			tmpbuffer[i] = frames[consumed + i];
+		}
+		consumed += amount;
+		framecount -= amount;
+
+		ResampledFrames resampled = resample_audio(
+			tmpbuffer, amount, snd.sample_rate_in, snd.sample_rate_out, ratio);
+
+		// Write resampled frames to the buffer
+		int written_frames = 0;
+		
+		for (int i = 0; i < resampled.frame_count; i++) {
+			if ((snd.frame_in + 1) % snd.frame_count == snd.frame_out) {
+				// Buffer is full, break. This should never happen tho, but just to be safe
+				break;
+			}
+			pthread_mutex_lock(&audio_mutex);
+			snd.buffer[snd.frame_in] = resampled.frames[i];
+			snd.frame_in = (snd.frame_in + 1) % snd.frame_count;
+			pthread_mutex_unlock(&audio_mutex);
+			written_frames++;
+			
+		}
+		
+		total_consumed_frames += written_frames;
+		free(resampled.frames);
+	}
+
+	return total_consumed_frames;
+}
+
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
 	currentreqfps = frame_rate;
 	SDL_InitSubSystem(SDL_INIT_AUDIO);
 
-		
+	fps_counter = 0;
+	fps_buffer_index = 0;
+
 #if defined(USE_SDL2)
 	LOG_info("Available audio drivers:\n");
 	for (int i=0; i<SDL_GetNumAudioDrivers(); i++) {
@@ -1825,6 +2022,11 @@ void SND_quit(void) { // plat_sound_finish
 		free(snd.buffer);
 		snd.buffer = NULL;
 	}
+}
+
+void SND_resetAudio(double sample_rate, double frame_rate) {
+	SND_quit();
+	SND_init(sample_rate, frame_rate);
 }
 
 ///////////////////////////////
@@ -2621,5 +2823,4 @@ void LEDS_initLeds() {
 	PLAT_getBatteryStatusFine(&pwr.is_charging, &pwr.charge);
 	PLAT_initLeds(lights);
 }
-
 

@@ -217,8 +217,10 @@ int GFX_hdmiChanged(void);
 void GFX_startFrame(void);
 void audioFPS(void);
 void GFX_flip(SDL_Surface* screen);
+void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps); // if target_fps is 0, then use the native screen FPS
 #define GFX_supportsOverscan PLAT_supportsOverscan // (void)
 void GFX_sync(void); // call this to maintain 60fps when not calling GFX_flip() this frame
+void GFX_sync_fixed_rate(double target_fps);
 void GFX_delay(void); // gfx_sync() is only for everywhere where there is no audio buffer to rely on for delaying, stupid so doing gfx_delay() for like waiting for input loop in binding menu. Need to remove gfx_sync() everwhere eventually
 void GFX_quit(void);
 
@@ -283,7 +285,9 @@ typedef struct {
 
 void SND_init(double sample_rate, double frame_rate);
 size_t SND_batchSamples(const SND_Frame* frames, size_t frame_count);
+size_t SND_batchSamples_fixed_rate(const SND_Frame* frames, size_t frame_count);
 void SND_quit(void);
+void SND_resetAudio(double sample_rate, double frame_rate);
 void SND_setQuality(int quality);
 
 ///////////////////////////////
