@@ -1663,9 +1663,18 @@ void SND_setQuality(int quality) {
 ResampledFrames resample_audio(const SND_Frame *input_frames,
 	int input_frame_count, int input_sample_rate,
 	int output_sample_rate, double ratio) {
+
 	int error;
 	static double previous_ratio = 1.0;
 	static SRC_STATE *src_state = NULL;
+
+	if (input_sample_rate <= 0 || output_sample_rate <= 0 || ratio <= 0) {
+		fprintf(stderr, "Invalid sample rates or ratio: %d -> %d (ratio: %f)\n", 
+			input_sample_rate, output_sample_rate, ratio);
+		exit(1);
+	}
+
+	double final_ratio = ((double)output_sample_rate / input_sample_rate) * ratio;
 
 	if (!src_state || resetSrcState) {
 		resetSrcState = 0;
@@ -1677,17 +1686,16 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 		}
 	}
 
-	if (previous_ratio != ratio) {
-		if (src_set_ratio(src_state, ratio) != 0) {
+	if (previous_ratio != final_ratio) {
+		if (src_set_ratio(src_state, final_ratio) != 0) {
 			fprintf(stderr, "Error setting resampling ratio: %s\n",
 				src_strerror(src_error(src_state)));
 			exit(1);
 		}
-
-		previous_ratio = ratio;
+		previous_ratio = final_ratio;
 	}
 
-	int max_output_frames = (int)(input_frame_count * ratio + 1);
+	int max_output_frames = (int)(input_frame_count * final_ratio + 1);
 
 	float *input_buffer = malloc(input_frame_count * 2 * sizeof(float));
 	float *output_buffer = malloc(max_output_frames * 2 * sizeof(float));
@@ -1704,14 +1712,15 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 		input_buffer[2 * i + 1] = input_frames[i].right / 32768.0f;
 	}
 
-	SRC_DATA src_data = {.data_in = input_buffer,
+	SRC_DATA src_data = {
+		.data_in = input_buffer,
 		.data_out = output_buffer,
 		.input_frames = input_frame_count,
 		.output_frames = max_output_frames,
-		.src_ratio = ratio,
-		.end_of_input = 0};
+		.src_ratio = final_ratio,
+		.end_of_input = 0
+	};
 
-	// Perform resampling
 	if (src_process(src_state, &src_data) != 0) {
 		fprintf(stderr, "Error resampling: %s\n",
 			src_strerror(src_error(src_state)));
@@ -1741,11 +1750,9 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 		output_frames[i].right = (int16_t)(right * 32767.0f);
 	}
 
-	// Free temporary buffers
 	free(input_buffer);
 	free(output_buffer);
 
-	// Return the resampled frames
 	ResampledFrames resampled;
 	resampled.frames = output_frames;
 	resampled.frame_count = output_frame_count;
@@ -1824,7 +1831,7 @@ size_t SND_batchSamples(const SND_Frame *frames, size_t frame_count) {
 
 	currentbufferms = tempdelay;
 
-	float tempratio = (float)snd.sample_rate_out / (float)snd.sample_rate_in;
+	float tempratio = 1;
 	// i use 0.4* as minimum free space because i want my algorithm to fight more for free buffer then full, cause you know free buffer is lower latency :D
 	// My algorithm is fighting here with audio hardware. 
 	// It's like a person is trying to balance on a rope (my algorithm) and another person (the audio hardware and screen) is wiggling the rope and the balancing person got to keep countering and try to stay stable
