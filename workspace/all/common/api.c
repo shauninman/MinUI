@@ -1780,7 +1780,7 @@ float calculateBufferAdjustment(float remaining_space, float targetbuffer_over, 
 	// lets say hovering around 2000 means 2000 samples queue, about 4 frames, so at 17ms(60fps) thats  68ms delay right?
 	// Should have payed attention when my math teacher was talking dammit
 	// Also I chose 3 for pow, but idk if that really the best nr, anyone good in maths looking at my code?
-	float adjustment = 0.0000001f + (0.005f - 0.0000001f) * pow(normalizedDistance, 3);
+	float adjustment = 0.000001f + (0.005f - 0.000001f) * pow(normalizedDistance, 3);
 
     if (remaining_space < midpoint) {
         adjustment = -adjustment;
