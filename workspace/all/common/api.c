@@ -59,6 +59,8 @@ uint32_t RGB_DARK_GRAY;
 float currentbufferms = 20.0;
 LightSettings lights[MAX_LIGHTS];
 
+volatile int useAutoCpu;
+
 static struct GFX_Context {
 	SDL_Surface* screen;
 	SDL_Surface* assets;
