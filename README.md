@@ -60,6 +60,7 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - Updated and optimized build emulation cores
 - Rumble strength fixed and is now variable as used by the games
 - FBNeo Arcade screen rotation
+- PAL Mode
 - Next font supports CJK for JP/CN etc rom names
 - Lot of other smaller fixes and optimizations
 
@@ -69,7 +70,6 @@ Trimui Smart Pro | MinUI-20231111b-2
 
 # Future plans roadmap
 
-- Pal rom mode
 - Bluetooth and wifi integrated
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
