@@ -502,15 +502,16 @@ void GFX_flip(SDL_Surface* screen) {
 	uint64_t frame_duration = SDL_GetPerformanceCounter() - per_frame_start;
 	double elapsed_time_s = (double)frame_duration / performance_frequency;
 	double tempfps = 1.0 / elapsed_time_s;
-	if (!should_vsync) {
-		uint64_t frame_time = performance_frequency / snd.frame_rate;  // Time per frame in performance counter units
-		if (frame_duration < frame_time) {
-			uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
-			SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
-		}
-		per_frame_start = SDL_GetPerformanceCounter();
-		return;
-	}
+	// this is not needed here!
+	// if (!should_vsync) {
+	// 	uint64_t frame_time = performance_frequency / snd.frame_rate;  // Time per frame in performance counter units
+	// 	if (frame_duration < frame_time) {
+	// 		uint64_t delay_time = frame_time - frame_duration;  // Calculate the remaining time to wait
+	// 		SDL_Delay((1000 * delay_time) / performance_frequency);  // Convert to milliseconds and delay
+	// 	}
+	// 	per_frame_start = SDL_GetPerformanceCounter();
+	// 	return;
+	// }
 	if(tempfps < SCREEN_FPS * 0.8 || tempfps > SCREEN_FPS * 1.2) tempfps = SCREEN_FPS;
 	
 	fps_buffer[fps_buffer_index] = tempfps;
