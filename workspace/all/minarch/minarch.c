@@ -1144,7 +1144,7 @@ static struct Config {
 			},
 			[FE_OPT_RESAMPLING] = {
 				.key	= "minarch__resampling_quality", 
-				.name	= "Audio resampling quality",
+				.name	= "Audio Resampling Quality",
 				.desc	= "Resampling quality higher takes more CPU", // will call getScreenScalingDesc()
 				.default_value = 2,
 				.value = 2,
@@ -1154,7 +1154,7 @@ static struct Config {
 			},
 			[FE_OPT_AMBIENT] = {
 				.key	= "minarch_ambient", 
-				.name	= "Ambient mode",
+				.name	= "Ambient Mode",
 				.desc	= "Makes your leds follow on screen colors", // will call getScreenScalingDesc()
 				.default_value = 0,
 				.value = 0,
