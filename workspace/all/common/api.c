@@ -1668,12 +1668,6 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 	static double previous_ratio = 1.0;
 	static SRC_STATE *src_state = NULL;
 
-	if (input_sample_rate <= 0 || output_sample_rate <= 0 || ratio <= 0) {
-		fprintf(stderr, "Invalid sample rates or ratio: %d -> %d (ratio: %f)\n", 
-			input_sample_rate, output_sample_rate, ratio);
-		exit(1);
-	}
-
 	double final_ratio = ((double)output_sample_rate / input_sample_rate) * ratio;
 
 	if (!src_state || resetSrcState) {
