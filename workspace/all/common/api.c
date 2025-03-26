@@ -519,14 +519,14 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 		if (offset > max_lost_frames * frame_duration) {
 			frame_index = -1;
 			last_target_fps = 0.0;
-			LOG_warn("%s: lost sync by more than %d frames (late) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
+			// LOG_warn("%s: lost sync by more than %d frames (late) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
 		}
 	}
 	else {
 		if (offset < -max_lost_frames * frame_duration) {
 			frame_index = -1;
 			last_target_fps = 0.0;
-			LOG_warn("%s: lost sync by more than %d frames (early ?!) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
+			// LOG_warn("%s: lost sync by more than %d frames (early ?!) @%llu -> reset\n\n", __FUNCTION__, max_lost_frames, SDL_GetPerformanceCounter());
 		}
 		else if (offset < 0) {
 			useconds_t time_to_sleep_us = (useconds_t) ((time_of_frame - now) * 1e6 / perf_freq);
