@@ -32,21 +32,24 @@ void LOG_note(int level, const char* fmt, ...) {
 #ifdef DEBUG
 	case LOG_DEBUG:
 		printf("[DEBUG] %s", buf);
+		fflush(stdout);
 		break;
 #endif
 	case LOG_INFO:
 		printf("[INFO] %s", buf);
+		fflush(stdout);
 		break;
 	case LOG_WARN:
 		fprintf(stderr, "[WARN] %s", buf);
+		fflush(stderr);
 		break;
 	case LOG_ERROR:
 		fprintf(stderr, "[ERROR] %s", buf);
+		fflush(stderr);
 		break;
 	default:
 		break;
 	}
-	fflush(stdout);
 }
 
 ///////////////////////////////
