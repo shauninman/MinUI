@@ -1324,6 +1324,11 @@ static void loadLast(void) { // call after loading root directory
 	}
 	
 	StringArray_free(last);
+
+	if (top->selected >= 0 && top->selected < top->entries->count) {
+		Entry *selected_entry = top->entries->items[top->selected];
+		readyResume(selected_entry);
+	}
 }
 
 ///////////////////////////////////////
