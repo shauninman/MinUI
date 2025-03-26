@@ -829,7 +829,7 @@ struct blend_args {
 	uint16_t *blend_line;
 } blend_args;
 
-#if __ARM_ARCH >= 5 && !defined(__APPLE__)
+#if __ARM_ARCH >= 5 && !defined(__APPLE__) && !defined(__SNAPDRAGON__)
 static inline uint32_t average16(uint32_t c1, uint32_t c2) {
 	uint32_t ret, lowbits = 0x0821;
 	asm ("eor %0, %2, %3\r\n"
