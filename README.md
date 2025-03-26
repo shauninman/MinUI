@@ -116,6 +116,12 @@ While features still missing will be eventually be part native on NextUI, there 
 
 [![Watch this awesome review by Play Retro](https://img.youtube.com/vi/m_7ObMHAFK4/maxresdefault.jpg)](https://www.youtube.com/watch?v=m_7ObMHAFK4)
 
+## Or this awesome vid by Retro Handhelds
+
+[![image](https://github.com/user-attachments/assets/84dde4b6-4a23-4613-9212-14fd46629a2c)](https://www.youtube.com/watch?v=KlYVmtYDqRI)
+
+
+
 ## Media
 
 ![gameswitcher](https://github.com/user-attachments/assets/4c71dc26-d071-48cf-836e-83bd9a248a32)
