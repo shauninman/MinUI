@@ -99,6 +99,9 @@ int main(int argc, char *argv[])
             MenuItem{Color, "Secondary Accent Color", "A secondary highlight color.", colors, color_strings, []() -> std::any
                     { return CFG_getColor(3); }, [](const std::any &value)
                     { CFG_setColor(3, std::any_cast<uint32_t>(value)); }},
+            MenuItem{Color, "Hint info Color", "Color for button hints and info", colors, color_strings, []() -> std::any
+                    { return CFG_getColor(6); }, [](const std::any &value)
+                    { CFG_setColor(6, std::any_cast<uint32_t>(value)); }},
             MenuItem{Color, "List Text", "List text color", colors, color_strings, []() -> std::any
                     { return CFG_getColor(4); }, [](const std::any &value)
                     { CFG_setColor(4, std::any_cast<uint32_t>(value)); }},
