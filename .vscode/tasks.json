@@ -1,0 +1,242 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos",
+            "command": "/usr/bin/gcc",
+            "args": [
+                "-g", "minui.c", "-o", "${workspaceFolder}/workspace/all/minui/build/macos/minui", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include", 
+                "-L/opt/homebrew/lib", 
+                "../common/scaler.c", "../common/utils.c", "../common/api.c", "../../macos/platform/platform.c", 
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                //"-Ofast", 
+                "-std=gnu99", "-ldl", "-flto", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lm", "-lz", 
+                //"-fsanitize=address", 
+                "-fno-common",
+                "-Wno-tautological-constant-out-of-range-compare", 
+                "-Wno-asm-operand-widths",
+                "-Wno-deprecated-declarations"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/minui"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos - Battery",
+            "command": "/usr/bin/gcc",
+            "args": [
+                "-g", "battery.c", "-o", "${workspaceFolder}/workspace/all/battery/build/macos/battery", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include", "-I../libbatmondb/",
+                "-L/opt/homebrew/lib", 
+                "../common/scaler.c", "../common/utils.c", "../common/api.c", "../libbatmondb/batmondb.c", "../../macos/platform/platform.c", 
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                "-DDEBUG", 
+                //"-Ofast", 
+                "-std=gnu99", "-ldl", "-flto", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lsqlite3", "-lm", "-lz", 
+                //"-fsanitize=address", 
+                "-fno-common",
+                "-Wno-tautological-constant-out-of-range-compare", 
+                "-Wno-asm-operand-widths",
+                "-Wno-deprecated-declarations"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/battery"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos - Minput",
+            "command": "/usr/bin/gcc",
+            "args": [
+                "-g", "minput.c", "-o", "${workspaceFolder}/workspace/all/minput/build/macos/minput", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include",
+                "-L/opt/homebrew/lib", 
+                "../common/scaler.c", "../common/utils.c", "../common/api.c", "../../macos/platform/platform.c", 
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                "-DDEBUG", 
+                "-std=gnu99", "-ldl", "-flto", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lsqlite3", "-lm", "-lz", 
+                //"-fsanitize=address", 
+                "-fno-common",
+                "-Wno-tautological-constant-out-of-range-compare", 
+                "-Wno-asm-operand-widths",
+                "-Wno-deprecated-declarations"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/minput"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos - Gametime",
+            "command": "/usr/bin/gcc",
+            "args": [
+                "-g", "gametime.c", "-o", "${workspaceFolder}/workspace/all/gametime/build/macos/gametime", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include", "-I../libgametimedb/",
+                "-L/opt/homebrew/lib", 
+                "../common/scaler.c", "../common/utils.c", "../common/api.c", "../libgametimedb/gametimedb.c", "../../macos/platform/platform.c", 
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                "-DDEBUG", 
+                "-std=gnu99", "-ldl", "-flto", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lsqlite3", "-lm", "-lz", 
+                //"-fsanitize=address", 
+                "-fno-common",
+                "-Wno-tautological-constant-out-of-range-compare", 
+                "-Wno-asm-operand-widths",
+                "-Wno-deprecated-declarations"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/gametime"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos - Gametimectl",
+            "command": "/usr/bin/gcc",
+            "args": [
+                "-g", "gametimectl.c", "-o", "${workspaceFolder}/workspace/all/gametimectl/build/macos/gametimectl", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include", "-I../libgametimedb/",
+                "-L/opt/homebrew/lib", 
+                "../common/scaler.c", "../common/utils.c", "../common/api.c", "../libgametimedb/gametimedb.c", "../../macos/platform/platform.c", 
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                "-DDEBUG", 
+                "-std=gnu99", "-ldl", "-flto", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lsqlite3", "-lm", "-lz", 
+                //"-fsanitize=address", 
+                "-fno-common",
+                "-Wno-tautological-constant-out-of-range-compare", 
+                "-Wno-asm-operand-widths",
+                "-Wno-deprecated-declarations"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/gametimectl"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos - Settings",
+            "command": "/opt/homebrew/Cellar/gcc/14.2.0_1/bin/g++-14",
+            "args": [
+                "-g", "settings.cpp", "menu.cpp", "-o", "${workspaceFolder}/workspace/all/settings/build/macos/settings", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include",
+                "-L/opt/homebrew/lib", 
+                "../common/build/macos/utils.o", "../common/build/macos/api.o", "../common/build/macos/platform.o", "../common/build/macos/scaler.o",
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                "-DDEBUG", "-ldl", "-flto", 
+                "-std=c++17", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lm", "-lz", "-lsamplerate",
+                //"-fpermissive",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/settings"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn":["C/C++: gcc build macos - Utils"]
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc build macos - Utils make",
+            "command": "/opt/homebrew/Cellar/gcc/14.2.0_1/bin/gcc-14",
+            "args": [
+                "-g", 
+                "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include",
+                "-L/opt/homebrew/lib", 
+                "-c", "../common/utils.c", "../common/api.c", "../common/scaler.c",  "../../macos/platform/platform.c",
+                "-fomit-frame-pointer", 
+                "-DPLATFORM=\\\"macos\\\"", 
+                "-DUSE_SDL2", 
+                "-DDEBUG", "-ldl", "-flto", 
+                "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lm", "-lz", "-lsamplerate",
+                "-fpermissive",
+                // just C stuff, string.h, etc
+                "-Wno-write-strings",
+                // void pointer math in api.c
+                "-Wno-pointer-arith",
+                //"-v"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/common"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "C/C++: gcc build macos - Utils",
+            "command": "mkdir -p ${workspaceFolder}/workspace/all/common/build/macos && mv *.o ${workspaceFolder}/workspace/all/common/build/macos/",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceFolder}/workspace/all/common"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn":["C/C++: gcc build macos - Utils make"]
+        }
+
+    ],
+    "version": "2.0.0"
+}

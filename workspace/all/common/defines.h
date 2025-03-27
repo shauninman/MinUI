@@ -72,6 +72,11 @@
 #define FONT_MEDIUM 14 	// single char button label
 #define FONT_SMALL 12	// button hint
 #define FONT_TINY 10	// multi char button label
+#define FONT_MICRO 8	// icon overlay text
+
+#ifndef MAX_LIGHTS
+#define MAX_LIGHTS 0
+#endif
 
 ///////////////////////////////
 

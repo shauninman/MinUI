@@ -3,6 +3,7 @@
 #include "sdl.h"
 #include "platform.h"
 #include "scaler.h"
+#include <stdbool.h>
 
 ///////////////////////////////
 
@@ -12,17 +13,6 @@ enum {
 	LOG_WARN,
 	LOG_ERROR,
 };
-
-typedef struct
-{
-    int font;
-    uint32_t color1;
-    uint32_t color2;
-    uint32_t color3;
-    uint32_t backgroundColor;
-} MinUISettings;
-
-
 
 #define LOG_debug(fmt, ...) LOG_note(LOG_DEBUG, fmt, ##__VA_ARGS__)
 #define LOG_info(fmt, ...) LOG_note(LOG_INFO, fmt, ##__VA_ARGS__)
@@ -70,6 +60,7 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
+//extern MinUISettings settings;
 extern uint32_t THEME_COLOR1;
 extern uint32_t THEME_COLOR2;
 extern uint32_t THEME_COLOR3;
@@ -77,6 +68,8 @@ extern uint32_t THEME_COLOR1_255;
 extern uint32_t THEME_COLOR2_255;
 extern uint32_t THEME_COLOR3_255;
 
+// TODO: do we need that many free externs? This should move
+// to a structure or something.
 extern float currentratio;
 extern int currentbufferfree;
 extern int currentframecount;
@@ -90,7 +83,6 @@ extern int currentcpuspeed;
 extern double currentcpuse;
 extern int currentcputemp;
 extern int should_rotate;
-extern MinUISettings settings;
 extern volatile int useAutoCpu;
 
 enum {
@@ -135,6 +127,7 @@ typedef struct GFX_Fonts {
 	TTF_Font* medium; 	// single char button label
 	TTF_Font* small; 	// button hint
 	TTF_Font* tiny; 	// multi char button label
+	TTF_Font* micro; 	// icon overlay text
 } GFX_Fonts;
 extern GFX_Fonts font;
 
@@ -200,7 +193,6 @@ enum {
 	MODE_MENU,
 };
 
-void loadSettings();
 SDL_Surface* GFX_init(int mode);
 #define GFX_resize PLAT_resizeVideo // (int w, int h, int pitch);
 #define GFX_setScaleClip PLAT_setVideoScaleClip // (int x, int y, int width, int height)
@@ -254,7 +246,7 @@ void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitPillLight(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitPillDark(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
-void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect);
+int GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect);
 int GFX_getButtonWidth(char* hint, char* button);
 void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, SDL_Rect* dst_rect);
@@ -263,8 +255,8 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting);
 void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting);
 int GFX_blitButtonGroup(char** hints, int primary, SDL_Surface* dst, int align_right);
 
-void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h);
-void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_sizeText(TTF_Font* font, const char* str, int leading, int* w, int* h);
+void GFX_blitText(TTF_Font* font, const char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode);
 
 void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius);
@@ -397,6 +389,7 @@ enum {
 ///////////////////////////////
 
 FILE *PLAT_OpenSettings(const char *filename);
+FILE *PLAT_WriteSettings(const char *filename);
 void PLAT_initInput(void);
 void PLAT_quitInput(void);
 void PLAT_pollInput(void);
@@ -449,5 +442,84 @@ void PLAT_setLedBrightness(LightSettings *led);
 void PLAT_setLedInbrightness(LightSettings *led);
 void PLAT_setLedEffectSpeed(LightSettings *led);
 void PLAT_setLedEffectCycles(LightSettings *led);
+
+///////////////////////////////
+
+// This should move to cfg.h/.c
+// Read-only interface for minui.c usage
+// Read/Write interface for settings.cpp usage
+
+typedef struct
+{
+	// Theme
+    int font;
+    uint32_t color1;
+    uint32_t color1_255; // not screen mapped
+    uint32_t color2;
+    uint32_t color2_255; // not screen mapped
+    uint32_t color3;
+    uint32_t color3_255; // not screen mapped
+    uint32_t backgroundColor;
+    uint32_t backgroundColor_255; // not screen mapped
+	int thumbRadius;
+
+	// UI
+	bool showClock;
+	bool clock24h;
+	bool showBatteryPercent;
+	bool showMenuAnimations;
+	bool showRecents;
+	bool showGameArt;
+
+	// Power
+	uint32_t screenTimeoutSecs;
+	uint32_t suspendTimeoutSecs;
+
+} MinUISettings;
+
+void CFG_init(MinUISettings*);
+//void CFG_defaults(MinUISettings*);
+// The font id to use as the UI font.
+// 0 - Default MinUI font
+// 1 - Default NextUI font (default)
+int CFG_getFontId(void);
+void CFG_setFontId(int fontid);
+// The colors to use for the UI. These are 0xRRGGBB values.
+// 0 - Color1 (primary hint/asset colour)
+// 1 - Color2 (accent colour)
+// 2 - Color3 (secondary accent colour
+// 3 - Background Color (unused)
+uint32_t CFG_getColor(int id);
+void CFG_setColor(int id, uint32_t color);
+// Time in secs before the device enters screen-off mode.
+uint32_t CFG_getScreenTimeoutSecs(void);
+void CFG_setScreenTimeoutSecs(uint32_t secs);
+// Time in secs before the device enters suspend mode (aka deep sleep).
+uint32_t CFG_getSuspendTimeoutSecs(void);
+void CFG_setSuspendTimeoutSecs(uint32_t secs);
+// Show/hide clock in the status pill.
+bool CFG_getShowClock(void);
+void CFG_setShowClock(bool show);
+// Sets the time format to 12/24hrs.
+bool CFG_getClock24H(void);
+void CFG_setClock24H(bool);
+// Show/hide battery percentage in the status pill.
+bool CFG_getShowBatteryPercent(void);
+void CFG_setShowBatteryPercent(bool show);
+// Show/hide menu animations in main menu.
+bool CFG_getMenuAnimations(void);
+void CFG_setMenuAnimations(bool anims);
+// Set thumbnail rounding radius.
+int CFG_getThumbnailRadius(void);
+void CFG_setThumbnailRadius(int radius);
+// Show/hide recently played in the main menu.
+bool CFG_getShowRecents(void);
+void CFG_setShowRecents(bool show);
+// Show/hide game art in the main menu.
+bool CFG_getShowGameArt(void);
+void CFG_setShowGameArt(bool show);
+
+void CFG_sync(void);
+void CFG_quit(void);
 
 #endif

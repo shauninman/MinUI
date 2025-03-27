@@ -311,22 +311,6 @@ static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b
     *b = (blue << 3) | (blue >> 2);
 }
 
-FILE *PLAT_OpenSettings(const char *filename)
-{
-
-    char diskfilename[256];
-    snprintf(diskfilename, sizeof(diskfilename), "/mnt/SDCARD/.userdata/shared/%s", filename);
-
-	FILE *file = fopen(diskfilename, "r");
-	if (file == NULL)
-    {
-        return NULL;
- 
-    }
-	return file;
-  
-}
-
 static void updateEffect(void) {
 	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	

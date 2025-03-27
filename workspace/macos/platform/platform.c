@@ -89,7 +89,7 @@ int peekVersion(const char *filename) {
 void InitSettings(void){
 	// We are not really using them, but we should be able to debug them
 	sprintf(SettingsPath, "%s/msettings.bin", SDCARD_PATH "/.userdata");
-	msettings = malloc(sizeof(Settings));
+	msettings = (Settings*)malloc(sizeof(Settings));
 	
 	int version = peekVersion(SettingsPath);
 	if(version > 0) {
@@ -179,20 +179,6 @@ void PLAT_initInput(void) {
 void PLAT_quitInput(void) {
 	SDL_JoystickClose(joystick);
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-}
-
-FILE *PLAT_OpenSettings(const char *filename)
-{
-    char diskfilename[256];
-    snprintf(diskfilename, sizeof(diskfilename), SDCARD_PATH "/.userdata/%s", filename);
-
-	FILE *file = fopen(diskfilename, "r");
-	if (file == NULL)
-    {
-        return NULL;
- 
-    }
-	return file;
 }
 
 ///////////////////////////////
@@ -503,45 +489,4 @@ char* PLAT_getModel(void) {
 
 int PLAT_isOnline(void) {
 	return online;
-}
-
-void PLAT_initLeds(LightSettings *lights) {
-
-}
-
-void PLAT_setLedBrightness(LightSettings *led)
-{
-    
-}
-void PLAT_setLedEffect(LightSettings *led)
-{
-    
-}
-void PLAT_setLedColor(LightSettings *led)
-{
-    
-}
-
-void PLAT_setLedInbrightness(LightSettings *led)
-{
-
-}
-
-void PLAT_setLedEffectCycles(LightSettings *led)
-{
-
-}
-
-void PLAT_setLedEffectSpeed(LightSettings *led)
-{
-	
-}
-
-void *PLAT_cpu_monitor(void *arg) {
-
-}
-
-void PLAT_getCPUTemp() {
-	currentcputemp = 0;
-
 }

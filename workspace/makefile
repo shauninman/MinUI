@@ -52,4 +52,5 @@ clean:
 	cd ./all/settings/ && make
 	cd ./all/ledcontrol/ && make
 	cd ./all/bootlogo/ && make
+	cd ./all/scraper/ && make
 	cd ./$(PLATFORM) && make clean

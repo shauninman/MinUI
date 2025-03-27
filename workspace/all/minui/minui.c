@@ -656,7 +656,7 @@ static int hasRoms(char* dir_name) {
 static Array* getRoot(void) {
     Array* root = Array_new();
 
-    if (hasRecents()) Array_push(root, Entry_new(FAUX_RECENT_PATH, ENTRY_DIR));
+    if (CFG_getShowRecents() && hasRecents()) Array_push(root, Entry_new(FAUX_RECENT_PATH, ENTRY_DIR));
 
     Array* entries = Array_new();
     DIR* dh = opendir(ROMS_PATH);
@@ -1378,6 +1378,8 @@ float lerp(float a, float b, float t) {
     return a + (b - a) * t;
 }
 
+#define ANIMATION_FRAMES 3
+
 void updateSelectionAnimation(int selected) {
 	dirtyanim=1;
     if ((selected == previous_selected + 1 || selected == previous_selected - 1) && selection_offset >= 1.0f) {
@@ -1387,7 +1389,7 @@ void updateSelectionAnimation(int selected) {
 	}
 		
     if (selection_offset <= 1.0f) {
-        selection_offset += 0.35f; 
+        selection_offset += CFG_getMenuAnimations() ? 1.f / ANIMATION_FRAMES : 1.f;
         if (selection_offset >= 1.0f) {
             selection_offset = 1.0f;
             previous_selected = selected;
@@ -1721,7 +1723,8 @@ int main (int argc, char *argv[]) {
 					if (dot) *dot = '\0'; 
 			
 					char thumbpath[1024];
-					snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
+					if(CFG_getShowGameArt())
+						snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
 			
 					had_thumb = 0;
 					if (exists(thumbpath)) {
@@ -1761,7 +1764,7 @@ int main (int argc, char *argv[]) {
 
 								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
 								SDL_BlitScaled(optimized, NULL, thumbbmp, &scale_rect);
-								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, 40); // i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
+								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, SCALE1(CFG_getThumbnailRadius())); // i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
 								SDL_FreeSurface(optimized);
 								had_thumb = 1;
 							}
@@ -1885,7 +1888,7 @@ int main (int argc, char *argv[]) {
 							SDL_Rect image_rect = {0, 0, screen->w, screen->h};
 							SDL_BlitScaled(bmp, NULL, scaled, &image_rect);
 							SDL_FreeSurface(bmp);
-							GFX_ApplyRounderCorners16(scaled,30);
+							GFX_ApplyRounderCorners16(scaled,CFG_getThumbnailRadius()*3/2);
 							SDL_BlitSurface(scaled, NULL, screen, &image_rect);
 							SDL_FreeSurface(scaled);  // Free after rendering
 						}

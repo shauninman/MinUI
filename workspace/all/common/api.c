@@ -82,6 +82,10 @@ uint32_t THEME_COLOR1_255;
 uint32_t THEME_COLOR2_255;
 uint32_t THEME_COLOR3_255;
 SDL_Color ALT_BUTTON_TEXT_COLOR;
+char *FONT_PATH;
+MinUISettings settings = {0};
+
+// move to utils?
 
 // Function to convert hex color code to RGB and set the values
 static inline uint32_t HexToUint(const char *hexColor) {
@@ -94,6 +98,25 @@ static inline uint32_t HexToUint32_unmapped(const char *hexColor) {
     // Convert the hex string to an unsigned long
     uint32_t value = (uint32_t)strtoul(hexColor, NULL, 16);
     return value;
+}
+
+static inline void rgb_unpack(uint32_t col, int* r, int* g, int* b)
+{
+	*r = (col >> 16) & 0xff;
+	*g = (col >> 8) & 0xff;
+	*b =  col  & 0xff;
+}
+
+static inline uint32_t rgb_pack(int r, int g, int b)
+{
+	return (r<<16) + (g<<8) + b;
+}
+
+static inline uint32_t mapUint(uint32_t col)
+{
+	int r, g, b;
+	rgb_unpack(col, &r, &g, &b);
+	return SDL_MapRGB(gfx.screen->format, r, g, b);
 }
 
 static inline SDL_Color UintToColour(uint32_t colour)
@@ -117,88 +140,6 @@ static inline uint32_t UintMult(uint32_t color, uint32_t modulate_rgb)
 
 	return (dest.r << 16) | (dest.g << 8) | dest.b;
 }
-
-char *FONT_PATH;
-
-MinUISettings settings;
-
-void loadSettings() {
-
-	FILE *file = PLAT_OpenSettings("minuisettings.txt");
-	if (file == NULL)
-    {
-		LOG_info("Unable to open settings file\n");
-		char hexColor[7];
-		snprintf(hexColor, sizeof(hexColor), "%06x", 0xffffff);
-		THEME_COLOR1_255 = HexToUint32_unmapped(hexColor);
-		snprintf(hexColor, sizeof(hexColor), "%06x", 0x9b2257);
-		THEME_COLOR2_255 = HexToUint32_unmapped(hexColor);
-		snprintf(hexColor, sizeof(hexColor), "%06x", 0x1e2329);
-		THEME_COLOR3_255 = HexToUint32_unmapped(hexColor);
-		snprintf(hexColor, sizeof(hexColor), "%06x", 0xffffff);
-		THEME_COLOR1 = HexToUint(hexColor);
-		snprintf(hexColor, sizeof(hexColor), "%06x", 0x9b2257);
-		THEME_COLOR2 = HexToUint(hexColor);
-		snprintf(hexColor, sizeof(hexColor), "%06x", 0x1e2329);
-		THEME_COLOR3 = HexToUint(hexColor);
-		FONT_PATH = RES_PATH "/chillroundm.ttf";
-	} 
-	else {
-		char line[256];
-		int current_light = -1;
-		while (fgets(line, sizeof(line), file))
-		{
-				int temp_value;
-				uint32_t temp_color;
-				if (sscanf(line, "font=%i", &temp_value) == 1)
-				{
-					//LOG_info("ditte? %i \n",temp_value);
-					if(temp_value==1) {
-						FONT_PATH = RES_PATH "/chillroundm.ttf";
-					} else {
-						FONT_PATH = RES_PATH "/BPreplayBold-unhinted.otf";
-					}
-					continue;
-				}
-				if (sscanf(line, "color1=%x", &temp_color) == 1)
-				{
-					char hexColor[7];
-					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-					
-					// Set RGB values
-					THEME_COLOR1 = HexToUint(hexColor);
-					THEME_COLOR1_255 = HexToUint32_unmapped(hexColor);
-					continue;
-				}
-				if (sscanf(line, "color2=%x", &temp_color) == 1)
-				{
-					char hexColor[7];
-					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-					
-					// Set RGB values
-					THEME_COLOR2 = HexToUint(hexColor);
-					THEME_COLOR2_255 = HexToUint32_unmapped(hexColor);
-					continue;
-				}
-				if (sscanf(line, "color3=%x", &temp_color) == 1)
-				{
-					char hexColor[7];
-					snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
-					
-					// Set RGB values
-					THEME_COLOR3 = HexToUint(hexColor);
-					THEME_COLOR3_255 = HexToUint32_unmapped(hexColor);
-					continue;
-				}
-		}
-		fclose(file);
-	}
-
-	ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3_255);
-
-}
-
-
 
 
 ///////////////////////////////
@@ -260,20 +201,29 @@ int currentsamplerateout = 0;
 int should_rotate = 0;
 int currentcputemp = 0;
 
-SDL_Surface* GFX_init(int mode) {
+FALLBACK_IMPLEMENTATION void *PLAT_cpu_monitor(void *arg) {
+	return NULL; 
+}
+
+FALLBACK_IMPLEMENTATION void PLAT_getCPUTemp() {
+	currentcputemp = 0;
+}
+
+SDL_Surface* GFX_init(int mode)
+{
 	// TODO: this doesn't really belong here...
 	// tried adding to PWR_init() but that was no good (not sure why)
 
 	PLAT_initLid();
 	LEDS_initLeds();
 	LEDS_updateLeds();
-	
+
 	gfx.screen = PLAT_initVideo();
 	gfx.vsync = VSYNC_STRICT;
 	gfx.mode = mode;
 
-	loadSettings();
-	
+	CFG_init(&settings);
+
 	RGB_WHITE		= SDL_MapRGB(gfx.screen->format, TRIAD_WHITE);
 	RGB_BLACK		= SDL_MapRGB(gfx.screen->format, TRIAD_BLACK);
 	RGB_LIGHT_GRAY	= SDL_MapRGB(gfx.screen->format, TRIAD_LIGHT_GRAY);
@@ -321,22 +271,12 @@ SDL_Surface* GFX_init(int mode) {
 	asset_rects[ASSET_WIFI]				= (SDL_Rect){SCALE4(95,39,14,10)};
 	asset_rects[ASSET_HOLE]				= (SDL_Rect){SCALE4( 1,63,20,20)};
 	asset_rects[ASSET_GAMEPAD]			= (SDL_Rect){SCALE4(92,51,18,10)};
-	
+
 	char asset_path[MAX_PATH];
 	sprintf(asset_path, RES_PATH "/assets@%ix.png", FIXED_SCALE);
-	if (!exists(asset_path)) LOG_info("missing assets, you're about to segfault dummy!\n");
+	if (!exists(asset_path))
+		LOG_info("missing assets, you're about to segfault dummy!\n");
 	gfx.assets = IMG_Load(asset_path);
-	
-	TTF_Init();
-	font.large 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_LARGE));
-	font.medium = TTF_OpenFont(FONT_PATH, SCALE1(FONT_MEDIUM));
-	font.small 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_SMALL));
-	font.tiny 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_TINY));
-	
-	TTF_SetFontStyle(font.large, TTF_STYLE_BOLD);
-	TTF_SetFontStyle(font.medium, TTF_STYLE_BOLD);
-	TTF_SetFontStyle(font.small, TTF_STYLE_BOLD);
-	TTF_SetFontStyle(font.tiny, TTF_STYLE_BOLD);
 
 	return gfx.screen;
 }
@@ -347,7 +287,9 @@ void GFX_quit(void) {
 	TTF_CloseFont(font.tiny);
 	
 	SDL_FreeSurface(gfx.assets);
-	
+
+	CFG_quit();
+
 	GFX_freeAAScaler();
 	
 	GFX_clearAll();
@@ -745,7 +687,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
     if (text_width > max_width + padding) {
         frame_counter++;
         if (frame_counter >= 0) {  
-            text_offset += 2;  
+            text_offset += SCALE1(1);
             if (text_offset >= text_width) {
                 text_offset = 0; 
             }
@@ -983,7 +925,7 @@ static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint
 
 scaler_t GFX_getAAScaler(GFX_Renderer* renderer) {
 	int gcd_w, div_w, gcd_h, div_h;
-	blend_args.blend_line = calloc(renderer->src_w, sizeof(uint16_t));
+	blend_args.blend_line = (uint16_t*)calloc(renderer->src_w, sizeof(uint16_t));
 
 	gcd_w = gcd(renderer->src_w, renderer->dst_w);
 	blend_args.w_ratio_in = renderer->src_w / gcd_w;
@@ -1237,7 +1179,7 @@ void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	SDL_FillRect(dst, &(SDL_Rect){x+r,y+h-r,w-d,r}, c);
 	GFX_blitAssetColor(asset, &(SDL_Rect){r,r,r,r}, dst, &(SDL_Rect){x+w-r,y+h-r}, THEME_COLOR1);
 }
-void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
+int GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	// LOG_info("dst: %p\n", dst);
 	int x = 0;
 	int y = 0;
@@ -1252,20 +1194,37 @@ void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	if (pwr.is_charging) {
 		GFX_blitAssetColor(ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR1);
 		GFX_blitAssetColor(ASSET_BATTERY_BOLT, NULL, dst, &(SDL_Rect){x+SCALE1(3),y+SCALE1(2)}, THEME_COLOR1);
+		return rect.w + FIXED_SCALE;
 	}
 	else {
 		int percent = pwr.charge;
 		GFX_blitAssetColor(percent<=10?ASSET_BATTERY_LOW:ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR1);
 		
-		rect = asset_rects[ASSET_BATTERY_FILL];
-		SDL_Rect clip = rect;
-		clip.w *= percent;
-		clip.w /= 100;
-		if (clip.w<=0) return;
-		clip.x = rect.w - clip.w;
-		clip.y = 0;
-		
-		GFX_blitAssetColor(percent<=20?ASSET_BATTERY_FILL_LOW:ASSET_BATTERY_FILL, &clip, dst, &(SDL_Rect){x+SCALE1(3)+clip.x,y+SCALE1(2)}, THEME_COLOR1);
+		if(CFG_getShowBatteryPercent()) {
+			char percentage[16];
+			sprintf(percentage, "%i", pwr.charge);
+			SDL_Surface *text = TTF_RenderUTF8_Blended(font.micro, percentage, UintToColour(THEME_COLOR1_255));
+			SDL_Rect target = {
+				x + (rect.w - text->w) / 2 + FIXED_SCALE, 
+				y + (rect.h - text->h) / 2 - 1
+			};
+			SDL_BlitSurface(text, NULL, dst, &target);
+			SDL_FreeSurface(text);
+			return asset_rects[ASSET_BATTERY_FILL].w + FIXED_SCALE;
+		}
+		else {
+			rect = asset_rects[ASSET_BATTERY_FILL];
+			SDL_Rect clip = rect;
+			clip.w *= percent;
+			clip.w /= 100;
+			if (clip.w<=0) 
+				return rect.w + FIXED_SCALE;
+			clip.x = rect.w - clip.w;
+			clip.y = 0;
+			
+			GFX_blitAssetColor(percent<=20?ASSET_BATTERY_FILL_LOW:ASSET_BATTERY_FILL, &clip, dst, &(SDL_Rect){x+SCALE1(3)+clip.x,y+SCALE1(2)}, THEME_COLOR1);
+			return rect.w + FIXED_SCALE;
+		}
 	}
 }
 int GFX_getButtonWidth(char* hint, char* button) {
@@ -1431,12 +1390,30 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		}
 	}
 	else {
-		// TODO: handle wifi
 		int show_wifi = PLAT_isOnline(); // NOOOOO! not every frame!
-
+		
 		int ww = SCALE1(PILL_SIZE-3);
 		ow = SCALE1(PILL_SIZE);
 		if (show_wifi) ow += ww;
+		
+		// NOOOOO! not every frame!
+		bool show_clock = CFG_getShowClock();
+		int clockWidth = 0;
+		SDL_Surface *clock;
+		if (show_clock) {
+			char timeString[12];
+			time_t t = time(NULL);
+			struct tm tm = *localtime(&t);
+			if(CFG_getClock24H())
+				strftime(timeString, 12, "%R", &tm);
+			else 
+				strftime(timeString, 12, "%I:%M", &tm);
+			// why does this need to copy strings around?
+			char display_name[6];
+			clockWidth = GFX_getTextWidth(font.small, timeString, display_name, SCALE1(PILL_SIZE), SCALE1(2 * BUTTON_MARGIN));
+			clock = TTF_RenderUTF8_Blended(font.small, display_name, UintToColour(THEME_COLOR1_255));
+			ow += clockWidth;
+		}
 
 		ox = dst->w - SCALE1(PADDING) - ow;
 		oy = SCALE1(PADDING);
@@ -1456,7 +1433,17 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			GFX_blitAssetColor(ASSET_WIFI, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR1);
 			ox += ww;
 		}
-		GFX_blitBattery(dst, &(SDL_Rect){ox,oy});
+		ox += GFX_blitBattery(dst, &(SDL_Rect){ox,oy});
+		if(show_clock) {			
+			int x = ox;
+			int y = oy;
+			x += clock->w / 2;
+			y += (SCALE1(PILL_SIZE) - clock->h) / 2;
+
+			SDL_BlitSurface(clock, NULL, dst, &(SDL_Rect){x,y});
+			SDL_FreeSurface(clock);
+			ox += clockWidth;
+		}
 	}
 	
 	return ow;
@@ -1520,11 +1507,11 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 }
 
 #define MAX_TEXT_LINES 16
-void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h) {
-	char* lines[MAX_TEXT_LINES];
+void GFX_sizeText(TTF_Font* font, const char* str, int leading, int* w, int* h) {
+	const char* lines[MAX_TEXT_LINES];
 	int count = 0;
 
-	char* tmp;
+	const char* tmp;
 	lines[count++] = str;
 	while ((tmp=strchr(lines[count-1], '\n'))!=NULL) {
 		if (count+1>MAX_TEXT_LINES) break; // TODO: bail?
@@ -1554,13 +1541,13 @@ void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h) {
 	}
 	*w = mw;
 }
-void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect) {
+void GFX_blitText(TTF_Font* font, const char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	if (dst_rect==NULL) dst_rect = &(SDL_Rect){0,0,dst->w,dst->h};
 	
-	char* lines[MAX_TEXT_LINES];
+	const char* lines[MAX_TEXT_LINES];
 	int count = 0;
 
-	char* tmp;
+	const char* tmp;
 	lines[count++] = str;
 	while ((tmp=strchr(lines[count-1], '\n'))!=NULL) {
 		if (count+1>MAX_TEXT_LINES) break; // TODO: bail?
@@ -1645,7 +1632,7 @@ static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 	SDL_LockAudio();
 
 	int buffer_bytes = snd.frame_count * sizeof(SND_Frame);
-	snd.buffer = realloc(snd.buffer, buffer_bytes);
+	snd.buffer = (SND_Frame*)realloc(snd.buffer, buffer_bytes);
 
 	memset(snd.buffer, 0, buffer_bytes);
 
@@ -1691,8 +1678,8 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 
 	int max_output_frames = (int)(input_frame_count * final_ratio + 1);
 
-	float *input_buffer = malloc(input_frame_count * 2 * sizeof(float));
-	float *output_buffer = malloc(max_output_frames * 2 * sizeof(float));
+	float *input_buffer = (float*)malloc(input_frame_count * 2 * sizeof(float));
+	float *output_buffer = (float*)malloc(max_output_frames * 2 * sizeof(float));
 	if (!input_buffer || !output_buffer) {
 		fprintf(stderr, "Error allocating buffers\n");
 		free(input_buffer);
@@ -1725,7 +1712,7 @@ ResampledFrames resample_audio(const SND_Frame *input_frames,
 
 	int output_frame_count = src_data.output_frames_gen;
 
-	SND_Frame *output_frames = malloc(output_frame_count * sizeof(SND_Frame));
+	SND_Frame *output_frames = (SND_Frame*)malloc(output_frame_count * sizeof(SND_Frame));
 	if (!output_frames) {
 		fprintf(stderr, "Error allocating output frames\n");
 		free(input_buffer);
@@ -2506,13 +2493,13 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		}
 	}
 	
-	#define SLEEP_DELAY 60000 // 60 seconds
-	// #define SLEEP_DELAY 2400000 // sleep time for testing
-	if (now-last_input_at>=SLEEP_DELAY && PWR_preventAutosleep()) last_input_at = now;
-	
+	const int screenOffDelay = CFG_getScreenTimeoutSecs() * 1000;
+	if (screenOffDelay == 0 || (now - last_input_at >= screenOffDelay && PWR_preventAutosleep()))
+		last_input_at = now;
+
 	if (
 		pwr.requested_sleep || // hardware requested sleep
-		now-last_input_at>=SLEEP_DELAY || // autosleep
+		(screenOffDelay > 0 && now-last_input_at>=screenOffDelay) || // autosleep
 		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP) && power_pressed_at) // manual sleep
 	) {
 		pwr.requested_sleep = 0;
@@ -2596,8 +2583,8 @@ void PWR_powerOff(void) {
 		gfx.screen = GFX_resize(w,h,p);
 		
 		char* msg;
-		if (HAS_POWER_BUTTON || HAS_POWEROFF_BUTTON) msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npowering off" : "Powering off";
-		else msg = exists(AUTO_RESUME_PATH) ? "Quicksave created,\npower off now" : "Power off now";
+		if (HAS_POWER_BUTTON || HAS_POWEROFF_BUTTON) msg = exists(AUTO_RESUME_PATH) ? (char*)"Quicksave created,\npowering off" :  (char*)"Powering off";
+		else msg = exists(AUTO_RESUME_PATH) ?  (char*)"Quicksave created,\npower off now" :  (char*)"Power off now";
 		
 		// LOG_info("PWR_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);
 		
@@ -2648,36 +2635,40 @@ static void PWR_exitSleep(void) {
 static void PWR_waitForWake(void) {
 	uint32_t sleep_ticks = SDL_GetTicks();
 	int deep_sleep_attempts = 0;
-	while (!PAD_wake()) {
+	const int sleepDelay = CFG_getSuspendTimeoutSecs() * 1000;
+	while (!PAD_wake())
+	{
 		if (pwr.requested_wake) {
 			pwr.requested_wake = 0;
 			break;
 		}
-		SDL_Delay(200);
-		if (SDL_GetTicks()-sleep_ticks>=30000) { // increased to two minutes
-			if (pwr.is_charging) {
-				sleep_ticks += 60000; // check again in a minute
-				continue;
-			}
-			if (PLAT_supportsDeepSleep()) {
-				int ret = PWR_deepSleep();
-				if (ret == 0) {
-					return;
-				} else if (deep_sleep_attempts < 3) {
-					LOG_warn("failed to enter deep sleep - retrying in 5 seconds\n");
-					sleep_ticks += 5000;
-					deep_sleep_attempts++;
+		if(sleepDelay > 0) {
+			SDL_Delay(200);
+			if (SDL_GetTicks()-sleep_ticks>=sleepDelay) { // increased to two minutes
+				if (pwr.is_charging) {
+					sleep_ticks += 60000; // check again in a minute
 					continue;
-				} else {
-					LOG_warn("failed to enter deep sleep - powering off\n");
 				}
-			}
-			if (pwr.can_poweroff) {
-				PWR_powerOff();
+				if (PLAT_supportsDeepSleep()) {
+					int ret = PWR_deepSleep();
+					if (ret == 0) {
+						return;
+					} else if (deep_sleep_attempts < 3) {
+						LOG_warn("failed to enter deep sleep - retrying in 5 seconds\n");
+						sleep_ticks += 5000;
+						deep_sleep_attempts++;
+						continue;
+					} else {
+						LOG_warn("failed to enter deep sleep - powering off\n");
+					}
+				}
+				if (pwr.can_poweroff) {
+					PWR_powerOff();
+				}
 			}
 		}
 	}
-	
+
 	return;
 }
 void PWR_sleep(void) {
@@ -2747,6 +2738,17 @@ int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	system(cmd);
 	return 0; // why does this return an int?
 }
+
+///////////////////////////////
+// RGB LED cruft
+
+FALLBACK_IMPLEMENTATION void PLAT_initLeds(LightSettings *lights) {}
+FALLBACK_IMPLEMENTATION void PLAT_setLedBrightness(LightSettings *led) {}
+FALLBACK_IMPLEMENTATION void PLAT_setLedEffect(LightSettings *led){}
+FALLBACK_IMPLEMENTATION void PLAT_setLedColor(LightSettings *led){}
+FALLBACK_IMPLEMENTATION void PLAT_setLedInbrightness(LightSettings *led){}
+FALLBACK_IMPLEMENTATION void PLAT_setLedEffectCycles(LightSettings *led){}
+FALLBACK_IMPLEMENTATION void PLAT_setLedEffectSpeed(LightSettings *led){}
 
 // only indicator leds may work when battery is below PWR_LOW_CHARGE
 void LED_setIndicator(int effect,uint32_t color, int cycles,int ledindex) {
@@ -2828,3 +2830,372 @@ void LEDS_initLeds() {
 	PLAT_initLeds(lights);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
+FALLBACK_IMPLEMENTATION FILE *PLAT_OpenSettings(const char *filename)
+{
+    char diskfilename[256];
+    snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/%s", filename);
+
+	FILE *file = fopen(diskfilename, "r");
+	if (file == NULL)
+    {
+        return NULL;
+ 
+    }
+	return file;
+}
+
+FALLBACK_IMPLEMENTATION FILE *PLAT_WriteSettings(const char *filename)
+{
+    char diskfilename[256];
+    snprintf(diskfilename, sizeof(diskfilename), SHARED_USERDATA_PATH "/%s", filename);
+
+	FILE *file = fopen(diskfilename, "w");
+	if (file == NULL)
+    {
+        return NULL;
+ 
+    }
+	return file;
+}
+
+void CFG_defaults(MinUISettings* cfg)
+{
+	if(!cfg)
+		return;
+
+	MinUISettings defaults = {
+		.font = 1, // Next
+		.color1 = HexToUint("ffffff"),
+		.color2 = HexToUint("9b2257"),
+		.color3 = HexToUint("1e2329"),
+		.backgroundColor = HexToUint("000000"),
+		.color1_255 = HexToUint32_unmapped("ffffff"),
+		.color2_255 = HexToUint32_unmapped("9b2257"),
+		.color3_255 = HexToUint32_unmapped("1e2329"),
+		.backgroundColor_255 = HexToUint32_unmapped("000000"),
+		.thumbRadius = 20, // unscaled!
+
+		.showClock = false,
+		.clock24h = true,
+		.showBatteryPercent = false,
+		.showMenuAnimations = true,
+		.showRecents = true,
+		.showGameArt = true,
+
+		.screenTimeoutSecs = 60,
+		.suspendTimeoutSecs = 30,
+	};
+	
+	*cfg = defaults;
+}
+
+void CFG_init(MinUISettings* cfg)
+{
+	if(!cfg)
+		return;
+
+	CFG_defaults(&settings);
+	bool fontLoaded = false;
+
+	FILE *file = PLAT_OpenSettings("minuisettings.txt");
+	if (file == NULL)
+    {
+		LOG_info("Unable to open settings file, loading defaults\n");
+	}
+	else {
+		char line[256];
+		while (fgets(line, sizeof(line), file))
+		{
+			int temp_value;
+			uint32_t temp_color;
+			if (sscanf(line, "font=%i", &temp_value) == 1)
+			{
+				CFG_setFontId(temp_value);
+				fontLoaded = true;
+				continue;
+			}
+			if (sscanf(line, "color1=%x", &temp_color) == 1)
+			{
+				char hexColor[7];
+				snprintf(hexColor, sizeof(hexColor), "%06x", temp_color);
+				CFG_setColor(1, HexToUint32_unmapped(hexColor));
+				continue;
+			}
+			if (sscanf(line, "color2=%x", &temp_color) == 1)
+			{
+				CFG_setColor(2, temp_color);
+				continue;
+			}
+			if (sscanf(line, "color3=%x", &temp_color) == 1)
+			{
+				CFG_setColor(3, temp_color);
+				continue;
+			}
+			if (sscanf(line, "bgcolor=%x", &temp_color) == 1)
+			{
+				CFG_setColor(4, temp_color);
+				continue;
+			}
+			if (sscanf(line, "radius=%i", &temp_value) == 1)
+			{
+				CFG_setThumbnailRadius(temp_value);
+				continue;
+			}
+			if (sscanf(line, "showclock=%i", &temp_value) == 1)
+			{
+				CFG_setShowClock((bool)temp_value);
+				continue;
+			}
+			if (sscanf(line, "clock24h=%i", &temp_value) == 1)
+			{
+				CFG_setClock24H((bool)temp_value);
+				continue;
+			}
+			if (sscanf(line, "batteryperc=%i", &temp_value) == 1)
+			{
+				CFG_setShowBatteryPercent((bool)temp_value);
+				continue;
+			}
+			if (sscanf(line, "menuanim=%i", &temp_value) == 1)
+			{
+				CFG_setMenuAnimations((bool)temp_value);
+				continue;
+			}
+			if (sscanf(line, "recents=%i", &temp_value) == 1)
+			{
+				CFG_setShowRecents((bool)temp_value);
+				continue;
+			}
+			if (sscanf(line, "gameart=%i", &temp_value) == 1)
+			{
+				CFG_setShowGameArt((bool)temp_value);
+				continue;
+			}
+			if (sscanf(line, "screentimeout=%i", &temp_value) == 1)
+			{
+				CFG_setScreenTimeoutSecs(temp_value);
+				continue;
+			}
+			if (sscanf(line, "suspendTimeout=%i", &temp_value) == 1)
+			{
+				CFG_setSuspendTimeoutSecs(temp_value);
+				continue;
+			}
+
+		}
+		fclose(file);
+	}
+
+	// load gfx related stuff until we drop the indirection
+	CFG_setColor(1, CFG_getColor(1));
+	CFG_setColor(2, CFG_getColor(2));
+	CFG_setColor(3, CFG_getColor(3));
+	CFG_setColor(4, CFG_getColor(4));
+	// avoid reloading the font if not neccessary
+	if(!fontLoaded)
+		CFG_setFontId(CFG_getFontId());
+}
+
+int CFG_getFontId(void)
+{
+	return settings.font;
+}
+
+void CFG_setFontId(int id) 
+{
+	settings.font = clamp(id, 0, 1);
+
+	if (settings.font == 1)
+		FONT_PATH = RES_PATH "/chillroundm.ttf";
+	else
+		FONT_PATH = RES_PATH "/BPreplayBold-unhinted.otf";
+
+	// Load/Reload fonts
+	if(!TTF_WasInit())
+		TTF_Init();
+
+	TTF_CloseFont(font.large);
+	TTF_CloseFont(font.medium);
+	TTF_CloseFont(font.small);
+	TTF_CloseFont(font.tiny);
+	TTF_CloseFont(font.micro);
+
+	font.large = TTF_OpenFont(FONT_PATH, SCALE1(FONT_LARGE));
+	font.medium = TTF_OpenFont(FONT_PATH, SCALE1(FONT_MEDIUM));
+	font.small 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_SMALL));
+	font.tiny 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_TINY));
+	font.micro 	= TTF_OpenFont(FONT_PATH, SCALE1(FONT_MICRO));
+
+	TTF_SetFontStyle(font.large, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.medium, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.small, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.tiny, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(font.micro, TTF_STYLE_BOLD);
+}
+
+uint32_t CFG_getColor(int color_id) {
+	switch (color_id) {
+	case 1:
+		return settings.color1_255;
+	case 2:
+		return settings.color2_255;
+	case 3:
+		return settings.color3_255;
+	case 4:
+		return settings.backgroundColor_255;
+	default:
+		return 0;
+	}
+}
+
+void CFG_setColor(int color_id, uint32_t color) {
+	switch (color_id) {
+	case 1:
+		settings.color1_255 = color;
+		settings.color1 = mapUint(color);
+		THEME_COLOR1 = settings.color1;
+		THEME_COLOR1_255 = settings.color1_255;
+		break;
+	case 2:
+		settings.color2_255 = color;
+		settings.color2 = mapUint(color);
+		THEME_COLOR2 = settings.color2;
+		THEME_COLOR2_255 = settings.color2_255;
+		break;
+	case 3:
+		settings.color3_255 = color;
+		settings.color3 = mapUint(color);
+		THEME_COLOR3 = settings.color3;
+		THEME_COLOR3_255 = settings.color3_255;
+		ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3_255);
+		break;
+	case 4: 
+		settings.backgroundColor_255 = color;
+		settings.backgroundColor = mapUint(color);
+		break;
+	default:
+		break;
+	}
+
+}
+
+uint32_t CFG_getScreenTimeoutSecs(void) {
+	return settings.screenTimeoutSecs;
+}
+
+void CFG_setScreenTimeoutSecs(uint32_t secs) {
+	settings.screenTimeoutSecs = secs;
+}
+
+uint32_t CFG_getSuspendTimeoutSecs(void) {
+	return settings.suspendTimeoutSecs;
+}
+
+void CFG_setSuspendTimeoutSecs(uint32_t secs) {
+	settings.suspendTimeoutSecs = secs;
+}
+
+bool CFG_getShowClock(void)
+{
+	return settings.showClock;
+}
+
+void CFG_setShowClock(bool show)
+{
+	settings.showClock = show;
+}
+
+bool CFG_getClock24H(void)
+{
+	return settings.clock24h;
+}
+
+void CFG_setClock24H(bool is24)
+{
+	settings.clock24h = is24;
+}
+
+bool CFG_getShowBatteryPercent(void)
+{
+	return settings.showBatteryPercent;
+}
+
+void CFG_setShowBatteryPercent(bool show)
+{
+	settings.showBatteryPercent = show;
+}
+
+bool CFG_getMenuAnimations(void)
+{
+	return settings.showMenuAnimations;
+}
+
+void CFG_setMenuAnimations(bool anims)
+{
+	settings.showMenuAnimations = anims;
+}
+
+int CFG_getThumbnailRadius(void)
+{
+	return settings.thumbRadius;
+}
+
+void CFG_setThumbnailRadius(int radius)
+{
+	settings.thumbRadius = clamp(radius, 0, 24);
+}
+
+bool CFG_getShowRecents(void)
+{
+	return settings.showRecents;
+}
+
+void CFG_setShowRecents(bool show)
+{
+	settings.showRecents = show;
+}
+
+bool CFG_getShowGameArt(void)
+{
+	return settings.showGameArt;
+}
+
+void CFG_setShowGameArt(bool show)
+{
+	settings.showGameArt = show;
+}
+
+void CFG_sync(void)
+{
+	// write to file
+	FILE *file = PLAT_WriteSettings("minuisettings.txt");
+	if (file == NULL)
+    {
+		LOG_info("Unable to open settings file, cant write\n");
+		return;
+	}
+
+	fprintf(file, "font=%i\n", settings.font);
+    fprintf(file, "color1=0x%06X\n", settings.color1_255);
+    fprintf(file, "color2=0x%06X\n", settings.color2_255);
+    fprintf(file, "color3=0x%06X\n", settings.color3_255);
+    fprintf(file, "bgcolor=0x%06X\n", settings.backgroundColor_255);
+    fprintf(file, "radius=%i\n", settings.thumbRadius);
+    fprintf(file, "showclock=%i\n", settings.showClock);
+    fprintf(file, "clock24h=%i\n", settings.clock24h);
+    fprintf(file, "batteryperc=%i\n", settings.showBatteryPercent);
+    fprintf(file, "menuanim=%i\n", settings.showMenuAnimations);
+    fprintf(file, "recents=%i\n", settings.showRecents);
+    fprintf(file, "gameart=%i\n", settings.showGameArt);
+    fprintf(file, "screentimeout=%i\n", settings.screenTimeoutSecs);
+    fprintf(file, "suspendTimeout=%i\n", settings.suspendTimeoutSecs);
+    
+    fclose(file);
+}
+
+void CFG_quit(void)
+{
+	CFG_sync();
+}
