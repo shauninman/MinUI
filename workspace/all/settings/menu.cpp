@@ -445,7 +445,7 @@ void MenuList::drawListItem(SDL_Surface *surface, const SDL_Rect &dst, const Men
         w += SCALE1(OPTION_PADDING * 2);
 
         GFX_blitPillDarkCPP(ASSET_BUTTON, surface, {dst.x, dst.y, w, SCALE1(BUTTON_SIZE)});
-        text_color = COLOR_BLACK;
+        text_color = UintToColour(THEME_COLOR5_255);
     }
     text = TTF_RenderUTF8_Blended(font.small, item.getName().c_str(), text_color);
     SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + SCALE1(OPTION_PADDING), dst.y + SCALE1(1)});
@@ -489,7 +489,7 @@ namespace {
 
 void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem& item, bool selected)
 {
-    SDL_Color text_color = COLOR_WHITE;
+    SDL_Color text_color = UintToColour(THEME_COLOR4_255);
     SDL_Surface *text;
 
     // hack - this should be correlated to max_width
@@ -532,7 +532,7 @@ void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const Me
         TTF_SizeUTF8(font.small, item.getName().c_str(), &w, NULL);
         w += SCALE1(OPTION_PADDING * 2);
         GFX_blitPillDarkCPP(ASSET_BUTTON, surface, {dst.x, dst.y, w, SCALE1(BUTTON_SIZE)});
-        text_color = COLOR_BLACK;
+        text_color = UintToColour(THEME_COLOR5_255);
     }
 
     text = TTF_RenderUTF8_Blended(font.small, item.getName().c_str(), text_color);

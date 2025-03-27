@@ -3,6 +3,7 @@
   // in case we want to merge in MinUI patches down the line.
   "editor.formatOnSave": false,
   "files.associations": {
+    "*.tf": "terraform",
     "pthread.h": "c",
     "sqlite3.h": "c",
     "utils.h": "c",
@@ -100,6 +101,7 @@
     "*.in": "cpp",
     "numeric": "cpp",
     "random": "c",
-    "bit": "cpp"
+    "bit": "cpp",
+    "*.inc": "c"
   },
 }

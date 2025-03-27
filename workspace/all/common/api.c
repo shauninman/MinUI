@@ -81,9 +81,13 @@ GFX_Fonts font;
 uint32_t THEME_COLOR1;
 uint32_t THEME_COLOR2;
 uint32_t THEME_COLOR3;
+uint32_t THEME_COLOR4;
+uint32_t THEME_COLOR5;
 uint32_t THEME_COLOR1_255;
 uint32_t THEME_COLOR2_255;
 uint32_t THEME_COLOR3_255;
+uint32_t THEME_COLOR4_255;
+uint32_t THEME_COLOR5_255;
 SDL_Color ALT_BUTTON_TEXT_COLOR;
 char *FONT_PATH;
 MinUISettings settings = {0};
@@ -122,7 +126,7 @@ static inline uint32_t mapUint(uint32_t col)
 	return SDL_MapRGB(gfx.screen->format, r, g, b);
 }
 
-static inline SDL_Color UintToColour(uint32_t colour)
+SDL_Color UintToColour(uint32_t colour)
 {
 	SDL_Color tempcol;
 	tempcol.a = 255;
@@ -658,8 +662,8 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
 
     char scroll_text[1024]; 
     snprintf(scroll_text, sizeof(scroll_text), "%s  %s", in_name, in_name); 
-
-    SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, color);
+	SDL_Color text_color = UintToColour(THEME_COLOR5_255);
+    SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, text_color);
     if (!full_text_surface) {
         printf("Text rendering failed: %s\n", TTF_GetError());
         return;
@@ -1116,6 +1120,10 @@ void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rec
 			asset_color = THEME_COLOR2_255;
 		else if(asset_color == THEME_COLOR3)
 			asset_color = THEME_COLOR3_255;
+		else if(asset_color == THEME_COLOR4)
+			asset_color = THEME_COLOR4_255;
+		else if(asset_color == THEME_COLOR5)
+			asset_color = THEME_COLOR5_255;
 
 		SDL_Color restore;
 		SDL_GetSurfaceColorMod(gfx.assets, &restore.r, &restore.g, &restore.b);
@@ -2873,10 +2881,14 @@ void CFG_defaults(MinUISettings* cfg)
 		.color1 = HexToUint("ffffff"),
 		.color2 = HexToUint("9b2257"),
 		.color3 = HexToUint("1e2329"),
+		.color4 = HexToUint("ffffff"),
+		.color5 = HexToUint("000000"),
 		.backgroundColor = HexToUint("000000"),
 		.color1_255 = HexToUint32_unmapped("ffffff"),
 		.color2_255 = HexToUint32_unmapped("9b2257"),
 		.color3_255 = HexToUint32_unmapped("1e2329"),
+		.color4_255 = HexToUint32_unmapped("ffffff"),
+		.color5_255 = HexToUint32_unmapped("000000"),
 		.backgroundColor_255 = HexToUint32_unmapped("000000"),
 		.thumbRadius = 20, // unscaled!
 
@@ -2936,9 +2948,14 @@ void CFG_init(MinUISettings* cfg)
 				CFG_setColor(3, temp_color);
 				continue;
 			}
-			if (sscanf(line, "bgcolor=%x", &temp_color) == 1)
+			if (sscanf(line, "color4=%x", &temp_color) == 1)
 			{
 				CFG_setColor(4, temp_color);
+				continue;
+			}
+			if (sscanf(line, "color5=%x", &temp_color) == 1)
+			{
+				CFG_setColor(5, temp_color);
 				continue;
 			}
 			if (sscanf(line, "radius=%i", &temp_value) == 1)
@@ -3047,6 +3064,10 @@ uint32_t CFG_getColor(int color_id) {
 	case 3:
 		return settings.color3_255;
 	case 4:
+		return settings.color4_255;
+	case 5:
+		return settings.color5_255;
+	case 6:
 		return settings.backgroundColor_255;
 	default:
 		return 0;
@@ -3074,7 +3095,19 @@ void CFG_setColor(int color_id, uint32_t color) {
 		THEME_COLOR3_255 = settings.color3_255;
 		ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3_255);
 		break;
-	case 4: 
+	case 4:
+		settings.color4_255 = color;
+		settings.color4 = mapUint(color);
+		THEME_COLOR4 = settings.color4;
+		THEME_COLOR4_255 = settings.color4_255;
+		break;
+	case 5:
+		settings.color5_255 = color;
+		settings.color5 = mapUint(color);
+		THEME_COLOR5 = settings.color4;
+		THEME_COLOR5_255 = settings.color5_255;
+		break;
+	case 6: 
 		settings.backgroundColor_255 = color;
 		settings.backgroundColor = mapUint(color);
 		break;
@@ -3184,6 +3217,8 @@ void CFG_sync(void)
     fprintf(file, "color1=0x%06X\n", settings.color1_255);
     fprintf(file, "color2=0x%06X\n", settings.color2_255);
     fprintf(file, "color3=0x%06X\n", settings.color3_255);
+    fprintf(file, "color4=0x%06X\n", settings.color4_255);
+    fprintf(file, "color5=0x%06X\n", settings.color5_255);
     fprintf(file, "bgcolor=0x%06X\n", settings.backgroundColor_255);
     fprintf(file, "radius=%i\n", settings.thumbRadius);
     fprintf(file, "showclock=%i\n", settings.showClock);

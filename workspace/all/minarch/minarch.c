@@ -4406,8 +4406,8 @@ static int Menu_options(MenuList* list) {
 			int selected_row = selected - start;
 			for (int i=start,j=0; i<end; i++,j++) {
 				MenuItem* item = &items[i];
-				SDL_Color text_color = COLOR_WHITE;
-
+				SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+				text_color = COLOR_WHITE;
 				// int ox = (screen->w - w) / 2; // if we're centering these (but I don't think we should after seeing it)
 				if (j==selected_row) {
 					// move out of conditional if centering
@@ -4421,7 +4421,7 @@ static int Menu_options(MenuList* list) {
 						w,
 						SCALE1(BUTTON_SIZE)
 					});
-					text_color = COLOR_BLACK;
+					text_color = UintToColour(THEME_COLOR5_255);
 					
 					if (item->desc) desc = item->desc;
 				}
@@ -4445,7 +4445,7 @@ static int Menu_options(MenuList* list) {
 			int selected_row = selected - start;
 			for (int i=start,j=0; i<end; i++,j++) {
 				MenuItem* item = &items[i];
-				SDL_Color text_color = COLOR_WHITE;
+				SDL_Color text_color = UintToColour(THEME_COLOR4_255);
 
 				if (j==selected_row) {
 					// gray pill
@@ -4478,7 +4478,7 @@ static int Menu_options(MenuList* list) {
 						w,
 						SCALE1(BUTTON_SIZE)
 					});
-					text_color = COLOR_BLACK;
+					text_color = UintToColour(THEME_COLOR5_255);
 					
 					if (item->desc) desc = item->desc;
 				}
@@ -4527,7 +4527,8 @@ static int Menu_options(MenuList* list) {
 			int selected_row = selected - start;
 			for (int i=start,j=0; i<end; i++,j++) {
 				MenuItem* item = &items[i];
-				SDL_Color text_color = COLOR_WHITE;
+				SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+				
 
 				if (j==selected_row) {
 					// gray pill
@@ -4548,7 +4549,7 @@ static int Menu_options(MenuList* list) {
 						w,
 						SCALE1(BUTTON_SIZE)
 					});
-					text_color = COLOR_BLACK;
+					text_color = UintToColour(THEME_COLOR5_255);
 					
 					if (item->desc) desc = item->desc;
 				}
@@ -5082,10 +5083,10 @@ static void Menu_loop(void) {
 		oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
 		for (int i=0; i<MENU_ITEM_COUNT; i++) {
 			char* item = menu.items[i];
-			SDL_Color text_color = COLOR_WHITE;
+			SDL_Color text_color = UintToColour(THEME_COLOR4_255);
 			
 			if (i==selected) {
-				text_color = COLOR_BLACK;
+				text_color = UintToColour(THEME_COLOR5_255);
 
 				// disc change
 				if (menu.total_discs>1 && i==ITEM_CONT) {				
@@ -5114,15 +5115,7 @@ static void Menu_loop(void) {
 					SCALE1(PILL_SIZE)
 				});
 			}
-			else {
-				// shadow
-				text = TTF_RenderUTF8_Blended(font.large, item, COLOR_BLACK);
-				SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-					SCALE1(2 + PADDING + BUTTON_PADDING),
-					SCALE1(1 + PADDING + oy + (i * PILL_SIZE) + 4)
-				});
-				SDL_FreeSurface(text);
-			}
+		
 			
 			// text
 			text = TTF_RenderUTF8_Blended(font.large, item, text_color);
