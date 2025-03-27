@@ -4,3 +4,4 @@ color2=0x9b2257
 color3=0x1e2329
 color4=0xffffff
 color5=0x000000
+color6=0x000000

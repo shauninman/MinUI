@@ -66,11 +66,13 @@ extern uint32_t THEME_COLOR2;
 extern uint32_t THEME_COLOR3;
 extern uint32_t THEME_COLOR4;
 extern uint32_t THEME_COLOR5;
+extern uint32_t THEME_COLOR6;
 extern uint32_t THEME_COLOR1_255;
 extern uint32_t THEME_COLOR2_255;
 extern uint32_t THEME_COLOR3_255;
 extern uint32_t THEME_COLOR4_255;
 extern uint32_t THEME_COLOR5_255;
+extern uint32_t THEME_COLOR6_255;
 
 // TODO: do we need that many free externs? This should move
 // to a structure or something.
@@ -467,6 +469,8 @@ typedef struct
     uint32_t color4_255; // not screen mapped
 	uint32_t color5;
     uint32_t color5_255; // not screen mapped
+	uint32_t color6;
+    uint32_t color6_255; // not screen mapped
     uint32_t backgroundColor;
     uint32_t backgroundColor_255; // not screen mapped
 	int thumbRadius;

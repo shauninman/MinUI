@@ -83,11 +83,13 @@ uint32_t THEME_COLOR2;
 uint32_t THEME_COLOR3;
 uint32_t THEME_COLOR4;
 uint32_t THEME_COLOR5;
+uint32_t THEME_COLOR6;
 uint32_t THEME_COLOR1_255;
 uint32_t THEME_COLOR2_255;
 uint32_t THEME_COLOR3_255;
 uint32_t THEME_COLOR4_255;
 uint32_t THEME_COLOR5_255;
+uint32_t THEME_COLOR6_255;
 SDL_Color ALT_BUTTON_TEXT_COLOR;
 char *FONT_PATH;
 MinUISettings settings = {0};
@@ -1124,6 +1126,8 @@ void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rec
 			asset_color = THEME_COLOR4_255;
 		else if(asset_color == THEME_COLOR5)
 			asset_color = THEME_COLOR5_255;
+		else if(asset_color == THEME_COLOR6)
+			asset_color = THEME_COLOR6_255;
 
 		SDL_Color restore;
 		SDL_GetSurfaceColorMod(gfx.assets, &restore.r, &restore.g, &restore.b);
@@ -1203,18 +1207,18 @@ int GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 	y += (SCALE1(PILL_SIZE) - rect.h) / 2;
 	
 	if (pwr.is_charging) {
-		GFX_blitAssetColor(ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR1);
-		GFX_blitAssetColor(ASSET_BATTERY_BOLT, NULL, dst, &(SDL_Rect){x+SCALE1(3),y+SCALE1(2)}, THEME_COLOR1);
+		GFX_blitAssetColor(ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR6);
+		GFX_blitAssetColor(ASSET_BATTERY_BOLT, NULL, dst, &(SDL_Rect){x+SCALE1(3),y+SCALE1(2)}, THEME_COLOR6);
 		return rect.w + FIXED_SCALE;
 	}
 	else {
 		int percent = pwr.charge;
-		GFX_blitAssetColor(percent<=10?ASSET_BATTERY_LOW:ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR1);
+		GFX_blitAssetColor(percent<=10?ASSET_BATTERY_LOW:ASSET_BATTERY, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR6);
 		
 		if(CFG_getShowBatteryPercent()) {
 			char percentage[16];
 			sprintf(percentage, "%i", pwr.charge);
-			SDL_Surface *text = TTF_RenderUTF8_Blended(font.micro, percentage, UintToColour(THEME_COLOR1_255));
+			SDL_Surface *text = TTF_RenderUTF8_Blended(font.micro, percentage, UintToColour(THEME_COLOR6_255));
 			SDL_Rect target = {
 				x + (rect.w - text->w) / 2 + FIXED_SCALE, 
 				y + (rect.h - text->h) / 2 - 1
@@ -1233,7 +1237,7 @@ int GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 			clip.x = rect.w - clip.w;
 			clip.y = 0;
 			
-			GFX_blitAssetColor(percent<=20?ASSET_BATTERY_FILL_LOW:ASSET_BATTERY_FILL, &clip, dst, &(SDL_Rect){x+SCALE1(3)+clip.x,y+SCALE1(2)}, THEME_COLOR1);
+			GFX_blitAssetColor(percent<=20?ASSET_BATTERY_FILL_LOW:ASSET_BATTERY_FILL, &clip, dst, &(SDL_Rect){x+SCALE1(3)+clip.x,y+SCALE1(2)}, THEME_COLOR6);
 			return rect.w + FIXED_SCALE;
 		}
 	}
@@ -1289,7 +1293,8 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 	ox += SCALE1(BUTTON_MARGIN);
 
 	// hint text
-	text = TTF_RenderUTF8_Blended(font.small, hint, COLOR_WHITE);
+	SDL_Color text_color = UintToColour(THEME_COLOR6_255);
+	text = TTF_RenderUTF8_Blended(font.small, hint, text_color);
 	SDL_BlitSurface(text, NULL, dst, &(SDL_Rect){ox+dst_rect->x,dst_rect->y+(SCALE1(BUTTON_SIZE)-text->h)/2,text->w,text->h});
 	SDL_FreeSurface(text);
 }
@@ -1379,7 +1384,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		int asset = show_setting==3?ASSET_BUTTON:show_setting==1?ASSET_BRIGHTNESS:(setting_value>0?ASSET_VOLUME:ASSET_VOLUME_MUTE);
 		int ax = ox + (show_setting==1 || show_setting == 3 ? SCALE1(6) : SCALE1(8));
 		int ay = oy + (show_setting==1 || show_setting == 3 ? SCALE1(5) : SCALE1(7));
-		GFX_blitAssetColor(asset, NULL, dst, &(SDL_Rect){ax,ay}, THEME_COLOR1);
+		GFX_blitAssetColor(asset, NULL, dst, &(SDL_Rect){ax,ay}, THEME_COLOR6_255);
 		
 		ox += SCALE1(PILL_SIZE);
 		oy += SCALE1((PILL_SIZE - SETTINGS_SIZE) / 2);
@@ -1422,7 +1427,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			// why does this need to copy strings around?
 			char display_name[6];
 			clockWidth = GFX_getTextWidth(font.small, timeString, display_name, SCALE1(PILL_SIZE), SCALE1(2 * BUTTON_MARGIN));
-			clock = TTF_RenderUTF8_Blended(font.small, display_name, UintToColour(THEME_COLOR1_255));
+			clock = TTF_RenderUTF8_Blended(font.small, display_name, UintToColour(THEME_COLOR6_255));
 			ow += clockWidth;
 		}
 
@@ -1441,7 +1446,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			x += (SCALE1(PILL_SIZE) - rect.w) / 2;
 			y += (SCALE1(PILL_SIZE) - rect.h) / 2;
 			
-			GFX_blitAssetColor(ASSET_WIFI, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR1);
+			GFX_blitAssetColor(ASSET_WIFI, NULL, dst, &(SDL_Rect){x,y}, THEME_COLOR6);
 			ox += ww;
 		}
 		ox += GFX_blitBattery(dst, &(SDL_Rect){ox,oy});
@@ -2883,12 +2888,14 @@ void CFG_defaults(MinUISettings* cfg)
 		.color3 = HexToUint("1e2329"),
 		.color4 = HexToUint("ffffff"),
 		.color5 = HexToUint("000000"),
+		.color6 = HexToUint("ffffff"),
 		.backgroundColor = HexToUint("000000"),
 		.color1_255 = HexToUint32_unmapped("ffffff"),
 		.color2_255 = HexToUint32_unmapped("9b2257"),
 		.color3_255 = HexToUint32_unmapped("1e2329"),
 		.color4_255 = HexToUint32_unmapped("ffffff"),
 		.color5_255 = HexToUint32_unmapped("000000"),
+		.color6_255 = HexToUint32_unmapped("ffffff"),
 		.backgroundColor_255 = HexToUint32_unmapped("000000"),
 		.thumbRadius = 20, // unscaled!
 
@@ -2956,6 +2963,11 @@ void CFG_init(MinUISettings* cfg)
 			if (sscanf(line, "color5=%x", &temp_color) == 1)
 			{
 				CFG_setColor(5, temp_color);
+				continue;
+			}
+			if (sscanf(line, "color6=%x", &temp_color) == 1)
+			{
+				CFG_setColor(6, temp_color);
 				continue;
 			}
 			if (sscanf(line, "radius=%i", &temp_value) == 1)
@@ -3068,6 +3080,8 @@ uint32_t CFG_getColor(int color_id) {
 	case 5:
 		return settings.color5_255;
 	case 6:
+		return settings.color6_255;
+	case 7:
 		return settings.backgroundColor_255;
 	default:
 		return 0;
@@ -3104,10 +3118,16 @@ void CFG_setColor(int color_id, uint32_t color) {
 	case 5:
 		settings.color5_255 = color;
 		settings.color5 = mapUint(color);
-		THEME_COLOR5 = settings.color4;
+		THEME_COLOR5 = settings.color5;
 		THEME_COLOR5_255 = settings.color5_255;
 		break;
-	case 6: 
+	case 6:
+		settings.color6_255 = color;
+		settings.color6 = mapUint(color);
+		THEME_COLOR6 = settings.color6;
+		THEME_COLOR6_255 = settings.color6_255;
+		break;
+	case 7: 
 		settings.backgroundColor_255 = color;
 		settings.backgroundColor = mapUint(color);
 		break;
@@ -3219,6 +3239,7 @@ void CFG_sync(void)
     fprintf(file, "color3=0x%06X\n", settings.color3_255);
     fprintf(file, "color4=0x%06X\n", settings.color4_255);
     fprintf(file, "color5=0x%06X\n", settings.color5_255);
+    fprintf(file, "color6=0x%06X\n", settings.color6_255);
     fprintf(file, "bgcolor=0x%06X\n", settings.backgroundColor_255);
     fprintf(file, "radius=%i\n", settings.thumbRadius);
     fprintf(file, "showclock=%i\n", settings.showClock);
