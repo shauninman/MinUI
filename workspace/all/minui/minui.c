@@ -1911,7 +1911,8 @@ int main (int argc, char *argv[]) {
 						max_width = MIN(max_width, text_width);
 
 						SDL_Surface* text;
-						text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
+						SDL_Color listColor = UintToColour(THEME_COLOR4_255);
+						text = TTF_RenderUTF8_Blended(font.large, display_name, listColor);
 						GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING),
 							SCALE1(PADDING),
@@ -1969,8 +1970,8 @@ int main (int argc, char *argv[]) {
 						char* entry_unique = entry->unique;
 						int available_width = (had_thumb ? ox - SCALE1(BUTTON_MARGIN) : screen->w - SCALE1(BUTTON_PADDING)) - SCALE1(PADDING * 2);
 						if (i == top->start && !(had_thumb)) available_width -= ow;
-						SDL_Color text_color = COLOR_WHITE;
-						
+					
+						SDL_Color text_color = UintToColour(THEME_COLOR4_255);
 						trimSortingMeta(&entry_name);
 
 						if (entry_unique) { // Only render if a unique name exists
@@ -1980,7 +1981,9 @@ int main (int argc, char *argv[]) {
 						char display_name[256];
 						int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name,display_name, available_width, SCALE1(BUTTON_PADDING * 2));
 						int max_width = MIN(available_width, text_width);
+					
 						SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, entry_name, text_color);
+						
 						SDL_Surface* text_unique = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_DARK_TEXT);
 						SDL_Rect text_rect = { 0, 0, max_width - SCALE1(BUTTON_PADDING), text->h };
 						SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN + BUTTON_PADDING), SCALE1(PADDING + (j * PILL_SIZE)+4) };
@@ -2006,7 +2009,8 @@ int main (int argc, char *argv[]) {
 						float inverted_offset = 1.0f - selection_offset;
 
 						if (j == selected_row) {
-							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
+							SDL_Color text_color = UintToColour(THEME_COLOR5_255);
+							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 							SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h };
 												
 							SDL_Rect text_rect = {  SCALE1(BUTTON_PADDING), SCALE1((last_selection != selected_row ? last_selection < selected_row ? (inverted_offset * PILL_SIZE):(inverted_offset * -PILL_SIZE):0) +4) };
@@ -2080,8 +2084,9 @@ int main (int argc, char *argv[]) {
 				int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name,display_name, available_width, SCALE1(BUTTON_PADDING * 2));
 				int max_width = MIN(available_width, text_width);
 
-				
-				SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_BLACK);
+				SDL_Color text_color = UintToColour(THEME_COLOR5_255);
+					
+				SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 				SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-6),text2->h};
 		
 				SDL_Rect dest_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING), SCALE1(PADDING + ((remember_selection) * PILL_SIZE) +4) };
