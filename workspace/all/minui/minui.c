@@ -1520,10 +1520,12 @@ int main (int argc, char *argv[]) {
 			}
 			else if (recents->count > 0 && PAD_justReleased(BTN_Y)) {
 				// remove
-				Recent* recentEntry = recents->items[switcher_selected];
+				Recent* recentEntry = recents->items[switcher_selected--];
 				Array_remove(recents, recentEntry);
 				Recent_free(recentEntry);
 				saveRecents();
+				if(switcher_selected < 0)
+					switcher_selected = recents->count - 1; // wrap
 				dirty = 1;
 			}
 			else if (PAD_justPressed(BTN_RIGHT)) {
