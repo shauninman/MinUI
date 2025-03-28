@@ -1916,8 +1916,8 @@ int main (int argc, char *argv[]) {
 						max_width = MIN(max_width, text_width);
 
 						SDL_Surface* text;
-						SDL_Color listColor = UintToColour(THEME_COLOR4_255);
-						text = TTF_RenderUTF8_Blended(font.large, display_name, listColor);
+						SDL_Color textColor = UintToColour(THEME_COLOR6_255);
+						text = TTF_RenderUTF8_Blended(font.large, display_name, textColor);
 						GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING),
 							SCALE1(PADDING),

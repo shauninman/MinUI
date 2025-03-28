@@ -5056,7 +5056,7 @@ static void Menu_loop(void) {
 		max_width = MIN(max_width, text_width);
 
 		SDL_Surface* text;
-		text = TTF_RenderUTF8_Blended(font.large, display_name, UintToColour(THEME_COLOR5_255));
+		text = TTF_RenderUTF8_Blended(font.large, display_name, UintToColour(THEME_COLOR6_255));
 		GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 			SCALE1(PADDING),
 			SCALE1(PADDING),
