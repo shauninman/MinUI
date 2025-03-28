@@ -1465,11 +1465,11 @@ int main (int argc, char *argv[]) {
 	int ox;
 	int oy;
 	int is_scrolling = 1;
-	SDL_Surface* bgbmp = IMG_Load("/mnt/SDCARD/bg.png");
+	SDL_Surface* bgbmp = IMG_Load(SDCARD_PATH "/bg.png");
 	SDL_Surface* convertedbg = SDL_ConvertSurfaceFormat(bgbmp, SDL_PIXELFORMAT_RGB565, 0);
 	if (convertedbg) {
 		SDL_FreeSurface(bgbmp); 
-		SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);					
+		SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);
 		SDL_Rect image_rect = {0, 0, screen->w, screen->h};
 		SDL_BlitScaled(convertedbg, NULL, scaled, &image_rect);
 
@@ -1916,7 +1916,7 @@ int main (int argc, char *argv[]) {
 						max_width = MIN(max_width, text_width);
 
 						SDL_Surface* text;
-						SDL_Color textColor = UintToColour(THEME_COLOR6_255);
+						SDL_Color textColor = uintToColour(THEME_COLOR6_255);
 						text = TTF_RenderUTF8_Blended(font.large, display_name, textColor);
 						GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 							SCALE1(PADDING),

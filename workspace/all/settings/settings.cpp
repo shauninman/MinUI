@@ -166,6 +166,17 @@ int main(int argc, char *argv[])
         const bool showIndicator = true;
         const bool showHints = false;
 
+        SDL_Surface* bgbmp = IMG_Load(SDCARD_PATH "/bg.png");
+        SDL_Surface* convertedbg = SDL_ConvertSurfaceFormat(bgbmp, SDL_PIXELFORMAT_RGB565, 0);
+        if (convertedbg) {
+            SDL_FreeSurface(bgbmp); 
+            SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, ctx.screen->w, ctx.screen->h, 32, SDL_PIXELFORMAT_RGB565);
+            SDL_Rect image_rect = {0, 0, ctx.screen->w, ctx.screen->h};
+            SDL_BlitScaled(convertedbg, NULL, scaled, &image_rect);
+
+            bgbmp = scaled;
+        }
+
         // main content (list)
         // PADDING all around
         SDL_Rect listRect = {SCALE1(PADDING), SCALE1(PADDING), ctx.screen->w - SCALE1(PADDING * 2), ctx.screen->h - SCALE1(PADDING * 2)};
@@ -191,6 +202,11 @@ int main(int argc, char *argv[])
             {
                 // CFG_init();
                 GFX_clear(ctx.screen);
+                if(bgbmp) {
+                    SDL_Rect image_rect = {0, 0, ctx.screen->w, ctx.screen->h};
+                    SDL_BlitSurface(bgbmp, NULL, ctx.screen, &image_rect);
+                }
+
                 int ow = 0;
 
                 // indicator area top right
