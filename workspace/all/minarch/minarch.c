@@ -4406,8 +4406,7 @@ static int Menu_options(MenuList* list) {
 			int selected_row = selected - start;
 			for (int i=start,j=0; i<end; i++,j++) {
 				MenuItem* item = &items[i];
-				SDL_Color text_color = UintToColour(THEME_COLOR4_255);
-				text_color = COLOR_WHITE;
+				SDL_Color text_color = COLOR_WHITE;
 				// int ox = (screen->w - w) / 2; // if we're centering these (but I don't think we should after seeing it)
 				if (j==selected_row) {
 					// move out of conditional if centering
@@ -4445,7 +4444,7 @@ static int Menu_options(MenuList* list) {
 			int selected_row = selected - start;
 			for (int i=start,j=0; i<end; i++,j++) {
 				MenuItem* item = &items[i];
-				SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+				SDL_Color text_color = COLOR_WHITE;
 
 				if (j==selected_row) {
 					// gray pill
@@ -4527,7 +4526,7 @@ static int Menu_options(MenuList* list) {
 			int selected_row = selected - start;
 			for (int i=start,j=0; i<end; i++,j++) {
 				MenuItem* item = &items[i];
-				SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+				SDL_Color text_color = COLOR_WHITE;
 				
 
 				if (j==selected_row) {
@@ -5057,7 +5056,7 @@ static void Menu_loop(void) {
 		max_width = MIN(max_width, text_width);
 
 		SDL_Surface* text;
-		text = TTF_RenderUTF8_Blended(font.large, display_name, COLOR_WHITE);
+		text = TTF_RenderUTF8_Blended(font.large, display_name, UintToColour(THEME_COLOR5_255));
 		GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
 			SCALE1(PADDING),
 			SCALE1(PADDING),
@@ -5083,7 +5082,7 @@ static void Menu_loop(void) {
 		oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
 		for (int i=0; i<MENU_ITEM_COUNT; i++) {
 			char* item = menu.items[i];
-			SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+			SDL_Color text_color = COLOR_WHITE;
 			
 			if (i==selected) {
 				text_color = UintToColour(THEME_COLOR5_255);

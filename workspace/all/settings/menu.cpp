@@ -489,7 +489,7 @@ namespace {
 
 void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem& item, bool selected)
 {
-    SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+    SDL_Color text_color = COLOR_WHITE;
     SDL_Surface *text;
 
     // hack - this should be correlated to max_width
