@@ -1976,7 +1976,7 @@ int main (int argc, char *argv[]) {
 						int available_width = (had_thumb ? ox - SCALE1(BUTTON_MARGIN) : screen->w - SCALE1(BUTTON_PADDING)) - SCALE1(PADDING * 2);
 						if (i == top->start && !(had_thumb)) available_width -= ow;
 					
-						SDL_Color text_color = UintToColour(THEME_COLOR4_255);
+						SDL_Color text_color = uintToColour(THEME_COLOR4_255);
 						trimSortingMeta(&entry_name);
 
 						if (entry_unique) { // Only render if a unique name exists
@@ -2014,7 +2014,7 @@ int main (int argc, char *argv[]) {
 						float inverted_offset = 1.0f - selection_offset;
 
 						if (j == selected_row) {
-							SDL_Color text_color = UintToColour(THEME_COLOR5_255);
+							SDL_Color text_color = uintToColour(THEME_COLOR5_255);
 							SDL_Surface* text = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 							SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h };
 												
@@ -2089,7 +2089,7 @@ int main (int argc, char *argv[]) {
 				int text_width = GFX_getTextWidth(font.large, entry_unique ? entry_unique : entry_name,display_name, available_width, SCALE1(BUTTON_PADDING * 2));
 				int max_width = MIN(available_width, text_width);
 
-				SDL_Color text_color = UintToColour(THEME_COLOR5_255);
+				SDL_Color text_color = uintToColour(THEME_COLOR5_255);
 					
 				SDL_Surface* text2 = TTF_RenderUTF8_Blended(font.large, display_name, text_color);
 				SDL_Rect clear_rect = { SCALE1(BUTTON_MARGIN+BUTTON_PADDING),SCALE1(PADDING + (remember_selection * PILL_SIZE) +4),max_width - SCALE1((BUTTON_PADDING*2)-6),text2->h};
@@ -2100,7 +2100,7 @@ int main (int argc, char *argv[]) {
 				SDL_Rect src_text_rect = {  0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text2->h };
 
 				SDL_FillRect(screen, &clear_rect, THEME_COLOR1);
-				GFX_scrollTextSurface(font.large, display_name, &text2,max_width - ((SCALE1(BUTTON_PADDING*2))),text2->h, 0, COLOR_BLACK, 1);
+				GFX_scrollTextSurface(font.large, display_name, &text2,max_width - ((SCALE1(BUTTON_PADDING*2))),text2->h, 0, text_color, 1);
 				
 				
 				SDL_BlitSurface(text2, &src_text_rect, screen, &dest_rect);

@@ -458,21 +458,21 @@ void PLAT_setLedEffectCycles(LightSettings *led);
 typedef struct
 {
 	// Theme
-    int font;
-    uint32_t color1;
-    uint32_t color1_255; // not screen mapped
-    uint32_t color2;
-    uint32_t color2_255; // not screen mapped
-    uint32_t color3;
-    uint32_t color3_255; // not screen mapped
+	int font;
+	uint32_t color1;
+	uint32_t color1_255; // not screen mapped
+	uint32_t color2;
+	uint32_t color2_255; // not screen mapped
+	uint32_t color3;
+	uint32_t color3_255; // not screen mapped
 	uint32_t color4;
-    uint32_t color4_255; // not screen mapped
+	uint32_t color4_255; // not screen mapped
 	uint32_t color5;
-    uint32_t color5_255; // not screen mapped
+	uint32_t color5_255; // not screen mapped
 	uint32_t color6;
-    uint32_t color6_255; // not screen mapped
-    uint32_t backgroundColor;
-    uint32_t backgroundColor_255; // not screen mapped
+	uint32_t color6_255; // not screen mapped
+	uint32_t backgroundColor;
+	uint32_t backgroundColor_255; // not screen mapped
 	int thumbRadius;
 
 	// UI
@@ -533,6 +533,5 @@ void CFG_setShowGameArt(bool show);
 
 void CFG_sync(void);
 void CFG_quit(void);
-SDL_Color UintToColour(uint32_t colour);
 
 #endif

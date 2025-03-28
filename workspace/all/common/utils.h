@@ -45,4 +45,6 @@ uint64_t getMicroseconds(void);
 
 int clamp(int x, int lower, int upper);
 
+SDL_Color uintToColour(uint32_t colour);
+
 #endif

@@ -4420,7 +4420,7 @@ static int Menu_options(MenuList* list) {
 						w,
 						SCALE1(BUTTON_SIZE)
 					});
-					text_color = UintToColour(THEME_COLOR5_255);
+					text_color = uintToColour(THEME_COLOR5_255);
 					
 					if (item->desc) desc = item->desc;
 				}
@@ -4477,7 +4477,7 @@ static int Menu_options(MenuList* list) {
 						w,
 						SCALE1(BUTTON_SIZE)
 					});
-					text_color = UintToColour(THEME_COLOR5_255);
+					text_color = uintToColour(THEME_COLOR5_255);
 					
 					if (item->desc) desc = item->desc;
 				}
@@ -4548,7 +4548,7 @@ static int Menu_options(MenuList* list) {
 						w,
 						SCALE1(BUTTON_SIZE)
 					});
-					text_color = UintToColour(THEME_COLOR5_255);
+					text_color = uintToColour(THEME_COLOR5_255);
 					
 					if (item->desc) desc = item->desc;
 				}
@@ -5085,7 +5085,7 @@ static void Menu_loop(void) {
 			SDL_Color text_color = COLOR_WHITE;
 			
 			if (i==selected) {
-				text_color = UintToColour(THEME_COLOR5_255);
+				text_color = uintToColour(THEME_COLOR5_255);
 
 				// disc change
 				if (menu.total_discs>1 && i==ITEM_CONT) {				

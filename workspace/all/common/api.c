@@ -128,20 +128,10 @@ static inline uint32_t mapUint(uint32_t col)
 	return SDL_MapRGB(gfx.screen->format, r, g, b);
 }
 
-SDL_Color UintToColour(uint32_t colour)
-{
-	SDL_Color tempcol;
-	tempcol.a = 255;
-	tempcol.r = (colour >> 16) & 0xFF;
-	tempcol.g = (colour >> 8) & 0xFF;
-	tempcol.b = colour & 0xFF;
-	return tempcol;
-}
-
 static inline uint32_t UintMult(uint32_t color, uint32_t modulate_rgb)
 {
-	SDL_Color dest = UintToColour(color);
-	SDL_Color modulate = UintToColour(modulate_rgb);
+	SDL_Color dest = uintToColour(color);
+	SDL_Color modulate = uintToColour(modulate_rgb);
 
 	dest.r = (int)dest.r * modulate.r / 255;
 	dest.g = (int)dest.g * modulate.g / 255;
@@ -664,8 +654,7 @@ void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** ou
 
     char scroll_text[1024]; 
     snprintf(scroll_text, sizeof(scroll_text), "%s  %s", in_name, in_name); 
-	SDL_Color text_color = UintToColour(THEME_COLOR5_255);
-    SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, text_color);
+    SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, color);
     if (!full_text_surface) {
         printf("Text rendering failed: %s\n", TTF_GetError());
         return;
@@ -1218,7 +1207,7 @@ int GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
 		if(CFG_getShowBatteryPercent()) {
 			char percentage[16];
 			sprintf(percentage, "%i", pwr.charge);
-			SDL_Surface *text = TTF_RenderUTF8_Blended(font.micro, percentage, UintToColour(THEME_COLOR6_255));
+			SDL_Surface *text = TTF_RenderUTF8_Blended(font.micro, percentage, uintToColour(THEME_COLOR6_255));
 			SDL_Rect target = {
 				x + (rect.w - text->w) / 2 + FIXED_SCALE, 
 				y + (rect.h - text->h) / 2 - 1
@@ -1293,7 +1282,7 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 	ox += SCALE1(BUTTON_MARGIN);
 
 	// hint text
-	SDL_Color text_color = UintToColour(THEME_COLOR6_255);
+	SDL_Color text_color = uintToColour(THEME_COLOR6_255);
 	text = TTF_RenderUTF8_Blended(font.small, hint, text_color);
 	SDL_BlitSurface(text, NULL, dst, &(SDL_Rect){ox+dst_rect->x,dst_rect->y+(SCALE1(BUTTON_SIZE)-text->h)/2,text->w,text->h});
 	SDL_FreeSurface(text);
@@ -1427,7 +1416,7 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 			// why does this need to copy strings around?
 			char display_name[6];
 			clockWidth = GFX_getTextWidth(font.small, timeString, display_name, SCALE1(PILL_SIZE), SCALE1(2 * BUTTON_MARGIN));
-			clock = TTF_RenderUTF8_Blended(font.small, display_name, UintToColour(THEME_COLOR6_255));
+			clock = TTF_RenderUTF8_Blended(font.small, display_name, uintToColour(THEME_COLOR6_255));
 			ow += clockWidth;
 		}
 
@@ -1592,6 +1581,11 @@ void GFX_blitText(TTF_Font* font, const char* str, int leading, SDL_Color color,
 			SDL_FreeSurface(text);
 		}
 	}
+}
+
+SDL_Color GFX_mapColor(uint32_t c)
+{
+	return uintToColour(c);
 }
 
 ///////////////////////////////
@@ -3107,7 +3101,7 @@ void CFG_setColor(int color_id, uint32_t color) {
 		settings.color3 = mapUint(color);
 		THEME_COLOR3 = settings.color3;
 		THEME_COLOR3_255 = settings.color3_255;
-		ALT_BUTTON_TEXT_COLOR = UintToColour(THEME_COLOR3_255);
+		ALT_BUTTON_TEXT_COLOR = uintToColour(THEME_COLOR3_255);
 		break;
 	case 4:
 		settings.color4_255 = color;
