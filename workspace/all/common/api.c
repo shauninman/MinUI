@@ -2924,7 +2924,7 @@ void CFG_init(MinUISettings* cfg)
 	FILE *file = PLAT_OpenSettings("minuisettings.txt");
 	if (file == NULL)
     {
-		LOG_info("Unable to open settings file, loading defaults\n");
+		LOG_warn("Unable to open settings file, loading defaults\n");
 	}
 	else {
 		char line[256];
@@ -3229,7 +3229,7 @@ void CFG_sync(void)
 	FILE *file = PLAT_WriteSettings("minuisettings.txt");
 	if (file == NULL)
     {
-		LOG_info("Unable to open settings file, cant write\n");
+		LOG_warn("Unable to open settings file, cant write\n");
 		return;
 	}
 
