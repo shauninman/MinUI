@@ -39,6 +39,8 @@ if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
 	export DEVICE="brick"
 fi
 
+export IS_NEXT="yes"
+
 #######################################
 
 ##REmove Old Led Daemon
