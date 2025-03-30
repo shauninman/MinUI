@@ -56,12 +56,11 @@ void CFG_init(FontLoad_callback_t cb)
     bool fontLoaded = false;
 
     char settingsPath[MAX_PATH];
-    sprintf(settingsPath, "%s/minuisettings.txt", getenv("SHARED_USERDATA_PATH"));
+    sprintf(settingsPath, "%s/minuisettings.txt", SHARED_USERDATA_PATH);
     FILE *file = fopen(settingsPath, "r");
     if (file == NULL)
     {
         printf("[CFG] Unable to open settings file, loading defaults\n");
-        printf("[CFG] SHARED_USERDATA_PATH=%s\n", getenv("SHARED_USERDATA_PATH"));
     }
     else
     {
@@ -432,6 +431,10 @@ void CFG_get(const char *key, char *value)
             sprintf(value, "%s", RES_PATH "/chillroundm.ttf");
         else
             sprintf(value, "%s", RES_PATH "/BPreplayBold-unhinted.otf");
+    }
+
+    else {
+        sprintf(value, "");
     }
 }
 

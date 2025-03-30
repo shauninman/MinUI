@@ -9,8 +9,9 @@ void printUsage()
     printf("NextUI nextval\n"
            "[read]\n"
            "  nextval key\n\n"
-           "[write]\n"
-           "  nextval key vale\n");
+           //"[write]\n"
+           //"  nextval key vale\n\n"
+    );
     CFG_print();
 }
 
@@ -29,15 +30,15 @@ int main(int argc, char *argv[])
     if (argc == 2) {
         char setting_value[MAX_PATH];
         CFG_get(argv[1], setting_value);
-        if(strlen(setting_value))
+        if(strcmp(setting_value, "") != 0)
             printf("%s\n", setting_value);
         else
-            printf("unknown key: %s", argv[1]);
+            printf("unknown key: %s\n", argv[1]);
     }
     // set
-    else if(argc == 3) {
-
-    }
+    //else if(argc == 3) {
+    //
+    //}
     else {
         printf("Error: Invalid argument '%s'\n", argv[1]);
         printUsage();
