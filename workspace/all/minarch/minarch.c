@@ -111,6 +111,7 @@ static struct Core {
 	void *(*get_memory_data)(unsigned id);
 	size_t (*get_memory_size)(unsigned id);
 	
+	retro_core_options_update_display_callback_t update_visibility_callback;
 	// retro_audio_buffer_status_callback_t audio_buffer_status;
 } core;
 
@@ -850,14 +851,21 @@ typedef struct Option {
 	char* name; // desc
 	char* desc; // info, truncated
 	char* full; // info, longer but possibly still truncated
+	char *category;
 	char* var;
 	int default_value;
 	int value;
 	int count; // TODO: drop this?
 	int lock;
+	int hidden;
 	char** values;
 	char** labels;
 } Option;
+typedef struct OptionCategory {
+	char *key;
+	char *desc;
+	char *info;
+} OptionCategory;
 typedef struct OptionList {
 	int count;
 	int changed;
@@ -865,6 +873,8 @@ typedef struct OptionList {
 	
 	int enabled_count;
 	Option** enabled_options;
+
+	OptionCategory *categories;
 	// OptionList_callback_t on_set;
 } OptionList;
 
@@ -1788,6 +1798,7 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 	// TODO: add frontend options to this? so the can use the same override method? eg. minarch_*
 	
 	config.core.count = count;
+	config.core.categories = NULL; // There is no categories in v1 definition
 	if (count) {
 		config.core.options = calloc(count+1, sizeof(Option));
 		
@@ -1853,6 +1864,92 @@ static void OptionList_init(const struct retro_core_option_definition *defs) {
 	}
 	// fflush(stdout);
 }
+
+static void OptionList_v2_init(const struct retro_core_options_v2 *opt_defs) {
+	LOG_info("OptionList_v2_init\n");
+	struct retro_core_option_v2_category   *cats = opt_defs->categories;
+	struct retro_core_option_v2_definition *defs = opt_defs->definitions;
+
+	int cat_count = 0;
+	while (cats[cat_count].key) cat_count++;
+
+	int count = 0;
+	while (defs[count].key) count++;
+	
+	// LOG_info("%i categories, %i options\n", cat_count, count);
+	
+	// TODO: add frontend options to this? so the can use the same override method? eg. minarch_*
+	
+	if (cat_count) {
+		config.core.categories = calloc(cat_count + 1, sizeof(OptionCategory));
+
+		for (int i=0; i<cat_count; i++) {
+			const struct retro_core_option_v2_category *cat = &cats[i];
+			OptionCategory* item = &config.core.categories[i];
+
+			item->key  = strdup(cat->key);
+			item->desc = strdup(cat->desc);
+			item->info = cat->info ? strdup(cat->info) : NULL;
+			printf("CATEGORY %s\n", item->key);
+		}
+	}
+	else {
+		config.core.categories = NULL;
+	}
+
+	config.core.count = count;
+	if (count) {
+		config.core.options = calloc(count+1, sizeof(Option));
+		
+		for (int i=0; i<config.core.count; i++) {
+			const struct retro_core_option_v2_definition *def = &defs[i];
+			Option* item = &config.core.options[i];
+		
+			item->key = strdup(def->key);
+			item->name = strdup(getOptionNameFromKey(def->key, def->desc_categorized ? def->desc_categorized : def->desc));
+			item->category = def->category_key ? strdup(def->category_key) : NULL;
+
+			if (def->info) {
+				item->desc = strdup(def->info);
+				item->full = strdup(item->desc);
+				
+				// these magic numbers are more about chars per line than pixel width 
+				// so it's not going to be relative to the screen size, only the scale
+				// what does that even mean?
+				GFX_wrapText(font.tiny, item->desc, SCALE1(240), 2); // TODO magic number!
+				GFX_wrapText(font.medium, item->full, SCALE1(240), 7); // TODO: magic number!
+			}
+		
+			for (count=0; def->values[count].value; count++);
+		
+			item->count = count;
+			item->values = calloc(count+1, sizeof(char*));
+			item->labels = calloc(count+1, sizeof(char*));
+	
+			for (int j=0; j<count; j++) {
+				const char* value = def->values[j].value;
+				const char* label = def->values[j].label;
+		
+				item->values[j] = strdup(value);
+		
+				if (label) {
+					item->labels[j] = strdup(label);
+				}
+				else {
+					item->labels[j] = item->values[j];
+				}
+				// printf("\t%s\n", item->labels[j]);
+			}
+			
+			item->value = Option_getValueIndex(item, def->default_value);
+			item->default_value = item->value;
+			
+			// LOG_info("\tINIT %s (%s) TO %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
+		}
+	}
+	// fflush(stdout);
+}
+
 static void OptionList_vars(const struct retro_variable *vars) {
 	LOG_info("OptionList_vars\n");
 	int count;
@@ -1979,11 +2076,11 @@ static void OptionList_setOptionValue(OptionList* list, const char* key, const c
 	}
 	else LOG_info("unknown option %s \n", key);
 }
-// static void OptionList_setOptionVisibility(OptionList* list, const char* key, int visible) {
-// 	Option* item = OptionList_getOption(list, key);
-// 	if (item) item->visible = visible;
-// 	else printf("unknown option %s \n", key); fflush(stdout);
-// }
+static void OptionList_setOptionVisibility(OptionList* list, const char* key, int visible) {
+	Option* item = OptionList_getOption(list, key);
+	if (item) item->hidden = !visible;
+	else printf("unknown option %s \n", key); fflush(stdout);
+}
 
 ///////////////////////////////
 
@@ -2296,7 +2393,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		struct retro_variable *var = (struct retro_variable *)data;
 		if (var && var->key) {
 			var->value = OptionList_getOptionValue(&config.core, var->key);
-			// printf("\t%s = %s\n", var->key, var->value);
+			// printf("\t%s = \"%s\"\n", var->key, var->value);
 		}
 		// fflush(stdout);
 		break;
@@ -2379,7 +2476,11 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		break;
 	}
 	// RETRO_ENVIRONMENT_SET_MEMORY_MAPS (36 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-	// RETRO_ENVIRONMENT_GET_LANGUAGE 39
+	case RETRO_ENVIRONMENT_GET_LANGUAGE: { /* 39 */
+		// puts("RETRO_ENVIRONMENT_GET_LANGUAGE");
+		if (data) *(int *) data = RETRO_LANGUAGE_ENGLISH;
+		break;
+	}
 	case RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER: { /* (40 | RETRO_ENVIRONMENT_EXPERIMENTAL) */
 		// puts("RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER");
 		break;
@@ -2410,9 +2511,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION: { /* 52 */
 		// puts("RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION");
-		unsigned *out = (unsigned *)data;
-		if (out)
-			*out = 1;
+		if (data) *(unsigned *)data = 2;
 		break;
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS: { /* 53 */
@@ -2434,8 +2533,11 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	}
 	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY: { /* 55 */
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY");
-		// const struct retro_core_option_display *display = (const struct retro_core_option_display *)data;
-	// 	if (display) OptionList_setOptionVisibility(&config.core, display->key, display->visible);
+	 	if (data) {
+			const struct retro_core_option_display *display = (const struct retro_core_option_display *)data;
+			LOG_info("Core asked for option key %s to be %s\n", display->key, display->visible ? "visible" : "invisible");
+			OptionList_setOptionVisibility(&config.core, display->key, display->visible);
+		}
 		break;
 	}
 	case RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION: { /* 57 */
@@ -2489,7 +2591,34 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		break;
 	}
 	// RETRO_ENVIRONMENT_GET_GAME_INFO_EXT 66
-	// TODO: RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK 69
+	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2: { /* 67 */
+		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2");
+		if (data) {
+			OptionList_reset();
+			OptionList_v2_init((const struct retro_core_options_v2 *)data); 
+		}
+		break;
+	}
+	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL: { /* 68 */
+		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL");
+		if (data) {
+			const struct retro_core_options_v2_intl *intl = (const struct retro_core_options_v2_intl *)data;
+			OptionList_reset();
+			OptionList_v2_init(intl->us);
+		}
+		break;
+	}
+	case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK: {  /* 69 */
+		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK");
+		if (data) {
+			struct retro_core_options_update_display_callback *update_display_cb = (struct retro_core_options_update_display_callback *) data;
+			core.update_visibility_callback = update_display_cb->callback;
+		}
+		else {
+			core.update_visibility_callback = NULL;
+		}
+		break;
+	}
 	// used by fceumm
 	// TODO: used by gambatte for L/R palette switching (seems like it needs to return true even if data is NULL to indicate support)
 	case RETRO_ENVIRONMENT_SET_VARIABLE: {
@@ -3719,6 +3848,7 @@ typedef struct MenuList {
 	int type;
 	int max_width; // cached on first draw
 	char* desc;
+	char* category; // currently displayed category
 	MenuItem* items;
 	MenuList_callback_t on_confirm;
 	MenuList_callback_t on_change;
@@ -3820,62 +3950,122 @@ static int OptionEmulator_optionChanged(MenuList* list, int i) {
 	OptionList_setOptionRawValue(&config.core, item->key, item->value);
 	return MENU_CALLBACK_NOP;
 }
-static int OptionEmulator_optionDetail(MenuList* list, int i) {
-	MenuItem* item = &list->items[i];
-	Option* option = OptionList_getOption(&config.core, item->key);
-	if (option->full) return Menu_message(option->full, (char*[]){ "B","BACK", NULL });
-	else return MENU_CALLBACK_NOP;
-}
+
+static int OptionEmulator_openMenu(MenuList* list, int i);
+static int OptionEmulator_optionDetail(MenuList* list, int i);
+
 static MenuList OptionEmulator_menu = {
 	.type = MENU_FIXED,
 	.on_confirm = OptionEmulator_optionDetail, // TODO: this needs pagination to be truly useful
 	.on_change = OptionEmulator_optionChanged,
 	.items = NULL,
 };
-static int OptionEmulator_openMenu(MenuList* list, int i) {
-	if (OptionEmulator_menu.items==NULL) {
-		// TODO: where do I free this? I guess I don't :sweat_smile:
-		if (!config.core.enabled_count) {
-			int enabled_count = 0;
-			for (int i=0; i<config.core.count; i++) {
-				if (!config.core.options[i].lock) enabled_count += 1;
-			}
-			config.core.enabled_count = enabled_count;
-			config.core.enabled_options = calloc(enabled_count+1, sizeof(Option*));
-			int j = 0;
-			for (int i=0; i<config.core.count; i++) {
-				Option* item = &config.core.options[i];
-				if (item->lock) continue;
-				config.core.enabled_options[j] = item;
-				j += 1;
-			}
-		}
-		
-		OptionEmulator_menu.items = calloc(config.core.enabled_count+1, sizeof(MenuItem));
-		for (int j=0; j<config.core.enabled_count; j++) {
-			Option* option = config.core.enabled_options[j];
-			MenuItem* item = &OptionEmulator_menu.items[j];
-			item->key = option->key;
-			item->name = option->name;
-			item->desc = option->desc;
-			item->value = option->value;
-			item->values = option->labels;
-		}
+
+static int OptionEmulator_optionDetail(MenuList* list, int i) {
+	MenuItem* item = &list->items[i];
+
+	if (item->values == NULL) {
+		// This is a category item
+		// Display the corresponding submenu
+		list->category = item->key;
+		LOG_info("%s: displaying category %s\n", __FUNCTION__, item->key);
+
+		int prev_enabled_count = config.core.enabled_count;
+		Option **prev_enabled = config.core.enabled_options;
+		MenuItem *prev_items = OptionEmulator_menu.items;
+
+		OptionEmulator_openMenu(list, 0);
+		list->category = NULL;
+
+		config.core.enabled_count = prev_enabled_count ;
+		config.core.enabled_options = prev_enabled ;
+		OptionEmulator_menu.items = prev_items;
+
+		LOG_info("%s: back to root menu\n", __FUNCTION__);
 	}
 	else {
-		// update values
-		for (int j=0; j<config.core.enabled_count; j++) {
-			Option* option = config.core.enabled_options[j];
-			MenuItem* item = &OptionEmulator_menu.items[j];
-			item->value = option->value;
+		Option* option = OptionList_getOption(&config.core, item->key);
+		if (option->full) return Menu_message(option->full, (char*[]){ "B","BACK", NULL });
+		else return MENU_CALLBACK_NOP;
+	}
+}
+
+static int OptionEmulator_openMenu(MenuList* list, int index) {
+	LOG_info("%s: limit to category %s\n", __FUNCTION__, list->category ? list->category : "<all>");
+
+	if (list->category == NULL) {
+		if (core.update_visibility_callback) {
+			LOG_info("%s: calling update visibility callback\n", __FUNCTION__);
+			core.update_visibility_callback();
 		}
+	}
+
+	int enabled_count = 0;
+	config.core.enabled_options = calloc(config.core.count + 1, sizeof(Option*));
+	for (int i=0; i<config.core.count; i++) {
+		Option *item = &config.core.options[i];
+
+		// Exclude locked and hidden items
+		if (item->lock || item->hidden) {
+			continue;
+		}
+		// Restrict to the current category
+		if (list->category == NULL && item->category) {
+			continue;
+		}
+		if (list->category && (item->category == NULL || strcmp(item->category, list->category))) {
+			continue;
+		}
+
+		config.core.enabled_options[enabled_count++] = item;
+	}
+	config.core.enabled_count = enabled_count;
+	config.core.enabled_options = realloc(config.core.enabled_options, sizeof(Option *) * (enabled_count + 1));
+
+	// If we are at the top level, add the categories
+	int cat_count = 0;
+
+	if (list->category == NULL && config.core.categories) {
+		while (config.core.categories[cat_count].key) {
+			cat_count++;
+		}
+	}
+
+	OptionEmulator_menu.items = calloc(cat_count + config.core.enabled_count + 1, sizeof(MenuItem));
+
+	for (int i=0; i<cat_count; i++) {
+		OptionCategory *cat = &config.core.categories[i];
+		MenuItem *item = &OptionEmulator_menu.items[i];
+		item->key = cat->key;
+		item->name = cat->desc;
+		item->desc = cat->info;
+	}
+
+	for (int i=0; i<config.core.enabled_count; i++) {
+		Option *option = config.core.enabled_options[i];
+		MenuItem *item = &OptionEmulator_menu.items[cat_count + i];
+		item->key = option->key;
+		item->name = option->name;
+		item->desc = option->desc;
+		item->value = option->value;
+		item->values = option->labels;
 	}
 	
-	if (OptionEmulator_menu.items[0].name) { // TODO: why doesn't this just use (enabled_)count?
+	if (cat_count || config.core.enabled_count) {
 		Menu_options(&OptionEmulator_menu);
+		free(OptionEmulator_menu.items);
+		free(config.core.enabled_options);
+		OptionEmulator_menu.items = NULL;
+		config.core.enabled_count = 0;
+		config.core.enabled_options = NULL;
 	}
 	else {
-		Menu_message("This core has no options.", (char*[]){ "B","BACK", NULL });
+		if (list->category) {
+			Menu_message("This category has no options.", (char*[]){ "B","BACK", NULL });
+		}
+		else {
+			Menu_message("This core has no options.", (char*[]){ "B","BACK", NULL });
+		}
 	}
 	
 	return MENU_CALLBACK_NOP;
@@ -4456,13 +4646,27 @@ static int Menu_options(MenuList* list) {
 					});
 				}
 				
-				if (item->value>=0) {
-					text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
+				if (item->values == NULL) {
+					// This is a navigation item, used to displayed a specific category
+					text = TTF_RenderUTF8_Blended(font.small, ">", COLOR_WHITE); // always white
 					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
 						ox + mw - text->w - SCALE1(OPTION_PADDING),
 						oy+SCALE1((j*BUTTON_SIZE)+3)
 					});
 					SDL_FreeSurface(text);
+				}
+				else {
+					if (item->value>=0) {
+						const char *str = item->values[item->value];
+						text = TTF_RenderUTF8_Blended(font.tiny, str ? str : "none", str ? COLOR_WHITE : COLOR_GRAY); // always white
+						if (text) {
+							SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+								ox + mw - text->w - SCALE1(OPTION_PADDING),
+								oy+SCALE1((j*BUTTON_SIZE)+3)
+							});
+							SDL_FreeSurface(text);
+						}
+					}
 				}
 				
 				// TODO: blit a black pill on unselected rows (to cover longer item->values?) or truncate longer item->values?
