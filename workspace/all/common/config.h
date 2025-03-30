@@ -16,6 +16,7 @@ extern uint32_t THEME_COLOR6_255;
 // Read/Write interface for settings.cpp usage
 
 typedef int (*FontLoad_callback_t)(const char* path);
+typedef int (*ColorSet_callback_t)(void);
 
 typedef struct
 {
@@ -41,6 +42,9 @@ typedef struct
     // font loading/unloading callback
     FontLoad_callback_t onFontChange;
 
+    // color update callback
+    ColorSet_callback_t onColorSet;
+
     // UI
 	bool showClock;
 	bool clock24h;
@@ -55,7 +59,7 @@ typedef struct
 
 } MinUISettings;
 
-void CFG_init(FontLoad_callback_t fontCallback);
+void CFG_init(FontLoad_callback_t fontCallback, ColorSet_callback_t ccb);
 void CFG_print(void);
 void CFG_get(const char *key, char * value);
 // void CFG_defaults(MinUISettings*);

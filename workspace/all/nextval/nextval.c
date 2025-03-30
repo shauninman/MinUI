@@ -17,7 +17,7 @@ void printUsage()
 
 int main(int argc, char *argv[])
 {
-    CFG_init(NULL);
+    CFG_init(NULL, NULL);
 
     if (argc <= 1) {
         printUsage();

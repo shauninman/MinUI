@@ -49,10 +49,11 @@ void CFG_defaults(MinUISettings *cfg)
     *cfg = defaults;
 }
 
-void CFG_init(FontLoad_callback_t cb)
+void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
 {
     CFG_defaults(&settings);
     settings.onFontChange = cb;
+    settings.onColorSet = ccb;
     bool fontLoaded = false;
 
     char settingsPath[MAX_PATH];
@@ -247,6 +248,9 @@ void CFG_setColor(int color_id, uint32_t color)
     default:
         break;
     }
+
+    if(settings.onColorSet)
+        settings.onColorSet();
 }
 
 uint32_t CFG_getScreenTimeoutSecs(void)

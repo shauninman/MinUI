@@ -197,7 +197,6 @@ enum {
 };
 
 SDL_Surface* GFX_init(int mode);
-int GFX_loadSystemFont(const char *path);
 #define GFX_resize PLAT_resizeVideo				// (int w, int h, int pitch);
 #define GFX_setScaleClip PLAT_setVideoScaleClip // (int x, int y, int width, int height)
 #define GFX_setNearestNeighbor PLAT_setNearestNeighbor // (int enabled)

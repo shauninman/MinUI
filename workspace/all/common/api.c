@@ -254,8 +254,7 @@ SDL_Surface* GFX_init(int mode)
 	gfx.vsync = VSYNC_STRICT;
 	gfx.mode = mode;
 
-	CFG_init(GFX_loadSystemFont);
-	GFX_updateColors();
+	CFG_init(GFX_loadSystemFont, GFX_updateColors);
 
 	RGB_WHITE		= SDL_MapRGB(gfx.screen->format, TRIAD_WHITE);
 	RGB_BLACK		= SDL_MapRGB(gfx.screen->format, TRIAD_BLACK);
