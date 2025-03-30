@@ -15,19 +15,17 @@ endif
 ###########################################################
 
 include ../../$(PLATFORM)/platform/makefile.env
-SDL?=SDL
 
 ###########################################################
 
 TARGET = nextval
 INCDIR = -I. -I../common/ -I../../$(PLATFORM)/platform/
-SOURCE = $(TARGET).c ../common/utils.c ../common/api.c ../../$(PLATFORM)/platform/platform.c
+SOURCE = $(TARGET).c ../common/utils.c ../common/config.c
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS   = $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -DUSE_$(SDL)  -Ofast 
-LDFLAGS	 = -ldl $(LIBS) -l$(SDL) -l$(SDL)_image -l$(SDL)_ttf -lpthread -lm -lz
-LDFLAGS +=  -lmsettings
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -Ofast 
+LDFLAGS	 = -ldl $(LIBS) -lpthread -lm -lz
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 

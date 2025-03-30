@@ -1,22 +1,22 @@
 #include "config.h"
 #include "defines.h"
+#include "utils.h"
 
 MinUISettings settings = {0};
 
 // deprecated
-uint32_t THEME_COLOR1;
-uint32_t THEME_COLOR2;
-uint32_t THEME_COLOR3;
-uint32_t THEME_COLOR4;
-uint32_t THEME_COLOR5;
-uint32_t THEME_COLOR6;
 uint32_t THEME_COLOR1_255;
 uint32_t THEME_COLOR2_255;
 uint32_t THEME_COLOR3_255;
 uint32_t THEME_COLOR4_255;
 uint32_t THEME_COLOR5_255;
 uint32_t THEME_COLOR6_255;
-uint32_t ALT_BUTTON_TEXT_COLOR;
+
+static inline uint32_t HexToUint32_unmapped(const char *hexColor) {
+    // Convert the hex string to an unsigned long
+    uint32_t value = (uint32_t)strtoul(hexColor, NULL, 16);
+    return value;
+}
 
 void CFG_defaults(MinUISettings *cfg)
 {
@@ -25,13 +25,6 @@ void CFG_defaults(MinUISettings *cfg)
 
     MinUISettings defaults = {
         .font = 1, // Next
-        .color1 = HexToUint("ffffff"),
-        .color2 = HexToUint("9b2257"),
-        .color3 = HexToUint("1e2329"),
-        .color4 = HexToUint("ffffff"),
-        .color5 = HexToUint("000000"),
-        .color6 = HexToUint("ffffff"),
-        .backgroundColor = HexToUint("000000"),
         .color1_255 = HexToUint32_unmapped("ffffff"),
         .color2_255 = HexToUint32_unmapped("9b2257"),
         .color3_255 = HexToUint32_unmapped("1e2329"),
@@ -62,10 +55,13 @@ void CFG_init(FontLoad_callback_t cb)
     settings.onFontChange = cb;
     bool fontLoaded = false;
 
-    FILE *file = PLAT_OpenSettings("minuisettings.txt");
+    char settingsPath[MAX_PATH];
+    sprintf(settingsPath, "%s/minuisettings.txt", getenv("SHARED_USERDATA_PATH"));
+    FILE *file = fopen(settingsPath, "r");
     if (file == NULL)
     {
-        LOG_warn("Unable to open settings file, loading defaults\n");
+        printf("[CFG] Unable to open settings file, loading defaults\n");
+        printf("[CFG] SHARED_USERDATA_PATH=%s\n", getenv("SHARED_USERDATA_PATH"));
     }
     else
     {
@@ -224,44 +220,30 @@ void CFG_setColor(int color_id, uint32_t color)
     {
     case 1:
         settings.color1_255 = color;
-        settings.color1 = mapUint(color);
-        THEME_COLOR1 = settings.color1;
         THEME_COLOR1_255 = settings.color1_255;
         break;
     case 2:
         settings.color2_255 = color;
-        settings.color2 = mapUint(color);
-        THEME_COLOR2 = settings.color2;
         THEME_COLOR2_255 = settings.color2_255;
         break;
     case 3:
         settings.color3_255 = color;
-        settings.color3 = mapUint(color);
-        THEME_COLOR3 = settings.color3;
         THEME_COLOR3_255 = settings.color3_255;
-        ALT_BUTTON_TEXT_COLOR = uintToColour(THEME_COLOR3_255);
         break;
     case 4:
         settings.color4_255 = color;
-        settings.color4 = mapUint(color);
-        THEME_COLOR4 = settings.color4;
         THEME_COLOR4_255 = settings.color4_255;
         break;
     case 5:
         settings.color5_255 = color;
-        settings.color5 = mapUint(color);
-        THEME_COLOR5 = settings.color5;
         THEME_COLOR5_255 = settings.color5_255;
         break;
     case 6:
         settings.color6_255 = color;
-        settings.color6 = mapUint(color);
-        THEME_COLOR6 = settings.color6;
         THEME_COLOR6_255 = settings.color6_255;
         break;
     case 7:
         settings.backgroundColor_255 = color;
-        settings.backgroundColor = mapUint(color);
         break;
     default:
         break;
@@ -456,10 +438,12 @@ void CFG_get(const char *key, char *value)
 void CFG_sync(void)
 {
     // write to file
-    FILE *file = PLAT_WriteSettings("minuisettings.txt");
+    char settingsPath[MAX_PATH];
+    sprintf(settingsPath, "%s/minuisettings.txt", getenv("SHARED_USERDATA_PATH"));
+    FILE *file = fopen(settingsPath, "w");
     if (file == NULL)
     {
-        LOG_warn("Unable to open settings file, cant write\n");
+        printf("[CFG] Unable to open settings file, cant write\n");
         return;
     }
 

@@ -16,7 +16,7 @@ void printUsage()
 
 int main(int argc, char *argv[])
 {
-    CFG_init();
+    CFG_init(NULL);
 
     if (argc <= 1) {
         printUsage();
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         char setting_value[MAX_PATH];
         CFG_get(argv[1], setting_value);
         if(strlen(setting_value))
-            printf("%s", setting_value);
+            printf("%s\n", setting_value);
         else
             printf("unknown key: %s", argv[1]);
     }

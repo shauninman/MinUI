@@ -3,6 +3,7 @@
 #include "sdl.h"
 #include "platform.h"
 #include "scaler.h"
+#include "config.h"
 #include <stdbool.h>
 
 ///////////////////////////////
@@ -60,6 +61,15 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
+
+// screen-mapped to RGB565
+extern uint32_t THEME_COLOR1;
+extern uint32_t THEME_COLOR2;
+extern uint32_t THEME_COLOR3;
+extern uint32_t THEME_COLOR4;
+extern uint32_t THEME_COLOR5;
+extern uint32_t THEME_COLOR6;
+extern SDL_Color ALT_BUTTON_TEXT_COLOR;
 
 // TODO: do we need that many free externs? This should move
 // to a structure or something.
@@ -196,6 +206,7 @@ int GFX_loadSystemFont(const char *path);
 #define GFX_setEffect PLAT_setEffect // (int effect)
 void GFX_setMode(int mode);
 int GFX_hdmiChanged(void);
+SDL_Color /*GFX_*/uintToColour(uint32_t colour);
 
 #define GFX_clear PLAT_clearVideo // (SDL_Surface* screen)
 #define GFX_clearAll PLAT_clearAll // (void)

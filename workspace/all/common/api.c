@@ -79,7 +79,28 @@ GFX_Fonts font;
 
 ///////////////////////////////
 
+uint32_t THEME_COLOR1;
+uint32_t THEME_COLOR2;
+uint32_t THEME_COLOR3;
+uint32_t THEME_COLOR4;
+uint32_t THEME_COLOR5;
+uint32_t THEME_COLOR6;
+SDL_Color ALT_BUTTON_TEXT_COLOR;
+
 // move to utils?
+
+// Function to convert hex color code to RGB and set the values
+static inline uint32_t HexToUint(const char *hexColor) {
+    int r, g, b;
+    sscanf(hexColor, "%02x%02x%02x", &r, &g, &b);
+	return SDL_MapRGB(gfx.screen->format, r, g, b);
+}
+
+static inline uint32_t HexToUint32_unmapped(const char *hexColor) {
+    // Convert the hex string to an unsigned long
+    uint32_t value = (uint32_t)strtoul(hexColor, NULL, 16);
+    return value;
+}
 
 static inline void rgb_unpack(uint32_t col, int* r, int* g, int* b)
 {
@@ -203,6 +224,21 @@ int GFX_loadSystemFont(const char *fontPath)
     TTF_SetFontStyle(font.small, TTF_STYLE_BOLD);
     TTF_SetFontStyle(font.tiny, TTF_STYLE_BOLD);
     TTF_SetFontStyle(font.micro, TTF_STYLE_BOLD);
+
+	return 0;
+}
+
+int GFX_updateColors()
+{
+	// We are currently micro managing all of these screen-mapped colors, 
+	// should just move this to the caller.
+	THEME_COLOR1 = mapUint(CFG_getColor(1));
+	THEME_COLOR2 = mapUint(CFG_getColor(2));
+	THEME_COLOR3 = mapUint(CFG_getColor(3));
+	THEME_COLOR4 = mapUint(CFG_getColor(4));
+	THEME_COLOR5 = mapUint(CFG_getColor(5));
+	THEME_COLOR6 = mapUint(CFG_getColor(6));
+	ALT_BUTTON_TEXT_COLOR = uintToColour(CFG_getColor(3));
 }
 
 SDL_Surface* GFX_init(int mode)
@@ -219,6 +255,7 @@ SDL_Surface* GFX_init(int mode)
 	gfx.mode = mode;
 
 	CFG_init(GFX_loadSystemFont);
+	GFX_updateColors();
 
 	RGB_WHITE		= SDL_MapRGB(gfx.screen->format, TRIAD_WHITE);
 	RGB_BLACK		= SDL_MapRGB(gfx.screen->format, TRIAD_BLACK);
@@ -953,6 +990,16 @@ void GFX_freeAAScaler(void) {
 
 ///////////////////////////////
 
+SDL_Color /*GFX_*/uintToColour(uint32_t colour)
+{
+	SDL_Color tempcol;
+	tempcol.a = 255;
+	tempcol.r = (colour >> 16) & 0xFF;
+	tempcol.g = (colour >> 8) & 0xFF;
+	tempcol.b = colour & 0xFF;
+	return tempcol;
+}
+
 SDL_Rect GFX_blitScaled(int scale, SDL_Surface *src, SDL_Surface *dst)
 {
 	switch(scale) {
@@ -1205,11 +1252,6 @@ void BlitRGBA4444toRGB565(SDL_Surface* src, SDL_Surface* dest, SDL_Rect* dest_re
     }
 }
 
-
-
-
-
-
 void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t asset_color) {
 
 	SDL_Rect* rect = &asset_rects[asset];
@@ -1388,13 +1430,13 @@ void GFX_blitButton(char* hint, char*button, SDL_Surface* dst, SDL_Rect* dst_rec
 		GFX_blitAssetColor(ASSET_BUTTON, NULL, dst, dst_rect, THEME_COLOR1);
 
 		// label
-		text = TTF_RenderUTF8_Blended(font.medium, button, uintToColour(ALT_BUTTON_TEXT_COLOR));
+		text = TTF_RenderUTF8_Blended(font.medium, button, ALT_BUTTON_TEXT_COLOR);
 		SDL_BlitSurface(text, NULL, dst, &(SDL_Rect){dst_rect->x+(SCALE1(BUTTON_SIZE)-text->w)/2,dst_rect->y+(SCALE1(BUTTON_SIZE)-text->h)/2});
 		ox += SCALE1(BUTTON_SIZE);
 		SDL_FreeSurface(text);
 	}
 	else {
-		text = TTF_RenderUTF8_Blended(special_case ? font.large : font.tiny, button, uintToColour(ALT_BUTTON_TEXT_COLOR));
+		text = TTF_RenderUTF8_Blended(special_case ? font.large : font.tiny, button, ALT_BUTTON_TEXT_COLOR);
 		GFX_blitPillDark(ASSET_BUTTON, dst, &(SDL_Rect){dst_rect->x,dst_rect->y,SCALE1(BUTTON_SIZE)/2+text->w,SCALE1(BUTTON_SIZE)});
 		ox += SCALE1(BUTTON_SIZE)/4;
 		

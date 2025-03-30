@@ -5,19 +5,12 @@
 #include <stdbool.h>
 
 // portability, deprecated
-extern uint32_t THEME_COLOR1;
-extern uint32_t THEME_COLOR2;
-extern uint32_t THEME_COLOR3;
-extern uint32_t THEME_COLOR4;
-extern uint32_t THEME_COLOR5;
-extern uint32_t THEME_COLOR6;
 extern uint32_t THEME_COLOR1_255;
 extern uint32_t THEME_COLOR2_255;
 extern uint32_t THEME_COLOR3_255;
 extern uint32_t THEME_COLOR4_255;
 extern uint32_t THEME_COLOR5_255;
 extern uint32_t THEME_COLOR6_255;
-extern uint32_t ALT_BUTTON_TEXT_COLOR;
 
 // Read-only interface for minui.c usage
 // Read/Write interface for settings.cpp usage
@@ -28,19 +21,19 @@ typedef struct
 {
 	// Theme
 	int font;
-	uint32_t color1;
+	//uint32_t color1;
 	uint32_t color1_255; // not screen mapped
-	uint32_t color2;
+	//uint32_t color2;
 	uint32_t color2_255; // not screen mapped
-	uint32_t color3;
+	//uint32_t color3;
 	uint32_t color3_255; // not screen mapped
-	uint32_t color4;
+	//uint32_t color4;
 	uint32_t color4_255; // not screen mapped
-	uint32_t color5;
+	//uint32_t color5;
 	uint32_t color5_255; // not screen mapped
-	uint32_t color6;
+	//uint32_t color6;
 	uint32_t color6_255; // not screen mapped
-	uint32_t backgroundColor;
+	//uint32_t backgroundColor;
 	uint32_t backgroundColor_255; // not screen mapped
 	int thumbRadius;
 	int gameSwitcherScaling; // enum
