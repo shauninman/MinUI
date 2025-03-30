@@ -470,7 +470,6 @@ static void updateOverlay(void) {
 	
 	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	if(!vid.overlay) {
-		LOG_info("overlay path %s\n",overlay_path);
 		if(overlay_path) {
 			SDL_Surface* tmp = IMG_Load(overlay_path);
 			if (tmp) {
