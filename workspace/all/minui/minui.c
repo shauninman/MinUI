@@ -1347,31 +1347,6 @@ static void Menu_quit(void) {
 
 ///////////////////////////////////////
 
-static SDL_Rect GFX_scaled_rect(SDL_Rect preview_rect, SDL_Rect image_rect) {
-    SDL_Rect scaled_rect;
-    
-    // Calculate the aspect ratios
-    float image_aspect = (float)image_rect.w / (float)image_rect.h;
-    float preview_aspect = (float)preview_rect.w / (float)preview_rect.h;
-    
-    // Determine scaling factor
-    if (image_aspect > preview_aspect) {
-        // Image is wider than the preview area
-        scaled_rect.w = preview_rect.w;
-        scaled_rect.h = (int)(preview_rect.w / image_aspect);
-    } else {
-        // Image is taller than or equal to the preview area
-        scaled_rect.h = preview_rect.h;
-        scaled_rect.w = (int)(preview_rect.h * image_aspect);
-    }
-    
-    // Center the scaled rectangle within preview_rect
-    scaled_rect.x = preview_rect.x + (preview_rect.w - scaled_rect.w) / 2;
-    scaled_rect.y = preview_rect.y + (preview_rect.h - scaled_rect.h) / 2;
-    
-    return scaled_rect;
-}
-
 static float selection_offset = 1.0f; 
 static int previous_selected = -1; 
 static int dirty = 1;
@@ -1470,9 +1445,7 @@ int main (int argc, char *argv[]) {
 	if (convertedbg) {
 		SDL_FreeSurface(bgbmp); 
 		SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);
-		SDL_Rect image_rect = {0, 0, screen->w, screen->h};
-		SDL_BlitScaled(convertedbg, NULL, scaled, &image_rect);
-
+		GFX_blitScaleToFill(convertedbg, scaled);
 		bgbmp = scaled;
 	}
 	unsigned long cputimer = SDL_GetTicks();
@@ -1744,34 +1717,14 @@ int main (int argc, char *argv[]) {
 							}
 			
 							if (optimized) {
-								if (thumbbmp) SDL_FreeSurface(thumbbmp); 
+								if (thumbbmp) SDL_FreeSurface(thumbbmp);
 
-								int img_w = optimized->w;
-								int img_h = optimized->h;
-								double aspect_ratio = (double)img_h / img_w; 
-			
-								int max_w = (int)(screen->w * 0.45); 
-								int max_h = (int)(screen->h * 0.6);  
-			
-								int new_w = max_w;
-								int new_h = (int)(new_w * aspect_ratio); 
-			
-			
-								if (new_h > max_h) {
-									new_h = max_h;
-									new_w = (int)(new_h / aspect_ratio);
-								}
-			
-								SDL_Rect scale_rect = {
-									0,
-									0,
-									new_w,
-									new_h
-								};
+								SDL_Rect art_rect = {0, 0, (int)(screen->w * 0.45), (int)(screen->h * 0.6)};
+								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, art_rect.w, art_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
 
-								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
-								SDL_BlitScaled(optimized, NULL, thumbbmp, &scale_rect);
-								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, SCALE1(CFG_getThumbnailRadius())); // i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
+								SDL_Rect imgRect = GFX_blitScaleAspect(optimized, thumbbmp);
+								// i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
+								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, &imgRect, SCALE1(CFG_getThumbnailRadius())); 
 								SDL_FreeSurface(optimized);
 								had_thumb = 1;
 							}
@@ -1891,12 +1844,11 @@ int main (int argc, char *argv[]) {
 							bmp = raw_preview; 
 						}
 						if(bmp) {
-							SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);					
-							SDL_Rect image_rect = {0, 0, screen->w, screen->h};
-							SDL_BlitScaled(bmp, NULL, scaled, &image_rect);
+							SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGB565);
+							SDL_Rect imgRect = GFX_blitScaled(CFG_getGameSwitcherScaling(), bmp, scaled);
 							SDL_FreeSurface(bmp);
-							GFX_ApplyRounderCorners16(scaled,CFG_getThumbnailRadius()*3/2);
-							SDL_BlitSurface(scaled, NULL, screen, &image_rect);
+							GFX_ApplyRoundedCorners16(scaled, &imgRect, SCALE1(CFG_getThumbnailRadius()));
+							SDL_BlitSurface(scaled, NULL, screen, NULL);
 							SDL_FreeSurface(scaled);  // Free after rendering
 						}
 					}

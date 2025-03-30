@@ -955,14 +955,127 @@ void GFX_freeAAScaler(void) {
 }
 
 ///////////////////////////////
-void GFX_ApplyRounderCorners16(SDL_Surface* surface, int radius) {
-    if (!surface) return;
 
-    int width = surface->w;
-    int height = surface->h;
-    SDL_PixelFormat* fmt = surface->format;
+SDL_Rect GFX_blitScaled(int scale, SDL_Surface *src, SDL_Surface *dst)
+{
+	switch(scale) {
+		case GFX_SCALE_FIT: 
+			return GFX_blitScaleAspect(src, dst);
+			break;
+		case GFX_SCALE_FILL:
+			return GFX_blitScaleToFill(src, dst);
+			break;
+		case GFX_SCALE_FULLSCREEN:
+		default:
+			return GFX_blitStretch(src, dst);
+		}
+}
 
-    if (fmt->format != SDL_PIXELFORMAT_RGB565) {
+SDL_Rect GFX_blitStretch(SDL_Surface *src, SDL_Surface *dst)
+{
+	if(!src || !dst){
+		SDL_Rect none = {0,0};
+		return none;
+	}
+
+	SDL_Rect image_rect = {0, 0, dst->w, dst->h};
+	SDL_BlitScaled(src, NULL, dst, &image_rect);
+	return image_rect;
+}
+
+static inline SDL_Rect GFX_scaledRectAspect(SDL_Rect src, SDL_Rect dst) {
+    SDL_Rect scaled_rect;
+    
+    // Calculate the aspect ratios
+    float image_aspect = (float)src.w / (float)src.h;
+    float preview_aspect = (float)dst.w / (float)dst.h;
+    
+    // Determine scaling factor
+    if (image_aspect > preview_aspect) {
+        // Image is wider than the preview area
+        scaled_rect.w = dst.w;
+        scaled_rect.h = (int)(dst.w / image_aspect);
+    } else {
+        // Image is taller than or equal to the preview area
+        scaled_rect.h = dst.h;
+        scaled_rect.w = (int)(dst.h * image_aspect);
+    }
+    
+    // Center the scaled rectangle within preview_rect
+    scaled_rect.x = dst.x + (dst.w - scaled_rect.w) / 2;
+    scaled_rect.y = dst.y + (dst.h - scaled_rect.h) / 2;
+    
+    return scaled_rect;
+}
+
+SDL_Rect GFX_blitScaleAspect(SDL_Surface *src, SDL_Surface *dst)
+{
+	if(!src || !dst) {
+		SDL_Rect none = {0,0};
+		return none;
+	}
+
+	SDL_Rect src_rect = {0, 0, src->w, src->h};
+	SDL_Rect dst_rect = {0, 0, dst->w, dst->h};
+	SDL_Rect scaled_rect = GFX_scaledRectAspect(src_rect, dst_rect);
+	SDL_FillRect(dst, NULL, 0);
+	SDL_BlitScaled(src, NULL, dst, &scaled_rect);
+	return scaled_rect;
+}
+
+static inline SDL_Rect GFX_scaledRectAspectFill(SDL_Rect src, SDL_Rect dst)
+{
+	SDL_Rect scaled_rect;
+
+    // Calculate the aspect ratios
+    float image_aspect = (float)src.w / (float)src.h;
+    float preview_aspect = (float)dst.w / (float)dst.h;
+
+	// Determine scaling factor
+    if (preview_aspect > image_aspect) {
+        scaled_rect.w  = src.w;
+        scaled_rect.h = (int)(src.w / preview_aspect + 0.5f);
+    }
+    else {
+        scaled_rect.w  = (int)(src.h * preview_aspect + 0.5f);
+        scaled_rect.h = src.h;
+    }
+
+    // Calculate the coordinates of the visible part of the input image
+    int offsetX = abs(scaled_rect.w - src.w) / 2;
+    int offsetY = abs(scaled_rect.h - src.h) / 2;
+
+	scaled_rect.x = offsetX;
+	scaled_rect.y = offsetY;
+
+	return scaled_rect;
+}
+
+SDL_Rect GFX_blitScaleToFill(SDL_Surface *src, SDL_Surface *dst)
+{
+	if(!src || !dst){
+		SDL_Rect none = {0,0};
+		return none;
+	}
+
+	SDL_Rect src_rect = {0, 0, src->w, src->h};
+	SDL_Rect dst_rect = {0, 0, dst->w, dst->h};
+	SDL_Rect scaled_rect = GFX_scaledRectAspectFill(src_rect, dst_rect);
+	SDL_BlitScaled(src, &scaled_rect, dst, NULL);
+
+	return dst_rect;
+}
+
+///////////////////////////////
+void GFX_ApplyRoundedCorners16(SDL_Surface* surface, SDL_Rect* rect, int radius) {
+    if (!surface || radius == 0) return;
+
+	SDL_PixelFormat *fmt = surface->format;
+	SDL_Rect target = {0, 0, surface->w, surface->h};
+	if (rect)
+		target = *rect;
+
+	if (fmt->format != SDL_PIXELFORMAT_RGB565) {
         SDL_Log("Unsupported pixel format: %s", SDL_GetPixelFormatName(fmt->format));
         return;
     }
@@ -970,54 +1083,70 @@ void GFX_ApplyRounderCorners16(SDL_Surface* surface, int radius) {
     Uint16* pixels = (Uint16*)surface->pixels;  // RGB565 uses 16-bit pixels
     Uint16 transparent_black = 0x0000;  // RGB565 has no alpha, so use black (0)
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int dx = (x < radius) ? radius - x : (x >= width - radius) ? x - (width - radius - 1) : 0;
-            int dy = (y < radius) ? radius - y : (y >= height - radius) ? y - (height - radius - 1) : 0;
+	const int xBeg = target.x;
+	const int xEnd = target.x + target.w;
+	const int yBeg = target.y;
+	const int yEnd = target.y + target.h;
+	for (int y = yBeg; y < yEnd; ++y)
+	{
+		for (int x = xBeg; x < xEnd; ++x) {
+            int dx = (x < xBeg + radius) ? xBeg + radius - x : (x >= xEnd - radius) ? x - (xEnd - radius - 1) : 0;
+            int dy = (y < yBeg + radius) ? yBeg + radius - y : (y >= yEnd - radius) ? y - (yEnd - radius - 1) : 0;
             if (dx * dx + dy * dy > radius * radius) {
                 pixels[y * (surface->pitch / 2) + x] = transparent_black;  // Set to black (0)
             }
         }
-    }
+	}
 }
 
-void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius) {
+void GFX_ApplyRoundedCorners(SDL_Surface* surface, SDL_Rect* rect, int radius) {
 	if (!surface) return;
 
     Uint32* pixels = (Uint32*)surface->pixels;
-    int width = surface->w;
-    int height = surface->h;
     SDL_PixelFormat* fmt = surface->format;
+	SDL_Rect target = {0, 0, surface->w, surface->h};
+	if (rect)
+		target = *rect;
     
     Uint32 transparent_black = SDL_MapRGBA(fmt, 0, 0, 0, 0);  // Fully transparent black
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int dx = (x < radius) ? radius - x : (x >= width - radius) ? x - (width - radius - 1) : 0;
-            int dy = (y < radius) ? radius - y : (y >= height - radius) ? y - (height - radius - 1) : 0;
+	const int xBeg = target.x;
+	const int xEnd = target.x + target.w;
+	const int yBeg = target.y;
+	const int yEnd = target.y + target.h;
+	for (int y = yBeg; y < yEnd; ++y)
+	{
+		for (int x = xBeg; x < xEnd; ++x) {
+            int dx = (x < xBeg + radius) ? xBeg + radius - x : (x >= xEnd - radius) ? x - (xEnd - radius - 1) : 0;
+            int dy = (y < yBeg + radius) ? yBeg + radius - y : (y >= yEnd - radius) ? y - (yEnd - radius - 1) : 0;
             if (dx * dx + dy * dy > radius * radius) {
-                pixels[y * width + x] = transparent_black;  // Set to fully transparent black
+                pixels[y * target.w + x] = transparent_black;  // Set to fully transparent black
             }
         }
     }
 }
 
 // Need a roundercorners for rgba4444 now too to have transparant rounder corners :D
-void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, int radius) {
+void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, SDL_Rect* rect, int radius) {
     if (!surface || surface->format->format != SDL_PIXELFORMAT_RGBA4444) return;
 
     Uint16* pixels = (Uint16*)surface->pixels; 
-    int width = surface->w;
-    int height = surface->h;
     int pitch = surface->pitch / 2;  
+	SDL_Rect target = {0, 0, surface->w, surface->h};
+	if (rect)
+		target = *rect;
 
     Uint16 transparent_black = 0x0000; 
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int dx = (x < radius) ? radius - x : (x >= width - radius) ? x - (width - radius - 1) : 0;
-            int dy = (y < radius) ? radius - y : (y >= height - radius) ? y - (height - radius - 1) : 0;
-
+	const int xBeg = target.x;
+	const int xEnd = target.x + target.w;
+	const int yBeg = target.y;
+	const int yEnd = target.y + target.h;
+	for (int y = yBeg; y < yEnd; ++y)
+	{
+		for (int x = xBeg; x < xEnd; ++x) {
+            int dx = (x < xBeg + radius) ? xBeg + radius - x : (x >= xEnd - radius) ? x - (xEnd - radius - 1) : 0;
+            int dy = (y < yBeg + radius) ? yBeg + radius - y : (y >= yEnd - radius) ? y - (yEnd - radius - 1) : 0;
             if (dx * dx + dy * dy > radius * radius) {
                 pixels[y * pitch + x] = transparent_black; 
             }
@@ -2899,9 +3028,10 @@ void CFG_defaults(MinUISettings* cfg)
 		.showMenuAnimations = true,
 		.showRecents = true,
 		.showGameArt = true,
+		.gameSwitcherScaling = GFX_SCALE_FULLSCREEN,
 
-		.screenTimeoutSecs = 60,
-		.suspendTimeoutSecs = 30,
+	.screenTimeoutSecs = 60,
+	.suspendTimeoutSecs = 30,
 	};
 	
 	*cfg = defaults;
@@ -3007,6 +3137,11 @@ void CFG_init(MinUISettings* cfg)
 			if (sscanf(line, "suspendTimeout=%i", &temp_value) == 1)
 			{
 				CFG_setSuspendTimeoutSecs(temp_value);
+				continue;
+			}
+			if (sscanf(line, "switcherscale=%i", &temp_value) == 1)
+			{
+				CFG_setGameSwitcherScaling(temp_value);
 				continue;
 			}
 
@@ -3217,6 +3352,16 @@ void CFG_setShowGameArt(bool show)
 	settings.showGameArt = show;
 }
 
+int CFG_getGameSwitcherScaling(void)
+{
+	return settings.gameSwitcherScaling;
+}
+
+void CFG_setGameSwitcherScaling(int enumValue)
+{
+	settings.gameSwitcherScaling = clamp(enumValue, 0, GFX_SCALE_NUM_OPTIONS);
+}
+
 void CFG_sync(void)
 {
 	// write to file
@@ -3244,6 +3389,7 @@ void CFG_sync(void)
     fprintf(file, "gameart=%i\n", settings.showGameArt);
     fprintf(file, "screentimeout=%i\n", settings.screenTimeoutSecs);
     fprintf(file, "suspendTimeout=%i\n", settings.suspendTimeoutSecs);
+    fprintf(file, "switcherscale=%i\n", settings.gameSwitcherScaling);
     
     fclose(file);
 }

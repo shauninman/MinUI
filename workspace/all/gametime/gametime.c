@@ -170,20 +170,11 @@ SDL_Surface *loadRomImage(char *image_path)
         img = optimized;
     }
     
-    double sw = (double)SCALE1(IMG_MAX_WIDTH) / img->w;
-    double sh = (double)SCALE1(IMG_MAX_HEIGHT) / img->h;
-    double s = MIN(sw, sh);
-
     SDL_PixelFormat *ft = img->format;
-    SDL_Surface *dst = SDL_CreateRGBSurface(0, (int)(s * img->w), (int)(s * img->h), ft->BitsPerPixel, ft->Rmask, ft->Gmask, ft->Bmask, ft->Amask);
-
-    SDL_Rect src_rect = {0, 0, img->w, img->h};
-    SDL_Rect dst_rect = {0, 0, dst->w, dst->h};
-    SDL_SoftStretch(img, &src_rect, dst, &dst_rect);
-
+    SDL_Surface *dst = SDL_CreateRGBSurface(0, SCALE1(IMG_MAX_WIDTH), SCALE1(IMG_MAX_HEIGHT), ft->BitsPerPixel, ft->Rmask, ft->Gmask, ft->Bmask, ft->Amask);
+    SDL_Rect imgRect = GFX_blitScaled(GFX_SCALE_FILL, img, dst);
+    GFX_ApplyRoundedCorners(dst, &imgRect, SCALE1(18));
     SDL_FreeSurface(img);
-
-    GFX_ApplyRounderCorners(dst, SCALE1(18));
 
     return dst;
 }

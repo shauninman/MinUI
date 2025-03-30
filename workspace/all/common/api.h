@@ -244,6 +244,23 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
 void GFX_freeAAScaler(void);
 
+enum
+{
+	GFX_SCALE_FULLSCREEN = 0,
+	GFX_SCALE_FIT,
+	GFX_SCALE_FILL,
+	GFX_SCALE_NUM_OPTIONS // do not use 
+};
+// calls the appropriate scale function based on the enum value.
+// returns the SDL_Rect of the resulting image in screen coordinates.
+SDL_Rect GFX_blitScaled(int scale, SDL_Surface *src, SDL_Surface *dst);
+// blits to the destination and stretches to fit.
+SDL_Rect GFX_blitStretch(SDL_Surface *src, SDL_Surface *dst);
+// blits to the destination while keeping the aspect ratio.
+SDL_Rect GFX_blitScaleAspect(SDL_Surface *src, SDL_Surface *dst);
+// same as GFX_blitScaledAspect, but fills both dimensions.
+SDL_Rect GFX_blitScaleToFill(SDL_Surface *src, SDL_Surface *dst);
+
 // NOTE: all dimensions should be pre-scaled
 void GFX_blitAssetColor(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t asset_color);
 void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
@@ -265,9 +282,9 @@ void GFX_sizeText(TTF_Font* font, const char* str, int leading, int* w, int* h);
 void GFX_blitText(TTF_Font* font, const char* str, int leading, SDL_Color color, SDL_Surface* dst, SDL_Rect* dst_rect);
 void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode);
 
-void GFX_ApplyRounderCorners(SDL_Surface* surface, int radius);
-void GFX_ApplyRounderCorners16(SDL_Surface* surface, int radius);
-void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, int radius);
+void GFX_ApplyRoundedCorners(SDL_Surface* surface, SDL_Rect* rect, int radius);
+void GFX_ApplyRoundedCorners16(SDL_Surface* surface, SDL_Rect* rect, int radius);
+void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, SDL_Rect* rect, int radius);
 void BlitRGBA4444toRGB565(SDL_Surface* src, SDL_Surface* dest, SDL_Rect* dest_rect);
 ///////////////////////////////
 
@@ -474,6 +491,7 @@ typedef struct
 	uint32_t backgroundColor;
 	uint32_t backgroundColor_255; // not screen mapped
 	int thumbRadius;
+	int gameSwitcherScaling; // enum
 
 	// UI
 	bool showClock;
@@ -530,6 +548,9 @@ void CFG_setShowRecents(bool show);
 // Show/hide game art in the main menu.
 bool CFG_getShowGameArt(void);
 void CFG_setShowGameArt(bool show);
+// The scaling algorithm used for the game switcher preview image.
+int CFG_getGameSwitcherScaling(void);
+void CFG_setGameSwitcherScaling(int enumValue);
 
 void CFG_sync(void);
 void CFG_quit(void);
