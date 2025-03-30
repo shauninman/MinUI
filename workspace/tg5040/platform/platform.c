@@ -418,32 +418,40 @@ static void updateEffect(void) {
 #define OVERLAYS_FOLDER "/mnt/SDCARD/Overlays/"
 static char* overlay_path = "";
 
-void PLAT_setOverlay(int select) {
+void PLAT_setOverlay(int select, const char* tag) {
+    if (vid.overlay) {
+        SDL_DestroyTexture(vid.overlay);
+        vid.overlay = NULL;
+    }
+
     // Array of overlay filenames
-	if (vid.overlay) SDL_DestroyTexture(vid.overlay);
-	vid.overlay = NULL;
     static const char* overlay_files[] = {
-		"",
+        "",
         "overlay1.png",
         "overlay2.png",
         "overlay3.png",
         "overlay4.png",
         "overlay5.png"
     };
+    
     int overlay_count = sizeof(overlay_files) / sizeof(overlay_files[0]);
 
     if (select < 0 || select >= overlay_count) {
         printf("Invalid selection. Skipping overlay update.\n");
         return;
     }
-    
+
     const char* filename = overlay_files[select];
-    if (!filename || strcmp(filename, "None") == 0) {
+
+    if (!filename || strcmp(filename, "") == 0) {
+		overlay_path = "";
         printf("Skipping overlay update.\n");
         return;
     }
 
-    size_t path_len = strlen(OVERLAYS_FOLDER) + strlen(filename) + 1;
+
+
+    size_t path_len = strlen(OVERLAYS_FOLDER) + strlen(tag) + strlen(filename) + 5; // +3 for slashes and null-terminator
     overlay_path = malloc(path_len);
 
     if (!overlay_path) {
@@ -451,10 +459,10 @@ void PLAT_setOverlay(int select) {
         return;
     }
 
-    snprintf(overlay_path, path_len, "%s%s", OVERLAYS_FOLDER, filename);
-
-  
+    snprintf(overlay_path, path_len, "%s/%s/%s", OVERLAYS_FOLDER, tag, filename);
+    printf("Overlay path set to: %s\n", overlay_path);
 }
+
 static void updateOverlay(void) {
 	
 	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);

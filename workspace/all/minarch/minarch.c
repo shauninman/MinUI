@@ -85,6 +85,7 @@ static struct Core {
 	const char saves_dir[MAX_PATH]; // eg. /mnt/sdcard/Saves/GB
 	const char bios_dir[MAX_PATH]; // eg. /mnt/sdcard/Bios/GB
 	const char cheats_dir[MAX_PATH]; // eg. /mnt/sdcard/Cheats/GB
+	const char overlays_dir[MAX_PATH]; // eg. /mnt/sdcard/Cheats/GB
 	
 	double fps;
 	double sample_rate;
@@ -1363,7 +1364,7 @@ static void Config_syncFrontend(char* key, int value) {
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERLAY].key)) {
 		overlay = value;
-		GFX_setOverlay(value);
+		GFX_setOverlay(value,core.tag);
 		renderer.dst_p = 0;
 		i = FE_OPT_OVERLAY;
 	}
@@ -3501,6 +3502,7 @@ void Core_open(const char* core_path, const char* tag_name) {
 	sprintf((char*)core.saves_dir, SDCARD_PATH "/Saves/%s", core.tag);
 	sprintf((char*)core.bios_dir, SDCARD_PATH "/Bios/%s", core.tag);
 	sprintf((char*)core.cheats_dir, SDCARD_PATH "/Cheats/%s", core.tag);
+	sprintf((char*)core.overlays_dir, SDCARD_PATH "/Overlays/%s", core.tag);
 	
 	char cmd[512];
 	sprintf(cmd, "mkdir -p \"%s\"; mkdir -p \"%s\"", core.config_dir, core.states_dir);
@@ -5216,7 +5218,7 @@ static void Menu_loop(void) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
 		GFX_setEffect(screen_effect);
-		GFX_setOverlay(overlay);
+		GFX_setOverlay(overlay,core.tag);
 		GFX_clear(screen);
 		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
 		

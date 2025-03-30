@@ -414,7 +414,7 @@ void PLAT_setNearestNeighbor(int enabled);
 void PLAT_setSharpness(int sharpness);
 void PLAT_setEffectColor(int color);
 void PLAT_setEffect(int effect);
-void PLAT_setOverlay(int select);
+void PLAT_setOverlay(int select, const char* tag);
 void PLAT_vsync(int remaining);
 scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
