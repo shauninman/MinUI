@@ -60,19 +60,6 @@ extern uint32_t RGB_BLACK;
 extern uint32_t RGB_LIGHT_GRAY;
 extern uint32_t RGB_GRAY;
 extern uint32_t RGB_DARK_GRAY;
-//extern MinUISettings settings;
-extern uint32_t THEME_COLOR1;
-extern uint32_t THEME_COLOR2;
-extern uint32_t THEME_COLOR3;
-extern uint32_t THEME_COLOR4;
-extern uint32_t THEME_COLOR5;
-extern uint32_t THEME_COLOR6;
-extern uint32_t THEME_COLOR1_255;
-extern uint32_t THEME_COLOR2_255;
-extern uint32_t THEME_COLOR3_255;
-extern uint32_t THEME_COLOR4_255;
-extern uint32_t THEME_COLOR5_255;
-extern uint32_t THEME_COLOR6_255;
 
 // TODO: do we need that many free externs? This should move
 // to a structure or something.
@@ -200,7 +187,8 @@ enum {
 };
 
 SDL_Surface* GFX_init(int mode);
-#define GFX_resize PLAT_resizeVideo // (int w, int h, int pitch);
+int GFX_loadSystemFont(const char *path);
+#define GFX_resize PLAT_resizeVideo				// (int w, int h, int pitch);
 #define GFX_setScaleClip PLAT_setVideoScaleClip // (int x, int y, int width, int height)
 #define GFX_setNearestNeighbor PLAT_setNearestNeighbor // (int enabled)
 #define GFX_setSharpness PLAT_setSharpness // (int sharpness)
@@ -244,13 +232,6 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
 void GFX_freeAAScaler(void);
 
-enum
-{
-	GFX_SCALE_FULLSCREEN = 0,
-	GFX_SCALE_FIT,
-	GFX_SCALE_FILL,
-	GFX_SCALE_NUM_OPTIONS // do not use 
-};
 // calls the appropriate scale function based on the enum value.
 // returns the SDL_Rect of the resulting image in screen coordinates.
 SDL_Rect GFX_blitScaled(int scale, SDL_Surface *src, SDL_Surface *dst);
@@ -465,96 +446,5 @@ void PLAT_setLedBrightness(LightSettings *led);
 void PLAT_setLedInbrightness(LightSettings *led);
 void PLAT_setLedEffectSpeed(LightSettings *led);
 void PLAT_setLedEffectCycles(LightSettings *led);
-
-///////////////////////////////
-
-// This should move to cfg.h/.c
-// Read-only interface for minui.c usage
-// Read/Write interface for settings.cpp usage
-
-typedef struct
-{
-	// Theme
-	int font;
-	uint32_t color1;
-	uint32_t color1_255; // not screen mapped
-	uint32_t color2;
-	uint32_t color2_255; // not screen mapped
-	uint32_t color3;
-	uint32_t color3_255; // not screen mapped
-	uint32_t color4;
-	uint32_t color4_255; // not screen mapped
-	uint32_t color5;
-	uint32_t color5_255; // not screen mapped
-	uint32_t color6;
-	uint32_t color6_255; // not screen mapped
-	uint32_t backgroundColor;
-	uint32_t backgroundColor_255; // not screen mapped
-	int thumbRadius;
-	int gameSwitcherScaling; // enum
-
-	// UI
-	bool showClock;
-	bool clock24h;
-	bool showBatteryPercent;
-	bool showMenuAnimations;
-	bool showRecents;
-	bool showGameArt;
-
-	// Power
-	uint32_t screenTimeoutSecs;
-	uint32_t suspendTimeoutSecs;
-
-} MinUISettings;
-
-void CFG_init(void);
-void CFG_print(void);
-void CFG_get(const char *key, char * value);
-// void CFG_defaults(MinUISettings*);
-//  The font id to use as the UI font.
-//  0 - Default MinUI font
-//  1 - Default NextUI font (default)
-int CFG_getFontId(void);
-void CFG_setFontId(int fontid);
-// The colors to use for the UI. These are 0xRRGGBB values.
-// 0 - Color1 (primary hint/asset colour)
-// 1 - Color2 (accent colour)
-// 2 - Color3 (secondary accent colour
-// 3 - Background Color (unused)
-uint32_t CFG_getColor(int id);
-void CFG_setColor(int id, uint32_t color);
-// Time in secs before the device enters screen-off mode.
-uint32_t CFG_getScreenTimeoutSecs(void);
-void CFG_setScreenTimeoutSecs(uint32_t secs);
-// Time in secs before the device enters suspend mode (aka deep sleep).
-uint32_t CFG_getSuspendTimeoutSecs(void);
-void CFG_setSuspendTimeoutSecs(uint32_t secs);
-// Show/hide clock in the status pill.
-bool CFG_getShowClock(void);
-void CFG_setShowClock(bool show);
-// Sets the time format to 12/24hrs.
-bool CFG_getClock24H(void);
-void CFG_setClock24H(bool);
-// Show/hide battery percentage in the status pill.
-bool CFG_getShowBatteryPercent(void);
-void CFG_setShowBatteryPercent(bool show);
-// Show/hide menu animations in main menu.
-bool CFG_getMenuAnimations(void);
-void CFG_setMenuAnimations(bool anims);
-// Set thumbnail rounding radius.
-int CFG_getThumbnailRadius(void);
-void CFG_setThumbnailRadius(int radius);
-// Show/hide recently played in the main menu.
-bool CFG_getShowRecents(void);
-void CFG_setShowRecents(bool show);
-// Show/hide game art in the main menu.
-bool CFG_getShowGameArt(void);
-void CFG_setShowGameArt(bool show);
-// The scaling algorithm used for the game switcher preview image.
-int CFG_getGameSwitcherScaling(void);
-void CFG_setGameSwitcherScaling(int enumValue);
-
-void CFG_sync(void);
-void CFG_quit(void);
 
 #endif
