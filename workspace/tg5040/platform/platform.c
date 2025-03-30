@@ -432,7 +432,6 @@ void PLAT_setOverlay(int select) {
     };
     int overlay_count = sizeof(overlay_files) / sizeof(overlay_files[0]);
 
-    // Validate selection
     if (select < 0 || select >= overlay_count) {
         printf("Invalid selection. Skipping overlay update.\n");
         return;
@@ -444,7 +443,6 @@ void PLAT_setOverlay(int select) {
         return;
     }
 
-    // Allocate memory for full path (folder path + filename + null terminator)
     size_t path_len = strlen(OVERLAYS_FOLDER) + strlen(filename) + 1;
     overlay_path = malloc(path_len);
 
@@ -453,7 +451,6 @@ void PLAT_setOverlay(int select) {
         return;
     }
 
-    // Construct full path
     snprintf(overlay_path, path_len, "%s%s", OVERLAYS_FOLDER, filename);
 
   
