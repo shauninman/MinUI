@@ -507,11 +507,13 @@ typedef struct
 
 } MinUISettings;
 
-void CFG_init(MinUISettings*);
-//void CFG_defaults(MinUISettings*);
-// The font id to use as the UI font.
-// 0 - Default MinUI font
-// 1 - Default NextUI font (default)
+void CFG_init(void);
+void CFG_print(void);
+void CFG_get(const char *key, char * value);
+// void CFG_defaults(MinUISettings*);
+//  The font id to use as the UI font.
+//  0 - Default MinUI font
+//  1 - Default NextUI font (default)
 int CFG_getFontId(void);
 void CFG_setFontId(int fontid);
 // The colors to use for the UI. These are 0xRRGGBB values.

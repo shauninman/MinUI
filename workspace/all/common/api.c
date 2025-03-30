@@ -221,7 +221,7 @@ SDL_Surface* GFX_init(int mode)
 	gfx.vsync = VSYNC_STRICT;
 	gfx.mode = mode;
 
-	CFG_init(&settings);
+	CFG_init();
 
 	RGB_WHITE		= SDL_MapRGB(gfx.screen->format, TRIAD_WHITE);
 	RGB_BLACK		= SDL_MapRGB(gfx.screen->format, TRIAD_BLACK);
@@ -3030,18 +3030,15 @@ void CFG_defaults(MinUISettings* cfg)
 		.showGameArt = true,
 		.gameSwitcherScaling = GFX_SCALE_FULLSCREEN,
 
-	.screenTimeoutSecs = 60,
-	.suspendTimeoutSecs = 30,
+		.screenTimeoutSecs = 60,
+		.suspendTimeoutSecs = 30,
 	};
 	
 	*cfg = defaults;
 }
 
-void CFG_init(MinUISettings* cfg)
+void CFG_init(void)
 {
-	if(!cfg)
-		return;
-
 	CFG_defaults(&settings);
 	bool fontLoaded = false;
 
@@ -3362,6 +3359,72 @@ void CFG_setGameSwitcherScaling(int enumValue)
 	settings.gameSwitcherScaling = clamp(enumValue, 0, GFX_SCALE_NUM_OPTIONS);
 }
 
+void CFG_get(const char *key, char* value)
+{
+	if(strcmp(key, "font") == 0){
+		sprintf(value, "%i", CFG_getFontId());
+	}
+	else if(strcmp(key, "color1") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(1));
+	}
+	else if(strcmp(key, "color2") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(2));
+	}
+	else if(strcmp(key, "color3") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(3));
+	}
+	else if(strcmp(key, "color4") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(4));
+	}
+	else if(strcmp(key, "color5") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(5));
+	}
+	else if(strcmp(key, "color6") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(6));
+	}
+	else if(strcmp(key, "bgcolor") == 0){
+		sprintf(value, "0x%06X", CFG_getColor(7));
+	}
+	else if(strcmp(key, "radius") == 0){
+		sprintf(value, "%i", CFG_getThumbnailRadius());
+	}
+	else if(strcmp(key, "showclock") == 0){
+		sprintf(value, "%i", CFG_getShowClock());
+	}
+	else if(strcmp(key, "clock24h") == 0){
+		sprintf(value, "%i", CFG_getClock24H());
+	}
+	else if(strcmp(key, "batteryperc") == 0){
+		sprintf(value, "%i", CFG_getShowBatteryPercent());
+	}
+	else if(strcmp(key, "menuanim") == 0){
+		sprintf(value, "%i", CFG_getMenuAnimations());
+	}
+	else if(strcmp(key, "recents") == 0){
+		sprintf(value, "%i", CFG_getShowRecents());
+	}
+	else if(strcmp(key, "gameart") == 0){
+		sprintf(value, "%i", CFG_getShowGameArt());
+	}
+	else if(strcmp(key, "screentimeout") == 0){
+		sprintf(value, "%i", CFG_getScreenTimeoutSecs());
+	}
+	else if(strcmp(key, "suspendTimeout") == 0){
+		sprintf(value, "%i", CFG_getSuspendTimeoutSecs());
+	}
+	else if(strcmp(key, "switcherscale") == 0){
+		sprintf(value, "%i", CFG_getGameSwitcherScaling());
+	}
+
+	// meta, not a real setting
+	else if(strcmp(key, "fontpath") == 0){
+		if (CFG_getFontId() == 1)
+			sprintf(value, "%s", RES_PATH "/chillroundm.ttf");
+		else
+			sprintf(value, "%s", RES_PATH "/BPreplayBold-unhinted.otf");
+	}
+}
+
 void CFG_sync(void)
 {
 	// write to file
@@ -3392,6 +3455,37 @@ void CFG_sync(void)
     fprintf(file, "switcherscale=%i\n", settings.gameSwitcherScaling);
     
     fclose(file);
+}
+
+void CFG_print(void)
+{
+	printf("{\n");
+	printf("\t\"font\": %i\n", settings.font);
+	printf("\t\"color1\": \"0x%06X\"\n", settings.color1_255);
+    printf("\t\"color2\": \"0x%06X\"\n", settings.color2_255);
+    printf("\t\"color3\": \"0x%06X\"\n", settings.color3_255);
+    printf("\t\"color4\": \"0x%06X\"\n", settings.color4_255);
+    printf("\t\"color5\": \"0x%06X\"\n", settings.color5_255);
+    printf("\t\"color6\": \"0x%06X\"\n", settings.color6_255);
+    printf("\t\"bgcolor\": \"0x%06X\"\n", settings.backgroundColor_255);
+    printf("\t\"radius\": %i\n", settings.thumbRadius);
+    printf("\t\"showclock\": %i\n", settings.showClock);
+    printf("\t\"clock24h\": %i\n", settings.clock24h);
+    printf("\t\"batteryperc\": %i\n", settings.showBatteryPercent);
+    printf("\t\"menuanim\": %i\n", settings.showMenuAnimations);
+    printf("\t\"recents\": %i\n", settings.showRecents);
+    printf("\t\"gameart\": %i\n", settings.showGameArt);
+    printf("\t\"screentimeout\": %i\n", settings.screenTimeoutSecs);
+    printf("\t\"suspendTimeout\": %i\n", settings.suspendTimeoutSecs);
+    printf("\t\"switcherscale\": %i\n", settings.gameSwitcherScaling);
+
+	// meta, not a real setting
+	if (settings.font == 1)
+		printf("\t\"fontpath\": %s\n", RES_PATH "/chillroundm.ttf");
+	else
+		printf("\t\"fontpath\": %s\n", RES_PATH "/BPreplayBold-unhinted.otf");
+
+	printf("}\n");
 }
 
 void CFG_quit(void)
