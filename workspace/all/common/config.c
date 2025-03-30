@@ -428,9 +428,9 @@ void CFG_get(const char *key, char *value)
     else if (strcmp(key, "fontpath") == 0)
     {
         if (CFG_getFontId() == 1)
-            sprintf(value, "%s", RES_PATH "/chillroundm.ttf");
+            sprintf(value, "\"%s\"", RES_PATH "/chillroundm.ttf");
         else
-            sprintf(value, "%s", RES_PATH "/BPreplayBold-unhinted.otf");
+            sprintf(value, "\"%s\"", RES_PATH "/BPreplayBold-unhinted.otf");
     }
 
     else {
@@ -496,9 +496,9 @@ void CFG_print(void)
 
     // meta, not a real setting
     if (settings.font == 1)
-        printf("\t\"fontpath\": %s\n", RES_PATH "/chillroundm.ttf");
+        printf("\t\"fontpath\": \"%s\"\n", RES_PATH "/chillroundm.ttf");
     else
-        printf("\t\"fontpath\": %s\n", RES_PATH "/BPreplayBold-unhinted.otf");
+        printf("\t\"fontpath\": \"%s\"\n", RES_PATH "/BPreplayBold-unhinted.otf");
 
     printf("}\n");
 }
