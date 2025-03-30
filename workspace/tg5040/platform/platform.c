@@ -65,6 +65,10 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 
+#define OVERLAYS_FOLDER "/mnt/SDCARD/Overlays"
+static char* overlay_path = NULL;
+
+
 SDL_Surface* PLAT_initVideo(void) {
 	char* device = getenv("DEVICE");
 	is_brick = exactMatch("brick", device);
@@ -209,6 +213,7 @@ void PLAT_quitVideo(void) {
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	if (vid.effect) SDL_DestroyTexture(vid.effect);
 	if (vid.overlay) SDL_DestroyTexture(vid.overlay);
+	if (overlay_path) free(overlay_path);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
@@ -415,8 +420,6 @@ static void updateEffect(void) {
 	}
 }
 
-#define OVERLAYS_FOLDER "/mnt/SDCARD/Overlays/"
-static char* overlay_path = "";
 
 void PLAT_setOverlay(int select, const char* tag) {
     if (vid.overlay) {
@@ -451,7 +454,7 @@ void PLAT_setOverlay(int select, const char* tag) {
 
 
 
-    size_t path_len = strlen(OVERLAYS_FOLDER) + strlen(tag) + strlen(filename) + 5; // +3 for slashes and null-terminator
+    size_t path_len = strlen(OVERLAYS_FOLDER) + strlen(tag) + strlen(filename) + 4; // +3 for slashes and null-terminator
     overlay_path = malloc(path_len);
 
     if (!overlay_path) {
@@ -468,12 +471,14 @@ static void updateOverlay(void) {
 	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	if(!vid.overlay) {
 		LOG_info("overlay path %s\n",overlay_path);
-		SDL_Surface* tmp = IMG_Load(overlay_path);
-		if (tmp) {
+		if(overlay_path) {
+			SDL_Surface* tmp = IMG_Load(overlay_path);
+			if (tmp) {
 
-			if (vid.overlay) SDL_DestroyTexture(vid.overlay);
-			vid.overlay = SDL_CreateTextureFromSurface(vid.renderer, tmp);
-			SDL_FreeSurface(tmp);
+				if (vid.overlay) SDL_DestroyTexture(vid.overlay);
+				vid.overlay = SDL_CreateTextureFromSurface(vid.renderer, tmp);
+				SDL_FreeSurface(tmp);
+			}
 		}
 	}
 }

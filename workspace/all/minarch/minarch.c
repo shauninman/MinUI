@@ -5212,13 +5212,13 @@ static void Menu_loop(void) {
 
 	GFX_clearAll();
 	PWR_warn(1);
-	
+	GFX_setOverlay(overlay,core.tag);
 	if (!quit) {
 		if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
 		GFX_setEffect(screen_effect);
-		GFX_setOverlay(overlay,core.tag);
+
 		GFX_clear(screen);
 		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
 		
