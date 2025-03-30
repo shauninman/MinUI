@@ -6,13 +6,7 @@
 
 void printUsage()
 {
-    printf("NextUI nextval\n"
-           "[read]\n"
-           "  nextval key\n\n"
-           //"[write]\n"
-           //"  nextval key vale\n\n"
-    );
-    CFG_print();
+    printf("usage: nextval <key>\n");
 }
 
 int main(int argc, char *argv[])
@@ -20,20 +14,24 @@ int main(int argc, char *argv[])
     CFG_init(NULL, NULL);
 
     if (argc <= 1) {
-        printUsage();
+        CFG_print();
         return EXIT_SUCCESS;
     }
 
+    if (strcmp(argv[1], "-h") == 0
+       || strcmp(argv[1], "--help") == 0) {
+        printUsage();
+    }
     // get
     // not really maintainable this way, this should really all be c++ with proper type deduction
     // instead of naive copy paste
-    if (argc == 2) {
+    else if (argc == 2) {
         char setting_value[MAX_PATH];
         CFG_get(argv[1], setting_value);
         if(strcmp(setting_value, "") != 0)
-            printf("%s\n", setting_value);
+            printf("{\"%s\": %s}\n", argv[1], setting_value);
         else
-            printf("unknown key: %s\n", argv[1]);
+            printf("{}\n");
     }
     // set
     //else if(argc == 3) {

@@ -361,31 +361,31 @@ void CFG_get(const char *key, char *value)
     }
     else if (strcmp(key, "color1") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(1));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(1));
     }
     else if (strcmp(key, "color2") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(2));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(2));
     }
     else if (strcmp(key, "color3") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(3));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(3));
     }
     else if (strcmp(key, "color4") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(4));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(4));
     }
     else if (strcmp(key, "color5") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(5));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(5));
     }
     else if (strcmp(key, "color6") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(6));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(6));
     }
     else if (strcmp(key, "bgcolor") == 0)
     {
-        sprintf(value, "0x%06X", CFG_getColor(7));
+        sprintf(value, "\"0x%06X\"", CFG_getColor(7));
     }
     else if (strcmp(key, "radius") == 0)
     {
@@ -479,24 +479,24 @@ void CFG_sync(void)
 void CFG_print(void)
 {
     printf("{\n");
-    printf("\t\"font\": %i\n", settings.font);
-    printf("\t\"color1\": \"0x%06X\"\n", settings.color1_255);
-    printf("\t\"color2\": \"0x%06X\"\n", settings.color2_255);
-    printf("\t\"color3\": \"0x%06X\"\n", settings.color3_255);
-    printf("\t\"color4\": \"0x%06X\"\n", settings.color4_255);
-    printf("\t\"color5\": \"0x%06X\"\n", settings.color5_255);
-    printf("\t\"color6\": \"0x%06X\"\n", settings.color6_255);
-    printf("\t\"bgcolor\": \"0x%06X\"\n", settings.backgroundColor_255);
-    printf("\t\"radius\": %i\n", settings.thumbRadius);
-    printf("\t\"showclock\": %i\n", settings.showClock);
-    printf("\t\"clock24h\": %i\n", settings.clock24h);
-    printf("\t\"batteryperc\": %i\n", settings.showBatteryPercent);
-    printf("\t\"menuanim\": %i\n", settings.showMenuAnimations);
-    printf("\t\"recents\": %i\n", settings.showRecents);
-    printf("\t\"gameart\": %i\n", settings.showGameArt);
-    printf("\t\"screentimeout\": %i\n", settings.screenTimeoutSecs);
-    printf("\t\"suspendTimeout\": %i\n", settings.suspendTimeoutSecs);
-    printf("\t\"switcherscale\": %i\n", settings.gameSwitcherScaling);
+    printf("\t\"font\": %i,\n", settings.font);
+    printf("\t\"color1\": \"0x%06X\",\n", settings.color1_255);
+    printf("\t\"color2\": \"0x%06X\",\n", settings.color2_255);
+    printf("\t\"color3\": \"0x%06X\",\n", settings.color3_255);
+    printf("\t\"color4\": \"0x%06X\",\n", settings.color4_255);
+    printf("\t\"color5\": \"0x%06X\",\n", settings.color5_255);
+    printf("\t\"color6\": \"0x%06X\",\n", settings.color6_255);
+    printf("\t\"bgcolor\": \"0x%06X\",\n", settings.backgroundColor_255);
+    printf("\t\"radius\": %i,\n", settings.thumbRadius);
+    printf("\t\"showclock\": %i,\n", settings.showClock);
+    printf("\t\"clock24h\": %i,\n", settings.clock24h);
+    printf("\t\"batteryperc\": %i,\n", settings.showBatteryPercent);
+    printf("\t\"menuanim\": %i,\n", settings.showMenuAnimations);
+    printf("\t\"recents\": %i,\n", settings.showRecents);
+    printf("\t\"gameart\": %i,\n", settings.showGameArt);
+    printf("\t\"screentimeout\": %i,\n", settings.screenTimeoutSecs);
+    printf("\t\"suspendTimeout\": %i,\n", settings.suspendTimeoutSecs);
+    printf("\t\"switcherscale\": %i,\n", settings.gameSwitcherScaling);
 
     // meta, not a real setting
     if (settings.font == 1)
