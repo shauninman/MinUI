@@ -50,6 +50,7 @@ static int resampling_quality = 2;
 static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
+static int overlay = 0; 
 static int prevent_tearing = 1; // lenient
 static int use_core_fps = 0;
 static int sync_ref = 0;
@@ -84,6 +85,7 @@ static struct Core {
 	const char saves_dir[MAX_PATH]; // eg. /mnt/sdcard/Saves/GB
 	const char bios_dir[MAX_PATH]; // eg. /mnt/sdcard/Bios/GB
 	const char cheats_dir[MAX_PATH]; // eg. /mnt/sdcard/Cheats/GB
+	const char overlays_dir[MAX_PATH]; // eg. /mnt/sdcard/Cheats/GB
 	
 	double fps;
 	double sample_rate;
@@ -913,6 +915,15 @@ static char* effect_labels[] = {
 	"Grid",
 	NULL
 };
+static char* overlay_labels[] = {
+	"None",
+	"overlay1.png",
+	"overlay2.png",
+	"overlay3.png",
+	"overlay4.png",
+	"overlay5.png",
+	NULL
+};
 static char* sharpness_labels[] = {
 	"Sharp",
 	"Crisp",
@@ -950,6 +961,7 @@ enum {
 	FE_OPT_RESAMPLING,
 	FE_OPT_AMBIENT,
 	FE_OPT_EFFECT,
+	FE_OPT_OVERLAY,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_SYNC_REFERENCE,
@@ -1183,6 +1195,16 @@ static struct Config {
 				.values = effect_labels,
 				.labels = effect_labels,
 			},
+			[FE_OPT_OVERLAY] = {
+				.key	= "minarch_overlay",
+				.name	= "Overlay",
+				.desc	= "Choose a custom overlay png from the Overlays folder",
+				.default_value = 0,
+				.value = 0,
+				.count = 6,
+				.values = overlay_labels,
+				.labels = overlay_labels,
+			},
 			[FE_OPT_SHARPNESS] = {
 				.key	= "minarch_screen_sharpness",
 				.name	= "Screen Sharpness",
@@ -1349,6 +1371,12 @@ static void Config_syncFrontend(char* key, int value) {
 		GFX_setEffect(value);
 		renderer.dst_p = 0;
 		i = FE_OPT_EFFECT;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERLAY].key)) {
+		overlay = value;
+		GFX_setOverlay(value,core.tag);
+		renderer.dst_p = 0;
+		i = FE_OPT_OVERLAY;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
 		screen_sharpness = value;
@@ -3603,6 +3631,7 @@ void Core_open(const char* core_path, const char* tag_name) {
 	sprintf((char*)core.saves_dir, SDCARD_PATH "/Saves/%s", core.tag);
 	sprintf((char*)core.bios_dir, SDCARD_PATH "/Bios/%s", core.tag);
 	sprintf((char*)core.cheats_dir, SDCARD_PATH "/Cheats/%s", core.tag);
+	sprintf((char*)core.overlays_dir, SDCARD_PATH "/Overlays/%s", core.tag);
 	
 	char cmd[512];
 	sprintf(cmd, "mkdir -p \"%s\"; mkdir -p \"%s\"", core.config_dir, core.states_dir);
@@ -5387,12 +5416,13 @@ static void Menu_loop(void) {
 
 	GFX_clearAll();
 	PWR_warn(1);
-	
+	GFX_setOverlay(overlay,core.tag);
 	if (!quit) {
 		if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
 		}
 		GFX_setEffect(screen_effect);
+
 		GFX_clear(screen);
 		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
 		

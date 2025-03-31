@@ -22,6 +22,7 @@
 #include "scaler.h"
 #include <time.h>
 #include <pthread.h>
+#include <string.h>
 
 int is_brick = 0;
 volatile int useAutoCpu = 1;
@@ -48,6 +49,7 @@ static struct VID_Context {
 	SDL_Texture* texture;
 	SDL_Texture* target;
 	SDL_Texture* effect;
+	SDL_Texture* overlay;
 	SDL_Surface* buffer;
 	SDL_Surface* screen;
 	
@@ -62,6 +64,10 @@ static struct VID_Context {
 static int device_width;
 static int device_height;
 static int device_pitch;
+
+#define OVERLAYS_FOLDER "/mnt/SDCARD/Overlays"
+static char* overlay_path = NULL;
+
 
 SDL_Surface* PLAT_initVideo(void) {
 	char* device = getenv("DEVICE");
@@ -206,6 +212,8 @@ void PLAT_quitVideo(void) {
 	SDL_FreeSurface(vid.buffer);
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	if (vid.effect) SDL_DestroyTexture(vid.effect);
+	if (vid.overlay) SDL_DestroyTexture(vid.overlay);
+	if (overlay_path) free(overlay_path);
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
@@ -411,6 +419,68 @@ static void updateEffect(void) {
 		effect.live_type = effect.type;
 	}
 }
+
+
+void PLAT_setOverlay(int select, const char* tag) {
+    if (vid.overlay) {
+        SDL_DestroyTexture(vid.overlay);
+        vid.overlay = NULL;
+    }
+
+    // Array of overlay filenames
+    static const char* overlay_files[] = {
+        "",
+        "overlay1.png",
+        "overlay2.png",
+        "overlay3.png",
+        "overlay4.png",
+        "overlay5.png"
+    };
+    
+    int overlay_count = sizeof(overlay_files) / sizeof(overlay_files[0]);
+
+    if (select < 0 || select >= overlay_count) {
+        printf("Invalid selection. Skipping overlay update.\n");
+        return;
+    }
+
+    const char* filename = overlay_files[select];
+
+    if (!filename || strcmp(filename, "") == 0) {
+		overlay_path = "";
+        printf("Skipping overlay update.\n");
+        return;
+    }
+
+
+
+    size_t path_len = strlen(OVERLAYS_FOLDER) + strlen(tag) + strlen(filename) + 4; // +3 for slashes and null-terminator
+    overlay_path = malloc(path_len);
+
+    if (!overlay_path) {
+        perror("malloc failed");
+        return;
+    }
+
+    snprintf(overlay_path, path_len, "%s/%s/%s", OVERLAYS_FOLDER, tag, filename);
+    printf("Overlay path set to: %s\n", overlay_path);
+}
+
+static void updateOverlay(void) {
+	
+	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
+	if(!vid.overlay) {
+		if(overlay_path) {
+			SDL_Surface* tmp = IMG_Load(overlay_path);
+			if (tmp) {
+
+				if (vid.overlay) SDL_DestroyTexture(vid.overlay);
+				vid.overlay = SDL_CreateTextureFromSurface(vid.renderer, tmp);
+				SDL_FreeSurface(tmp);
+			}
+		}
+	}
+}
 void PLAT_setEffect(int next_type) {
 	effect.next_type = next_type;
 }
@@ -534,6 +604,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
         SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0, 0, dst_rect->w, dst_rect->h}, dst_rect);
     }
 
+	updateOverlay();
+	SDL_RenderCopy(vid.renderer, vid.overlay, &(SDL_Rect){0, 0,device_width, device_height}, &(SDL_Rect){0, 0,device_width, device_height});
     SDL_RenderPresent(vid.renderer);
     vid.blit = NULL;
 }
