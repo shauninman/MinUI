@@ -65,7 +65,7 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 
-#define OVERLAYS_FOLDER "/mnt/SDCARD/Overlays"
+#define OVERLAYS_FOLDER SDCARD_PATH "/Overlays"
 static char* overlay_path = NULL;
 
 
