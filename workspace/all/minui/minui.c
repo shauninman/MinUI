@@ -1708,16 +1708,34 @@ int main (int argc, char *argv[]) {
 							}
 			
 							if (optimized) {
-								if (thumbbmp) SDL_FreeSurface(thumbbmp);
+								if (thumbbmp) SDL_FreeSurface(thumbbmp); 
 
-								SDL_Rect art_rect = {0, 0, (int)(screen->w * 0.45), (int)(screen->h * 0.6)};
-								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, art_rect.w, art_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
+								int img_w = optimized->w;
+								int img_h = optimized->h;
+								double aspect_ratio = (double)img_h / img_w; 
+			
+								int max_w = (int)(screen->w * 0.45); 
+								int max_h = (int)(screen->h * 0.6);  
+			
+								int new_w = max_w;
+								int new_h = (int)(new_w * aspect_ratio); 
+			
+			
+								if (new_h > max_h) {
+									new_h = max_h;
+									new_w = (int)(new_h / aspect_ratio);
+								}
+			
+								SDL_Rect scale_rect = {
+									0,
+									0,
+									new_w,
+									new_h
+								};
 
-								SDL_Surface* cropped = GFX_blitScaleAspectCropped(optimized, thumbbmp);
-								SDL_FreeSurface(thumbbmp);
-								thumbbmp = cropped;
-								// i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
-								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, &(SDL_Rect){0,0,thumbbmp->w, thumbbmp->h}, SCALE1(CFG_getThumbnailRadius())); 
+								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, scale_rect.w, scale_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
+								SDL_BlitScaled(optimized, NULL, thumbbmp, &scale_rect);
+								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, &(SDL_Rect){0,0,thumbbmp->w, thumbbmp->h}, SCALE1(CFG_getThumbnailRadius())); // i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
 								SDL_FreeSurface(optimized);
 								had_thumb = 1;
 							}

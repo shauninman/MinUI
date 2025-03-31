@@ -250,8 +250,6 @@ SDL_Rect GFX_blitScaled(int scale, SDL_Surface *src, SDL_Surface *dst);
 SDL_Rect GFX_blitStretch(SDL_Surface *src, SDL_Surface *dst);
 // blits to the destination while keeping the aspect ratio.
 SDL_Rect GFX_blitScaleAspect(SDL_Surface *src, SDL_Surface *dst);
-// same but align to right
-SDL_Surface* GFX_blitScaleAspectCropped(SDL_Surface *src, SDL_Surface *dst);
 // same as GFX_blitScaledAspect, but fills both dimensions.
 SDL_Rect GFX_blitScaleToFill(SDL_Surface *src, SDL_Surface *dst);
 

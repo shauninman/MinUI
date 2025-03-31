@@ -1066,28 +1066,6 @@ SDL_Rect GFX_blitScaleAspect(SDL_Surface *src, SDL_Surface *dst)
 	return scaled_rect;
 }
 
-SDL_Surface* GFX_blitScaleAspectCropped(SDL_Surface *src, SDL_Surface *dst)
-{
-	if(!src || !dst) {
-		SDL_Rect none = {0,0};
-		return NULL;
-	}
-
-	SDL_Rect src_rect = {0, 0, src->w, src->h};
-	SDL_Rect dst_rect = {0, 0, dst->w, dst->h};
-	SDL_Rect scaled_rect = GFX_scaledRectAspect(src_rect, dst_rect);
-	// cropped x
-	scaled_rect.x = 0;
-	// crop
-	SDL_Surface *cropped = SDL_CreateRGBSurfaceWithFormat(dst->flags, scaled_rect.w, scaled_rect.h,
-		 dst->format->BitsPerPixel, dst->format->format);
-
-	//SDL_FillRect(cropped, NULL, 0);
-	SDL_BlitScaled(src, &src_rect, cropped, NULL);
-
-	return cropped;
-}
-
 static inline SDL_Rect GFX_scaledRectAspectFill(SDL_Rect src, SDL_Rect dst)
 {
 	SDL_Rect scaled_rect;
