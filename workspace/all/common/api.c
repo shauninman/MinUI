@@ -1066,6 +1066,23 @@ SDL_Rect GFX_blitScaleAspect(SDL_Surface *src, SDL_Surface *dst)
 	return scaled_rect;
 }
 
+SDL_Rect GFX_blitScaleAspectR(SDL_Surface *src, SDL_Surface *dst)
+{
+	if(!src || !dst) {
+		SDL_Rect none = {0,0};
+		return none;
+	}
+
+	SDL_Rect src_rect = {0, 0, src->w, src->h};
+	SDL_Rect dst_rect = {0, 0, dst->w, dst->h};
+	SDL_Rect scaled_rect = GFX_scaledRectAspect(src_rect, dst_rect);
+	// align right
+	scaled_rect.x = dst_rect.w - scaled_rect.w;
+	SDL_FillRect(dst, NULL, 0);
+	SDL_BlitScaled(src, NULL, dst, &scaled_rect);
+	return scaled_rect;
+}
+
 static inline SDL_Rect GFX_scaledRectAspectFill(SDL_Rect src, SDL_Rect dst)
 {
 	SDL_Rect scaled_rect;
