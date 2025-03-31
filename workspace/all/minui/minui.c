@@ -10,6 +10,7 @@
 #include "defines.h"
 #include "api.h"
 #include "utils.h"
+#include "config.h"
 #include <sys/resource.h>
 #include <pthread.h>
 

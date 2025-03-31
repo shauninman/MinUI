@@ -496,13 +496,3 @@ int clamp(int x, int lower, int upper)
 {
     return min(upper, max(x, lower));
 }
-
-SDL_Color uintToColour(uint32_t colour)
-{
-	SDL_Color tempcol;
-	tempcol.a = 255;
-	tempcol.r = (colour >> 16) & 0xFF;
-	tempcol.g = (colour >> 8) & 0xFF;
-	tempcol.b = colour & 0xFF;
-	return tempcol;
-}

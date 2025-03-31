@@ -205,7 +205,6 @@ int main(int argc, char *argv[])
 
             if (ctx.dirty)
             {
-                // CFG_init();
                 GFX_clear(ctx.screen);
                 if(bgbmp) {
                     SDL_Rect image_rect = {0, 0, ctx.screen->w, ctx.screen->h};

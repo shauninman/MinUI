@@ -28,6 +28,7 @@ all:
 	cd ./all/gametime/ && make
 	cd ./all/gametimectl/ && make
 	cd ./all/syncsettings/ && make
+	cd ./all/nextval/ && make
 	cd ./all/settings/ && make
 	cd ./all/ledcontrol/ && make
 	cd ./all/bootlogo/ && make
@@ -49,6 +50,7 @@ clean:
 	cd ./all/gametime/ && make clean
 	cd ./all/minput/ && make clean
 	cd ./all/syncsettings/ && make clean
+	cd ./all/nextval/ && make clean
 	cd ./all/settings/ && make
 	cd ./all/ledcontrol/ && make
 	cd ./all/bootlogo/ && make

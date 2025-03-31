@@ -78,6 +78,14 @@
 #define MAX_LIGHTS 0
 #endif
 
+enum
+{
+	GFX_SCALE_FULLSCREEN = 0,
+	GFX_SCALE_FIT,
+	GFX_SCALE_FILL,
+	GFX_SCALE_NUM_OPTIONS // do not use 
+};
+
 ///////////////////////////////
 
 #define STR_HELPER(x) #x
