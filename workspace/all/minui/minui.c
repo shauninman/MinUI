@@ -1713,9 +1713,11 @@ int main (int argc, char *argv[]) {
 								SDL_Rect art_rect = {0, 0, (int)(screen->w * 0.45), (int)(screen->h * 0.6)};
 								thumbbmp = SDL_CreateRGBSurfaceWithFormat(0, art_rect.w, art_rect.h, 16, SDL_PIXELFORMAT_RGBA4444);
 
-								SDL_Rect imgRect = GFX_blitScaleAspectR(optimized, thumbbmp);
+								SDL_Surface* cropped = GFX_blitScaleAspectCropped(optimized, thumbbmp);
+								SDL_FreeSurface(thumbbmp);
+								thumbbmp = cropped;
 								// i wrote my own blit function cause its faster at converting rgba4444 to rgba565 then SDL's one lol
-								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, &imgRect, SCALE1(CFG_getThumbnailRadius())); 
+								GFX_ApplyRoundedCorners_RGBA4444(thumbbmp, &(SDL_Rect){0,0,thumbbmp->w, thumbbmp->h}, SCALE1(CFG_getThumbnailRadius())); 
 								SDL_FreeSurface(optimized);
 								had_thumb = 1;
 							}
