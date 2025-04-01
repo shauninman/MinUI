@@ -1,0 +1,29 @@
+diff --git a/Makefile b/Makefile
+index 1aa1720..228fb6b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -390,6 +390,24 @@ else ifeq ($(platform), miyoo)
+ 	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
+ 	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
+ 
++# TrimUI Brick
++else ifeq ($(platform), tg5040)
++	TARGET := $(TARGET_NAME)_libretro.so
++	CC = $(CROSS_COMPILE)gcc
++	CXX = $(CROSS_COMPILE)g++
++	AR = $(CROSS_COMPILE)ar
++	SHARED := -shared -Wl,--version-script=link.T -Wl,-no-undefined
++	LDFLAGS += -fPIC -flto
++	CFLAGS := -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DM16BPP
++	CFLAGS += -ffast-math
++	CFLAGS += -falign-functions=1 -falign-jumps=1 -falign-loops=1
++	CFLAGS += -fomit-frame-pointer -ffast-math	
++	CFLAGS += -funsafe-math-optimizations -fsingle-precision-constant -fexpensive-optimizations
++	CFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops
++	CFLAGS += -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a
++	CFLAGS += -fomit-frame-pointer -ffast-math -fPIC -flto
++	OPTIMIZE := -Ofast -DNDEBUG
++	
+ # emscripten
+ else ifeq ($(platform), emscripten)
+ 	TARGET := $(TARGET_NAME)_libretro_$(platform).bc

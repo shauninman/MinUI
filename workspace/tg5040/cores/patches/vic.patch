@@ -1,0 +1,21 @@
+diff --git a/Makefile b/Makefile
+index 62cb321..e50aa6e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -380,6 +380,16 @@ else ifneq (,$(findstring armv,$(platform)))
+    endif
+    CFLAGS += -DARM -marm -DALIGN_DWORD -mthumb-interwork -falign-functions=16 -pipe -fstack-protector
+ 
++# TrimUI Brick
++else ifeq ($(platform), tg5040)
++   TARGET := $(TARGET_NAME)_libretro.so
++   fpic := -fPIC
++   SHARED := -shared -Wl,--no-undefined
++   LDFLAGS += -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T
++   HAVE_NEON = 1
++   CFLAGS += -DARM -DALIGN_DWORD -falign-functions=16 -pipe -fstack-protector
++   CFLAGS += -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a
++
+ # Wincross64
+ else ifeq ($(platform), wincross64)
+    AR = x86_64-w64-mingw32-ar

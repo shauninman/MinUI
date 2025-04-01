@@ -1,5 +1,6 @@
 CORES = fceumm gambatte gpsp pcsx_rearmed picodrive snes9x
 CORES+= mednafen_pce_fast mednafen_vb fake-08 mednafen_supafaust mgba pokemini race fbneo
+CORES+= libretro-uae c64 c128 vic pet plus4 libretro-cap32
 #CORES+= mednafen_pce_fast mednafen_vb fake-08 mednafen_supafaust mgba pokemini race 
 
 ###############################
@@ -44,6 +45,33 @@ snes9x2005_plus_FLAGS = USE_BLARGG_APU=1
 snes9x_REPO = https://github.com/libretro/snes9x
 snes9x_CORE = snes9x_libretro.so
 snes9x_BUILD_PATH = snes9x/libretro
+
+libretro-uae_REPO = https://github.com/libretro/libretro-uae
+libretro-uae_HASH = 2.6.1
+libretro-uae_CORE = puae2021_libretro.so
+
+libretro-cap32_REPO = https://github.com/libretro/libretro-cap32
+libretro-cap32_CORE = cap32_libretro.so
+
+c64_REPO  = https://github.com/libretro/vice-libretro
+c64_CORE  = vice_x64_libretro.so
+c64_FLAGS = EMUTYPE=x64
+
+c128_REPO  = https://github.com/libretro/vice-libretro
+c128_CORE  = vice_x128_libretro.so
+c128_FLAGS = EMUTYPE=x128
+
+vic_REPO  = https://github.com/libretro/vice-libretro
+vic_CORE  = vice_xvic_libretro.so
+vic_FLAGS = EMUTYPE=xvic
+
+pet_REPO  = https://github.com/libretro/vice-libretro
+pet_CORE  = vice_xpet_libretro.so
+pet_FLAGS = EMUTYPE=xpet
+
+plus4_REPO  = https://github.com/libretro/vice-libretro
+plus4_CORE  = vice_xplus4_libretro.so
+plus4_FLAGS = EMUTYPE=xplus4
 
 ###############################
 

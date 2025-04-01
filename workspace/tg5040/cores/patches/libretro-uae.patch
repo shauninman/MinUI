@@ -1,0 +1,45 @@
+diff --git a/Makefile b/Makefile
+index 7e5ff625..d0e5bdf9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -37,6 +37,18 @@ ifneq (,$(findstring unix,$(platform)))
+       endif
+    endif
+ 
++# TrimUI Brick
++else ifeq ($(platform), tg5040)
++   TARGET := $(TARGET_NAME)_libretro.so
++   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
++   LDFLAGS += -lm -lpthread -ldl
++   LDFLAGS += -fPIC -flto
++   fpic := -fPIC
++   CFLAGS += -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a+crc+simd
++   CFLAGS += -fomit-frame-pointer -ffast-math -fPIC -flto
++   CFLAGS += -Ofast -flto=4 -fmerge-all-constants -fno-math-errno
++   CXXFLAGS += $(CFLAGS)
++
+ # Raspberry Pi 4
+ else ifneq (,$(findstring rpi4,$(platform)))
+    TARGET := $(TARGET_NAME)_libretro.so
+diff --git a/sources/src/misc.c b/sources/src/misc.c
+index a97b28bc..b328969d 100644
+--- a/sources/src/misc.c
++++ b/sources/src/misc.c
+@@ -543,7 +543,7 @@ char *ua_fs_copy (char *dst, int maxlen, const TCHAR *src, int defchar)
+ char *ua_copy (char *dst, int maxlen, const char *src)
+ {
+ 	dst[0] = 0;
+-	strncpy (dst, src, maxlen);
++	strncpy (dst, src, maxlen & 0xffffffff);
+ 	return dst;
+ }
+ 
+@@ -555,7 +555,7 @@ TCHAR *au (const char *s)
+ TCHAR *au_copy (TCHAR *dst, int maxlen, const char *src)
+ {
+ 	dst[0] = 0;
+-	memcpy (dst, src, maxlen);
++	memcpy (dst, src, maxlen & 0xffffffff);
+ 	return dst;
+ }
+ 
