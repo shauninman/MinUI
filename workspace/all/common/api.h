@@ -204,6 +204,8 @@ SDL_Surface* GFX_init(int mode);
 #define GFX_setEffectColor PLAT_setEffectColor // (int color)
 #define GFX_setEffect PLAT_setEffect // (int effect)
 #define GFX_setOverlay PLAT_setOverlay// (int effect)
+#define GFX_setOffsetX PLAT_setOffsetX// (int effect)
+#define GFX_setOffsetY PLAT_setOffsetY// (int effect)
 void GFX_setMode(int mode);
 int GFX_hdmiChanged(void);
 SDL_Color /*GFX_*/uintToColour(uint32_t colour);
@@ -423,6 +425,8 @@ void PLAT_setSharpness(int sharpness);
 void PLAT_setEffectColor(int color);
 void PLAT_setEffect(int effect);
 void PLAT_setOverlay(int select, const char* tag);
+void PLAT_setOffsetX(int x);
+void PLAT_setOffsetY(int y);
 void PLAT_vsync(int remaining);
 scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);

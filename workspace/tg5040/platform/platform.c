@@ -419,8 +419,16 @@ static void updateEffect(void) {
 		effect.live_type = effect.type;
 	}
 }
-
-
+int screenx = 0;
+int screeny = 0;
+void PLAT_setOffsetX(int x) {
+    if (x < 0 || x > 100) return;
+    screenx = x - 50;
+}
+void PLAT_setOffsetY(int y) {
+    if (y < 0 || y > 100) return;
+    screeny = y - 50;  
+}
 void PLAT_setOverlay(int select, const char* tag) {
     if (vid.overlay) {
         SDL_DestroyTexture(vid.overlay);
@@ -548,8 +556,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
         h = vid.blit->src_h * vid.blit->scale;
         x = (device_width - w) / 2;
         y = (device_height - h) / 2;
-        dst_rect->x = x;
-        dst_rect->y = y;
+        dst_rect->x = x +screenx;
+        dst_rect->y = y +screeny;
         dst_rect->w = w;
         dst_rect->h = h;
     } else if (vid.blit->aspect > 0) { // aspect scaling mode
@@ -572,8 +580,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
         }
         x = (device_width - w) / 2;
         y = (device_height - h) / 2;
-        dst_rect->x = x;
-        dst_rect->y = y;
+        dst_rect->x = x +screenx;
+        dst_rect->y = y +screeny;
         dst_rect->w = w;
         dst_rect->h = h;
     } else { // full screen mode
@@ -583,8 +591,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
             dst_rect->x = (device_width - dst_rect->w) / 2;
             dst_rect->y = (device_height - dst_rect->h) / 2;
         } else {
-            dst_rect->x = 0;
-            dst_rect->y = 0;
+            dst_rect->x = screenx;
+            dst_rect->y = screeny;
             dst_rect->w = device_width;
             dst_rect->h = device_height;
         }

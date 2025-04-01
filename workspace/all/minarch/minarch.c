@@ -50,6 +50,8 @@ static int resampling_quality = 2;
 static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
+static int screenx = 0;
+static int screeny = 0;
 static int overlay = 0; 
 static int prevent_tearing = 1; // lenient
 static int use_core_fps = 0;
@@ -953,6 +955,111 @@ static char* max_ff_labels[] = {
 	"8x",
 	NULL,
 };
+static char* offset_labels[] = {
+	"-50",
+	"-49",
+	"-48",
+	"-47",
+	"-46",
+	"-45",
+	"-44",
+	"-43",
+	"-42",
+	"-41",
+	"-40",
+	"-39",
+	"-38",
+	"-37",
+	"-36",
+	"-35",
+	"-34",
+	"-33",
+	"-32",
+	"-31",
+	"-30",
+	"-29",
+	"-28",
+	"-27",
+	"-26",
+	"-25",
+	"-24",
+	"-23",
+	"-22",
+	"-21",
+	"-20",
+	"-20",
+	"-19",
+	"-18",
+	"-17",
+	"-16",
+	"-15",
+	"-14",
+	"-13",
+	"-12",
+	"-11",
+	"-10",
+	"-9",
+	"-8",
+	"-7",
+	"-6",
+	"-5",
+	"-4",
+	"-3",
+	"-2",
+	"-1",
+	"0",
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"10",
+	"11",
+	"12",
+	"13",
+	"14",
+	"15",
+	"16",
+	"17",
+	"18",
+	"19",
+	"20",
+	"21",
+	"22",
+	"23",
+	"24",
+	"25",
+	"26",
+	"27",
+	"28",
+	"29",
+	"30",
+	"31",
+	"32",
+	"33",
+	"34",
+	"35",
+	"36",
+	"37",
+	"38",
+	"39",
+	"40",
+	"41",
+	"42",
+	"43",
+	"44",
+	"45",
+	"46",
+	"47",
+	"48",
+	"49",
+	"50",
+	NULL,
+};
 
 ///////////////////////////////
 
@@ -962,6 +1069,8 @@ enum {
 	FE_OPT_AMBIENT,
 	FE_OPT_EFFECT,
 	FE_OPT_OVERLAY,
+	FE_OPT_SCREENX,
+	FE_OPT_SCREENY,
 	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_SYNC_REFERENCE,
@@ -1205,6 +1314,26 @@ static struct Config {
 				.values = overlay_labels,
 				.labels = overlay_labels,
 			},
+			[FE_OPT_SCREENX] = {
+				.key	= "minarch_screenx",
+				.name	= "Offset screen X",
+				.desc	= "Offset X pixels",
+				.default_value = 41,
+				.value = 51,
+				.count = 101,
+				.values = offset_labels,
+				.labels = offset_labels,
+			},
+			[FE_OPT_SCREENY] = {
+				.key	= "minarch_screeny",
+				.name	= "Offset screen Y",
+				.desc	= "Offset Y pixels",
+				.default_value = 41,
+				.value = 51,
+				.count = 101,
+				.values = offset_labels,
+				.labels = offset_labels,
+			},
 			[FE_OPT_SHARPNESS] = {
 				.key	= "minarch_screen_sharpness",
 				.name	= "Screen Sharpness",
@@ -1377,6 +1506,16 @@ static void Config_syncFrontend(char* key, int value) {
 		GFX_setOverlay(value,core.tag);
 		renderer.dst_p = 0;
 		i = FE_OPT_OVERLAY;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_SCREENX].key)) {
+		screenx = value;
+		GFX_setOffsetX(value);
+		i = FE_OPT_SCREENX;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_SCREENY].key)) {
+		screeny = value;
+		GFX_setOffsetY(value);
+		i = FE_OPT_SCREENY;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
 		screen_sharpness = value;
@@ -5417,6 +5556,8 @@ static void Menu_loop(void) {
 	GFX_clearAll();
 	PWR_warn(1);
 	GFX_setOverlay(overlay,core.tag);
+	GFX_setOffsetX(screenx);
+	GFX_setOffsetY(screeny);
 	if (!quit) {
 		if (restore_w!=DEVICE_WIDTH || restore_h!=DEVICE_HEIGHT) {
 			screen = GFX_resize(restore_w,restore_h,restore_p);
