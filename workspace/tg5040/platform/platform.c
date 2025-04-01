@@ -533,6 +533,8 @@ void PLAT_powerOff(void) {
 	// while (1) pause(); // lolwat
 }
 
+int PLAT_supportsDeepSleep(void) { return 1; }
+
 ///////////////////////////////
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"

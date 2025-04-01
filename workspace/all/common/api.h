@@ -280,7 +280,8 @@ void PWR_disablePowerOff(void);
 void PWR_powerOff(void);
 int PWR_isPoweringOff(void);
 
-void PWR_fauxSleep(void);
+void PWR_sleep(void);
+int PWR_deepSleep(void);
 
 void PWR_disableSleep(void);
 void PWR_enableSleep(void);
@@ -331,6 +332,8 @@ void PLAT_enableOverlay(int enable);
 #define PWR_LOW_CHARGE 10
 void PLAT_getBatteryStatus(int* is_charging, int* charge); // 0,1 and 0,10,20,40,60,80,100
 void PLAT_enableBacklight(int enable);
+int PLAT_supportsDeepSleep(void);
+int PLAT_deepSleep(void);
 void PLAT_powerOff(void);
 	
 void PLAT_setCPUSpeed(int speed); // enum
