@@ -80,10 +80,6 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc.
 
-# Super awesome contributions thank you's
-
-- [@frysee](https://github.com/frysee) for the super awesome game switcher PR. Truly love this feature, thank you so much for contributing it to this project!
-  
 # Installing
 
 Just copy MinUI.zip (don't unzip this just copy as zipfile) and trimui to the root of your SD Card, bootup your Trim UI device it will say installing/updating and after that just enjoy all your beloved games!
