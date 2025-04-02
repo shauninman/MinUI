@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
             MenuItem{Generic, "Brightness", "Display brightness (0-10)", 0, 10, []() -> std::any
                     { return GetBrightness(); }, [](const std::any &value)
                     { SetBrightness(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Volume", "Speaker volume (0-10)", 0, 20, []() -> std::any
+            MenuItem{Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
                     { return GetVolume(); }, [](const std::any &value)
                     { SetVolume(std::any_cast<int>(value)); }},
             MenuItem{Generic, "Color temperature", "Color temperature (0-40)", 0, 40, []() -> std::any
