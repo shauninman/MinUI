@@ -44,6 +44,8 @@ void CFG_defaults(MinUISettings *cfg)
 
         .screenTimeoutSecs = 60,
         .suspendTimeoutSecs = 30,
+
+        .haptics = false,
     };
 
     *cfg = defaults;
@@ -156,6 +158,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
             if (sscanf(line, "switcherscale=%i", &temp_value) == 1)
             {
                 CFG_setGameSwitcherScaling(temp_value);
+                continue;
+            }
+            if (sscanf(line, "haptics=%i", &temp_value) == 1)
+            {
+                CFG_setHaptics((bool)temp_value);
                 continue;
             }
         }
@@ -353,6 +360,16 @@ void CFG_setGameSwitcherScaling(int enumValue)
     settings.gameSwitcherScaling = clamp(enumValue, 0, GFX_SCALE_NUM_OPTIONS);
 }
 
+bool CFG_getHaptics(void)
+{
+    return settings.haptics;
+}
+
+void CFG_setHaptics(bool enable)
+{
+    settings.haptics = enable;
+}
+
 void CFG_get(const char *key, char *value)
 {
     if (strcmp(key, "font") == 0)
@@ -472,6 +489,7 @@ void CFG_sync(void)
     fprintf(file, "screentimeout=%i\n", settings.screenTimeoutSecs);
     fprintf(file, "suspendTimeout=%i\n", settings.suspendTimeoutSecs);
     fprintf(file, "switcherscale=%i\n", settings.gameSwitcherScaling);
+    fprintf(file, "haptics=%i\n", settings.haptics);
 
     fclose(file);
 }
@@ -497,7 +515,7 @@ void CFG_print(void)
     printf("\t\"screentimeout\": %i,\n", settings.screenTimeoutSecs);
     printf("\t\"suspendTimeout\": %i,\n", settings.suspendTimeoutSecs);
     printf("\t\"switcherscale\": %i,\n", settings.gameSwitcherScaling);
-
+    printf("\t\"haptics\": %i,\n", settings.haptics);
     // meta, not a real setting
     if (settings.font == 1)
         printf("\t\"fontpath\": \"%s\"\n", RES_PATH "/chillroundm.ttf");

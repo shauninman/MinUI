@@ -623,6 +623,7 @@ void GFX_delay(void) {
 FALLBACK_IMPLEMENTATION int PLAT_supportsOverscan(void) { return 0; }
 FALLBACK_IMPLEMENTATION void PLAT_setEffectColor(int next_color) { }
 
+
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding) {
 	int text_width;
 	strcpy(out_name, in_name);
@@ -2499,7 +2500,6 @@ int PAD_tappedMenu(uint32_t now) {
 }
 
 ///////////////////////////////
-
 static struct VIB_Context {
 	int initialized;
 	pthread_t pt;
@@ -2543,6 +2543,49 @@ void VIB_setStrength(int strength) {
 int VIB_getStrength(void) {
 	return vib.strength;
 }
+
+#define MIN_STRENGTH 0x0000
+#define MAX_STRENGTH 0xFFFF
+#define NUM_INCREMENTS 10
+
+int VIB_scaleStrength(int strength) { // scale through 0-10 (NUM_INCREMENTS)
+	int scaled_strength = MIN_STRENGTH + (int)(strength * ((long long)(MAX_STRENGTH - MIN_STRENGTH) / NUM_INCREMENTS));
+	return scaled_strength; // between 0x0000 and 0xFFFF
+}
+
+void VIB_singlePulse(int strength, int duration_ms) {
+    VIB_setStrength(0);
+	VIB_setStrength(VIB_scaleStrength(strength));
+    usleep(duration_ms * 1000);
+    VIB_setStrength(0);
+}
+
+void VIB_doublePulse(int strength, int duration_ms, int gap_ms) {
+    VIB_setStrength(0);
+	VIB_singlePulse(VIB_scaleStrength(strength), duration_ms);
+    usleep(gap_ms * 1000);
+	VIB_setStrength(0);
+	usleep(gap_ms * 1000);
+    VIB_singlePulse(VIB_scaleStrength(strength), duration_ms);
+	usleep(gap_ms * 1000);
+	VIB_setStrength(0);
+}
+
+void VIB_triplePulse(int strength, int duration_ms, int gap_ms) {
+    VIB_setStrength(0);
+	VIB_singlePulse(VIB_scaleStrength(strength), duration_ms);
+    usleep(gap_ms * 1000);
+	VIB_setStrength(0);
+	usleep(gap_ms * 1000);
+    VIB_singlePulse(VIB_scaleStrength(strength), duration_ms);
+    usleep(gap_ms * 1000);
+	VIB_setStrength(0);
+	usleep(gap_ms * 1000);
+    VIB_singlePulse(VIB_scaleStrength(strength), duration_ms);
+	usleep(gap_ms * 1000);
+	VIB_setStrength(0);
+}
+
 
 ///////////////////////////////
 
@@ -2592,9 +2635,12 @@ void PWR_init(void) {
 	pwr.should_warn = 0;
 	pwr.charge = PWR_LOW_CHARGE;
 	
+	if (CFG_getHaptics()) {
+		VIB_singlePulse(VIB_bootStrength, VIB_bootDuration_ms);
+	}
 	PWR_initOverlay();
-
 	PWR_updateBatteryStatus();
+
 	pthread_create(&pwr.battery_pt, NULL, &PWR_monitorBattery, NULL);
 	pwr.initialized = 1;
 }
@@ -2769,6 +2815,7 @@ void PWR_powerOff(void) {
 		PLAT_clearVideo(gfx.screen);
 		GFX_blitMessage(font.large, msg, gfx.screen,&(SDL_Rect){0,0,gfx.screen->w,gfx.screen->h}); //, NULL);
 		GFX_flip(gfx.screen);
+
 		PLAT_powerOff();
 	}
 }
@@ -2782,6 +2829,9 @@ static void PWR_enterSleep(void) {
 	}
 	else {
 		SetRawVolume(MUTE_VOLUME_RAW);
+		if (CFG_getHaptics()) {
+			VIB_singlePulse(VIB_sleepStrength, VIB_sleepDuration_ms);
+		}
 		PLAT_enableBacklight(0);
 	}
 	system("killall -STOP keymon.elf");
@@ -2801,6 +2851,9 @@ static void PWR_exitSleep(void) {
 		// buh
 	}
 	else {
+		if (CFG_getHaptics()) {
+			VIB_singlePulse(VIB_sleepStrength, VIB_sleepDuration_ms);
+		}
 		PLAT_enableBacklight(1);
 		SetVolume(GetVolume());
 	}

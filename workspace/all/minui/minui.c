@@ -1402,7 +1402,7 @@ int main (int argc, char *argv[]) {
 	
 	PAD_init();
 	// LOG_info("- input init: %lu\n", SDL_GetTicks() - main_begin);
-	
+	VIB_init();
 	PWR_init();
 	if (!HAS_POWER_BUTTON && !simple_mode) PWR_disableSleep();
 	// LOG_info("- power init: %lu\n", SDL_GetTicks() - main_begin);

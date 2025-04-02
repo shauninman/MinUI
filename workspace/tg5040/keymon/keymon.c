@@ -125,6 +125,17 @@ int main (int argc, char *argv[]) {
 					else if (ev.code==CODE_MUTE) {
 						printf("mute: %i\n", val);
 						SetMute(val);
+						if (val) {
+							// tmp solution
+							system("echo 1500000 > /sys/class/motor/voltage");
+							system("echo 1 > /sys/class/gpio/gpio227/value");
+							usleep(100000);
+							system("echo 0 > /sys/class/gpio/gpio243/value");
+							usleep(100000);
+							system("echo 1 > /sys/class/gpio/gpio227/value");
+							usleep(100000);
+							system("echo 0 > /sys/class/gpio/gpio227/value");
+						}
 					}
 				}
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;

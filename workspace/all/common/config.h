@@ -57,6 +57,9 @@ typedef struct
 	uint32_t screenTimeoutSecs;
 	uint32_t suspendTimeoutSecs;
 
+	// Haptic
+	bool haptics;
+
 } MinUISettings;
 
 void CFG_init(FontLoad_callback_t fontCallback, ColorSet_callback_t ccb);
@@ -105,6 +108,9 @@ void CFG_setShowGameArt(bool show);
 // The scaling algorithm used for the game switcher preview image.
 int CFG_getGameSwitcherScaling(void);
 void CFG_setGameSwitcherScaling(int enumValue);
+// Enable/disable haptics.
+bool CFG_getHaptics(void);
+void CFG_setHaptics(bool enable);
 
 void CFG_sync(void);
 void CFG_quit(void);

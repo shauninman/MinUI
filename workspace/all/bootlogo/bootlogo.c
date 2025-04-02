@@ -68,6 +68,9 @@ int loadImages()
     } else {
         // could not open directory
         LOG_error("could not open directory");
+        if (CFG_getHaptics()) {
+            VIB_triplePulse(5, 150, 200);
+        }
         return 0;
     }
     return count;

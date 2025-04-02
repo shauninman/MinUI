@@ -697,6 +697,9 @@ void PLAT_enableBacklight(int enable) {
 }
 
 void PLAT_powerOff(void) {
+	if (CFG_getHaptics()) {
+		VIB_singlePulse(VIB_bootStrength, VIB_bootDuration_ms);
+	}
 	system("rm -f /tmp/minui_exec && sync");
 	sleep(2);
 
@@ -873,23 +876,26 @@ void PLAT_setCPUSpeed(int speed) {
 	putInt(GOVERNOR_PATH, freq);
 }
 
-#define RUMBLE_PATH "/sys/class/gpio/gpio227/value"
-#define RUMBLE_VOLTAGE_PATH "/sys/class/motor/voltage"
 #define MAX_STRENGTH 0xFFFF
 #define MIN_VOLTAGE 500000
 #define MAX_VOLTAGE 3300000
+#define RUMBLE_PATH "/sys/class/gpio/gpio227/value"
+#define RUMBLE_VOLTAGE_PATH "/sys/class/motor/voltage"
 
 void PLAT_setRumble(int strength) {
-	if(strength != 0) {
-		int voltage = MIN_VOLTAGE + (int)((strength * (long long)(MAX_VOLTAGE - MIN_VOLTAGE)) / MAX_STRENGTH);
+	int voltage = MAX_VOLTAGE;
+
+	if(strength > 0 && strength < MAX_STRENGTH) {
+		voltage = MIN_VOLTAGE + (int)(strength * ((long long)(MAX_VOLTAGE - MIN_VOLTAGE) / MAX_STRENGTH));
 		putInt(RUMBLE_VOLTAGE_PATH, voltage);
 	}
 	else {
 		putInt(RUMBLE_VOLTAGE_PATH, MAX_VOLTAGE);
 	}
 
-	// enable
-	putInt(RUMBLE_PATH, (strength && !GetMute()) ? 1 : 0);
+	// enable rumble - removed the FN switch disabling haptics
+	// did not make sense 
+	putInt(RUMBLE_PATH, (strength) ? 1 : 0);
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
@@ -1252,4 +1258,6 @@ void PLAT_setLedColor(LightSettings *led)
     }
     PLAT_chmod(filepath, 0);
 }
+
+
 

@@ -350,12 +350,20 @@ int PAD_justRepeated(int btn);
 int PAD_tappedMenu(uint32_t now); // special case, returns 1 on release of BTN_MENU within 250ms if BTN_PLUS/BTN_MINUS haven't been pressed
 
 ///////////////////////////////
+#define VIB_sleepStrength 4
+#define VIB_sleepDuration_ms 100
+#define VIB_bootStrength 5
+#define VIB_bootDuration_ms 100
 
 void VIB_init(void);
 void VIB_quit(void);
 void VIB_setStrength(int strength);
- int VIB_getStrength(void);
-	
+int VIB_getStrength(void);
+int VIB_scaleStrength(int strength);
+void VIB_singlePulse(int strength, int duration_ms);
+void VIB_doublePulse(int strength, int duration_ms, int gap_ms);
+void VIB_triplePulse(int strength, int duration_ms, int gap_ms);
+
 ///////////////////////////////
 
 #define BRIGHTNESS_BUTTON_LABEL "+ -" // ew
