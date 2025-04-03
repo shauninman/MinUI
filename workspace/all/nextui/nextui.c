@@ -1467,6 +1467,7 @@ int main (int argc, char *argv[]) {
 	int ox;
 	int oy;
 	int is_scrolling = 1;
+	char folderBgPath[1024];
 	folderbgbmp = NULL;
 	SDL_Surface* bgbmp = IMG_Load(SDCARD_PATH "/bg.png");
 	SDL_Surface* convertedbg = SDL_ConvertSurfaceFormat(bgbmp, SDL_PIXELFORMAT_RGB565, 0);
@@ -1486,8 +1487,6 @@ int main (int argc, char *argv[]) {
 
 		GFX_startFrame();
 		unsigned long now = SDL_GetTicks();
-		
-	
 		
 		PAD_poll();
 			
@@ -1678,30 +1677,73 @@ int main (int argc, char *argv[]) {
 				// can_resume = 0;
 				if (total>0) readyResume(top->entries->items[top->selected]);
 			}
-
 		}
 		
 		if(dirty || dirtyanim) {
 			// PWR_setCPUSpeed(CPU_SPEED_PERFORMANCE);
 			GFX_clear(screen);
-			if(folderbgbmp) {
-				SDL_Rect image_rect = {0, 0, screen->w, screen->h};
-				SDL_BlitSurface(folderbgbmp, NULL, screen, &image_rect);
-			}
-			else if(bgbmp) {
-				SDL_Rect image_rect = {0, 0, screen->w, screen->h};
-				SDL_BlitSurface(bgbmp, NULL, screen, &image_rect);
-			}
+
+			char thumbpath[1024];
+
+			// Update background if neccessary
+			if(total > 0)
+			{
+				Entry* entry = top->entries->items[top->selected];
 			
+				char tmp_path[MAX_PATH];
+				strncpy(tmp_path, entry->path, sizeof(tmp_path) - 1);
+				tmp_path[sizeof(tmp_path) - 1] = '\0';
+			
+				char* res_name = strrchr(tmp_path, '/');
+				if (res_name) res_name++;
+
+				char path_copy[1024];
+				strncpy(path_copy, entry->path, sizeof(path_copy) - 1);
+				path_copy[sizeof(path_copy) - 1] = '\0';
+		
+				char* rompath = dirname(path_copy);
+			
+				char res_copy[1024];
+				strncpy(res_copy, res_name, sizeof(res_copy) - 1);
+				res_copy[sizeof(res_copy) - 1] = '\0';
+		
+				char* dot = strrchr(res_copy, '.');
+				if (dot) *dot = '\0'; 
+
+				// folder-specific background for roms (or not)
+				if(entry->type == ENTRY_DIR || CFG_getRomsUseFolderBackground()) {
+					char *newBg = entry->type == ENTRY_DIR ? entry->path : rompath;
+					if(strcmp(newBg, folderBgPath) != 0) {
+						strncpy(folderBgPath, newBg, sizeof(folderBgPath) - 1);
+						folderBgPath[sizeof(folderBgPath) - 1] = '\0';
+						//strcpy(folderBgPath, newBg);
+						SDL_FreeSurface(folderbgbmp);
+						folderbgbmp = loadFolderBackground(folderBgPath);
+					}
+					else {
+						// keep
+					}
+				}
+
+				// game art
+				if(CFG_getShowGameArt())
+					snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
+
+				if(folderbgbmp) {
+					SDL_Rect image_rect = {0, 0, screen->w, screen->h};
+					SDL_BlitSurface(folderbgbmp, NULL, screen, &image_rect);
+				}
+				else if(bgbmp) {
+					SDL_Rect image_rect = {0, 0, screen->w, screen->h};
+					SDL_BlitSurface(bgbmp, NULL, screen, &image_rect);
+				}
+			}
+
 			// simple thumbnail support a thumbnail for a file or folder named NAME.EXT needs a corresponding /.res/NAME.EXT.png 
 			// that is no bigger than platform FIXED_HEIGHT x FIXED_HEIGHT
 			
 			if (!show_version && total > 0) {
 				Entry* entry = top->entries->items[top->selected];
-			
-				//char res_root[MAX_PATH];
-				//strncpy(res_root, entry->path, sizeof(res_root) - 1);
-				//res_root[sizeof(res_root) - 1] = '\0';  
 			
 				char tmp_path[MAX_PATH];
 				strncpy(tmp_path, entry->path, sizeof(tmp_path) - 1);
@@ -1711,37 +1753,7 @@ int main (int argc, char *argv[]) {
 				if (res_name) res_name++;
 			
 				if (dirty) {
-					char path_copy[1024];
-					strncpy(path_copy, entry->path, sizeof(path_copy) - 1);
-					path_copy[sizeof(path_copy) - 1] = '\0';
-			
-					char* rompath = dirname(path_copy);
-
-					// folder-specific background for roms (or not)
-					if(entry->type == ENTRY_DIR || CFG_getRomsUseFolderBackground()) {
-						if(folderbgbmp) {
-							SDL_FreeSurface(folderbgbmp);
-						}
-						folderbgbmp = loadFolderBackground(entry->type == ENTRY_DIR ? tmp_path : rompath);
-						if (folderbgbmp) {
-							SDL_Rect image_rect = {0, 0, screen->w, screen->h};
-							SDL_BlitSurface(folderbgbmp, NULL, screen, &image_rect);
-						}
-					}
-			
-					char res_copy[1024];
-					strncpy(res_copy, res_name, sizeof(res_copy) - 1);
-					res_copy[sizeof(res_copy) - 1] = '\0';
-			
-					char* dot = strrchr(res_copy, '.');
-					if (dot) *dot = '\0'; 
-			
-					char thumbpath[1024];
-					if(CFG_getShowGameArt())
-						snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
-
 					//LOG_info("Loading game art from %s\n", thumbpath);
-			
 					had_thumb = 0;
 					if (exists(thumbpath)) {
 						SDL_Surface* newThumb = IMG_Load(thumbpath);
