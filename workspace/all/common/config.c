@@ -2,7 +2,7 @@
 #include "defines.h"
 #include "utils.h"
 
-MinUISettings settings = {0};
+NextUISettings settings = {0};
 
 // deprecated
 uint32_t THEME_COLOR1_255;
@@ -18,12 +18,12 @@ static inline uint32_t HexToUint32_unmapped(const char *hexColor) {
     return value;
 }
 
-void CFG_defaults(MinUISettings *cfg)
+void CFG_defaults(NextUISettings *cfg)
 {
     if (!cfg)
         return;
 
-    MinUISettings defaults = {
+    NextUISettings defaults = {
         .font = 1, // Next
         .color1_255 = HexToUint32_unmapped("ffffff"),
         .color2_255 = HexToUint32_unmapped("9b2257"),

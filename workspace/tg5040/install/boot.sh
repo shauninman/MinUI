@@ -40,6 +40,11 @@ if [ -f "$UPDATE_PATH" ]; then
 		./show.elf ./$DEVICE/installing.png
 	fi
 
+	# clean replacement for core paths
+	rm -rf $SYSTEM_PATH/$PLATFORM/bin
+	rm -rf $SYSTEM_PATH/$PLATFORM/lib
+	rm -rf $SYSTEM_PATH/$PLATFORM/paks/MinUI.pak
+
 	./unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH" # &> /mnt/SDCARD/unzip.txt
 	rm -f "$UPDATE_PATH"
 

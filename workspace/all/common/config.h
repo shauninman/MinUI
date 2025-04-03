@@ -61,12 +61,12 @@ typedef struct
 	// Haptic
 	bool haptics;
 
-} MinUISettings;
+} NextUISettings;
 
 void CFG_init(FontLoad_callback_t fontCallback, ColorSet_callback_t ccb);
 void CFG_print(void);
 void CFG_get(const char *key, char * value);
-// void CFG_defaults(MinUISettings*);
+// void CFG_defaults(NextUISettings*);
 //  The font id to use as the UI font.
 //  0 - Default MinUI font
 //  1 - Default NextUI font (default)

@@ -390,7 +390,7 @@ static void Game_changeDisc(char* path) {
 	game_info.size = game.size;
 	
 	disk_control_ext.replace_image_index(0, &game_info);
-	putFile(CHANGE_DISC_PATH, path); // MinUI still needs to know this to update recents.txt
+	putFile(CHANGE_DISC_PATH, path); // NextUI still needs to know this to update recents.txt
 }
 
 ///////////////////////////////////////
@@ -4562,7 +4562,7 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 static MenuList options_menu = {
 	.type = MENU_LIST,
 	.items = (MenuItem[]) {
-		{"Frontend", "MinUI (" BUILD_DATE " " BUILD_HASH ")",.on_confirm=OptionFrontend_openMenu},
+		{"Frontend", "NextUI (" BUILD_DATE " " BUILD_HASH ")",.on_confirm=OptionFrontend_openMenu},
 		{"Emulator",.on_confirm=OptionEmulator_openMenu},
 		// TODO: this should be hidden with no cheats available
 		{"Cheats",.on_confirm=OptionCheats_openMenu},

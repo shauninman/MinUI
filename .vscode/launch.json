@@ -5,14 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "MinUI Launcher",
+            "name": "NextUI Launcher",
             "request": "launch",
             "type": "cppdbg",
             "osx": {
               "MIMode": "lldb"
             },
-            "cwd": "${workspaceFolder}/workspace/all/minui/build/macos",
-            "program": "${workspaceFolder}/workspace/all/minui/build/macos/minui",
+            "cwd": "${workspaceFolder}/workspace/all/nextui/build/macos",
+            "program": "${workspaceFolder}/workspace/all/nextui/build/macos/nextui",
             "preLaunchTask": "C/C++: gcc build macos",
         },
         {

@@ -29,7 +29,7 @@ h700/a133
 		it must have something to do with some control loop not being broken properly
 			caused by systemd restarting the ui loop?
 			check dmenu.bin or dmenu_ln
-				no loop, just calls MinUI.pak/launch.sh directly
+				no loop, just calls NextUI.pak/launch.sh directly
 				check higher, what's changed?
 			check PLAT_powerOff()
 				looks fine (breaks MinUI loop and exits)

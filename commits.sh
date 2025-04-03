@@ -37,8 +37,8 @@ bump() {
 }
 
 {
-	# tell MINUI
-	printf '%-26s%-10s%-12s%s\n' MINUI HASH DATE USER/REPO
+	# tell NEXTUI
+	printf '%-26s%-10s%-12s%s\n' NEXTUI HASH DATE USER/REPO
 	rule
 	show ./
 	bump

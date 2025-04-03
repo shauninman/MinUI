@@ -1,5 +1,5 @@
 #!/bin/sh
-# MiniUI.pak
+# MinUI.pak
 
 # recover from readonly SD card -------------------------------
 # touch /mnt/writetest
@@ -12,6 +12,11 @@
 # fi
 
 #######################################
+
+if [ -f "/tmp/poweroff" ]; then
+	poweroff
+	exit 0
+fi
 
 export PLATFORM="tg5040"
 export SDCARD_PATH="/mnt/SDCARD"
@@ -117,22 +122,23 @@ cd $(dirname "$0")
 
 #######################################
 
-EXEC_PATH="/tmp/minui_exec"
+EXEC_PATH="/tmp/nextui_exec"
 NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH"  && sync
 while [ -f $EXEC_PATH ]; do
-	minui.elf &> $LOGS_PATH/minui.txt
+	nextui.elf &> $LOGS_PATH/nextui.txt
 	echo $CPU_SPEED_PERF > $CPU_PATH
-	echo `date +'%F %T'` > "$DATETIME_PATH"
-	sync
 	
 	if [ -f $NEXT_PATH ]; then
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
 		rm -f $NEXT_PATH
 		echo $CPU_SPEED_PERF > $CPU_PATH
-		echo `date +'%F %T'` > "$DATETIME_PATH"
-		sync
+	fi
+
+	if [ -f "/tmp/poweroff" ]; then
+		poweroff
+		exit 0
 	fi
 done
 

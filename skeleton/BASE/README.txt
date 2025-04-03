@@ -8,7 +8,7 @@ Installing
 
 PREFACE
 
-MinUI has two essential parts: an installer/updater zip archive named "MinUI.zip" and a bootstrap file or folder with names that vary by platform.
+MinUI has two essential parts: an installer/updater zip archive named "NextUI.zip" and a bootstrap file or folder with names that vary by platform.
 
 On devices that support two SD cards (eg. RG35XX) I will use the name "TF1" to refer to the card that goes into slot one of the device. All other instances of "SD card" or "primary card" refer to the card that goes into the second slot or to the sole SD card of devices that only support a single card. To be able to use MinUI from a single SD card on multiple devices you must install it on the second card of devices that support two SD cards.
 
@@ -28,7 +28,7 @@ MinUI is meant to be used with Moss installed on the SD card that goes into the 
 
 	https://github.com/shauninman/Moss/releases
 
-Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TFGAME) of the RGB30.
+Copy "NextUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TFGAME) of the RGB30.
 
 MAGICX XU MINI M
 
@@ -36,7 +36,7 @@ MinUI is meant to be used with a heavily modified stock SD card that goes into t
 
 	https://github.com/shauninman/Moss-magicmini/releases
 
-Copy "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TF2/EXT).
+Copy "NextUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TF2/EXT).
 
 MAGICX MINI ZERO 28
 
@@ -44,41 +44,41 @@ MinUI is meant to be used with Moss installed on the SD card that goes into the 
 
 	https://github.com/shauninman/Moss-zero28/releases
 
-Copy the "magicx" folder and "MinUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TF2/EXT).
+Copy the "magicx" folder and "NextUI.zip" (without unzipping) to the root of the SD card that goes into the right slot (labeled TF2/EXT).
 
 TRIMUI SMART / TRIMUI SMART PRO / TRIMUI BRICK
 
-Copy the "trimui" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "trimui" folder and "NextUI.zip" (without unzipping) to the root of the SD card.
 
 MIYOO MINI / MIYOO A30
 
-Copy the "miyoo" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "miyoo" folder and "NextUI.zip" (without unzipping) to the root of the SD card.
 
 MIYOO MINI PLUS
 
-Copy the "miyoo354" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "miyoo354" folder and "NextUI.zip" (without unzipping) to the root of the SD card.
 
 If you have a device with working RTC, you can enable it by creating an empty file named "enable-rtc" (no extension) in "/.userdata/miyoomini/".
 
 MIYOO FLIP
 
-Copy the "miyoo355" folder and "MinUI.zip" (without unzipping) to the root of the SD card. Put the SD card into the right slot (beneath the power button).
+Copy the "miyoo355" folder and "NextUI.zip" (without unzipping) to the root of the SD card. Put the SD card into the right slot (beneath the power button).
 
 M17
 
-Copy the "em_ui.sh" file and "MinUI.zip" (without unzipping) to the root of the SD card.
+Copy the "em_ui.sh" file and "NextUI.zip" (without unzipping) to the root of the SD card.
 
 RG35XX
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
 
-Copy "/rg35xx/dmenu.bin" (just the file) to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
+Copy "/rg35xx/dmenu.bin" (just the file) to the root of the MISC partition of the TF1 card. Copy "NextUI.zip" (without unzipping) to the root of the TF2 card.
 
 RG35XX PLUS / RG35XX H / RG35XX 2024 / RG28XX / RG35XXSP / RG40XXH / RGCUBEXX / RG34XX
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it. (Note that the PLUS/H/2024/SP stock TF1 is not compatible with the 28XX/40XXH and vice versa.)
 
-Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the "NO NAME" partition (FAT32 with an "anbernic" folder) of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
+Copy "/rg35xxplus/dmenu.bin" (just the file) to the root of the "NO NAME" partition (FAT32 with an "anbernic" folder) of the TF1 card. Copy "NextUI.zip" (without unzipping) to the root of the TF2 card.
 
 GKD PIXEL / GKD MINI
 
@@ -86,7 +86,7 @@ An important caveat: this device is not cross-compatible with other MinUI-suppor
 
 Backup your stock SD card (not just the "ROMS" partition but the entire thing). If you like to live on the edge just create a folder named "stock" on the "ROMS" partition and copy everything into that folder.
 
-Copy the "gkdpixel" folder and "MinUI.zip" (without unzipping) to the root of the "ROMS" partition of the SD card. (On the GKD Mini should be TF1.)
+Copy the "gkdpixel" folder and "NextUI.zip" (without unzipping) to the root of the "ROMS" partition of the SD card. (On the GKD Mini should be TF1.)
 
 Boot stock, navigate to the "APP" folder and launch "file manager". Then use the d-pad and A button to navigate to "/media/roms/gkdpixel". Highlight the "install.sh" file and press A to open a menu and select "Execute" to install MinUI.
 
@@ -95,7 +95,7 @@ Updating
 
 ALL
 
-Copy "MinUI.zip" (without unzipping) to the root of the SD card containing your Roms.
+Copy "NextUI.zip" (without unzipping) to the root of the SD card containing your Roms.
 
 ----------------------------------------
 Shortcuts

@@ -18,7 +18,7 @@ all:
 	cd ./$(PLATFORM)/libmsettings && make
 	cd ./$(PLATFORM) && make early # eg. other libs
 	cd ./$(PLATFORM)/keymon && make
-	cd ./all/minui/ && make
+	cd ./all/nextui/ && make
 	cd ./all/minarch/ && make
 	cd ./all/battery/ && make
 	cd ./all/clock/ && make
@@ -32,14 +32,19 @@ all:
 	cd ./all/settings/ && make
 	cd ./all/ledcontrol/ && make
 	cd ./all/bootlogo/ && make
-# BUILDOPTION: don't forget to uncomment this to rebuild cores from  source, idk if this was left commented by mistake, but I actually agree on leaving this commented out by default as they take a long while to build and only really need building if someone bothered to pull the repo's manually and there are actually updates to any core worth including in new MinUI Next releases.
+# BUILDOPTION: don't forget to uncomment this to rebuild cores from  
+# source, idk if this was left commented by mistake, but I actually 
+# agree on leaving this commented out by default as they take a long 
+# while to build and only really need building if someone bothered to 
+# pull the repo's manually and there are actually updates to any core 
+# worth including in new NextUI releases.
 	# cd ./$(PLATFORM)/cores && make
 	cd ./$(PLATFORM) && make
 
 clean:
 	cd ./$(PLATFORM)/libmsettings && make clean
 	cd ./$(PLATFORM)/keymon && make clean
-	cd ./all/minui/ && make clean
+	cd ./all/nextui/ && make clean
 	cd ./all/minarch/ && make clean
 	cd ./all/battery/ && make clean
 	cd ./all/clock/ && make clean

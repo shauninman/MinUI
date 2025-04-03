@@ -3,7 +3,7 @@
 pushd "$(dirname "$0")" >> /dev/null
 
 files=$(ls *.png)
-screenshotText="# MinUI screenshots\n\n"
+screenshotText="# NextUI screenshots\n\n"
 
 for file in $files; do
     screenshotText+="<img src=\"$file\" width=320 /> "

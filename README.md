@@ -83,7 +83,7 @@ Trimui Smart Pro | MinUI-20231111b-2
 
 # Installing
 
-Just copy MinUI.zip (don't unzip this just copy as zipfile) and trimui to the root of your SD Card, bootup your Trim UI device it will say installing/updating and after that just enjoy all your beloved games!
+Just copy NextUI.zip (don't unzip this just copy as zipfile) and trimui to the root of your SD Card, bootup your Trim UI device it will say installing/updating and after that just enjoy all your beloved games!
 
 # How to use
 
