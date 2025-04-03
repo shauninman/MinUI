@@ -53,6 +53,7 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - Menu animations
 - LED control, change colors, effects, brightness
 - LED indicators, low battery, stand by, charging (brightness can be set seperately)
+- Haptic feedback in the menu by [@ExonakiDev](https://github.com/exonakidev)
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
 - Screen color temperature and brightness controls
 - Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
