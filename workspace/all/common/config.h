@@ -52,6 +52,7 @@ typedef struct
 	bool showMenuAnimations;
 	bool showRecents;
 	bool showGameArt;
+	bool romsUseFolderBackground;
 
 	// Power
 	uint32_t screenTimeoutSecs;
@@ -105,6 +106,9 @@ void CFG_setShowRecents(bool show);
 // Show/hide game art in the main menu.
 bool CFG_getShowGameArt(void);
 void CFG_setShowGameArt(bool show);
+// Use folder background or default background for roms
+bool CFG_getRomsUseFolderBackground(void);
+void CFG_setRomsUseFolderBackground(bool);
 // The scaling algorithm used for the game switcher preview image.
 int CFG_getGameSwitcherScaling(void);
 void CFG_setGameSwitcherScaling(int enumValue);

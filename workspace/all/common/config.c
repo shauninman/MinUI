@@ -46,7 +46,8 @@ void CFG_defaults(MinUISettings *cfg)
         .suspendTimeoutSecs = 30,
 
         .haptics = false,
-    };
+        .romsUseFolderBackground = true,
+};
 
     *cfg = defaults;
 }
@@ -163,6 +164,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
             if (sscanf(line, "haptics=%i", &temp_value) == 1)
             {
                 CFG_setHaptics((bool)temp_value);
+                continue;
+            }
+            if (sscanf(line, "romfolderbg=%i", &temp_value) == 1)
+            {
+                CFG_setRomsUseFolderBackground((bool)temp_value);
                 continue;
             }
         }
@@ -350,6 +356,16 @@ void CFG_setShowGameArt(bool show)
     settings.showGameArt = show;
 }
 
+bool CFG_getRomsUseFolderBackground(void)
+{
+    return settings.romsUseFolderBackground;
+}
+
+void CFG_setRomsUseFolderBackground(bool folder)
+{
+    settings.romsUseFolderBackground = folder;
+}
+
 int CFG_getGameSwitcherScaling(void)
 {
     return settings.gameSwitcherScaling;
@@ -444,6 +460,10 @@ void CFG_get(const char *key, char *value)
     {
         sprintf(value, "%i", CFG_getGameSwitcherScaling());
     }
+    else if (strcmp(key, "romfolderbg") == 0)
+    {
+        sprintf(value, "%i", CFG_getRomsUseFolderBackground());
+    }
 
     // meta, not a real setting
     else if (strcmp(key, "fontpath") == 0)
@@ -490,6 +510,7 @@ void CFG_sync(void)
     fprintf(file, "suspendTimeout=%i\n", settings.suspendTimeoutSecs);
     fprintf(file, "switcherscale=%i\n", settings.gameSwitcherScaling);
     fprintf(file, "haptics=%i\n", settings.haptics);
+    fprintf(file, "romfolderbg=%i\n", settings.romsUseFolderBackground);
 
     fclose(file);
 }
@@ -516,6 +537,8 @@ void CFG_print(void)
     printf("\t\"suspendTimeout\": %i,\n", settings.suspendTimeoutSecs);
     printf("\t\"switcherscale\": %i,\n", settings.gameSwitcherScaling);
     printf("\t\"haptics\": %i,\n", settings.haptics);
+    printf("\t\"romfolderbg\": %i,\n", settings.romsUseFolderBackground);
+
     // meta, not a real setting
     if (settings.font == 1)
         printf("\t\"fontpath\": \"%s\"\n", RES_PATH "/chillroundm.ttf");
