@@ -564,8 +564,8 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 			useconds_t time_to_sleep_us = (useconds_t) ((time_of_frame - now) * 1e6 / perf_freq);
 
 			// The OS scheduling algorithm cannot guarantee that
-			// the sleep while last the exact amount of requested time.
-			// We sleep as much as we can using the OS primitive
+			// the sleep will last the exact amount of requested time.
+			// We sleep as much as we can using the OS primitive.
 			const useconds_t min_waiting_time = 2000;
 			if (time_to_sleep_us > min_waiting_time) {
 				usleep(time_to_sleep_us - min_waiting_time);

@@ -455,7 +455,7 @@ void PLAT_setOverlay(int select, const char* tag) {
     const char* filename = overlay_files[select];
 
     if (!filename || strcmp(filename, "") == 0) {
-		overlay_path = "";
+		overlay_path = strdup("");
         printf("Skipping overlay update.\n");
         return;
     }
