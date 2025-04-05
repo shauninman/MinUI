@@ -18,6 +18,12 @@ extern uint32_t THEME_COLOR6_255;
 typedef int (*FontLoad_callback_t)(const char* path);
 typedef int (*ColorSet_callback_t)(void);
 
+enum
+{
+	SAVE_FORMAT_SAV,
+	SAVE_FORMAT_SRM
+};
+
 typedef struct
 {
 	// Theme
@@ -57,6 +63,9 @@ typedef struct
 	// Power
 	uint32_t screenTimeoutSecs;
 	uint32_t suspendTimeoutSecs;
+
+	// Emulator
+	int saveFormat;
 
 	// Haptic
 	bool haptics;
@@ -115,6 +124,11 @@ void CFG_setGameSwitcherScaling(int enumValue);
 // Enable/disable haptics.
 bool CFG_getHaptics(void);
 void CFG_setHaptics(bool enable);
+// Save format to use for libretro cores
+// 0 - .sav
+// 1 - .srm
+int CFG_getSaveFormat(void);
+void CFG_setSaveFormat(int);
 
 void CFG_sync(void);
 void CFG_quit(void);

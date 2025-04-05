@@ -47,6 +47,7 @@ void CFG_defaults(NextUISettings *cfg)
 
         .haptics = false,
         .romsUseFolderBackground = true,
+        .saveFormat = SAVE_FORMAT_SAV,
 };
 
     *cfg = defaults;
@@ -386,6 +387,16 @@ void CFG_setHaptics(bool enable)
     settings.haptics = enable;
 }
 
+int CFG_getSaveFormat(void)
+{
+    return settings.saveFormat;
+}
+
+void CFG_setSaveFormat(int f)
+{
+    settings.saveFormat = f;
+}
+
 void CFG_get(const char *key, char *value)
 {
     if (strcmp(key, "font") == 0)
@@ -464,6 +475,10 @@ void CFG_get(const char *key, char *value)
     {
         sprintf(value, "%i", CFG_getRomsUseFolderBackground());
     }
+    else if (strcmp(key, "saveFormat") == 0)
+    {
+        sprintf(value, "%i", CFG_getSaveFormat());
+    }
 
     // meta, not a real setting
     else if (strcmp(key, "fontpath") == 0)
@@ -511,6 +526,7 @@ void CFG_sync(void)
     fprintf(file, "switcherscale=%i\n", settings.gameSwitcherScaling);
     fprintf(file, "haptics=%i\n", settings.haptics);
     fprintf(file, "romfolderbg=%i\n", settings.romsUseFolderBackground);
+    fprintf(file, "saveFormat=%i\n", settings.saveFormat);
 
     fclose(file);
 }
@@ -538,6 +554,7 @@ void CFG_print(void)
     printf("\t\"switcherscale\": %i,\n", settings.gameSwitcherScaling);
     printf("\t\"haptics\": %i,\n", settings.haptics);
     printf("\t\"romfolderbg\": %i,\n", settings.romsUseFolderBackground);
+    printf("\t\"saveFormat\": %i,\n", settings.saveFormat);
 
     // meta, not a real setting
     if (settings.font == 1)

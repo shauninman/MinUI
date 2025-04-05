@@ -189,6 +189,9 @@ int main(int argc, char *argv[])
             MenuItem{Generic, "Time zone", "Your time zone", tz_values, tz_labels, []() -> std::any
                     { return std::string(TIME_getCurrentTimezone()); }, [](const std::any &value)
                     { TIME_setCurrentTimezone(std::any_cast<std::string>(value).c_str()); }},
+            MenuItem{Generic, "Save format", "The save format to use.", {(int)SAVE_FORMAT_SAV, (int)SAVE_FORMAT_SRM}, {".sav", ".srm"}, []() -> std::any
+                    { return CFG_getSaveFormat(); }, [](const std::any &value)
+                    { CFG_setSaveFormat(std::any_cast<int>(value)); }},
         });
 
         ctx.menu = new MenuList(MenuItemType::List, "Main",
