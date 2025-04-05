@@ -137,6 +137,8 @@ class MenuItem
     void initSelection();
     bool nextValue();
     bool prevValue();
+    bool next(int n);
+    bool prev(int n);
 
 public:
     MenuItem(ListItemType type, const std::string &name, const std::string &desc,

@@ -108,7 +108,7 @@ static int estimation_line_size = 0;
 static int begining_session_index;
 static char session_duration[10];
 static char current_percentage[10];
-static char session_left[10] = "calculating";
+static char session_left[12] = "calculating";
 static char session_best[10];
 
 static void sigHandler(int sig)

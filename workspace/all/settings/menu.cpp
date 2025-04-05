@@ -12,35 +12,35 @@ extern "C"
 
 ///////////////////////////////////////////////////////////
 
-MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, 
-    const std::vector<std::any>& values, const std::vector<std::string>& labels, 
-    ValueGetCallback on_get, ValueSetCallback on_set, 
-    MenuListCallback on_confirm, MenuList* submenu)
-: type(type), name(name), desc(desc), values(values), labels(labels), 
-  on_get(on_get), on_set(on_set), on_confirm(on_confirm),
-  submenu(submenu)
+MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc,
+                   const std::vector<std::any> &values, const std::vector<std::string> &labels,
+                   ValueGetCallback on_get, ValueSetCallback on_set,
+                   MenuListCallback on_confirm, MenuList *submenu)
+    : type(type), name(name), desc(desc), values(values), labels(labels),
+      on_get(on_get), on_set(on_set), on_confirm(on_confirm),
+      submenu(submenu)
 {
     initSelection();
 }
 
-MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, const std::vector<std::any>& values, 
-    ValueGetCallback on_get, ValueSetCallback on_set, 
-    MenuListCallback on_confirm, MenuList* submenu)
-: MenuItem(type, name, desc, values, {}, on_get, on_set, on_confirm, submenu)
+MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, const std::vector<std::any> &values,
+                   ValueGetCallback on_get, ValueSetCallback on_set,
+                   MenuListCallback on_confirm, MenuList *submenu)
+    : MenuItem(type, name, desc, values, {}, on_get, on_set, on_confirm, submenu)
 {
     generateDefaultLabels();
 }
 
 MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, int min, int max,
-    ValueGetCallback on_get, ValueSetCallback on_set, 
-    MenuListCallback on_confirm, MenuList* submenu)
-: type(type), name(name), desc(desc),
-  on_get(on_get), on_set(on_set), on_confirm(on_confirm), 
-  submenu(submenu)
+                   ValueGetCallback on_get, ValueSetCallback on_set,
+                   MenuListCallback on_confirm, MenuList *submenu)
+    : type(type), name(name), desc(desc),
+      on_get(on_get), on_set(on_set), on_confirm(on_confirm),
+      submenu(submenu)
 {
     const int step = 1; // until we need it
     const int num = (max - min) / step + 1;
-    for(int i = 0; i < num; i++)
+    for (int i = 0; i < num; i++)
         values.push_back(min + i * step);
 
     initSelection();
@@ -58,14 +58,14 @@ void MenuItem::generateDefaultLabels()
     labels.clear();
     for (auto v : values)
     {
-        if(v.type() == typeid(std::string))
-            labels.push_back(std::any_cast<std::string> (v));
+        if (v.type() == typeid(std::string))
+            labels.push_back(std::any_cast<std::string>(v));
         else if (v.type() == typeid(float))
-            labels.push_back(std::to_string(std::any_cast<float> (v)));
+            labels.push_back(std::to_string(std::any_cast<float>(v)));
         else if (v.type() == typeid(int))
-            labels.push_back(std::to_string(std::any_cast<int> (v)));
+            labels.push_back(std::to_string(std::any_cast<int>(v)));
         else if (v.type() == typeid(uint32_t))
-            labels.push_back(std::to_string(std::any_cast<uint32_t> (v)));
+            labels.push_back(std::to_string(std::any_cast<uint32_t>(v)));
         else if (v.type() == typeid(bool))
             labels.push_back(std::any_cast<bool>(v) ? "On" : "Off");
         else
@@ -76,81 +76,161 @@ void MenuItem::generateDefaultLabels()
 void MenuItem::initSelection()
 {
     valueIdx = -1;
-    if(!values.empty()) {
+    if (!values.empty())
+    {
         valueIdx = 0;
-        if(on_get) {
+        if (on_get)
+        {
             // we know we can convert both std::any values to the same type
             const auto initialVal = on_get();
-            for(int i = 0; i < values.size(); i++) {
-                const auto& v = values[i];
-                if(v.type() != initialVal.type())
-                    LOG_error("type mismatch: %s vs. %s", v.type().name(), initialVal.type().name());
-                
-                assert(v.type() == initialVal.type());
-                if(v.type() == typeid(float) && std::any_cast<float>(initialVal) == std::any_cast<float>(v)) {
-                    valueIdx = i;
-                    break;
-                }
-                else if(v.type() == typeid(int) && std::any_cast<int>(initialVal) == std::any_cast<int>(v)) {
-                    valueIdx = i;
-                    break;
-                }
-                else if(v.type() == typeid(uint32_t) && std::any_cast<uint32_t>(initialVal) == std::any_cast<uint32_t>(v)) {
-                    valueIdx = i;
-                    break;
-                }
-                else if(v.type() == typeid(std::string) && std::any_cast<std::string>(initialVal) == std::any_cast<std::string>(v)) {
-                    valueIdx = i;
-                    break;
-                }
-                else if(v.type() == typeid(bool) && std::any_cast<bool>(initialVal) == std::any_cast<bool>(v)) {
-                    valueIdx = i;
-                    break;
+            try
+            {
+                for (int i = 0; i < values.size(); i++)
+                {
+                    const auto &v = values[i];
+                    if (v.type() != initialVal.type())
+                        LOG_error("type mismatch: %s vs. %s", v.type().name(), initialVal.type().name());
+
+                    assert(v.type() == initialVal.type());
+
+                    if (v.type() == typeid(float))
+                    {
+                        if (std::any_cast<float>(initialVal) == std::any_cast<float>(v))
+                        {
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else if (v.type() == typeid(int))
+                    {
+                        if (std::any_cast<int>(initialVal) == std::any_cast<int>(v))
+                        {
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else if (v.type() == typeid(unsigned int))
+                    {
+                        if (std::any_cast<unsigned int>(initialVal) == std::any_cast<unsigned int>(v))
+                        {
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else if (v.type() == typeid(uint32_t))
+                    {
+                        if (std::any_cast<uint32_t>(initialVal) == std::any_cast<uint32_t>(v))
+                        {
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else if (v.type() == typeid(bool))
+                    {
+                        if (std::any_cast<bool>(initialVal) == std::any_cast<bool>(v))
+                        {
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else if (v.type() == typeid(std::string))
+                    {
+                        if (std::any_cast<std::string>(initialVal) == std::any_cast<std::string>(v))
+                        {
+                            LOG_info("Found equal strings %s and %s\n", initialVal, v);
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else if (v.type() == typeid(std::basic_string<char>))
+                    {
+                        if (std::any_cast<std::basic_string<char>>(initialVal) == std::any_cast<std::basic_string<char>>(v))
+                        {
+                            LOG_info("Found equal basic strings %s and %s\n", initialVal, v);
+                            valueIdx = i;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        LOG_warn("Cant initialize selection for %s from unknown type %s\n", this->getLabel(), v.type().name());
+                        // assert(false);
+                    }
                 }
             }
+            catch (...)
+            {
+                // bad any cast
+                LOG_warn("Bad any cast for %s\n", this->getLabel());
+            }
             // this sadly doesnt work with std::any
-            //auto it = std::find(values.cbegin(), values.cend(), on_get());
-            //if (it == std::end(values))
+            // auto it = std::find(values.cbegin(), values.cend(), on_get());
+            // if (it == std::end(values))
             //    valueIdx = -1;
-            //else
+            // else
             //    valueIdx = std::distance(values.cbegin(), it);
         }
         assert(valueIdx >= 0);
     }
 }
 
-
 bool MenuItem::handleInput(int &dirty)
 {
     bool handled = false;
 
-    if(deferred) {
+    if (deferred)
+    {
         assert(submenu);
         int subMenuJustClosed = 0;
         handled = submenu->handleInput(dirty, subMenuJustClosed);
-        if(subMenuJustClosed)
+        if (subMenuJustClosed)
             defer(false);
         dirty = 1; // could be more granular and efficient here
         return handled;
     }
     // handle our custom behavior and return true if the input was handled
-    if(PAD_justRepeated(BTN_LEFT)) {
+    if (PAD_justRepeated(BTN_LEFT))
+    {
         handled = true;
-        if(prevValue()) {
-            if(on_set)
+        if (prevValue())
+        {
+            if (on_set)
                 on_set(getValue());
             dirty = 1;
         }
     }
-    else if (PAD_justRepeated(BTN_RIGHT)) {
+    else if (PAD_justRepeated(BTN_RIGHT))
+    {
         handled = true;
-        if(nextValue()) {
-            if(on_set)
+        if (nextValue())
+        {
+            if (on_set)
                 on_set(getValue());
             dirty = 1;
         }
     }
-    else if (PAD_justPressed(BTN_A)) {
+    if (PAD_justRepeated(BTN_L1))
+    {
+        handled = true;
+        if (prev(10))
+        {
+            if (on_set)
+                on_set(getValue());
+            dirty = 1;
+        }
+    }
+    else if (PAD_justRepeated(BTN_R1))
+    {
+        handled = true;
+        if (next(10))
+        {
+            if (on_set)
+                on_set(getValue());
+            dirty = 1;
+        }
+    }
+    else if (PAD_justPressed(BTN_A))
+    {
         handled = true; // not really, should check on_confirm
         if (on_confirm)
             on_confirm(*this);
@@ -162,23 +242,31 @@ bool MenuItem::handleInput(int &dirty)
 
 bool MenuItem::nextValue()
 {
-    if(valueIdx < 0)
-        return false;
-    valueIdx = (valueIdx + 1) % values.size();
-    return true;
+    return next(1);
 }
 
 bool MenuItem::prevValue()
 {
-    if(valueIdx < 0)
+    return prev(1);
+}
+
+bool MenuItem::next(int n)
+{
+    if (valueIdx < 0)
         return false;
-    valueIdx = (valueIdx + values.size() - 1) % values.size();
+    valueIdx = (valueIdx + n) % values.size();
     return true;
 }
 
+bool MenuItem::prev(int n)
+{
+    if (valueIdx < 0)
+        return false;
+    valueIdx = (valueIdx + values.size() - n) % values.size();
+    return true;
+}
 
 ///////////////////////////////////////////////////////////
-
 
 MenuList::MenuList(MenuItemType type, const std::string &descp, std::vector<MenuItem> items, MenuListCallback on_change, MenuListCallback on_confirm)
     : type(type), desc(descp), items(items), on_change(on_change), on_confirm(on_confirm)
@@ -209,14 +297,14 @@ void MenuList::performLayout(const SDL_Rect &dst)
     {
         // we are leaving some space to show the description label here, account for roughly two lines or one pill
         // also account for the scroll icon, in case we need it.
-        //scope.max_visible_options = (dst.h - SCALE1(PILL_SIZE * 2)) / SCALE1(BUTTON_SIZE);
+        // scope.max_visible_options = (dst.h - SCALE1(PILL_SIZE * 2)) / SCALE1(BUTTON_SIZE);
         scope.max_visible_options = (dst.h - SCALE1(PILL_SIZE)) / SCALE1(BUTTON_SIZE);
     }
     scope.end = std::min(scope.count, scope.max_visible_options);
     scope.visible_rows = scope.end;
 
-    for(auto& itm : items)
-        if(itm.getSubMenu())
+    for (auto &itm : items)
+        if (itm.getSubMenu())
             itm.getSubMenu()->performLayout(dst);
 
     layout_called = true;
@@ -257,7 +345,7 @@ bool MenuList::selectPrev()
 }
 
 // returns true if the input was handled
-bool MenuList::handleInput(int &dirty, int& quit)
+bool MenuList::handleInput(int &dirty, int &quit)
 {
     if (items.at(scope.selected).handleInput(dirty))
         return true;
@@ -278,13 +366,16 @@ bool MenuList::handleInput(int &dirty, int& quit)
             dirty = true;
         return true;
     }
-    else if(on_change) {
+    else if (on_change)
+    {
         // do we even need this?
     }
-    else if(on_confirm && PAD_justPressed(BTN_A)) {
+    else if (on_confirm && PAD_justPressed(BTN_A))
+    {
         // do we even need this?
     }
-    else if(PAD_justPressed(BTN_B)) {
+    else if (PAD_justPressed(BTN_B))
+    {
         quit = 1;
         return true;
     }
@@ -292,7 +383,7 @@ bool MenuList::handleInput(int &dirty, int& quit)
     return false;
 }
 
-SDL_Rect MenuList::itemSizeHint(const MenuItem& item)
+SDL_Rect MenuList::itemSizeHint(const MenuItem &item)
 {
     if (type == MenuItemType::Fixed)
     {
@@ -352,11 +443,13 @@ void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
     assert(layout_called);
 
     auto &cur = items.at(scope.selected);
-    if (cur.isDeferred()) {
+    if (cur.isDeferred())
+    {
         assert(cur.getSubMenu());
         cur.getSubMenu()->draw(surface, dst);
     }
-    else {
+    else
+    {
         // iterate all items and draw them vertically
         switch (type)
         {
@@ -391,10 +484,10 @@ void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
                 GFX_blitAssetCPP(ASSET_SCROLL_UP, {}, surface, {rect.x, rect.y - SCALE1(PADDING)});
             if (scope.end < scope.count)
                 // this is with 2 * pill_size bottom margin
-                //GFX_blitAssetCPP(ASSET_SCROLL_DOWN, {}, surface, {rect.x, rect.h - SCALE1(PADDING + PILL_SIZE + BUTTON_SIZE) + rect.y});
+                // GFX_blitAssetCPP(ASSET_SCROLL_DOWN, {}, surface, {rect.x, rect.h - SCALE1(PADDING + PILL_SIZE + BUTTON_SIZE) + rect.y});
                 GFX_blitAssetCPP(ASSET_SCROLL_DOWN, {}, surface, {rect.x, rect.h - SCALE1(PADDING + PILL_SIZE) + rect.y});
         }
-        
+
         if (cur.getDesc().length() > 0)
         {
             int w, h;
@@ -411,7 +504,7 @@ void MenuList::drawList(SDL_Surface *surface, const SDL_Rect &dst)
     if (max_width == 0)
     {
         int mw = 0;
-        for (auto& item : items)
+        for (auto &item : items)
         {
             auto hintRect = itemSizeHint(item);
             if (hintRect.w > mw)
@@ -432,7 +525,7 @@ void MenuList::drawList(SDL_Surface *surface, const SDL_Rect &dst)
     }
 }
 
-void MenuList::drawListItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem& item, bool selected)
+void MenuList::drawListItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected)
 {
     SDL_Color text_color = COLOR_WHITE;
     SDL_Surface *text;
@@ -472,15 +565,16 @@ void MenuList::drawFixed(SDL_Surface *surface, const SDL_Rect &dst)
 }
 
 // TODO: expose API functions that do the same
-namespace {
-    static inline void rgb_unpack(uint32_t col, int* r, int* g, int* b)
+namespace
+{
+    static inline void rgb_unpack(uint32_t col, int *r, int *g, int *b)
     {
         *r = (col >> 16) & 0xff;
         *g = (col >> 8) & 0xff;
-        *b =  col  & 0xff;
+        *b = col & 0xff;
     }
 
-    static inline uint32_t mapUint(SDL_Surface* surface, uint32_t col)
+    static inline uint32_t mapUint(SDL_Surface *surface, uint32_t col)
     {
         int r, g, b;
         rgb_unpack(col, &r, &g, &b);
@@ -488,7 +582,7 @@ namespace {
     }
 }
 
-void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem& item, bool selected)
+void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected)
 {
     SDL_Color text_color = uintToColour(THEME_COLOR4_255);
     SDL_Surface *text;
@@ -504,20 +598,21 @@ void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const Me
 
     if (item.getValue().has_value())
     {
-        text = TTF_RenderUTF8_Blended(font.tiny,item.getLabel().c_str(), COLOR_WHITE); // always white
+        text = TTF_RenderUTF8_Blended(font.tiny, item.getLabel().c_str(), COLOR_WHITE); // always white
 
-        if(item.getType() == Color) {
+        if (item.getType() == Color)
+        {
             uint32_t color = mapUint(surface, std::any_cast<uint32_t>(item.getValue()));
             SDL_Rect rect = {
-                dst.x + dst.w - SCALE1(OPTION_PADDING + FONT_TINY), 
-                dst.y + SCALE1(BUTTON_SIZE - FONT_TINY) / 2, 
+                dst.x + dst.w - SCALE1(OPTION_PADDING + FONT_TINY),
+                dst.y + SCALE1(BUTTON_SIZE - FONT_TINY) / 2,
                 SCALE1(FONT_TINY), SCALE1(FONT_TINY)};
-            SDL_FillRect(surface,&rect,RGB_WHITE);
+            SDL_FillRect(surface, &rect, RGB_WHITE);
             rect = dy(dx(rect, 1), 1);
             rect.h -= 1;
             rect.w -= 1;
-            SDL_FillRect(surface,&rect,color);
-            #define COLOR_PADDING 4
+            SDL_FillRect(surface, &rect, color);
+#define COLOR_PADDING 4
             SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + mw - text->w - SCALE1(OPTION_PADDING + COLOR_PADDING + FONT_TINY), dst.y + SCALE1(3)});
         }
         else // Generic and fallback
@@ -570,7 +665,7 @@ void MenuList::drawInput(SDL_Surface *surface, const SDL_Rect &dst)
     }
 }
 
-void MenuList::drawInputItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem& item, bool selected)
+void MenuList::drawInputItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected)
 {
     SDL_Color text_color = COLOR_WHITE;
     SDL_Surface *text;
@@ -631,7 +726,7 @@ void MenuList::drawMain(SDL_Surface *surface, const SDL_Rect &dst)
     }
 }
 
-void MenuList::drawMainItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem& item, bool selected)
+void MenuList::drawMainItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected)
 {
     SDL_Color text_color = COLOR_WHITE;
     SDL_Surface *text;

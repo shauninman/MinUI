@@ -1052,7 +1052,7 @@ void PLAT_initLeds(LightSettings *lights) {
     if (file == NULL)
     {
 		
-        LOG_info("Unable to open led settings file");
+        LOG_info("Unable to open led settings file\n");
 	
     }
 	else {
@@ -1256,5 +1256,175 @@ void PLAT_setLedColor(LightSettings *led)
     PLAT_chmod(filepath, 0);
 }
 
+//////////////////////////////////////////////
 
+int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
+	char cmd[512];
+	sprintf(cmd, "date -s '%d-%d-%d %d:%d:%d'; hwclock -u -w", y,m,d,h,i,s);
+	system(cmd);
+	return 0; // why does this return an int?
+}
 
+#define MAX_LINE_LENGTH 200
+#define ZONE_PATH "/usr/share/zoneinfo"
+#define ZONE_TAB_PATH ZONE_PATH "/zone.tab"
+
+static char cached_timezones[MAX_TIMEZONES][MAX_TZ_LENGTH];
+static int cached_tz_count = -1;
+
+int compare_timezones(const void *a, const void *b) {
+    return strcmp((const char *)a, (const char *)b);
+}
+
+void PLAT_initTimezones() {
+    if (cached_tz_count != -1) { // Already initialized
+        return;
+    }
+    
+    FILE *file = fopen(ZONE_TAB_PATH, "r");
+    if (!file) {
+        LOG_info("Error opening file %s\n", ZONE_TAB_PATH);
+        return;
+    }
+    
+    char line[MAX_LINE_LENGTH];
+    cached_tz_count = 0;
+    
+    while (fgets(line, sizeof(line), file)) {
+        // Skip comment lines
+        if (line[0] == '#' || strlen(line) < 3) {
+            continue;
+        }
+        
+        char *token = strtok(line, "\t"); // Skip country code
+        if (!token) continue;
+        
+        token = strtok(NULL, "\t"); // Skip latitude/longitude
+        if (!token) continue;
+        
+        token = strtok(NULL, "\t\n"); // Extract timezone
+        if (!token) continue;
+        
+        // Check for duplicates before adding
+        int duplicate = 0;
+        for (int i = 0; i < cached_tz_count; i++) {
+            if (strcmp(cached_timezones[i], token) == 0) {
+                duplicate = 1;
+                break;
+            }
+        }
+        
+        if (!duplicate && cached_tz_count < MAX_TIMEZONES) {
+            strncpy(cached_timezones[cached_tz_count], token, MAX_TZ_LENGTH - 1);
+            cached_timezones[cached_tz_count][MAX_TZ_LENGTH - 1] = '\0'; // Ensure null-termination
+            cached_tz_count++;
+        }
+    }
+    
+    fclose(file);
+    
+    // Sort the list alphabetically
+    qsort(cached_timezones, cached_tz_count, MAX_TZ_LENGTH, compare_timezones);
+}
+
+void PLAT_getTimezones(char timezones[MAX_TIMEZONES][MAX_TZ_LENGTH], int *tz_count) {
+    if (cached_tz_count == -1) {
+        LOG_warn("Error: Timezones not initialized. Call PLAT_initTimezones first.\n");
+        *tz_count = 0;
+        return;
+    }
+    
+    memcpy(timezones, cached_timezones, sizeof(cached_timezones));
+    *tz_count = cached_tz_count;
+}
+
+char *PLAT_getCurrentTimezone() {
+
+	char *output = (char *)malloc(256);
+	if (!output) {
+		return false;
+	}
+	FILE *fp = popen("uci get system.@system[0].zonename", "r");
+	if (!fp) {
+		free(output);
+		return false;
+	}
+	fgets(output, 256, fp);
+	pclose(fp);
+	trimTrailingNewlines(output);
+
+	return output;
+}
+
+void PLAT_setCurrentTimezone(const char* tz) {
+	if (cached_tz_count == -1) {
+		LOG_warn("Error: Timezones not initialized. Call PLAT_initTimezones first.\n");
+        return;
+    }
+
+	// This makes it permanent
+	char *zonename = (char *)malloc(256);
+	if (!zonename)
+		return;
+	snprintf(zonename, 256, "uci set system.@system[0].zonename=\"%s\"", tz);
+	system(zonename);
+	//system("uci set system.@system[0].zonename=\"Europe/Berlin\"");
+	system("uci del -q system.@system[0].timezone");
+	system("uci commit system");
+	free(zonename);
+
+	// This fixes the timezone until the next reboot
+	char *tz_path = (char *)malloc(256);
+	if (!tz_path) {
+		return;
+	}
+	snprintf(tz_path, 256, ZONE_PATH "/%s", tz);
+	// replace existing symlink
+	if (unlink("/tmp/localtime") == -1) {
+		LOG_error("Failed to remove existing symlink: %s\n", strerror(errno));
+	}
+	if (symlink(tz_path, "/tmp/localtime") == -1) {
+		LOG_error("Failed to set timezone: %s\n", strerror(errno));
+	}
+	free(tz_path);
+
+	// apply timezone to kernel
+	system("date -k");
+}
+
+bool PLAT_getNetworkTimeSync(void) {
+	char *output = (char *)malloc(256);
+	if (!output) {
+		return false;
+	}
+	FILE *fp = popen("uci get system.ntp.enable", "r");
+	if (!fp) {
+		free(output);
+		return false;
+	}
+	fgets(output, 256, fp);
+	pclose(fp);
+	bool result = (output[0] == '1');
+	free(output);
+}
+
+void PLAT_setNetworkTimeSync(bool on) {
+	// note: this is not the service residing at /etc/init.d/ntpd - that one has hardcoded time server URLs and does not interact with UCI.
+	if (on) {
+		// permanment
+		system("uci set system.ntp.enable=1");
+		system("uci commit system");
+		system("/etc/init.d/ntpd reload");
+	} else {
+		// permanment
+		system("uci set system.ntp.enable=0");
+		system("uci commit system");
+		system("/etc/init.d/ntpd stop");
+	}
+}
+
+/////////////////////////
+
+bool PLAT_supportSSH() { return true; }
+
+// wifi check /etc/rc.d/S20network

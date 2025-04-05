@@ -102,6 +102,7 @@
     "numeric": "cpp",
     "random": "c",
     "bit": "cpp",
-    "*.inc": "c"
+    "*.inc": "c",
+    "cassert": "cpp"
   },
 }
