@@ -4552,7 +4552,7 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 		Menu_options(&OptionCheats_menu);
 	}
 	else {
-		Menu_message("This core has no cheats.", (char*[]){ "B","BACK", NULL });
+		Menu_message("No cheat file loaded.", (char*[]){ "B","BACK", NULL });
 	}
 	
 	return MENU_CALLBACK_NOP;
