@@ -2,18 +2,16 @@
 
   <img src="github/logo.png">
 
-  (formerly MinUI Next)
-
 </div>
 
 <hr>
 
 <h4 align="center">
-  <a href="https://github.com/LoveRetro/NextUI/wiki/Installation#installation--update">Install</a>
+  <a href="https://nextui.loveretro.games/getting-started/" target="_blank">Installation Guide</a>
   ·
-  <a href="https://github.com/LoveRetro/NextUI/wiki">Wiki</a>
+  <a href="https://nextui.loveretro.games/docs/" target="_blank">Documentation</a>
   ·
-  <a href="https://discord.gg/HKd7wqZk3h">Discord</a>
+  <a href="https://discord.gg/HKd7wqZk3h" target="_blank">Discord</a>
 </h4>
 
 <div align="center"><p>
@@ -32,12 +30,13 @@
     <a href="https://github.com/LoveRetro/NextUI/issues">
       <img alt="Issues" src="https://img.shields.io/github/issues/LoveRetro/NextUI?style=for-the-badge&logo=bilibili&color=F5E0DC&logoColor=D9E0EE&labelColor=302D41" />
     </a>
-    <a href="https://github.com/LoveRetro/NextUI">
-      <img alt="Repo Size" src="https://img.shields.io/github/repo-size/LoveRetro/NextUI?color=%23DDB6F2&label=SIZE&logo=codesandbox&style=for-the-badge&logoColor=D9E0EE&labelColor=302D41" />
-    </a>
 </div>
 
-A CFW based of MinUI with a rebuild emulation engine and tons of added features for the TrimUI Brick and Smart Pro. For other devices we recommend checking out [MinUI](https://github.com/shauninman/MinUI)
+---
+
+A CFW based of MinUI with a rebuild emulation engine and tons of added features for the TrimUI Brick and Smart Pro. 
+
+For other devices we recommend checking out [MinUI](https://github.com/shauninman/MinUI)
 
 - Fixed both screen tearing and sync stutter problems of MinUI by rebuilding the emulator engine core
 - Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
@@ -66,11 +65,15 @@ A CFW based of MinUI with a rebuild emulation engine and tons of added features 
 - Next font supports CJK for JP/CN etc rom names
 - Lot of other smaller fixes and optimizations
 
-Current supported devices:
-Trimui Brick | MinUI-20241028-0
-Trimui Smart Pro | MinUI-20231111b-2
+---
 
-# Future plans roadmap
+## Currently supported devices:
+- Trimui Brick
+- Trimui Smart Pro
+
+---
+
+## Future plans roadmap
 
 - Bluetooth and wifi integrated
 - Configurable FN and switch buttons
@@ -81,107 +84,53 @@ Trimui Smart Pro | MinUI-20231111b-2
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc.
 
-# Installing
+---
 
-Just copy NextUI.zip (don't unzip this just copy as zipfile) and trimui to the root of your SD Card, bootup your Trim UI device it will say installing/updating and after that just enjoy all your beloved games!
+## Installing
 
-# How to use
+Follow our [installation guide](https://nextui.loveretro.games/getting-started/).
 
-I think most speaks for itself but here are some handy short instructions just in case:
+---
+
+## How to use
 
 While in menu:
 
-- Hold start and use volume up and down to adjust brightes
-- Hold select and use volume up and down to adjust color temperature
-- Short press select to open game switcher menu
-- Idk the rest speaks for itself I guess?
+- Hold `start` and press `volume up` or `volume down` to adjust brighness
+- Hold `select` and press `volume up` or `volume down` to adjust color temperature
+- Short press `select` to open the game switcher
 
 While in game:
 
-- Menu opens in game options menu, adjusting controls, scaling and what not
-- Hold menu and select at same time to open up game switcher
+- `Menu` opens in game options menu, adjusting controls, scaling and what not
+- Hold `menu` and `select` at same time to open up the game switcher
 
 Deep sleep:
 
-- First the device goes into light sleep mode the screen turns off and the Leds will pulse 5 times to let you know its in light sleep, after 2 minutes the device will go in full deep sleep and the leds will also turn completely off.
+When the device is left idle it will enter light sleep. Light sleep turns the screen off and pulses the leds 5 times.
 
-# What about X feature?
+After two minutes the device will go into deep sleep. The leds will turn completely off.
 
-While features still missing will be eventually be part native on NextUI, there are right now already some excellent Paks out there from other developers. For for example things like WiFI and syncthings we def recommend checking out the awesome work from [@josegonzalez](https://github.com/josegonzalez) He has an awesome Pak library with many things
-<https://github.com/josegonzalez/pakman/>
+---
 
-## Watch this awesome review by Play Retro
+## What about X feature?
+
+NextUI supports a variety of optional extras called Paks.
+
+These Paks introduce a variety of new features and emulators.
+
+Our community has currated a [list of favorite Paks](https://nextui.loveretro.games/paks/community-favorites/) and a [list of standalone emulators](https://nextui.loveretro.games/paks/standalone-emulators/).
+
+---
+
+## Play Retro's review of NextUI
 
 [![image](https://github.com/user-attachments/assets/43217a30-e052-4f67-88a9-c4361f82e72f)](https://www.youtube.com/watch?v=m_7ObMHAFK4)
 
-## Or this awesome vid by Retro Handhelds
+##  Retro Handhelds' coverage of NextUI
 
 [![image](https://github.com/user-attachments/assets/5fd538ea-285b-46e9-add4-1ef99b2ee9e5)](https://www.youtube.com/watch?v=KlYVmtYDqRI)
 
+---
 
-
-## Media
-
-![gameswitcher](https://github.com/user-attachments/assets/4c71dc26-d071-48cf-836e-83bd9a248a32)
-![battery](https://github.com/user-attachments/assets/5f8a6f85-7bb7-41b0-95ab-468229a7f443)
-![battery](https://github.com/user-attachments/assets/9e7c14b3-757d-4e01-b381-71897e6dc4e2)
-![ingamesettings](https://github.com/user-attachments/assets/73fbed30-7aaa-420b-bb53-74dd50160434)
-![gamelist](https://github.com/user-attachments/assets/ed0d2552-04c1-40a3-9eb2-14406e83b09a)
-![gameoverlay](https://github.com/user-attachments/assets/a7c99784-fa48-4d3e-a64b-28e7149d929a)
-
-# MinUI Readme
-
-NextUI is based of [MinUI](https://github.com/shauninman/MinUI) which is an amazing CFW and works on many more devices than NextUI currently does, so def check it out!
-
-## Features
-
-- Simple launcher, simple SD card
-- No settings or configuration
-- No boxart, themes, or distractions
-- Automatically hides hidden files
-  and extension and region/version
-  cruft in display names
-
-- Consistent in-emulator menu with
-  quick access to save states, disc
-  changing, and emulator options
-- Automatically sleeps after 30 seconds
-  or press POWER to sleep (and wake)
-- Automatically powers off while asleep
-  after two minutes or hold POWER for
-  one second
-- Automatically resumes right where
-  you left off if powered off while
-  in-game, manually or while asleep
-- Resume from manually created, last
-  used save state by pressing X in
-  the launcher instead of A
-- Streamlined emulator frontend
-  (minarch + libretro cores)
-- Single SD card compatible with
-  multiple devices from different
-  manufacturers
-
-## Supported consoles
-
-Base:
-
-- Game Boy
-- Game Boy Color
-- Game Boy Advance
-- Nintendo Entertainment System
-- Super Nintendo Entertainment System
-- Sega Genesis
-- PlayStation
-
-Extras:
-
-- Neo Geo Pocket (and Color)
-- Pico-8
-- Pokémon mini
-- Sega Game Gear
-- Sega Master System
-- Super Game Boy
-- TurboGrafx-16 (and TurboGrafx-CD)
-- Virtual Boy
-- Arcade (cps, mame etc)
+## For all other info visit our website: [nextui.loveretro.games](https://nextui.loveretro.games)
