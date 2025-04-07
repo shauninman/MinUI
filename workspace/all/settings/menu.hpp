@@ -93,17 +93,24 @@ enum ListItemType
     // generic list item, could be anything and any type
     Generic,
     // hex color, typically as uint32_t
-    Color
+    Color,
+    // no option values, only title and BTN_CONFIRM
+    Button,
 };
 
 enum InputReactionHint
 {
+    // Bubble up handling to caller. 
+    // \note All other hints imply the event has been handled.
+    Unhandled,
     // No specific hint available
     NoOp,
     // Caller should quit
     Exit,
     // Caller should step to the next list item
     NextItem,
+    // Caller should reset items to default
+    ResetAllItems
 };
 
 class MenuItem;
@@ -114,9 +121,12 @@ using MenuListCallback = std::function<InputReactionHint(MenuItem &item)>;
 using ValueGetCallback = std::any (*)(void);
 // using ValueSetCallback = std::function<void(const std::any& value)>;
 using ValueSetCallback = void (*)(const std::any &);
+using ValueResetCallback = void (*)(void);
 
 class MenuItem
 {
+    friend class MenuList;
+
     ListItemType type;
     std::string name, desc;
     std::vector<std::any> values;
@@ -128,6 +138,7 @@ class MenuItem
     MenuListCallback on_confirm; // handling drill-down and other custom item stuff
     ValueGetCallback on_get;
     ValueSetCallback on_set;
+    ValueResetCallback on_reset;
     // MenuListCallback on_change;
 
     MenuList *submenu{nullptr};
@@ -143,20 +154,26 @@ class MenuItem
 public:
     MenuItem(ListItemType type, const std::string &name, const std::string &desc,
              const std::vector<std::any> &values, const std::vector<std::string> &labels,
-             ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr,
-             MenuListCallback on_confirm = nullptr, MenuList *submenu = nullptr);
+             ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr, 
+             ValueResetCallback on_reset = nullptr, MenuListCallback on_confirm = nullptr, 
+             MenuList *submenu = nullptr);
 
     MenuItem(ListItemType type, const std::string &name, const std::string &desc, const std::vector<std::any> &values,
-             ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr,
-             MenuListCallback on_confirm = nullptr, MenuList *submenu = nullptr);
+             ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr, 
+             ValueResetCallback on_reset = nullptr, MenuListCallback on_confirm = nullptr, 
+             MenuList *submenu = nullptr);
 
     MenuItem(ListItemType type, const std::string &name, const std::string &desc, int min, int max,
-             ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr,
-             MenuListCallback on_confirm = nullptr, MenuList *submenu = nullptr);
+             ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr, 
+             ValueResetCallback on_reset = nullptr, MenuListCallback on_confirm = nullptr, 
+             MenuList *submenu = nullptr);
+
+    MenuItem(ListItemType type, const std::string &name, const std::string &desc,
+            MenuListCallback on_confirm = nullptr, MenuList *submenu = nullptr);
 
     ~MenuItem();
 
-    bool handleInput(int &dirty);
+    InputReactionHint handleInput(int &dirty);
 
     const std::any &getValue() const
     {
@@ -184,7 +201,7 @@ class MenuList
 {
     MenuItemType type;
     std::string desc;
-    std::vector<MenuItem> items;
+    std::vector<MenuItem*> items;
     int max_width{0}; // cached on first draw
     bool layout_called{false};
 
@@ -202,15 +219,16 @@ class MenuList
     MenuListCallback on_confirm;
 
 public:
-    MenuList(MenuItemType type, const std::string &desc, std::vector<MenuItem> items, MenuListCallback on_change = nullptr, MenuListCallback on_confirm = nullptr);
+    MenuList(MenuItemType type, const std::string &desc, std::vector<MenuItem*> items, MenuListCallback on_change = nullptr, MenuListCallback on_confirm = nullptr);
     ~MenuList();
 
     void performLayout(const SDL_Rect &dst);
     bool selectNext();
     bool selectPrev();
+    void resetAllItems();
 
     // returns true if the input was handled
-    bool handleInput(int &dirty, int &quit);
+    InputReactionHint handleInput(int &dirty, int &quit);
 
     SDL_Rect itemSizeHint(const MenuItem &item);
 
@@ -230,4 +248,9 @@ const MenuListCallback DeferToSubmenu = [](MenuItem &itm) -> InputReactionHint
     if (itm.getSubMenu())
         itm.defer(true);
     return InputReactionHint::NoOp;
+};
+
+const MenuListCallback ResetCurrentMenu = [](MenuItem &itm) -> InputReactionHint
+{
+    return InputReactionHint::ResetAllItems;
 };

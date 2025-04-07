@@ -1,6 +1,14 @@
 #ifndef __msettings_h__
 #define __msettings_h__
 
+#define SETTINGS_DEFAULT_BRIGHTNESS 2
+#define SETTINGS_DEFAULT_COLORTEMP 20
+#define SETTINGS_DEFAULT_CONTRAST 0
+#define SETTINGS_DEFAULT_SATURATION 0
+#define SETTINGS_DEFAULT_EXPOSURE 0
+#define SETTINGS_DEFAULT_VOLUME 8
+#define SETTINGS_DEFAULT_HEADPHONE_VOLUME 4
+
 void InitSettings(void);
 void QuitSettings(void);
 

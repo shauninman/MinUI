@@ -101,114 +101,144 @@ int main(int argc, char *argv[])
         }
 
         auto appearanceMenu = new MenuList(MenuItemType::Fixed, "Appearance",
-        {
-            MenuItem{Generic, "Font", "The font to render all UI text.", {0, 1}, font_names, []() -> std::any
-                    { return CFG_getFontId(); },[](const std::any &value)
-                    { CFG_setFontId(std::any_cast<int>(value)); }},
-            MenuItem{Color, "Main Color", "The color used to render main UI elements.", colors, color_strings, []() -> std::any
-                    { return CFG_getColor(1); }, [](const std::any &value)
-                    { CFG_setColor(1, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Color, "Primary Accent Color", "The color used to highlight important things in the user interface.", colors, color_strings, []() -> std::any
-                    { return CFG_getColor(2); }, [](const std::any &value)
-                    { CFG_setColor(2, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Color, "Secondary Accent Color", "A secondary highlight color.", colors, color_strings, []() -> std::any
-                    { return CFG_getColor(3); }, [](const std::any &value)
-                    { CFG_setColor(3, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Color, "Hint info Color", "Color for button hints and info", colors, color_strings, []() -> std::any
-                    { return CFG_getColor(6); }, [](const std::any &value)
-                    { CFG_setColor(6, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Color, "List Text", "List text color", colors, color_strings, []() -> std::any
-                    { return CFG_getColor(4); }, [](const std::any &value)
-                    { CFG_setColor(4, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Color, "List Text Selected", "List selected text color", colors, color_strings, []() -> std::any
-                    { return CFG_getColor(5); }, [](const std::any &value)
-                    { CFG_setColor(5, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Generic, "Show battery percentage", "Show battery level as percent in the status pill", {false, true}, on_off, []() -> std::any
-                    { return CFG_getShowBatteryPercent(); },
-                    [](const std::any &value)
-                    { CFG_setShowBatteryPercent(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Show menu animations", "Enable or disable menu animations", {false, true}, on_off, []() -> std::any
-                    { return CFG_getMenuAnimations(); },
-                    [](const std::any &value)
-                    { CFG_setMenuAnimations(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Thumb radius", "Set the thumb radius for the status pill", 0, 24, []() -> std::any
-                    { return CFG_getThumbnailRadius(); }, [](const std::any &value)
-                    { CFG_setThumbnailRadius(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Show recents", "Show \"Recently Played\" menu entry.\nThis also disables Game Switcher.", {false, true}, on_off, []() -> std::any
-                    { return CFG_getShowRecents(); },
-                    [](const std::any &value)
-                    { CFG_setShowRecents(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Show game art", "Show game artwork in the main menu", {false, true}, on_off, []() -> std::any
-                    { return CFG_getShowGameArt(); },
-                    [](const std::any &value)
-                    { CFG_setShowGameArt(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Use folder background for ROMs", "If enabled, used the emulator background image. Otherwise uses the default.", {false, true}, on_off, []() -> std::any
-                    { return CFG_getRomsUseFolderBackground(); },
-                    [](const std::any &value)
-                    { CFG_setRomsUseFolderBackground(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Game switcher scaling", "The scaling algorithm used to display the savegame image.", scaling, scaling_strings, []() -> std::any
-                    { return CFG_getGameSwitcherScaling(); },
-                    [](const std::any &value)
-                    { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); }},
+            {new MenuItem{Generic, "Font", "The font to render all UI text.", {0, 1}, font_names, 
+                []() -> std::any{ return CFG_getFontId(); },
+                [](const std::any &value){ CFG_setFontId(std::any_cast<int>(value)); },
+                []() { CFG_setFontId(CFG_DEFAULT_FONT_ID);}},
+                new MenuItem{Color, "Main Color", "The color used to render main UI elements.", colors, color_strings, 
+                []() -> std::any{ return CFG_getColor(1); }, 
+                [](const std::any &value){ CFG_setColor(1, std::any_cast<uint32_t>(value)); },
+                []() { CFG_setColor(1, CFG_DEFAULT_COLOR1);}},
+                new MenuItem{Color, "Primary Accent Color", "The color used to highlight important things in the user interface.", colors, color_strings, 
+                []() -> std::any{ return CFG_getColor(2); }, 
+                [](const std::any &value){ CFG_setColor(2, std::any_cast<uint32_t>(value)); },
+                []() { CFG_setColor(2, CFG_DEFAULT_COLOR2);}},
+                new MenuItem{Color, "Secondary Accent Color", "A secondary highlight color.", colors, color_strings, 
+                []() -> std::any{ return CFG_getColor(3); }, 
+                [](const std::any &value){ CFG_setColor(3, std::any_cast<uint32_t>(value)); },
+                []() { CFG_setColor(3, CFG_DEFAULT_COLOR3);}},
+                new MenuItem{Color, "Hint info Color", "Color for button hints and info", colors, color_strings, 
+                []() -> std::any{ return CFG_getColor(6); }, 
+                [](const std::any &value){ CFG_setColor(6, std::any_cast<uint32_t>(value)); },
+                []() { CFG_setColor(6, CFG_DEFAULT_COLOR6);}},
+                new MenuItem{Color, "List Text", "List text color", colors, color_strings, 
+                []() -> std::any{ return CFG_getColor(4); }, 
+                [](const std::any &value){ CFG_setColor(4, std::any_cast<uint32_t>(value)); },
+                []() { CFG_setColor(4, CFG_DEFAULT_COLOR4);}},
+                new MenuItem{Color, "List Text Selected", "List selected text color", colors, color_strings, 
+                []() -> std::any { return CFG_getColor(5); }, 
+                [](const std::any &value) { CFG_setColor(5, std::any_cast<uint32_t>(value)); },
+                []() { CFG_setColor(5, CFG_DEFAULT_COLOR5);}},
+                new MenuItem{Generic, "Show battery percentage", "Show battery level as percent in the status pill", {false, true}, on_off, 
+                []() -> std::any { return CFG_getShowBatteryPercent(); },
+                [](const std::any &value) { CFG_setShowBatteryPercent(std::any_cast<bool>(value)); },
+                []() { CFG_setShowBatteryPercent(CFG_DEFAULT_SHOWBATTERYPERCENT);}},
+                new MenuItem{Generic, "Show menu animations", "Enable or disable menu animations", {false, true}, on_off, 
+                []() -> std::any{ return CFG_getMenuAnimations(); },
+                [](const std::any &value) { CFG_setMenuAnimations(std::any_cast<bool>(value)); },
+                []() { CFG_setMenuAnimations(CFG_DEFAULT_SHOWMENUANIMATIONS);}},
+                new MenuItem{Generic, "Thumb radius", "Set the thumb radius for the status pill", 0, 24, 
+                []() -> std::any{ return CFG_getThumbnailRadius(); }, 
+                [](const std::any &value) { CFG_setThumbnailRadius(std::any_cast<int>(value)); },
+                []() { CFG_setThumbnailRadius(CFG_DEFAULT_THUMBRADIUS);}},
+                new MenuItem{Generic, "Show recents", "Show \"Recently Played\" menu entry.\nThis also disables Game Switcher.", {false, true}, on_off, 
+                []() -> std::any { return CFG_getShowRecents(); },
+                [](const std::any &value) { CFG_setShowRecents(std::any_cast<bool>(value)); },
+                []() { CFG_setShowRecents(CFG_DEFAULT_SHOWRECENTS);}},
+                new MenuItem{Generic, "Show game art", "Show game artwork in the main menu", {false, true}, on_off, []() -> std::any
+                        { return CFG_getShowGameArt(); },
+                        [](const std::any &value)
+                        { CFG_setShowGameArt(std::any_cast<bool>(value)); },
+                        []() { CFG_setShowGameArt(CFG_DEFAULT_SHOWGAMEART);}},
+                        new MenuItem{Generic, "Use folder background for ROMs", "If enabled, used the emulator background image. Otherwise uses the default.", {false, true}, on_off, []() -> std::any
+                        { return CFG_getRomsUseFolderBackground(); },
+                        [](const std::any &value)
+                        { CFG_setRomsUseFolderBackground(std::any_cast<bool>(value)); },
+                        []() { CFG_setRomsUseFolderBackground(CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND);}},
+                        new MenuItem{Generic, "Game switcher scaling", "The scaling algorithm used to display the savegame image.", scaling, scaling_strings, []() -> std::any
+                        { return CFG_getGameSwitcherScaling(); },
+                        [](const std::any &value)
+                        { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); },
+                        []() { CFG_setGameSwitcherScaling(CFG_DEFAULT_GAMESWITCHERSCALING);}},
+
+                        new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
         auto displayMenu = new MenuList(MenuItemType::Fixed, "Display",
         {
-            MenuItem{Generic, "Brightness", "Display brightness (0 to 10)", 0, 10, []() -> std::any
+            new MenuItem{Generic, "Brightness", "Display brightness (0 to 10)", 0, 10, []() -> std::any
                 { return GetBrightness(); }, [](const std::any &value)
-                { SetBrightness(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, []() -> std::any
+                { SetBrightness(std::any_cast<int>(value)); },
+                []() { SetBrightness(SETTINGS_DEFAULT_BRIGHTNESS);}},
+                new MenuItem{Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, []() -> std::any
                 { return GetColortemp(); }, [](const std::any &value)
-                { SetColortemp(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, []() -> std::any
+                { SetColortemp(std::any_cast<int>(value)); },
+                []() { SetColortemp(SETTINGS_DEFAULT_COLORTEMP);}},
+                new MenuItem{Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, []() -> std::any
                 { return GetContrast(); }, [](const std::any &value)
-                { SetContrast(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, []() -> std::any
+                { SetContrast(std::any_cast<int>(value)); },
+                []() { SetContrast(SETTINGS_DEFAULT_CONTRAST);}},
+                new MenuItem{Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, []() -> std::any
                 { return GetSaturation(); }, [](const std::any &value)
-                { SetSaturation(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, []() -> std::any
+                { SetSaturation(std::any_cast<int>(value)); },
+                []() { SetSaturation(SETTINGS_DEFAULT_SATURATION);}},
+                new MenuItem{Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, []() -> std::any
                 { return GetExposure(); }, [](const std::any &value)
-                { SetExposure(std::any_cast<int>(value)); }},
+                { SetExposure(std::any_cast<int>(value)); },
+                []() { SetExposure(SETTINGS_DEFAULT_EXPOSURE);}},
+
+                new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
         auto systemMenu = new MenuList(MenuItemType::Fixed, "System",
         {
-            MenuItem{Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
+            new MenuItem{Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
                 { return GetVolume(); }, [](const std::any &value)
-                { SetVolume(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Screen timeout", "Time before screen turns off (0-600s)", timeout_secs, timeout_labels, []() -> std::any
+                { SetVolume(std::any_cast<int>(value)); },
+                []() { SetVolume(SETTINGS_DEFAULT_VOLUME);}},
+                new MenuItem{Generic, "Screen timeout", "Time before screen turns off (0-600s)", timeout_secs, timeout_labels, []() -> std::any
                     { return CFG_getScreenTimeoutSecs(); }, [](const std::any &value)
-                    { CFG_setScreenTimeoutSecs(std::any_cast<uint32_t>(value)); }},
-            MenuItem{Generic, "Suspend timeout", "Time before device goes to sleep (0-600s)", timeout_secs, timeout_labels, []() -> std::any
+                    { CFG_setScreenTimeoutSecs(std::any_cast<uint32_t>(value)); },
+                    []() { CFG_setScreenTimeoutSecs(CFG_DEFAULT_SCREENTIMEOUTSECS);}},
+                    new MenuItem{Generic, "Suspend timeout", "Time before device goes to sleep (0-600s)", timeout_secs, timeout_labels, []() -> std::any
                     { return CFG_getSuspendTimeoutSecs(); }, [](const std::any &value)
-                    { CFG_setSuspendTimeoutSecs(std::any_cast<uint32_t>(value)); }},
-            MenuItem{Generic, "Haptic feedback", "Enable or disable haptic feedback on certain actions in the OS", {false, true}, on_off, []() -> std::any
+                    { CFG_setSuspendTimeoutSecs(std::any_cast<uint32_t>(value)); },
+                    []() { CFG_setSuspendTimeoutSecs(CFG_DEFAULT_SUSPENDTIMEOUTSECS);}},
+                    new MenuItem{Generic, "Haptic feedback", "Enable or disable haptic feedback on certain actions in the OS", {false, true}, on_off, []() -> std::any
                     { return CFG_getHaptics(); }, [](const std::any &value)
-                    { CFG_setHaptics(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Show 24h time format", "Show clock in the 24hrs time format", {false, true}, on_off, []() -> std::any
+                    { CFG_setHaptics(std::any_cast<bool>(value)); },
+                    []() { CFG_setHaptics(CFG_DEFAULT_HAPTICS);}},
+                    new MenuItem{Generic, "Show 24h time format", "Show clock in the 24hrs time format", {false, true}, on_off, []() -> std::any
                     { return CFG_getClock24H(); },
                     [](const std::any &value)
-                    { CFG_setClock24H(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Show clock", "Show clock in the status pill", {false, true}, on_off, []() -> std::any
+                    { CFG_setClock24H(std::any_cast<bool>(value)); },
+                    []() { CFG_setClock24H(CFG_DEFAULT_CLOCK24H);}},
+                    new MenuItem{Generic, "Show clock", "Show clock in the status pill", {false, true}, on_off, []() -> std::any
                     { return CFG_getShowClock(); },
                     [](const std::any &value)
-                    { CFG_setShowClock(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Set time and date automatically", "Automatically adjust system time\nwith NTP (requires internet access)", {false, true}, on_off, []() -> std::any
+                    { CFG_setShowClock(std::any_cast<bool>(value)); },
+                    []() { CFG_setShowClock(CFG_DEFAULT_SHOWCLOCK);}},
+                    new MenuItem{Generic, "Set time and date automatically", "Automatically adjust system time\nwith NTP (requires internet access)", {false, true}, on_off, []() -> std::any
                     { return TIME_getNetworkTimeSync(); }, [](const std::any &value)
-                    { TIME_setNetworkTimeSync(std::any_cast<bool>(value)); }},
-            MenuItem{Generic, "Time zone", "Your time zone", tz_values, tz_labels, []() -> std::any
+                    { TIME_setNetworkTimeSync(std::any_cast<bool>(value)); },
+                    []() { TIME_setNetworkTimeSync(false);}}, // default from stock
+                    new MenuItem{Generic, "Time zone", "Your time zone", tz_values, tz_labels, []() -> std::any
                     { return std::string(TIME_getCurrentTimezone()); }, [](const std::any &value)
-                    { TIME_setCurrentTimezone(std::any_cast<std::string>(value).c_str()); }},
-            MenuItem{Generic, "Save format", "The save format to use.", {(int)SAVE_FORMAT_SAV, (int)SAVE_FORMAT_SRM}, {".sav", ".srm"}, []() -> std::any
+                    { TIME_setCurrentTimezone(std::any_cast<std::string>(value).c_str()); },
+                    []() { TIME_setCurrentTimezone("Asia/Shanghai");}}, // default from Stock
+                    new MenuItem{Generic, "Save format", "The save format to use.", {(int)SAVE_FORMAT_SAV, (int)SAVE_FORMAT_SRM}, {".sav", ".srm"}, []() -> std::any
                     { return CFG_getSaveFormat(); }, [](const std::any &value)
-                    { CFG_setSaveFormat(std::any_cast<int>(value)); }},
+                    { CFG_setSaveFormat(std::any_cast<int>(value)); },
+                    []() { CFG_setSaveFormat(CFG_DEFAULT_SAVEFORMAT);}},
+
+                    new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
         ctx.menu = new MenuList(MenuItemType::List, "Main",
         {
-            MenuItem{Generic, "Appearance", "UI customization", {}, {}, nullptr, nullptr, DeferToSubmenu, appearanceMenu},
-            MenuItem{Generic, "Display", "", {}, {}, nullptr, nullptr, DeferToSubmenu, displayMenu},
-            MenuItem{Generic, "System", "", {}, {}, nullptr, nullptr, DeferToSubmenu, systemMenu},
+            new MenuItem{Generic, "Appearance", "UI customization", {}, {}, nullptr, nullptr, DeferToSubmenu, appearanceMenu},
+            new MenuItem{Generic, "Display", "", {}, {}, nullptr, nullptr, DeferToSubmenu, displayMenu},
+            new MenuItem{Generic, "System", "", {}, {}, nullptr, nullptr, DeferToSubmenu, systemMenu},
         });
 
         const bool showTitle = false;
@@ -241,7 +271,7 @@ int main(int argc, char *argv[])
             uint32_t now = SDL_GetTicks();
             PAD_poll();
 
-            bool handled = ctx.menu->handleInput(ctx.dirty, quit);
+            ctx.menu->handleInput(ctx.dirty, quit);
 
             PWR_update(&ctx.dirty, &ctx.show_setting, nullptr, nullptr);
 

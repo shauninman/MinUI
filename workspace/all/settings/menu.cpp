@@ -14,28 +14,31 @@ extern "C"
 
 MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc,
                    const std::vector<std::any> &values, const std::vector<std::string> &labels,
-                   ValueGetCallback on_get, ValueSetCallback on_set,
+                   ValueGetCallback on_get, ValueSetCallback on_set, ValueResetCallback on_reset, 
                    MenuListCallback on_confirm, MenuList *submenu)
     : type(type), name(name), desc(desc), values(values), labels(labels),
-      on_get(on_get), on_set(on_set), on_confirm(on_confirm),
+      on_get(on_get), on_set(on_set), on_confirm(on_confirm), on_reset(on_reset),
       submenu(submenu)
 {
     initSelection();
 }
 
 MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, const std::vector<std::any> &values,
-                   ValueGetCallback on_get, ValueSetCallback on_set,
+                   ValueGetCallback on_get, ValueSetCallback on_set, ValueResetCallback on_reset,
                    MenuListCallback on_confirm, MenuList *submenu)
-    : MenuItem(type, name, desc, values, {}, on_get, on_set, on_confirm, submenu)
+    : type(type), name(name), desc(desc), values(values), /*labels({}),*/
+    on_get(on_get), on_set(on_set), on_confirm(on_confirm), on_reset(on_reset),
+    submenu(submenu)
 {
     generateDefaultLabels();
+    initSelection();
 }
 
 MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, int min, int max,
-                   ValueGetCallback on_get, ValueSetCallback on_set,
+                   ValueGetCallback on_get, ValueSetCallback on_set, ValueResetCallback on_reset,
                    MenuListCallback on_confirm, MenuList *submenu)
     : type(type), name(name), desc(desc),
-      on_get(on_get), on_set(on_set), on_confirm(on_confirm),
+      on_get(on_get), on_set(on_set), on_confirm(on_confirm), on_reset(on_reset),
       submenu(submenu)
 {
     const int step = 1; // until we need it
@@ -43,9 +46,16 @@ MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string
     for (int i = 0; i < num; i++)
         values.push_back(min + i * step);
 
-    initSelection();
     generateDefaultLabels();
+    initSelection();
     assert(valueIdx >= 0);
+}
+
+MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc,
+    MenuListCallback on_confirm, MenuList *submenu)
+    : MenuItem(type, name, desc, 0,0, nullptr, nullptr, nullptr, on_confirm, submenu)
+{
+    
 }
 
 MenuItem::~MenuItem()
@@ -75,6 +85,7 @@ void MenuItem::generateDefaultLabels()
 
 void MenuItem::initSelection()
 {
+    int oldValueIdx = valueIdx;
     valueIdx = -1;
     if (!values.empty())
     {
@@ -137,7 +148,7 @@ void MenuItem::initSelection()
                     {
                         if (std::any_cast<std::string>(initialVal) == std::any_cast<std::string>(v))
                         {
-                            LOG_info("Found equal strings %s and %s\n", initialVal, v);
+                            //LOG_info("Found equal strings %s and %s\n", initialVal, v);
                             valueIdx = i;
                             break;
                         }
@@ -146,7 +157,7 @@ void MenuItem::initSelection()
                     {
                         if (std::any_cast<std::basic_string<char>>(initialVal) == std::any_cast<std::basic_string<char>>(v))
                         {
-                            LOG_info("Found equal basic strings %s and %s\n", initialVal, v);
+                            //LOG_info("Found equal basic strings %s and %s\n", initialVal, v);
                             valueIdx = i;
                             break;
                         }
@@ -174,24 +185,26 @@ void MenuItem::initSelection()
     }
 }
 
-bool MenuItem::handleInput(int &dirty)
+InputReactionHint MenuItem::handleInput(int &dirty)
 {
-    bool handled = false;
+    InputReactionHint hint = Unhandled;
 
     if (deferred)
     {
         assert(submenu);
         int subMenuJustClosed = 0;
-        handled = submenu->handleInput(dirty, subMenuJustClosed);
-        if (subMenuJustClosed)
+        hint = submenu->handleInput(dirty, subMenuJustClosed);
+        if (subMenuJustClosed) {
             defer(false);
-        dirty = 1; // could be more granular and efficient here
-        return handled;
+            dirty = 1;
+        }
+        return hint;
     }
+
     // handle our custom behavior and return true if the input was handled
     if (PAD_justRepeated(BTN_LEFT))
     {
-        handled = true;
+        hint = NoOp;
         if (prevValue())
         {
             if (on_set)
@@ -201,7 +214,7 @@ bool MenuItem::handleInput(int &dirty)
     }
     else if (PAD_justRepeated(BTN_RIGHT))
     {
-        handled = true;
+        hint = NoOp;
         if (nextValue())
         {
             if (on_set)
@@ -211,7 +224,7 @@ bool MenuItem::handleInput(int &dirty)
     }
     if (PAD_justRepeated(BTN_L1))
     {
-        handled = true;
+        hint = NoOp;
         if (prev(10))
         {
             if (on_set)
@@ -221,7 +234,7 @@ bool MenuItem::handleInput(int &dirty)
     }
     else if (PAD_justRepeated(BTN_R1))
     {
-        handled = true;
+        hint = NoOp;
         if (next(10))
         {
             if (on_set)
@@ -231,13 +244,13 @@ bool MenuItem::handleInput(int &dirty)
     }
     else if (PAD_justPressed(BTN_A))
     {
-        handled = true; // not really, should check on_confirm
+        hint = NoOp; // not really, should check on_confirm
         if (on_confirm)
-            on_confirm(*this);
+            hint = on_confirm(*this);
         dirty = 1;
     }
 
-    return handled;
+    return hint;
 }
 
 bool MenuItem::nextValue()
@@ -268,7 +281,7 @@ bool MenuItem::prev(int n)
 
 ///////////////////////////////////////////////////////////
 
-MenuList::MenuList(MenuItemType type, const std::string &descp, std::vector<MenuItem> items, MenuListCallback on_change, MenuListCallback on_confirm)
+MenuList::MenuList(MenuItemType type, const std::string &descp, std::vector<MenuItem*> items, MenuListCallback on_change, MenuListCallback on_confirm)
     : type(type), desc(descp), items(items), on_change(on_change), on_confirm(on_confirm)
 {
     // best effort layout based on the platform defines, user should really call performLayout manually
@@ -278,6 +291,9 @@ MenuList::MenuList(MenuItemType type, const std::string &descp, std::vector<Menu
 
 MenuList::~MenuList()
 {
+   for (auto item : items)
+     delete item;
+   items.clear();
 }
 
 void MenuList::performLayout(const SDL_Rect &dst)
@@ -303,9 +319,9 @@ void MenuList::performLayout(const SDL_Rect &dst)
     scope.end = std::min(scope.count, scope.max_visible_options);
     scope.visible_rows = scope.end;
 
-    for (auto &itm : items)
-        if (itm.getSubMenu())
-            itm.getSubMenu()->performLayout(dst);
+    for (auto itm : items)
+        if (itm->getSubMenu())
+            itm->getSubMenu()->performLayout(dst);
 
     layout_called = true;
 }
@@ -345,26 +361,32 @@ bool MenuList::selectPrev()
 }
 
 // returns true if the input was handled
-bool MenuList::handleInput(int &dirty, int &quit)
+InputReactionHint MenuList::handleInput(int &dirty, int &quit)
 {
-    if (items.at(scope.selected).handleInput(dirty))
-        return true;
+    InputReactionHint handled = items.at(scope.selected)->handleInput(dirty);
+    if(handled == ResetAllItems) {
+        resetAllItems();
+        dirty = 1;
+        return NoOp;
+    }
+    else if (handled != Unhandled)
+        return handled;
 
     if (PAD_justRepeated(BTN_UP))
     {
         if (scope.selected == 0 && !PAD_justPressed(BTN_UP))
-            return true; // stop at top
+            return NoOp; // stop at top
         if (selectPrev())
-            dirty = true;
-        return true;
+            dirty = 1;
+        return NoOp;
     }
     else if (PAD_justRepeated(BTN_DOWN))
     {
         if (scope.selected == scope.count - 1 && !PAD_justPressed(BTN_DOWN))
-            return true; // stop at bottom
+            return NoOp; // stop at bottom
         if (selectNext())
-            dirty = true;
-        return true;
+            dirty = 1;
+        return NoOp;
     }
     else if (on_change)
     {
@@ -377,10 +399,10 @@ bool MenuList::handleInput(int &dirty, int &quit)
     else if (PAD_justPressed(BTN_B))
     {
         quit = 1;
-        return true;
+        return NoOp;
     }
 
-    return false;
+    return Unhandled;
 }
 
 SDL_Rect MenuList::itemSizeHint(const MenuItem &item)
@@ -442,11 +464,11 @@ void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
 {
     assert(layout_called);
 
-    auto &cur = items.at(scope.selected);
-    if (cur.isDeferred())
+    auto cur = items.at(scope.selected);
+    if (cur->isDeferred())
     {
-        assert(cur.getSubMenu());
-        cur.getSubMenu()->draw(surface, dst);
+        assert(cur->getSubMenu());
+        cur->getSubMenu()->draw(surface, dst);
     }
     else
     {
@@ -488,10 +510,10 @@ void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
                 GFX_blitAssetCPP(ASSET_SCROLL_DOWN, {}, surface, {rect.x, rect.h - SCALE1(PADDING + PILL_SIZE) + rect.y});
         }
 
-        if (cur.getDesc().length() > 0)
+        if (cur->getDesc().length() > 0)
         {
             int w, h;
-            const auto description = cur.getDesc();
+            const auto description = cur->getDesc();
             GFX_sizeText(font.tiny, description.c_str(), SCALE1(FONT_SMALL), &w, &h);
             GFX_blitTextCPP(font.tiny, description.c_str(), SCALE1(FONT_SMALL), COLOR_WHITE, surface, {(dst.x + dst.w - w) / 2, dst.y + dst.h - h, w, h});
         }
@@ -504,9 +526,9 @@ void MenuList::drawList(SDL_Surface *surface, const SDL_Rect &dst)
     if (max_width == 0)
     {
         int mw = 0;
-        for (auto &item : items)
+        for (auto item : items)
         {
-            auto hintRect = itemSizeHint(item);
+            auto hintRect = itemSizeHint(*item);
             if (hintRect.w > mw)
                 mw = hintRect.w;
         }
@@ -521,7 +543,7 @@ void MenuList::drawList(SDL_Surface *surface, const SDL_Rect &dst)
     for (int i = scope.start, j = 0; i < scope.end; i++, j++)
     {
         auto pos = dy(rect, SCALE1(j * BUTTON_SIZE));
-        drawListItem(surface, pos, items[i], j == selected_row);
+        drawListItem(surface, pos, *items[i], j == selected_row);
     }
 }
 
@@ -560,7 +582,7 @@ void MenuList::drawFixed(SDL_Surface *surface, const SDL_Rect &dst)
     for (int i = scope.start, j = 0; i < scope.end; i++, j++)
     {
         auto pos = dy(rect, SCALE1(j * BUTTON_SIZE));
-        drawFixedItem(surface, pos, items[i], j == selected_row);
+        drawFixedItem(surface, pos, *items[i], j == selected_row);
     }
 }
 
@@ -615,6 +637,9 @@ void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const Me
 #define COLOR_PADDING 4
             SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + mw - text->w - SCALE1(OPTION_PADDING + COLOR_PADDING + FONT_TINY), dst.y + SCALE1(3)});
         }
+        else if(item.getType() == Button) {
+            // dont draw anything for now, could be a button hint later
+        }
         else // Generic and fallback
             SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + mw - text->w - SCALE1(OPTION_PADDING), dst.y + SCALE1(3)});
         SDL_FreeSurface(text);
@@ -643,9 +668,9 @@ void MenuList::drawInput(SDL_Surface *surface, const SDL_Rect &dst)
     {
         // get the width of the widest row
         int mw = 0;
-        for (auto &item : items)
+        for (auto item : items)
         {
-            auto hintRect = itemSizeHint(item);
+            auto hintRect = itemSizeHint(*item);
             if (hintRect.w > mw)
                 mw = hintRect.w;
         }
@@ -661,7 +686,7 @@ void MenuList::drawInput(SDL_Surface *surface, const SDL_Rect &dst)
     {
         auto pos = dy(rect, SCALE1(j * BUTTON_SIZE));
         pos.w = max_width;
-        drawInputItem(surface, pos, items[i], j == selected_row);
+        drawInputItem(surface, pos, *items[i], j == selected_row);
     }
 }
 
@@ -717,7 +742,7 @@ void MenuList::drawMain(SDL_Surface *surface, const SDL_Rect &dst)
             // pos.w = std::min(pos.w, hintRect.w);
             // pos.h = std::min(pos.h, hintRect.h);
 
-            drawMainItem(surface, pos, items[i], j == selected_row);
+            drawMainItem(surface, pos, *items[i], j == selected_row);
         }
     }
     else
@@ -750,4 +775,14 @@ void MenuList::drawMainItem(SDL_Surface *surface, const SDL_Rect &dst, const Men
     text = TTF_RenderUTF8_Blended(font.large, truncated, text_color);
     SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + SCALE1(BUTTON_PADDING), dst.y + SCALE1(3)});
     SDL_FreeSurface(text);
+}
+
+void MenuList::resetAllItems()
+{
+    for(auto item : items) {
+        if(item->on_reset) {
+            item->on_reset();
+            item->initSelection();
+        }
+    }
 }

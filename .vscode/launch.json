@@ -14,6 +14,10 @@
             "cwd": "${workspaceFolder}/workspace/all/nextui/build/macos",
             "program": "${workspaceFolder}/workspace/all/nextui/build/macos/nextui",
             "preLaunchTask": "C/C++: gcc build macos",
+            "environment": [{
+              "name": "SHARED_USERDATA_PATH", 
+              "value": "/Library/Developer/Projects/private/MinUI_FAKESD/.userdata/shared", 
+            }]
         },
         {
             "name": "App: Battery",
@@ -70,6 +74,10 @@
             "cwd": "${workspaceFolder}/workspace/all/settings/build/macos",
             "program": "${workspaceFolder}/workspace/all/settings/build/macos/settings",
             "preLaunchTask": "C/C++: gcc build macos - Settings",
+            "environment": [{
+              "name": "SHARED_USERDATA_PATH", 
+              "value": "/Library/Developer/Projects/private/MinUI_FAKESD/.userdata/shared", 
+            }]
         }
     ]
 }

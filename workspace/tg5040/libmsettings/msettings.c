@@ -74,15 +74,15 @@ typedef struct SettingsV6 {
 typedef SettingsV6 Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
-	.brightness = 2,
-	.colortemperature = 20,
-	.headphones = 4,
-	.speaker = 8,
+	.brightness = SETTINGS_DEFAULT_BRIGHTNESS,
+	.colortemperature = SETTINGS_DEFAULT_COLORTEMP,
+	.headphones = SETTINGS_DEFAULT_HEADPHONE_VOLUME,
+	.speaker = SETTINGS_DEFAULT_VOLUME,
 	.mute = 0,
-	.contrast = 0,
-	.saturation = 0,
-	.exposure = 0,
-.jack = 0,
+	.contrast = SETTINGS_DEFAULT_CONTRAST,
+	.saturation = SETTINGS_DEFAULT_SATURATION,
+	.exposure = SETTINGS_DEFAULT_EXPOSURE,
+	.jack = 0,
 };
 static Settings* settings;
 
