@@ -172,6 +172,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
                 CFG_setRomsUseFolderBackground((bool)temp_value);
                 continue;
             }
+            if (sscanf(line, "saveFormat=%i", &temp_value) == 1)
+            {
+                CFG_setSaveFormat(temp_value);
+                continue;
+            }
         }
         fclose(file);
     }
