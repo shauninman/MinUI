@@ -155,10 +155,17 @@ void InitSettings(void) {
 				else if(version==5) {
 					SettingsV5 old;
 					read(fd, &old, sizeof(SettingsV5));
-					// initialize additional display params
+					// no display settings yet, default values used. 
 					settings->saturation = 0;
 					settings->contrast = 0;
 					settings->exposure = 0;
+					// copy the rest
+					settings->colortemperature = old.colortemperature;
+					settings->brightness = old.brightness;
+					settings->headphones = old.headphones;
+					settings->speaker = old.speaker;
+					settings->mute = old.mute;
+					settings->jack = old.jack;
 				}
 				else if(version==4) {
 					SettingsV4 old;
