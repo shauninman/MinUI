@@ -39,7 +39,7 @@ typedef struct SettingsV4 {
 	int jack; 
 } SettingsV4;
 
-// Current NextUI settings format
+// Second NextUI settings format
 typedef struct SettingsV5 {
 	int version; // future proofing
 	int brightness;
@@ -52,10 +52,26 @@ typedef struct SettingsV5 {
 	int jack; 
 } SettingsV5;
 
+// Current NextUI settings format
+typedef struct SettingsV6 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int contrast;
+	int saturation;
+	int exposure;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV6;
+
 // When incrementing SETTINGS_VERSION, update the Settings typedef and add
 // backwards compatibility to InitSettings!
-#define SETTINGS_VERSION 5
-typedef SettingsV5 Settings;
+#define SETTINGS_VERSION 6
+typedef SettingsV6 Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = 2,
@@ -63,7 +79,10 @@ static Settings DefaultSettings = {
 	.headphones = 4,
 	.speaker = 8,
 	.mute = 0,
-	.jack = 0,
+	.contrast = 0,
+	.saturation = 0,
+	.exposure = 0,
+.jack = 0,
 };
 static Settings* settings;
 
@@ -130,11 +149,16 @@ void InitSettings(void) {
 		if(version > 0) {
 			int fd = open(SettingsPath, O_RDONLY);
 			if (fd>=0) {
-				if (version == SETTINGS_VERSION)
-				{
-					// changes: colortemp 0-40
-					// read the rest
+				if (version == SETTINGS_VERSION) {
 					read(fd, settings, shm_size);
+				}
+				else if(version==5) {
+					SettingsV5 old;
+					read(fd, &old, sizeof(SettingsV5));
+					// initialize additional display params
+					settings->saturation = 0;
+					settings->contrast = 0;
+					settings->exposure = 0;
 				}
 				else if(version==4) {
 					SettingsV4 old;
@@ -196,12 +220,45 @@ static inline void SaveSettings(void) {
 	}
 }
 
+///////// Getters exposed in public API
+
 int GetBrightness(void) { // 0-10
 	return settings->brightness;
 }
 int GetColortemp(void) { // 0-10
 	return settings->colortemperature;
 }
+int GetVolume(void) { // 0-20
+	if (settings->mute) return 0;
+	return settings->jack ? settings->headphones : settings->speaker;
+}
+// monitored and set by thread in keymon
+int GetJack(void) {
+	return settings->jack;
+}
+int GetHDMI(void) {	
+	// printf("GetHDMI() %i\n", settings->hdmi); fflush(stdout);
+	// return settings->hdmi;
+	return 0;
+}
+int GetMute(void) {
+	return settings->mute;
+}
+int GetContrast(void)
+{
+	return settings->contrast;
+}
+int GetSaturation(void)
+{
+	return settings->saturation;
+}
+int GetExposure(void)
+{
+	return settings->exposure;
+}
+
+///////// Setters exposed in public API
+
 void SetBrightness(int value) {
 	
 	int raw;
@@ -291,12 +348,6 @@ void SetColortemp(int value) {
 	settings->colortemperature = value;
 	SaveSettings();
 }
-
-
-int GetVolume(void) { // 0-20
-	if (settings->mute) return 0;
-	return settings->jack ? settings->headphones : settings->speaker;
-}
 void SetVolume(int value) { // 0-20
 	if (settings->mute) return SetRawVolume(0);
 	// if (settings->hdmi) return;
@@ -308,6 +359,96 @@ void SetVolume(int value) { // 0-20
 	SetRawVolume(raw);
 	SaveSettings();
 }
+// monitored and set by thread in keymon
+void SetJack(int value) {
+	printf("SetJack(%i)\n", value); fflush(stdout);
+	
+	settings->jack = value;
+	SetVolume(GetVolume());
+}
+void SetHDMI(int value) {
+	// printf("SetHDMI(%i)\n", value); fflush(stdout);
+	
+	// if (settings->hdmi!=value) system("/usr/lib/autostart/common/055-hdmi-check");
+	
+	// settings->hdmi = value;
+	// if (value) SetRawVolume(100); // max
+	// else SetVolume(GetVolume()); // restore
+}
+void SetMute(int value) {
+	settings->mute = value;
+	if (settings->mute) SetRawVolume(0);
+	else SetVolume(GetVolume());
+}
+void SetContrast(int value)
+{
+	int raw;
+	
+	switch (value) {
+		// dont offer -5/ raw 0, looks like it might turn off the display completely?
+		case -4: raw=10; break;
+		case -3: raw=20; break;
+		case -2: raw=30; break;
+		case -1: raw=40; break;
+		case 0: raw=50; break;
+		case 1: raw=60; break;
+		case 2: raw=70; break;
+		case 3: raw=80; break;
+		case 4: raw=90; break;
+		case 5: raw=100; break;
+	}
+	
+	SetRawContrast(raw);
+	settings->contrast = value;
+	SaveSettings();
+}
+void SetSaturation(int value)
+{
+	int raw;
+	
+	switch (value) {
+		case -5: raw=0; break;
+		case -4: raw=10; break;
+		case -3: raw=20; break;
+		case -2: raw=30; break;
+		case -1: raw=40; break;
+		case 0: raw=50; break;
+		case 1: raw=60; break;
+		case 2: raw=70; break;
+		case 3: raw=80; break;
+		case 4: raw=90; break;
+		case 5: raw=100; break;
+	}
+	
+	SetRawSaturation(raw);
+	settings->saturation = value;
+	SaveSettings();
+}
+void SetExposure(int value)
+{
+	int raw;
+	
+	switch (value) {
+		// stock OS also avoids setting anything lower, so we do the same here.
+		case -4: raw=10; break;
+		case -3: raw=20; break;
+		case -2: raw=30; break;
+		case -1: raw=40; break;
+		case 0: raw=50; break;
+		case 1: raw=60; break;
+		case 2: raw=70; break;
+		case 3: raw=80; break;
+		case 4: raw=90; break;
+		case 5: raw=100; break;
+	}
+	
+	SetRawExposure(raw);
+	settings->exposure = value;
+	SaveSettings();
+}
+
+
+///////// Platform specific, unscaled accessors
 
 #define DISP_LCD_SET_BRIGHTNESS  0x102
 void SetRawBrightness(int val) { // 0 - 255
@@ -371,36 +512,36 @@ void SetRawVolume(int val) { // 0-100
 	// system(cmd);
 }
 
-// monitored and set by thread in keymon
-int GetJack(void) {
-	return settings->jack;
-}
-void SetJack(int value) {
-	printf("SetJack(%i)\n", value); fflush(stdout);
+void SetRawContrast(int val){
+	// if (settings->hdmi) return;
 	
-	settings->jack = value;
-	SetVolume(GetVolume());
-}
+	printf("SetRawContrast(%i)\n", val); fflush(stdout);
 
-int GetHDMI(void) {	
-	// printf("GetHDMI() %i\n", settings->hdmi); fflush(stdout);
-	// return settings->hdmi;
-	return 0;
+	FILE *fd = fopen("/sys/class/disp/disp/attr/enhance_contrast", "w");
+	if (fd) {
+		fprintf(fd, "%i", val);
+		fclose(fd);
+	}
 }
-void SetHDMI(int value) {
-	// printf("SetHDMI(%i)\n", value); fflush(stdout);
-	
-	// if (settings->hdmi!=value) system("/usr/lib/autostart/common/055-hdmi-check");
-	
-	// settings->hdmi = value;
-	// if (value) SetRawVolume(100); // max
-	// else SetVolume(GetVolume()); // restore
+void SetRawSaturation(int val){
+	// if (settings->hdmi) return;
+
+	printf("SetRawSaturation(%i)\n", val); fflush(stdout);
+
+	FILE *fd = fopen("/sys/class/disp/disp/attr/enhance_saturation", "w");
+	if (fd) {
+		fprintf(fd, "%i", val);
+		fclose(fd);
+	}
 }
-int GetMute(void) {
-	return settings->mute;
-}
-void SetMute(int value) {
-	settings->mute = value;
-	if (settings->mute) SetRawVolume(0);
-	else SetVolume(GetVolume());
+void SetRawExposure(int val){
+	// if (settings->hdmi) return;
+
+	printf("SetRawExposure(%i)\n", val); fflush(stdout);
+
+	FILE *fd = fopen("/sys/class/disp/disp/attr/enhance_bright", "w");
+	if (fd) {
+		fprintf(fd, "%i", val);
+		fclose(fd);
+	}
 }

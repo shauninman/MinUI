@@ -152,6 +152,9 @@ void QuitSettings(void){
 
 int GetBrightness(void) { return 0; }
 int GetColortemp(void) { return 0; }
+int GetContrast(void) { return 0; }
+int GetSaturation(void) { return 0; }
+int GetExposure(void) { return 0; }
 int GetVolume(void) { return 0; }
 
 void SetRawBrightness(int value) {}
@@ -159,6 +162,9 @@ void SetRawVolume(int value){}
 
 void SetBrightness(int value) {}
 void SetColortemp(int value) {}
+void SetContrast(int value) {}
+void SetSaturation(int value) {}
+void SetExposure(int value) {}
 void SetVolume(int value) {}
 
 int GetJack(void) { return 0; }

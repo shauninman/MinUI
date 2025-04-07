@@ -103,11 +103,8 @@ int main(int argc, char *argv[])
         auto appearanceMenu = new MenuList(MenuItemType::Fixed, "Appearance",
         {
             MenuItem{Generic, "Font", "The font to render all UI text.", {0, 1}, font_names, []() -> std::any
-                    { return CFG_getFontId(); },
-                    [](const std::any &value)
-                    {
-                        CFG_setFontId(std::any_cast<int>(value));
-                    }},
+                    { return CFG_getFontId(); },[](const std::any &value)
+                    { CFG_setFontId(std::any_cast<int>(value)); }},
             MenuItem{Color, "Main Color", "The color used to render main UI elements.", colors, color_strings, []() -> std::any
                     { return CFG_getColor(1); }, [](const std::any &value)
                     { CFG_setColor(1, std::any_cast<uint32_t>(value)); }},
@@ -126,15 +123,6 @@ int main(int argc, char *argv[])
             MenuItem{Color, "List Text Selected", "List selected text color", colors, color_strings, []() -> std::any
                     { return CFG_getColor(5); }, [](const std::any &value)
                     { CFG_setColor(5, std::any_cast<uint32_t>(value)); }},
-            MenuItem{Generic, "Brightness", "Display brightness (0-10)", 0, 10, []() -> std::any
-                    { return GetBrightness(); }, [](const std::any &value)
-                    { SetBrightness(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
-                    { return GetVolume(); }, [](const std::any &value)
-                    { SetVolume(std::any_cast<int>(value)); }},
-            MenuItem{Generic, "Color temperature", "Color temperature (0-40)", 0, 40, []() -> std::any
-                    { return GetColortemp(); }, [](const std::any &value)
-                    { SetColortemp(std::any_cast<int>(value)); }},
             MenuItem{Generic, "Show battery percentage", "Show battery level as percent in the status pill", {false, true}, on_off, []() -> std::any
                     { return CFG_getShowBatteryPercent(); },
                     [](const std::any &value)
@@ -164,8 +152,30 @@ int main(int argc, char *argv[])
                     { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); }},
         });
 
+        auto displayMenu = new MenuList(MenuItemType::Fixed, "Display",
+        {
+            MenuItem{Generic, "Brightness", "Display brightness (0 to 10)", 0, 10, []() -> std::any
+                { return GetBrightness(); }, [](const std::any &value)
+                { SetBrightness(std::any_cast<int>(value)); }},
+            MenuItem{Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, []() -> std::any
+                { return GetColortemp(); }, [](const std::any &value)
+                { SetColortemp(std::any_cast<int>(value)); }},
+            MenuItem{Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, []() -> std::any
+                { return GetContrast(); }, [](const std::any &value)
+                { SetContrast(std::any_cast<int>(value)); }},
+            MenuItem{Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, []() -> std::any
+                { return GetSaturation(); }, [](const std::any &value)
+                { SetSaturation(std::any_cast<int>(value)); }},
+            MenuItem{Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, []() -> std::any
+                { return GetExposure(); }, [](const std::any &value)
+                { SetExposure(std::any_cast<int>(value)); }},
+        });
+
         auto systemMenu = new MenuList(MenuItemType::Fixed, "System",
         {
+            MenuItem{Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
+                { return GetVolume(); }, [](const std::any &value)
+                { SetVolume(std::any_cast<int>(value)); }},
             MenuItem{Generic, "Screen timeout", "Time before screen turns off (0-600s)", timeout_secs, timeout_labels, []() -> std::any
                     { return CFG_getScreenTimeoutSecs(); }, [](const std::any &value)
                     { CFG_setScreenTimeoutSecs(std::any_cast<uint32_t>(value)); }},
@@ -197,6 +207,7 @@ int main(int argc, char *argv[])
         ctx.menu = new MenuList(MenuItemType::List, "Main",
         {
             MenuItem{Generic, "Appearance", "UI customization", {}, {}, nullptr, nullptr, DeferToSubmenu, appearanceMenu},
+            MenuItem{Generic, "Display", "", {}, {}, nullptr, nullptr, DeferToSubmenu, displayMenu},
             MenuItem{Generic, "System", "", {}, {}, nullptr, nullptr, DeferToSubmenu, systemMenu},
         });
 
