@@ -9,6 +9,8 @@
 #define SETTINGS_DEFAULT_VOLUME 8
 #define SETTINGS_DEFAULT_HEADPHONE_VOLUME 4
 
+#define SETTINGS_DEFAULT_MUTE_NO_CHANGE -69
+
 void InitSettings(void);
 void QuitSettings(void);
 
@@ -37,6 +39,18 @@ void SetHDMI(int value); // 0-1
 
 int GetMute(void);
 
-int GetSleepDelay(void);
+// custom mute mode persistence layer
+
+int  GetMutedBrightness(void);
+int  GetMutedColortemp(void);
+int  GetMutedContrast(void);
+int  GetMutedSaturation(void);
+int  GetMutedExposure(void);
+
+void SetMutedBrightness(int);
+void SetMutedColortemp(int);
+void SetMutedContrast(int);
+void SetMutedSaturation(int);
+void SetMutedExposure(int);
 
 #endif  // __msettings_h__

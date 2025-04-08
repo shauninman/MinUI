@@ -41,6 +41,7 @@ void CFG_defaults(NextUISettings *cfg)
         .showRecents = CFG_DEFAULT_SHOWRECENTS,
         .showGameArt = CFG_DEFAULT_SHOWGAMEART,
         .gameSwitcherScaling = CFG_DEFAULT_GAMESWITCHERSCALING,
+
         .muteLeds = CFG_DEFAULT_MUTELEDS,
 
         .screenTimeoutSecs = CFG_DEFAULT_SCREENTIMEOUTSECS,

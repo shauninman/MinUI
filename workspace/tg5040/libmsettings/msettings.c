@@ -52,7 +52,7 @@ typedef struct SettingsV5 {
 	int jack; 
 } SettingsV5;
 
-// Current NextUI settings format
+// Third NextUI settings format
 typedef struct SettingsV6 {
 	int version; // future proofing
 	int brightness;
@@ -68,10 +68,30 @@ typedef struct SettingsV6 {
 	int jack; 
 } SettingsV6;
 
+typedef struct SettingsV7 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int contrast;
+	int saturation;
+	int exposure;
+	int mutedbrightness;
+	int mutedcolortemperature;
+	int mutedcontrast;
+	int mutedsaturation;
+	int mutedexposure;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV7;
+
 // When incrementing SETTINGS_VERSION, update the Settings typedef and add
 // backwards compatibility to InitSettings!
-#define SETTINGS_VERSION 6
-typedef SettingsV6 Settings;
+#define SETTINGS_VERSION 7
+typedef SettingsV7 Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = SETTINGS_DEFAULT_BRIGHTNESS,
@@ -82,6 +102,11 @@ static Settings DefaultSettings = {
 	.contrast = SETTINGS_DEFAULT_CONTRAST,
 	.saturation = SETTINGS_DEFAULT_SATURATION,
 	.exposure = SETTINGS_DEFAULT_EXPOSURE,
+	.mutedbrightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.mutedcolortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.mutedcontrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.mutedsaturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.mutedexposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
 	.jack = 0,
 };
 static Settings* settings;
@@ -96,6 +121,12 @@ static int shm_size = sizeof(Settings);
 // #define BRIGHTNESS_PATH "/sys/class/backlight/backlight/brightness"
 // #define JACK_STATE_PATH "/sys/bus/platform/devices/singleadc-joypad/hp"
 // #define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
+
+int scaleBrightness(int);
+int scaleColortemp(int);
+int scaleContrast(int);
+int scaleSaturation(int);
+int scaleExposure(int);
 
 int getInt(char* path) {
 	int i = 0;
@@ -151,6 +182,26 @@ void InitSettings(void) {
 			if (fd>=0) {
 				if (version == SETTINGS_VERSION) {
 					read(fd, settings, shm_size);
+				}
+				else if(version==6) {
+					SettingsV6 old;
+					read(fd, &old, sizeof(SettingsV6));
+					// no muted* settings yet, default values used.
+					settings->mutedbrightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->mutedcolortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->mutedcontrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->mutedexposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->mutedsaturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					// copy the rest
+					settings->saturation = old.saturation;
+					settings->contrast = old.contrast;
+					settings->exposure = old.exposure;
+					settings->colortemperature = old.colortemperature;
+					settings->brightness = old.brightness;
+					settings->headphones = old.headphones;
+					settings->speaker = old.speaker;
+					settings->mute = old.mute;
+					settings->jack = old.jack;
 				}
 				else if(version==5) {
 					SettingsV5 old;
@@ -263,11 +314,149 @@ int GetExposure(void)
 {
 	return settings->exposure;
 }
+int GetMutedBrightness(void)
+{
+	return settings->mutedbrightness;
+}
+int GetMutedColortemp(void)
+{
+	return settings->mutedcolortemperature;
+}
+int GetMutedContrast(void)
+{
+	return settings->mutedcontrast;
+}
+int GetMutedSaturation(void)
+{
+	return settings->mutedsaturation;
+}
+int GetMutedExposure(void)
+{
+	return settings->mutedexposure;
+}
 
 ///////// Setters exposed in public API
 
 void SetBrightness(int value) {
+
+	int raw = scaleBrightness(value);
+	SetRawBrightness(raw);
+	settings->brightness = value;
+	SaveSettings();
+}
+void SetColortemp(int value) {
+	int raw = scaleColortemp(value);
+	SetRawColortemp(raw);
+	settings->colortemperature = value;
+	SaveSettings();
+}
+void SetVolume(int value) { // 0-20
+	if (settings->mute) return SetRawVolume(0);
+	// if (settings->hdmi) return;
 	
+	if (settings->jack) settings->headphones = value;
+	else settings->speaker = value;
+
+	int raw = value * 5;
+	SetRawVolume(raw);
+	SaveSettings();
+}
+// monitored and set by thread in keymon
+void SetJack(int value) {
+	printf("SetJack(%i)\n", value); fflush(stdout);
+	
+	settings->jack = value;
+	SetVolume(GetVolume());
+}
+void SetHDMI(int value) {
+	// printf("SetHDMI(%i)\n", value); fflush(stdout);
+	
+	// if (settings->hdmi!=value) system("/usr/lib/autostart/common/055-hdmi-check");
+	
+	// settings->hdmi = value;
+	// if (value) SetRawVolume(100); // max
+	// else SetVolume(GetVolume()); // restore
+}
+void SetMute(int value) {
+	settings->mute = value;
+	if (settings->mute) {
+		SetRawVolume(0);
+		// custom mute mode display settings
+		if(GetMutedBrightness() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+			SetRawBrightness(scaleBrightness(GetMutedBrightness()));
+		if(GetMutedColortemp() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+			SetRawColortemp(scaleColortemp(GetMutedColortemp()));
+		if(GetMutedContrast() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+			SetRawContrast(scaleContrast(GetMutedContrast()));
+		if(GetMutedSaturation() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+			SetRawSaturation(scaleSaturation(GetMutedSaturation()));
+		if(GetMutedExposure() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+			SetRawExposure(scaleExposure(GetMutedExposure()));
+	} 
+	else {
+		SetVolume(GetVolume());
+		SetBrightness(GetBrightness());
+		SetColortemp(GetColortemp());
+		SetContrast(GetContrast());
+		SetSaturation(GetSaturation());
+		SetExposure(GetExposure());
+	}
+}
+void SetContrast(int value)
+{
+	int raw = scaleContrast(value);
+	SetRawContrast(raw);
+	settings->contrast = value;
+	SaveSettings();
+}
+void SetSaturation(int value)
+{
+	int raw = scaleSaturation(value);
+	SetRawSaturation(raw);
+	settings->saturation = value;
+	SaveSettings();
+}
+void SetExposure(int value)
+{
+	int raw = scaleExposure(value);
+	SetRawExposure(raw);
+	settings->exposure = value;
+	SaveSettings();
+}
+
+void SetMutedBrightness(int value)
+{
+	settings->mutedbrightness = value;
+	SaveSettings();
+}
+
+void SetMutedColortemp(int value)
+{
+	settings->mutedcolortemperature = value;
+	SaveSettings();
+}
+
+void SetMutedContrast(int value)
+{
+	settings->mutedcontrast = value;
+	SaveSettings();
+}
+
+void SetMutedSaturation(int value)
+{
+	settings->mutedsaturation = value;
+	SaveSettings();
+}
+
+void SetMutedExposure(int value)
+{
+	settings->mutedexposure = value;
+	SaveSettings();
+}
+
+///////// Platform specific scaling
+
+int scaleBrightness(int value) {
 	int raw;
 	if (is_brick) {
 		switch (value) {
@@ -299,12 +488,9 @@ void SetBrightness(int value) {
 			case 10: raw=255; break;	// 64
 		}
 	}
-	SetRawBrightness(raw);
-	settings->brightness = value;
-	SaveSettings();
+	return raw;
 }
-void SetColortemp(int value) {
-	
+int scaleColortemp(int value) {
 	int raw;
 	
 	switch (value) {
@@ -350,45 +536,9 @@ void SetColortemp(int value) {
 		case 39: raw=190; break;		// 32
 		case 40: raw=200; break;		// 32
 	}
-	
-	SetRawColortemp(raw);
-	settings->colortemperature = value;
-	SaveSettings();
+	return raw;
 }
-void SetVolume(int value) { // 0-20
-	if (settings->mute) return SetRawVolume(0);
-	// if (settings->hdmi) return;
-	
-	if (settings->jack) settings->headphones = value;
-	else settings->speaker = value;
-
-	int raw = value * 5;
-	SetRawVolume(raw);
-	SaveSettings();
-}
-// monitored and set by thread in keymon
-void SetJack(int value) {
-	printf("SetJack(%i)\n", value); fflush(stdout);
-	
-	settings->jack = value;
-	SetVolume(GetVolume());
-}
-void SetHDMI(int value) {
-	// printf("SetHDMI(%i)\n", value); fflush(stdout);
-	
-	// if (settings->hdmi!=value) system("/usr/lib/autostart/common/055-hdmi-check");
-	
-	// settings->hdmi = value;
-	// if (value) SetRawVolume(100); // max
-	// else SetVolume(GetVolume()); // restore
-}
-void SetMute(int value) {
-	settings->mute = value;
-	if (settings->mute) SetRawVolume(0);
-	else SetVolume(GetVolume());
-}
-void SetContrast(int value)
-{
+int scaleContrast(int value) {
 	int raw;
 	
 	switch (value) {
@@ -404,13 +554,9 @@ void SetContrast(int value)
 		case 4: raw=90; break;
 		case 5: raw=100; break;
 	}
-	
-	SetRawContrast(raw);
-	settings->contrast = value;
-	SaveSettings();
+	return raw;
 }
-void SetSaturation(int value)
-{
+int scaleSaturation(int value) {
 	int raw;
 	
 	switch (value) {
@@ -426,13 +572,9 @@ void SetSaturation(int value)
 		case 4: raw=90; break;
 		case 5: raw=100; break;
 	}
-	
-	SetRawSaturation(raw);
-	settings->saturation = value;
-	SaveSettings();
+	return raw;
 }
-void SetExposure(int value)
-{
+int scaleExposure(int value) {
 	int raw;
 	
 	switch (value) {
@@ -448,12 +590,8 @@ void SetExposure(int value)
 		case 4: raw=90; break;
 		case 5: raw=100; break;
 	}
-	
-	SetRawExposure(raw);
-	settings->exposure = value;
-	SaveSettings();
+	return raw;
 }
-
 
 ///////// Platform specific, unscaled accessors
 

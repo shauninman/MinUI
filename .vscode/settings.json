@@ -103,6 +103,11 @@
     "random": "c",
     "bit": "cpp",
     "*.inc": "c",
-    "cassert": "cpp"
+    "cassert": "cpp",
+    "expected": "cpp",
+    "netfwd": "cpp",
+    "system_error": "cpp",
+    "stop_token": "cpp",
+    "cfenv": "cpp"
   },
 }

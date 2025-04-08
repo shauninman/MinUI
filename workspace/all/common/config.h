@@ -60,9 +60,9 @@ typedef struct
 	bool showGameArt;
 	bool romsUseFolderBackground;
 
-	// LED
+	// Mute switch
 	bool muteLeds;
-
+	
 	// Power
 	uint32_t screenTimeoutSecs;
 	uint32_t suspendTimeoutSecs;

@@ -681,11 +681,6 @@ void PLAT_getBatteryStatusFine(int* is_charging, int* charge)
 	online = prefixMatch("up", status);
 }
 
-
-// moving these to LED functions so keeping them closer to eachother for overview for now
-// #define LED_PATH1 "/sys/class/led_anim/max_scale"
-// #define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
-// #define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		if (is_brick) SetRawBrightness(8);

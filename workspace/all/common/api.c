@@ -2674,8 +2674,9 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	static uint32_t power_pressed_at = 0; // timestamp when power button was just pressed
 	static uint32_t mod_unpressed_at = 0; // timestamp of last time settings modifier key was NOT down
 	static uint32_t was_muted = -1;
-	if (was_muted==-1) was_muted = GetMute();
-	
+	if (was_muted == -1)
+		was_muted = GetMute();
+
 	static int was_charging = -1;
 	if (was_charging==-1) {
 		was_charging = pwr.is_charging;

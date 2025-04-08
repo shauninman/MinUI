@@ -167,25 +167,25 @@ int main(int argc, char *argv[])
         auto displayMenu = new MenuList(MenuItemType::Fixed, "Display",
         {
             new MenuItem{Generic, "Brightness", "Display brightness (0 to 10)", 0, 10, []() -> std::any
-                { return GetBrightness(); }, [](const std::any &value)
-                { SetBrightness(std::any_cast<int>(value)); },
-                []() { SetBrightness(SETTINGS_DEFAULT_BRIGHTNESS);}},
-                new MenuItem{Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, []() -> std::any
-                { return GetColortemp(); }, [](const std::any &value)
-                { SetColortemp(std::any_cast<int>(value)); },
-                []() { SetColortemp(SETTINGS_DEFAULT_COLORTEMP);}},
-                new MenuItem{Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, []() -> std::any
-                { return GetContrast(); }, [](const std::any &value)
-                { SetContrast(std::any_cast<int>(value)); },
-                []() { SetContrast(SETTINGS_DEFAULT_CONTRAST);}},
-                new MenuItem{Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, []() -> std::any
-                { return GetSaturation(); }, [](const std::any &value)
-                { SetSaturation(std::any_cast<int>(value)); },
-                []() { SetSaturation(SETTINGS_DEFAULT_SATURATION);}},
-                new MenuItem{Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, []() -> std::any
-                { return GetExposure(); }, [](const std::any &value)
-                { SetExposure(std::any_cast<int>(value)); },
-                []() { SetExposure(SETTINGS_DEFAULT_EXPOSURE);}},
+            { return GetBrightness(); }, [](const std::any &value)
+            { SetBrightness(std::any_cast<int>(value)); },
+            []() { SetBrightness(SETTINGS_DEFAULT_BRIGHTNESS);}},
+            new MenuItem{Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, []() -> std::any
+            { return GetColortemp(); }, [](const std::any &value)
+            { SetColortemp(std::any_cast<int>(value)); },
+            []() { SetColortemp(SETTINGS_DEFAULT_COLORTEMP);}},
+            new MenuItem{Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, []() -> std::any
+            { return GetContrast(); }, [](const std::any &value)
+            { SetContrast(std::any_cast<int>(value)); },
+            []() { SetContrast(SETTINGS_DEFAULT_CONTRAST);}},
+            new MenuItem{Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, []() -> std::any
+            { return GetSaturation(); }, [](const std::any &value)
+            { SetSaturation(std::any_cast<int>(value)); },
+            []() { SetSaturation(SETTINGS_DEFAULT_SATURATION);}},
+            new MenuItem{Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, []() -> std::any
+            { return GetExposure(); }, [](const std::any &value)
+            { SetExposure(std::any_cast<int>(value)); },
+            []() { SetExposure(SETTINGS_DEFAULT_EXPOSURE);}},
 
                 new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
@@ -234,14 +234,43 @@ int main(int argc, char *argv[])
             new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
-        auto ledMenu = new MenuList(MenuItemType::Fixed, "LED",
+        auto muteMenu = new MenuList(MenuItemType::Fixed, "Mute Switch",
         {
-            new MenuItem{Generic, "Mute switch controls LED", "Mute will als disable LEDs", {false, true}, on_off, []() -> std::any
-            { return CFG_getMuteLEDs(); },
-            [](const std::any &value)
-            { CFG_setMuteLEDs(std::any_cast<bool>(value)); },
-            []()
-            { CFG_setMuteLEDs(CFG_DEFAULT_MUTELEDS); }},
+            new MenuItem{Generic, "Mute switch disables LED", "Mute will also disable LEDs", {false, true}, on_off, 
+            []() -> std::any { return CFG_getMuteLEDs(); },
+            [](const std::any &value) { CFG_setMuteLEDs(std::any_cast<bool>(value)); },
+            []() { CFG_setMuteLEDs(CFG_DEFAULT_MUTELEDS); }},
+
+            new MenuItem{Generic, "Brightness when muted", "Display brightness (0 to 10)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, 0,1,2,3,4,5,6,7,8,9,10}, 
+            {"Unchanged","0","1","2","3","4","5","6","7","8","9","10"},
+            []() -> std::any { return GetMutedBrightness(); }, [](const std::any &value)
+            { SetMutedBrightness(std::any_cast<int>(value)); },
+            []() { SetMutedBrightness(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
+            new MenuItem{Generic, "Color temperature when muted", "Color temperature (0 to 40)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40}, 
+            {"Unchanged","0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"},
+            []() -> std::any{ return GetMutedColortemp(); }, [](const std::any &value)
+            { SetMutedColortemp(std::any_cast<int>(value)); },
+            []() { SetMutedColortemp(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
+            new MenuItem{Generic, "Contrast when muted", "Contrast enhancement (-4 to 5)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -4,-3,-2,-1,0,1,2,3,4,5}, 
+            {"Unchanged","-4","-3","-2","-1","0","1","2","3","4","5"}, 
+            []() -> std::any  { return GetMutedContrast(); }, [](const std::any &value)
+            { SetMutedContrast(std::any_cast<int>(value)); },
+            []() { SetMutedContrast(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
+            new MenuItem{Generic, "Saturation when muted", "Saturation enhancement (-4 to 5)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -4,-3,-2,-1,0,1,2,3,4,5}, 
+            {"Unchanged","-4","-3","-2","-1","0","1","2","3","4","5"}, 
+            []() -> std::any{ return GetMutedSaturation(); }, [](const std::any &value)
+            { SetMutedSaturation(std::any_cast<int>(value)); },
+            []() { SetMutedSaturation(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
+            new MenuItem{Generic, "Exposure when muted", "Exposure enhancement (-5 to 5)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -5,-4,-3,-2,-1,0,1,2,3,4,5}, 
+            {"Unchanged","-5","-4","-3","-2","-1","0","1","2","3","4","5"}, 
+            []() -> std::any  { return GetMutedExposure(); }, [](const std::any &value)
+            { SetMutedExposure(std::any_cast<int>(value)); },
+            []() { SetMutedExposure(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
 
             new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
@@ -249,9 +278,9 @@ int main(int argc, char *argv[])
         ctx.menu = new MenuList(MenuItemType::List, "Main",
         {
             new MenuItem{Generic, "Appearance", "UI customization", {}, {}, nullptr, nullptr, DeferToSubmenu, appearanceMenu},
-            new MenuItem{Generic, "LED", "RGB LED settings", {}, {}, nullptr, nullptr, DeferToSubmenu, ledMenu},
             new MenuItem{Generic, "Display", "", {}, {}, nullptr, nullptr, DeferToSubmenu, displayMenu},
             new MenuItem{Generic, "System", "", {}, {}, nullptr, nullptr, DeferToSubmenu, systemMenu},
+            new MenuItem{Generic, "Mute switch", "Mute switch settings", {}, {}, nullptr, nullptr, DeferToSubmenu, muteMenu},
         });
 
         const bool showTitle = false;
