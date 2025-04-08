@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="github/logo.png">
+  <img width=128px src="github/logo_outline.png">
 
 </div>
 
