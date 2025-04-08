@@ -61,7 +61,9 @@ uint32_t RGB_LIGHT_GRAY;
 uint32_t RGB_GRAY;
 uint32_t RGB_DARK_GRAY;
 float currentbufferms = 20.0;
-LightSettings lights[MAX_LIGHTS];
+LightSettings lightsDefault[MAX_LIGHTS];
+LightSettings lightsMuted[MAX_LIGHTS];
+LightSettings (*lights)[MAX_LIGHTS] = NULL;
 
 volatile int useAutoCpu;
 
@@ -446,22 +448,22 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 	uint32_t dominant_color = GFX_extract_dominant_color(data, width, height,pitch);
    
 	if(mode==1 || mode==2 || mode==5) {
-		lights[2].color1 = dominant_color;
-		lights[2].effect = 4;
-		lights[2].brightness = 100;
+		(*lights)[2].color1 = dominant_color;
+		(*lights)[2].effect = 4;
+		(*lights)[2].brightness = 100;
 	}
 	if(mode==1 || mode==3) {
-		lights[0].color1 = dominant_color;
-		lights[0].effect = 4;
-		lights[0].brightness = 100;
-		lights[1].color1 = dominant_color;
-		lights[1].effect = 4;
-		lights[1].brightness = 100;
+		(*lights)[0].color1 = dominant_color;
+		(*lights)[0].effect = 4;
+		(*lights)[0].brightness = 100;
+		(*lights)[1].color1 = dominant_color;
+		(*lights)[1].effect = 4;
+		(*lights)[1].brightness = 100;
 	}
 	if(mode==1 || mode==4 || mode==5) {
-		lights[3].color1 = dominant_color;
-		lights[3].effect = 4;
-		lights[3].brightness = 100;
+		(*lights)[3].color1 = dominant_color;
+		(*lights)[3].effect = 4;
+		(*lights)[3].brightness = 100;
 	}
 }
 
@@ -2692,7 +2694,7 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 			if(is_charging) {
 				LED_setIndicator(2,0xFF0000,-1,2);
 			} else {
-				PLAT_initLeds(lights);
+				PLAT_initLeds(lightsDefault);
 				LEDS_updateLeds();
 			}
 			was_charging = is_charging;
@@ -2774,6 +2776,10 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		was_muted = muted;
 		show_setting = 2;
 		setting_shown_at = now;
+		if(CFG_getMuteLEDs()) {
+			lights = muted ? &lightsMuted : &lightsDefault;
+			LEDS_updateLeds();
+		}
 	}
 	
 	if (show_setting) dirty = 1; // shm is slow or keymon is catching input on the next frame
@@ -2840,7 +2846,7 @@ static void PWR_enterSleep(void) {
 	sync();
 }
 static void PWR_exitSleep(void) {
-	PLAT_initLeds(lights);
+	PLAT_initLeds(lightsDefault);
 	LEDS_updateLeds();
 	if(pwr.is_charging) {
 		LED_setIndicator(2,0xFF0000,-1,2);
@@ -2982,82 +2988,89 @@ FALLBACK_IMPLEMENTATION void PLAT_setLedEffectSpeed(LightSettings *led){}
 
 // only indicator leds may work when battery is below PWR_LOW_CHARGE
 void LED_setIndicator(int effect,uint32_t color, int cycles,int ledindex) {
-	int lightsize = sizeof(lights) / sizeof(lights[0]);
-		lights[ledindex].effect = effect;
-		lights[ledindex].color1 = color;
-		lights[ledindex].cycles = cycles;
+	int lightsize = sizeof(*lights) / sizeof(LightSettings);
+		(*lights)[ledindex].effect = effect;
+		(*lights)[ledindex].color1 = color;
+		(*lights)[ledindex].cycles = cycles;
 		
-		PLAT_setLedInbrightness(&lights[ledindex]);
-		PLAT_setLedEffectCycles(&lights[ledindex]);
-		PLAT_setLedColor(&lights[ledindex]);
-		PLAT_setLedEffect(&lights[ledindex]);
+		PLAT_setLedInbrightness(&(*lights)[ledindex]);
+		PLAT_setLedEffectCycles(&(*lights)[ledindex]);
+		PLAT_setLedColor(       &(*lights)[ledindex]);
+		PLAT_setLedEffect(      &(*lights)[ledindex]);
 }
 void LEDS_setIndicator(int effect,uint32_t color, int cycles) {
-	int lightsize = sizeof(lights) / sizeof(lights[0]);
+	int lightsize = sizeof(*lights) / sizeof(LightSettings);
 	for (int i = 0; i < lightsize; i++)
 	{
-		lights[i].effect = effect;
+		(*lights)[i].effect = effect;
 		if(color) {
-			lights[i].color1 = color;
+			(*lights)[i].color1 = color;
 		}
-		lights[i].cycles = cycles;
+		(*lights)[i].cycles = cycles;
 
-		PLAT_setLedInbrightness(&lights[i]);
-		PLAT_setLedEffectCycles(&lights[i]);
-		PLAT_setLedColor(&lights[i]);
-		PLAT_setLedEffect(&lights[i]);
-		
+		PLAT_setLedInbrightness(&(*lights)[i]);
+		PLAT_setLedEffectCycles(&(*lights)[i]);
+		PLAT_setLedColor(       &(*lights)[i]);
+		PLAT_setLedEffect(      &(*lights)[i]);
 	}
 }
 void LEDS_setEffect(int effect) {
 	if(pwr.charge > PWR_LOW_CHARGE) {
-		int lightsize = sizeof(lights) / sizeof(lights[0]);
+		int lightsize = sizeof(*lights) / sizeof(LightSettings);
 		for (int i = 0; i < lightsize; i++)
 		{
-			lights[i].effect = effect;
-			PLAT_setLedEffect(&lights[i]);
+			(*lights)[i].effect = effect;
+			PLAT_setLedEffect(&(*lights)[i]);
 		}
 	}
 }
 void LEDS_setColor(uint32_t color) {
 	if(pwr.charge > PWR_LOW_CHARGE) {
-		int lightsize = sizeof(lights) / sizeof(lights[0]);
+		int lightsize = sizeof(*lights) / sizeof(LightSettings);
 		for (int i = 0; i < lightsize; i++)
 		{
-			lights[i].color1 = color;
-			PLAT_setLedColor(&lights[i]);
-			PLAT_setLedEffect(&lights[i]);
+			(*lights)[i].color1 = color;
+			PLAT_setLedColor( &(*lights)[i]);
+			PLAT_setLedEffect(&(*lights)[i]);
 		}
 	}
 }
 
 void LED_setColor(uint32_t color,int ledindex) {
 	if(pwr.charge > PWR_LOW_CHARGE) {
-		lights[ledindex].color1 = color;
-		PLAT_setLedColor(&lights[ledindex]);
-		PLAT_setLedEffect(&lights[ledindex]);
+		(*lights)[ledindex].color1 = color;
+		PLAT_setLedColor( &(*lights)[ledindex]);
+		PLAT_setLedEffect(&(*lights)[ledindex]);
 	}
 }
 
 void LEDS_updateLeds() {
 	if(pwr.charge > PWR_LOW_CHARGE) {
-		int lightsize = sizeof(lights) / sizeof(lights[0]);
+		int lightsize = sizeof(*lights) / sizeof(LightSettings);
 		for (int i = 0; i < lightsize; i++)
 		{
-			PLAT_setLedBrightness(&lights[i]); // set brightness of each led
-			PLAT_setLedEffectCycles(&lights[i]); // set how many times animation should loop
-			PLAT_setLedEffectSpeed(&lights[i]); // set animation speed
-			PLAT_setLedColor(&lights[i]); // set color
-			PLAT_setLedEffect(&lights[i]); // finally set the effect, on trimui devices this also applies the settings
-		
-			
+			PLAT_setLedBrightness(  &(*lights)[i]); // set brightness of each led
+			PLAT_setLedEffectCycles(&(*lights)[i]); // set how many times animation should loop
+			PLAT_setLedEffectSpeed( &(*lights)[i]); // set animation speed
+			PLAT_setLedColor(       &(*lights)[i]); // set color
+			PLAT_setLedEffect(      &(*lights)[i]); // finally set the effect, on trimui devices this also applies the settings
 		}
 	}
 }
 
 void LEDS_initLeds() {
 	PLAT_getBatteryStatusFine(&pwr.is_charging, &pwr.charge);
-	PLAT_initLeds(lights);
+	PLAT_initLeds(lightsDefault);
+
+	int lightsize = sizeof(lightsDefault) / sizeof(LightSettings);
+	for (int i = 0; i < lightsize; i++)
+	{
+		lightsMuted[i] = lightsDefault[i];
+		lightsMuted[i].brightness = 0;
+		lightsMuted[i].inbrightness = 0;
+	}
+
+	lights = &lightsDefault;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

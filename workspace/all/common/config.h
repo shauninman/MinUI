@@ -60,6 +60,9 @@ typedef struct
 	bool showGameArt;
 	bool romsUseFolderBackground;
 
+	// LED
+	bool muteLeds;
+
 	// Power
 	uint32_t screenTimeoutSecs;
 	uint32_t suspendTimeoutSecs;
@@ -93,6 +96,7 @@ typedef struct
 #define CFG_DEFAULT_HAPTICS false
 #define CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND true
 #define CFG_DEFAULT_SAVEFORMAT SAVE_FORMAT_SAV
+#define CFG_DEFAULT_MUTELEDS false
 
 void CFG_init(FontLoad_callback_t fontCallback, ColorSet_callback_t ccb);
 void CFG_print(void);
@@ -151,6 +155,9 @@ void CFG_setHaptics(bool enable);
 // 1 - .srm
 int CFG_getSaveFormat(void);
 void CFG_setSaveFormat(int);
+// Enable/disable mute also shutting off LEDs.
+bool CFG_getMuteLEDs(void);
+void CFG_setMuteLEDs(bool);
 
 void CFG_sync(void);
 void CFG_quit(void);

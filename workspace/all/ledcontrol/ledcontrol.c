@@ -54,15 +54,15 @@ const char *lr_effect_names[] = {
             LOG_info("saving leds!");
             for (int i = 0; i < maxlights; ++i)
             {
-                fprintf(file, "[%s]\n", lights[i].name);
-                fprintf(file, "effect=%d\n", lights[i].effect);
-                fprintf(file, "color1=0x%06X\n", lights[i].color1);
-                fprintf(file, "color2=0x%06X\n", lights[i].color2);
-                fprintf(file, "speed=%d\n", lights[i].speed);
-                fprintf(file, "brightness=%d\n", lights[i].brightness);
-                fprintf(file, "trigger=%d\n", lights[i].trigger);
-                fprintf(file, "filename=%s\n", lights[i].filename);
-                fprintf(file, "inbrightness=%i\n", lights[i].inbrightness);
+                fprintf(file, "[%s]\n", lightsDefault[i].name);
+                fprintf(file, "effect=%d\n", lightsDefault[i].effect);
+                fprintf(file, "color1=0x%06X\n", lightsDefault[i].color1);
+                fprintf(file, "color2=0x%06X\n", lightsDefault[i].color2);
+                fprintf(file, "speed=%d\n", lightsDefault[i].speed);
+                fprintf(file, "brightness=%d\n", lightsDefault[i].brightness);
+                fprintf(file, "trigger=%d\n", lightsDefault[i].trigger);
+                fprintf(file, "filename=%s\n", lightsDefault[i].filename);
+                fprintf(file, "inbrightness=%i\n", lightsDefault[i].inbrightness);
                 fprintf(file, "\n"); // added last extra break seperate because everytime i add another option i forget to change it lol
             }
     
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
         const char *default_names[] = {"Joysticks", "Logo"};
         memcpy(lightnames, default_names, sizeof(default_names)); // Copy values
     }
-    PLAT_initLeds(lights);
+    PLAT_initLeds(lightsDefault);
     PWR_setCPUSpeed(CPU_SPEED_MENU);
 
     SDL_Surface* screen = GFX_init(MODE_MAIN);
@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
             dirty = 1;
         }
         else if(PAD_justPressed(BTN_LEFT) || PAD_justPressed(BTN_RIGHT)) {
-            handle_light_input(&lights[selected_light],&event, selected_setting);
+            handle_light_input(&lightsDefault[selected_light],&event, selected_setting);
             dirty = 1;
         }
 
@@ -349,11 +349,11 @@ int main(int argc, char *argv[])
                 memcpy(settings_labels, non_brick_labels, sizeof(non_brick_labels)); // Copy values
             }
             int settings_values[5] = {
-                lights[selected_light].effect,
-                lights[selected_light].color1,
-                lights[selected_light].speed,
-                lights[selected_light].brightness,
-                lights[selected_light].inbrightness
+                lightsDefault[selected_light].effect,
+                lightsDefault[selected_light].color1,
+                lightsDefault[selected_light].speed,
+                lightsDefault[selected_light].brightness,
+                lightsDefault[selected_light].inbrightness
             };
 
             for (int j = 0; j < 5; ++j)

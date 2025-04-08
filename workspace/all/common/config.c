@@ -41,6 +41,7 @@ void CFG_defaults(NextUISettings *cfg)
         .showRecents = CFG_DEFAULT_SHOWRECENTS,
         .showGameArt = CFG_DEFAULT_SHOWGAMEART,
         .gameSwitcherScaling = CFG_DEFAULT_GAMESWITCHERSCALING,
+        .muteLeds = CFG_DEFAULT_MUTELEDS,
 
         .screenTimeoutSecs = CFG_DEFAULT_SCREENTIMEOUTSECS,
         .suspendTimeoutSecs = CFG_DEFAULT_SUSPENDTIMEOUTSECS,
@@ -175,6 +176,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
             if (sscanf(line, "saveFormat=%i", &temp_value) == 1)
             {
                 CFG_setSaveFormat(temp_value);
+                continue;
+            }
+            if (sscanf(line, "muteLeds=%i", &temp_value) == 1)
+            {
+                CFG_setMuteLEDs(temp_value);
                 continue;
             }
         }
@@ -404,6 +410,16 @@ void CFG_setSaveFormat(int f)
     settings.saveFormat = f;
 }
 
+bool CFG_getMuteLEDs(void)
+{
+    return settings.muteLeds;
+}
+
+void CFG_setMuteLEDs(bool on)
+{
+    settings.muteLeds = on;
+}
+
 void CFG_get(const char *key, char *value)
 {
     if (strcmp(key, "font") == 0)
@@ -486,6 +502,10 @@ void CFG_get(const char *key, char *value)
     {
         sprintf(value, "%i", CFG_getSaveFormat());
     }
+    else if (strcmp(key, "muteLeds") == 0)
+    {
+        sprintf(value, "%i", CFG_getMuteLEDs());
+    }
 
     // meta, not a real setting
     else if (strcmp(key, "fontpath") == 0)
@@ -534,6 +554,7 @@ void CFG_sync(void)
     fprintf(file, "haptics=%i\n", settings.haptics);
     fprintf(file, "romfolderbg=%i\n", settings.romsUseFolderBackground);
     fprintf(file, "saveFormat=%i\n", settings.saveFormat);
+    fprintf(file, "muteLeds=%i\n", settings.muteLeds);
 
     fclose(file);
 }
@@ -562,6 +583,7 @@ void CFG_print(void)
     printf("\t\"haptics\": %i,\n", settings.haptics);
     printf("\t\"romfolderbg\": %i,\n", settings.romsUseFolderBackground);
     printf("\t\"saveFormat\": %i,\n", settings.saveFormat);
+    printf("\t\"muteLeds\": %i,\n", settings.muteLeds);
 
     // meta, not a real setting
     if (settings.font == 1)

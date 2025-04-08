@@ -146,22 +146,22 @@ int main(int argc, char *argv[])
                 [](const std::any &value) { CFG_setShowRecents(std::any_cast<bool>(value)); },
                 []() { CFG_setShowRecents(CFG_DEFAULT_SHOWRECENTS);}},
                 new MenuItem{Generic, "Show game art", "Show game artwork in the main menu", {false, true}, on_off, []() -> std::any
-                        { return CFG_getShowGameArt(); },
-                        [](const std::any &value)
-                        { CFG_setShowGameArt(std::any_cast<bool>(value)); },
-                        []() { CFG_setShowGameArt(CFG_DEFAULT_SHOWGAMEART);}},
-                        new MenuItem{Generic, "Use folder background for ROMs", "If enabled, used the emulator background image. Otherwise uses the default.", {false, true}, on_off, []() -> std::any
-                        { return CFG_getRomsUseFolderBackground(); },
-                        [](const std::any &value)
-                        { CFG_setRomsUseFolderBackground(std::any_cast<bool>(value)); },
-                        []() { CFG_setRomsUseFolderBackground(CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND);}},
-                        new MenuItem{Generic, "Game switcher scaling", "The scaling algorithm used to display the savegame image.", scaling, scaling_strings, []() -> std::any
-                        { return CFG_getGameSwitcherScaling(); },
-                        [](const std::any &value)
-                        { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); },
-                        []() { CFG_setGameSwitcherScaling(CFG_DEFAULT_GAMESWITCHERSCALING);}},
+                { return CFG_getShowGameArt(); },
+                [](const std::any &value)
+                { CFG_setShowGameArt(std::any_cast<bool>(value)); },
+                []() { CFG_setShowGameArt(CFG_DEFAULT_SHOWGAMEART);}},
+                new MenuItem{Generic, "Use folder background for ROMs", "If enabled, used the emulator background image. Otherwise uses the default.", {false, true}, on_off, []() -> std::any
+                { return CFG_getRomsUseFolderBackground(); },
+                [](const std::any &value)
+                { CFG_setRomsUseFolderBackground(std::any_cast<bool>(value)); },
+                []() { CFG_setRomsUseFolderBackground(CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND);}},
+                new MenuItem{Generic, "Game switcher scaling", "The scaling algorithm used to display the savegame image.", scaling, scaling_strings, []() -> std::any
+                { return CFG_getGameSwitcherScaling(); },
+                [](const std::any &value)
+                { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); },
+                []() { CFG_setGameSwitcherScaling(CFG_DEFAULT_GAMESWITCHERSCALING);}},
 
-                        new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
+                new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
         auto displayMenu = new MenuList(MenuItemType::Fixed, "Display",
@@ -193,50 +193,63 @@ int main(int argc, char *argv[])
         auto systemMenu = new MenuList(MenuItemType::Fixed, "System",
         {
             new MenuItem{Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
-                { return GetVolume(); }, [](const std::any &value)
-                { SetVolume(std::any_cast<int>(value)); },
-                []() { SetVolume(SETTINGS_DEFAULT_VOLUME);}},
-                new MenuItem{Generic, "Screen timeout", "Time before screen turns off (0-600s)", timeout_secs, timeout_labels, []() -> std::any
-                    { return CFG_getScreenTimeoutSecs(); }, [](const std::any &value)
-                    { CFG_setScreenTimeoutSecs(std::any_cast<uint32_t>(value)); },
-                    []() { CFG_setScreenTimeoutSecs(CFG_DEFAULT_SCREENTIMEOUTSECS);}},
-                    new MenuItem{Generic, "Suspend timeout", "Time before device goes to sleep (0-600s)", timeout_secs, timeout_labels, []() -> std::any
-                    { return CFG_getSuspendTimeoutSecs(); }, [](const std::any &value)
-                    { CFG_setSuspendTimeoutSecs(std::any_cast<uint32_t>(value)); },
-                    []() { CFG_setSuspendTimeoutSecs(CFG_DEFAULT_SUSPENDTIMEOUTSECS);}},
-                    new MenuItem{Generic, "Haptic feedback", "Enable or disable haptic feedback on certain actions in the OS", {false, true}, on_off, []() -> std::any
-                    { return CFG_getHaptics(); }, [](const std::any &value)
-                    { CFG_setHaptics(std::any_cast<bool>(value)); },
-                    []() { CFG_setHaptics(CFG_DEFAULT_HAPTICS);}},
-                    new MenuItem{Generic, "Show 24h time format", "Show clock in the 24hrs time format", {false, true}, on_off, []() -> std::any
-                    { return CFG_getClock24H(); },
-                    [](const std::any &value)
-                    { CFG_setClock24H(std::any_cast<bool>(value)); },
-                    []() { CFG_setClock24H(CFG_DEFAULT_CLOCK24H);}},
-                    new MenuItem{Generic, "Show clock", "Show clock in the status pill", {false, true}, on_off, []() -> std::any
-                    { return CFG_getShowClock(); },
-                    [](const std::any &value)
-                    { CFG_setShowClock(std::any_cast<bool>(value)); },
-                    []() { CFG_setShowClock(CFG_DEFAULT_SHOWCLOCK);}},
-                    new MenuItem{Generic, "Set time and date automatically", "Automatically adjust system time\nwith NTP (requires internet access)", {false, true}, on_off, []() -> std::any
-                    { return TIME_getNetworkTimeSync(); }, [](const std::any &value)
-                    { TIME_setNetworkTimeSync(std::any_cast<bool>(value)); },
-                    []() { TIME_setNetworkTimeSync(false);}}, // default from stock
-                    new MenuItem{Generic, "Time zone", "Your time zone", tz_values, tz_labels, []() -> std::any
-                    { return std::string(TIME_getCurrentTimezone()); }, [](const std::any &value)
-                    { TIME_setCurrentTimezone(std::any_cast<std::string>(value).c_str()); },
-                    []() { TIME_setCurrentTimezone("Asia/Shanghai");}}, // default from Stock
-                    new MenuItem{Generic, "Save format", "The save format to use.", {(int)SAVE_FORMAT_SAV, (int)SAVE_FORMAT_SRM}, {".sav", ".srm"}, []() -> std::any
-                    { return CFG_getSaveFormat(); }, [](const std::any &value)
-                    { CFG_setSaveFormat(std::any_cast<int>(value)); },
-                    []() { CFG_setSaveFormat(CFG_DEFAULT_SAVEFORMAT);}},
+            { return GetVolume(); }, [](const std::any &value)
+            { SetVolume(std::any_cast<int>(value)); },
+            []() { SetVolume(SETTINGS_DEFAULT_VOLUME);}},
+            new MenuItem{Generic, "Screen timeout", "Time before screen turns off (0-600s)", timeout_secs, timeout_labels, []() -> std::any
+            { return CFG_getScreenTimeoutSecs(); }, [](const std::any &value)
+            { CFG_setScreenTimeoutSecs(std::any_cast<uint32_t>(value)); },
+            []() { CFG_setScreenTimeoutSecs(CFG_DEFAULT_SCREENTIMEOUTSECS);}},
+            new MenuItem{Generic, "Suspend timeout", "Time before device goes to sleep (0-600s)", timeout_secs, timeout_labels, []() -> std::any
+            { return CFG_getSuspendTimeoutSecs(); }, [](const std::any &value)
+            { CFG_setSuspendTimeoutSecs(std::any_cast<uint32_t>(value)); },
+            []() { CFG_setSuspendTimeoutSecs(CFG_DEFAULT_SUSPENDTIMEOUTSECS);}},
+            new MenuItem{Generic, "Haptic feedback", "Enable or disable haptic feedback on certain actions in the OS", {false, true}, on_off, []() -> std::any
+            { return CFG_getHaptics(); }, [](const std::any &value)
+            { CFG_setHaptics(std::any_cast<bool>(value)); },
+            []() { CFG_setHaptics(CFG_DEFAULT_HAPTICS);}},
+            new MenuItem{Generic, "Show 24h time format", "Show clock in the 24hrs time format", {false, true}, on_off, []() -> std::any
+            { return CFG_getClock24H(); },
+            [](const std::any &value)
+            { CFG_setClock24H(std::any_cast<bool>(value)); },
+            []() { CFG_setClock24H(CFG_DEFAULT_CLOCK24H);}},
+            new MenuItem{Generic, "Show clock", "Show clock in the status pill", {false, true}, on_off, []() -> std::any
+            { return CFG_getShowClock(); },
+            [](const std::any &value)
+            { CFG_setShowClock(std::any_cast<bool>(value)); },
+            []() { CFG_setShowClock(CFG_DEFAULT_SHOWCLOCK);}},
+            new MenuItem{Generic, "Set time and date automatically", "Automatically adjust system time\nwith NTP (requires internet access)", {false, true}, on_off, []() -> std::any
+            { return TIME_getNetworkTimeSync(); }, [](const std::any &value)
+            { TIME_setNetworkTimeSync(std::any_cast<bool>(value)); },
+            []() { TIME_setNetworkTimeSync(false);}}, // default from stock
+            new MenuItem{Generic, "Time zone", "Your time zone", tz_values, tz_labels, []() -> std::any
+            { return std::string(TIME_getCurrentTimezone()); }, [](const std::any &value)
+            { TIME_setCurrentTimezone(std::any_cast<std::string>(value).c_str()); },
+            []() { TIME_setCurrentTimezone("Asia/Shanghai");}}, // default from Stock
+            new MenuItem{Generic, "Save format", "The save format to use.", {(int)SAVE_FORMAT_SAV, (int)SAVE_FORMAT_SRM}, {".sav", ".srm"}, []() -> std::any
+            { return CFG_getSaveFormat(); }, [](const std::any &value)
+            { CFG_setSaveFormat(std::any_cast<int>(value)); },
+            []() { CFG_setSaveFormat(CFG_DEFAULT_SAVEFORMAT);}},
 
-                    new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
+            new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
+        });
+
+        auto ledMenu = new MenuList(MenuItemType::Fixed, "LED",
+        {
+            new MenuItem{Generic, "Mute switch controls LED", "Mute will als disable LEDs", {false, true}, on_off, []() -> std::any
+            { return CFG_getMuteLEDs(); },
+            [](const std::any &value)
+            { CFG_setMuteLEDs(std::any_cast<bool>(value)); },
+            []()
+            { CFG_setMuteLEDs(CFG_DEFAULT_MUTELEDS); }},
+
+            new MenuItem{Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
         ctx.menu = new MenuList(MenuItemType::List, "Main",
         {
             new MenuItem{Generic, "Appearance", "UI customization", {}, {}, nullptr, nullptr, DeferToSubmenu, appearanceMenu},
+            new MenuItem{Generic, "LED", "RGB LED settings", {}, {}, nullptr, nullptr, DeferToSubmenu, ledMenu},
             new MenuItem{Generic, "Display", "", {}, {}, nullptr, nullptr, DeferToSubmenu, displayMenu},
             new MenuItem{Generic, "System", "", {}, {}, nullptr, nullptr, DeferToSubmenu, systemMenu},
         });

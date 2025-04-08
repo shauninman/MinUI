@@ -189,7 +189,7 @@ typedef struct
 
 } LightSettings;
 
-extern LightSettings lights[MAX_LIGHTS];
+extern LightSettings lightsDefault[MAX_LIGHTS];
 
 enum {
 	MODE_MAIN,
