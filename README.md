@@ -54,7 +54,8 @@ For other devices we recommend checking out [MinUI](https://github.com/shauninma
 - LED indicators, low battery, stand by, charging (brightness can be set seperately)
 - Haptic feedback in the menu by [@ExonakiDev](https://github.com/exonakidev)
 - Ambient LED mode, the LEDS act like Ambient light TV's for extra immersion, configurable per emulator
-- Screen color temperature and brightness controls
+- Display controls (color temperature, brightness, contrast, saturation, exposure)
+- Support for automatic NTP time synchronization with timezones and realtime clock (RTC)
 - Deep Sleep mode, gives instant ON and avoids the overheat bug on the Brick by [@zhaofengli](https://github.com/zhaofengli)
 - Battery Monitoring including history graph and time left prediction
 - Scrolling animated titles for longer game names
