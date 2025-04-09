@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=99
+STOP=99
+DEPEND=wpa_supplicant
+USE_PROCD=1
+PROG=/bin/wifi_daemon
+OOM_ADJ=-17
+
+start_service() {
+    procd_open_instance
+	procd_set_param command $PROG
+    procd_close_instance
+}
+
+stop_service() {
+	da=`ps | grep wifi_daemon | grep -v grep`
+    [ -n "$da" ] && {
+		killall  wifi_daemon
+		sleep 1
+    }
+}

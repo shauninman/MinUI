@@ -157,6 +157,18 @@ int GetSaturation(void) { return 0; }
 int GetExposure(void) { return 0; }
 int GetVolume(void) { return 0; }
 
+int  GetMutedBrightness(void) { return 0; }
+int  GetMutedColortemp(void) { return 0; }
+int  GetMutedContrast(void) { return 0; }
+int  GetMutedSaturation(void) { return 0; }
+int  GetMutedExposure(void) { return 0; }
+
+void SetMutedBrightness(int value){}
+void SetMutedColortemp(int value){}
+void SetMutedContrast(int value){}
+void SetMutedSaturation(int value){}
+void SetMutedExposure(int value){}
+
 void SetRawBrightness(int value) {}
 void SetRawVolume(int value){}
 
@@ -957,3 +969,33 @@ void PLAT_setCurrentTimezone(const char* tz) {
 	}
 	free(tz_path);
 }
+
+/////////////////////
+
+ void PLAT_wifiInit() {}
+ bool PLAT_hasWifi() { return true; }
+ bool PLAT_wifiEnabled() { return true; }
+ void PLAT_wifiEnable(bool on) {}
+
+ int PLAT_wifiScan(struct WIFI_network *networks, int max) {
+	for (int i = 0; i < 5; i++) {
+		struct WIFI_network *network = &networks[i];
+
+		sprintf(network->ssid, "Network%d", i);
+		strcpy(network->bssid, "01:01:01:01:01:01");
+		network->rssi = (70 / 5) * (i + 1);
+		network->freq = 2400;
+		network->security = i % 2 ? SECURITY_WPA2_PSK : SECURITY_WEP;
+	}
+ }
+ bool PLAT_wifiConnected() { return true; }
+ int PLAT_wifiConnection(struct WIFI_connection *connection_info) {
+	connection_info->freq = 2400;
+	strcpy(connection_info->ip, "127.0.0.1");
+	strcpy(connection_info->ssid, "Network1");
+}
+ bool PLAT_wifiHasCredentials(char *ssid, WifiSecurityType sec) { return false; }
+ void PLAT_wifiForget(char *ssid, WifiSecurityType sec) {}
+ void PLAT_wifiConnect(char *ssid, WifiSecurityType sec) {}
+ void PLAT_wifiConnectPass(const char *ssid, WifiSecurityType sec, const char* pass) {}
+ void PLAT_wifiDisconnect(const char *ssid) {}

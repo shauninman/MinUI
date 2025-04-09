@@ -304,7 +304,11 @@ SDL_Surface* GFX_init(int mode)
 	asset_rects[ASSET_BATTERY_BOLT]		= (SDL_Rect){SCALE4(81,41,12, 6)};
 	asset_rects[ASSET_SCROLL_UP]		= (SDL_Rect){SCALE4(97,23,24, 6)};
 	asset_rects[ASSET_SCROLL_DOWN]		= (SDL_Rect){SCALE4(97,31,24, 6)};
-	asset_rects[ASSET_WIFI]				= (SDL_Rect){SCALE4(95,39,14,10)};
+	asset_rects[ASSET_WIFI]				= (SDL_Rect){SCALE4(23,64,14,10)};
+	asset_rects[ASSET_WIFI_MED]			= (SDL_Rect){SCALE4(38,64,14,10)};
+	asset_rects[ASSET_WIFI_LOW]			= (SDL_Rect){SCALE4(54,64,14,10)};
+	asset_rects[ASSET_CHECKCIRCLE]		= (SDL_Rect){SCALE4(68,63,12,12)};
+	asset_rects[ASSET_LOCK]				= (SDL_Rect){SCALE4(81,64,8,11)};
 	asset_rects[ASSET_HOLE]				= (SDL_Rect){SCALE4( 1,63,20,20)};
 	asset_rects[ASSET_GAMEPAD]			= (SDL_Rect){SCALE4(92,51,18,10)};
 
@@ -3084,3 +3088,18 @@ FALLBACK_IMPLEMENTATION char *PLAT_getCurrentTimezone() { return "Foo/Bar"; }
 FALLBACK_IMPLEMENTATION void PLAT_setCurrentTimezone(const char* tz) {}
 FALLBACK_IMPLEMENTATION bool PLAT_getNetworkTimeSync(void) { return true; }
 FALLBACK_IMPLEMENTATION void PLAT_setNetworkTimeSync(bool on) {}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+FALLBACK_IMPLEMENTATION void PLAT_wifiInit() {}
+FALLBACK_IMPLEMENTATION bool PLAT_hasWifi() { return false; }
+FALLBACK_IMPLEMENTATION bool PLAT_wifiEnabled() { return false; }
+FALLBACK_IMPLEMENTATION void PLAT_wifiEnable(bool on) {}
+
+FALLBACK_IMPLEMENTATION int PLAT_wifiScan(struct WIFI_network *networks, int max) { return 0; }
+FALLBACK_IMPLEMENTATION bool PLAT_wifiConnected() { return false; }
+FALLBACK_IMPLEMENTATION int PLAT_wifiConnection(struct WIFI_connection *connection_info) { return 0; }
+FALLBACK_IMPLEMENTATION bool PLAT_wifiHasCredentials(char *ssid, WifiSecurityType sec) { return false; }
+FALLBACK_IMPLEMENTATION void PLAT_wifiForget(char *ssid, WifiSecurityType sec) {}
+FALLBACK_IMPLEMENTATION void PLAT_wifiConnect(char *ssid, WifiSecurityType sec) {}
+FALLBACK_IMPLEMENTATION void PLAT_wifiConnectPass(const char *ssid, WifiSecurityType sec, const char* pass) {}
+FALLBACK_IMPLEMENTATION void PLAT_wifiDisconnect() {}

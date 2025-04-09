@@ -119,6 +119,11 @@ enum {
 	ASSET_SCROLL_DOWN,
 	
 	ASSET_WIFI,
+	ASSET_WIFI_MED,
+	ASSET_WIFI_LOW,
+	
+	ASSET_CHECKCIRCLE,
+	ASSET_LOCK,
 
 	ASSET_GAMEPAD,
 	
@@ -591,5 +596,78 @@ void PLAT_setNetworkTimeSync(bool on);
 #define TIME_setCurrentTimezone PLAT_setCurrentTimezone
 #define TIME_getNetworkTimeSync PLAT_getNetworkTimeSync
 #define TIME_setNetworkTimeSync PLAT_setNetworkTimeSync
+
+////////////////////////
+
+#define SSID_MAX 64
+#define SCAN_MAX_RESULTS 128
+//#define LIST_NETWORK_MAX 4096
+
+typedef enum {
+	SECURITY_NONE = 0,
+	SECURITY_WPA_PSK,
+	SECURITY_WPA2_PSK,
+	SECURITY_WEP,
+	SECURITY_UNSUPPORTED, // pull requests welcome, I dont think we need to deal with EAP
+} WifiSecurityType;
+
+struct WIFI_network {
+	char bssid[128];
+	char ssid[SSID_MAX];
+	int freq;
+	int rssi;
+	WifiSecurityType security;
+	bool wps;
+};
+
+struct WIFI_connection {
+	char ssid[SSID_MAX];
+	char ip[32];
+	int freq;
+	int rssi;
+	int link_speed;
+	int noise;
+};
+
+// initializes our wifi context and synchronizes it with the current system state
+void PLAT_wifiInit();
+// returns availability of a usable WiFi device
+bool PLAT_hasWifi();
+// returns if wifi devices are currently enabled
+// \note the platform specific implementation of this may vary, could be e.g. systemval entries for trimui
+// \sa PLAT_wifiEnable
+bool PLAT_wifiEnabled();
+void PLAT_wifiEnable(bool on);
+// scans available networks and returns a list.
+int PLAT_wifiScan(struct WIFI_network *networks, int max);
+// returns if currently connected to a network (or not)
+bool PLAT_wifiConnected();
+// returns connection info, if currently connected.
+int PLAT_wifiConnection(struct WIFI_connection *connection_info);
+// returns true if we have stored credentials for this network (via wpa_supplicant)
+bool PLAT_wifiHasCredentials(char *ssid, WifiSecurityType sec);
+// forgets the credentials for this SSID, if saved
+void PLAT_wifiForget(char *ssid, WifiSecurityType sec);
+// attempt to connect to this SSID, using, stored credentials.
+// \sa PLAT_wifiHasCredentials
+void PLAT_wifiConnect(char *ssid, WifiSecurityType sec);
+// attempt to connect to this SSID with password given. 
+// If successful, stores credentials with wpa_supplicant.
+void PLAT_wifiConnectPass(const char *ssid, WifiSecurityType sec, const char* pass);
+// disconnect from any active network
+void PLAT_wifiDisconnect();
+
+#define WIFI_init PLAT_wifiInit
+#define WIFI_supported PLAT_hasWifi
+#define WIFI_enabled PLAT_wifiEnabled
+#define WIFI_enable PLAT_wifiEnable
+#define WIFI_scan PLAT_wifiScan
+#define WIFI_connected PLAT_wifiConnected
+#define WIFI_connectionInfo PLAT_wifiConnection
+#define WIFI_isKnown PLAT_wifiHasCredentials
+#define WIFI_forget PLAT_wifiForget
+#define WIFI_connect PLAT_wifiConnect
+#define WIFI_connectPass PLAT_wifiConnectPass
+#define WIFI_disconnect PLAT_wifiDisconnect
 
 #endif

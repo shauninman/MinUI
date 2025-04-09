@@ -14,6 +14,10 @@ extern "C"
 #include <algorithm>
 #include <any>
 #include <numeric>
+#include <shared_mutex>
+
+// leftovers to port
+#define OPTION_PADDING 8
 
 // c++ compat/convenience
 // MinUI is passing a lot of temp value ptrs, which is not very c++
@@ -69,7 +73,7 @@ inline SDL_Rect dy(const SDL_Rect &rect, int dy)
     return {rect.x, rect.y + dy, rect.w, rect.h - dy};
 }
 
-enum MenuItemType
+enum class MenuItemType
 {
     // eg. save and main menu
     // small font, centered list of "buttons"
@@ -85,10 +89,12 @@ enum MenuItemType
     Input,
     // "big" MinUI menu
     Main,
+    // refer/defer to sublass
+    Custom,
 };
 
 // This should probably just be polymorphism, but this is fine for now.
-enum ListItemType
+enum class ListItemType
 {
     // generic list item, could be anything and any type
     Generic,
@@ -96,6 +102,8 @@ enum ListItemType
     Color,
     // no option values, only title and BTN_CONFIRM
     Button,
+    // used by custom items, defer to MenuItem::drawCustomItem
+    Custom,
 };
 
 enum InputReactionHint
@@ -116,12 +124,13 @@ enum InputReactionHint
 class MenuItem;
 class MenuList;
 // typedef InputReactionHint (*MenuListCallback)(MenuList* list, int i);
+//using ValueGetCallback = std::any (*)(void);
+//using ValueSetCallback = void (*)(const std::any &);
+//using ValueResetCallback = void (*)(void);
 using MenuListCallback = std::function<InputReactionHint(MenuItem &item)>;
-// using ValueGetCallback = std::function<const std::any&(void)>;
-using ValueGetCallback = std::any (*)(void);
-// using ValueSetCallback = std::function<void(const std::any& value)>;
-using ValueSetCallback = void (*)(const std::any &);
-using ValueResetCallback = void (*)(void);
+using ValueGetCallback = std::function<std::any(void)>;
+using ValueSetCallback = std::function<void(const std::any& value)>;
+using ValueResetCallback = std::function<void(void)>;
 
 class MenuItem
 {
@@ -175,6 +184,8 @@ public:
 
     InputReactionHint handleInput(int &dirty);
 
+    virtual void drawCustomItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected) const {}
+
     const std::any &getValue() const
     {
         assert(valueIdx >= 0);
@@ -199,6 +210,7 @@ public:
 
 class MenuList
 {
+protected:
     MenuItemType type;
     std::string desc;
     std::vector<MenuItem*> items;
@@ -218,9 +230,12 @@ class MenuList
     MenuListCallback on_change;
     MenuListCallback on_confirm;
 
+    std::shared_mutex itemLock;
+
 public:
     MenuList(MenuItemType type, const std::string &desc, std::vector<MenuItem*> items, MenuListCallback on_change = nullptr, MenuListCallback on_confirm = nullptr);
     ~MenuList();
+    MenuList(MenuList &) = delete;
 
     void performLayout(const SDL_Rect &dst);
     bool selectNext();
@@ -228,7 +243,7 @@ public:
     void resetAllItems();
 
     // returns true if the input was handled
-    InputReactionHint handleInput(int &dirty, int &quit);
+    virtual InputReactionHint handleInput(int &dirty, int &quit);
 
     SDL_Rect itemSizeHint(const MenuItem &item);
 
@@ -241,6 +256,7 @@ public:
     void drawInputItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected);
     void drawMain(SDL_Surface *surface, const SDL_Rect &dst);
     void drawMainItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected);
+    virtual void drawCustom(SDL_Surface *surface, const SDL_Rect &dst) {};
 };
 
 const MenuListCallback DeferToSubmenu = [](MenuItem &itm) -> InputReactionHint

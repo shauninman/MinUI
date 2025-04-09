@@ -1,0 +1,72 @@
+		WifiManager version update instructions
+
+--------------------------------------------------------------------------------------------------------------------------
+version: 18.11.05:
+
+1. Add a log system , print can be redirected to files , syslog, standard output .
+
+2. Improve the networking time and standardize the print output ( some interfaces and wifi events have some changes ). Based on this version, you can quickly merge as follows .
+
+(1) Replace the previous wifi_event_handle function with the wifi_state_handle in the new version of the demo .
+(2) Remove the while(aw_wifi_get_wifi_state() == WIFIMG_WIFI_BUSING) loop waiting and change it to use
+if(aw_wifi_get_wifi_state() == NETWORK_CONNECTED) to determine whether it is connected .
+(3) Remove irrelevant variable definitions .
+(4) For details , refer to tina/package/allwinner/wifimanager/demo/wifi_connect_ap.cpp
+
+3. Add wifi daemon and provide wifi daemon API interface .
+    Enable the following options in make menuconfig .
+Allwinner --->
+-*- wifimanager............................................. Tina wifimanager --->
+[*] Enable wifimanager daemon support -- ①
+<*> wifimanager-daemon-demo........................ Tina wifimanager daemon demo -- ②
+
+     ① : After selecting this option , the wifi_daemon executable program will be generated after compilation .
+     ② : Based on wifi daemon API , used to control wifi_daemon demo
+
+(1) wifi_daemon: After enabling ① , wifi_daemon will be automatically started each time the computer is turned on , and will automatically search for available networks from /etc/wifi/wpa_supplicant.conf
+      After the network connection is successful , if it is abnormally disconnected in the middle , it will automatically search for other networks from the configuration file to connect , that is, maintain the network automatic reconnection and other abnormal
+      This is a common problem and does not require user concern .
+
+(2) Wifi daemon API: Provides the following interfaces for users to programmatically control Wifi_daemon to perform related operations .
+
+a. int aw_wifid_connect_ap(const char *ssid, const char *passwd,enum cn_event *ptrEvent);
+        Connect to the network . If the connection is successful , it will be saved in the /etc/wifi/wpa_supplicant.conf file and will automatically connect next time you start the computer .
+
+b. int aw_wifid_get_scan_results(char *results,int len);
+        Scan surrounding networks .
+
+c. int aw_wifid_list_networks(char *reply, size_t len);
+        Lists network information stored in /etc/wifi/wpa_supplicant.conf .
+
+d. int aw_wifid_get_status(struct wifi_status *sptr);
+        Get the current network status ( whether the network is connected , if connected , return the corresponding ssid)
+
+f. int aw_wifid_remove_networks(char *pssid,int len);
+        Removes the specified network information stored in the network configuration file .
+
+g. void aw_wifid_open(void);
+        Open wifi daemon. Generally, wifi daemon starts automatically when the computer is powered on . This interface is mainly used in conjunction with aw_wifid_close .
+
+h. void aw_wifid_close(void);
+        If you turn off the wifi daemon, the network will be disconnected .
+
+(3) wifid: a demo based on (2) .
+wifid parameters are as follows :
+-h, --help print this help and exit
+         -c, --connect         connect AP,-c <ssid> <password>
+         -s, --scan            scan AP
+         -l, --list_network    list network
+         -t, --status          get wifi status
+         -r, --remove_net      remove network in config,-r <ssid>
+         -o, --open    open wifi daemon
+         -d, --close   close wifi daemon
+
+         example:
+         连接网络     : wifid -c AW-TEST 12345678  或者 wifid --connect  AW-TEST 12345678
+         Scan network : wifid -s or wifid --scan
+         List networks : wifid -l or wifid --list_network
+         Get network status : wifid -t			 Or wifid --status
+         Remove network : wifid -r AW-TEST or wifid --remove_net AW-TEST
+
+For other detailed modifications , please refer to the document <Tina_Wifimanager_API>
+--------------------------------------------------------------------------------------------------------------------------

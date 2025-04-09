@@ -1,0 +1,72 @@
+		wifimanager 版本更新说明
+
+----------------------------------------------------------------------------------------------------------
+version: 18.11.05:
+
+1. 添加log系统,打印可以重定向到文件,syslog,标准输出.
+
+2. 提升联网时间,规范打印输出(部分接口,wifi事件有一些改变).基于该版本可快速按照如下方式合并.
+
+    (1)将之前wifi_event_handle函数替换为新版本的demo中wifi_state_handle.
+    (2)去掉 while(aw_wifi_get_wifi_state() == WIFIMG_WIFI_BUSING)循环等待,修改为用
+      if(aw_wifi_get_wifi_state() == NETWORK_CONNECTED)去判断是否连接上.
+    (3)去掉无关的变量定义.
+    (4)详情参考tina/package/allwinner/wifimanager/demo/wifi_connect_ap.cpp
+
+3. 增加wifi daemon以及提供操作wifi daemon API接口.
+    在make menuconfig中使能以下选项.
+    Allwinner  --->
+      -*- wifimanager............................................. Tina wifimanager  --->
+       [*]   Enable wifimanager daemon support                                            --①
+       <*>   wifimanager-daemon-demo..................... Tina wifimanager daemon demo    --②
+
+     ①:选上该选项后,编译后将生成wifi_daemon可以执行程序.
+     ②:基于wifi daemon API编写,用于控制wifi_daemon的demo
+
+    (1) wifi_daemon:使能①后,每次开机将会自启动wifi_daemon,将会从/etc/wifi/wpa_supplicant.conf自动搜索可用网络
+      进行连接.网络连接成功后,如果中途异常断开,将会自动从配置文件中搜索其他网络进行连接,即维护网络自动重连及其他异
+      常问题,不需要用户关心.
+
+    (2) wifi daemon API:提供以下接口,可供用户编程控制wifi_daemon进行相关操作.
+
+      a. int aw_wifid_connect_ap(const char *ssid, const char *passwd,enum cn_event *ptrEvent);
+        连接网络,如果连接成功,将保存到/etc/wifi/wpa_supplicant.conf文件中,下次开机将会自动连接.
+
+      b. int aw_wifid_get_scan_results(char *results,int len);
+        扫描周围网络.
+
+      c. int aw_wifid_list_networks(char *reply, size_t len);
+        列出存放在/etc/wifi/wpa_supplicant.conf的网络信息.
+
+      d. int aw_wifid_get_status(struct wifi_status *sptr);
+        获取当前网络的状态(是否连接上网络,如果连接上,返回对应的ssid)
+
+      f. int aw_wifid_remove_networks(char *pssid,int len);
+        移除指定保存在网络配置文件中的网络信息.
+
+      g. void aw_wifid_open(void);
+        打开wifi daemon,一般情况wifi daemon是开机自启动的,该接口主要是配合aw_wifid_close使用.
+
+      h. void aw_wifid_close(void);
+        关闭wifi daemon,网络将会断开.
+
+     (3) wifid: 基于(2)编写的demo.
+        wifid 参数如下:
+         -h, --help            print this help and exit
+         -c, --connect         connect AP,-c <ssid> <password>
+         -s, --scan            scan AP
+         -l, --list_network    list network
+         -t, --status          get wifi status
+         -r, --remove_net      remove network in config,-r <ssid>
+         -o, --open    open wifi daemon
+         -d, --close   close wifi daemon
+
+         example:
+         连接网络     : wifid -c AW-TEST 12345678  或者 wifid --connect  AW-TEST 12345678
+         扫描网络     : wifid -s                   或者 wifid --scan
+         列出网络     : wifid -l                   或者 wifid --list_network
+         获取网络状态 : wifid -t			 或者  wifid --status
+         移除网络     : wifid -r AW-TEST           或者 wifid --remove_net AW-TEST
+
+其他详细修改,请参考文档<Tina_Wifimanager_API>
+----------------------------------------------------------------------------------------------------------

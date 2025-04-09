@@ -108,6 +108,7 @@
     "netfwd": "cpp",
     "system_error": "cpp",
     "stop_token": "cpp",
-    "cfenv": "cpp"
+    "cfenv": "cpp",
+    "wmg_debug.h": "c"
   },
 }

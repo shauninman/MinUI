@@ -15,6 +15,7 @@ endif
 .PHONY: all
 
 all:
+	cd ./$(PLATFORM)/wifimanager && make
 	cd ./$(PLATFORM)/libmsettings && make
 	cd ./$(PLATFORM) && make early # eg. other libs
 	cd ./$(PLATFORM)/keymon && make

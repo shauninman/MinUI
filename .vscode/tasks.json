@@ -166,7 +166,7 @@
             "label": "C/C++: gcc build macos - Settings",
             "command": "/opt/homebrew/Cellar/gcc/14.2.0_1/bin/g++-14",
             "args": [
-                "-g", "settings.cpp", "menu.cpp", "-o", "${workspaceFolder}/workspace/all/settings/build/macos/settings", 
+                "-g", "settings.cpp", "menu.cpp", "wifimenu.cpp","keyboardprompt.cpp", "-o", "${workspaceFolder}/workspace/all/settings/build/macos/settings", 
                 "-I.", "-I../common/", "-I../../macos/platform/", "-I/opt/homebrew/include",
                 "-L/opt/homebrew/lib", 
                 "../common/build/macos/utils.o", "../common/build/macos/api.o", "../common/build/macos/config.o", "../common/build/macos/platform.o", "../common/build/macos/scaler.o",
@@ -177,6 +177,7 @@
                 "-std=c++17", 
                 "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lpthread", "-lm", "-lz", "-lsamplerate",
                 //"-fpermissive",
+                //"-fsanitize=address", 
             ],
             "options": {
                 "cwd": "${workspaceFolder}/workspace/all/settings"

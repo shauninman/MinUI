@@ -1,0 +1,65 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=96
+STOP=98
+
+USE_PROCD=1
+DEPEND=boot
+PROG=wpa_supplicant
+OOM_ADJ=-17
+
+start_service() {
+    procd_open_instance
+#    wpa=`ps | grep wpa_supplicant | grep -v grep`
+#    [ -n "$wpa" ] && {
+#        killall  wpa_supplicant
+#		sleep 1
+#    }
+
+    ifconfig wlan0 up
+    for i in $(seq 1 5)
+    do
+	wlan=`ifconfig | grep wlan0 | awk '{print $1}'`
+	if [ x$wlan=="xwlan0" ]; then
+		usleep 500000
+		procd_set_param oom_adj $OOM_ADJ
+		procd_set_param command $PROG -iwlan0 -Dnl80211 -c/etc/wifi/wpa_supplicant.conf -I/etc/wifi/wpa_supplicant_overlay.conf -O/var/sockets
+		procd_close_instance
+	else
+		echo "=========try again up wlan0...========="
+		usleep 500000
+		ifconfig wlan0 up
+        fi
+    done
+
+    wlan=`ifconfig | grep wlan0 | awk '{print $1}'`
+    if [ x$wlan=="xwlan0" ]; then
+	echo "======wlan0 up successed!======"
+    else
+	echo "======wlan0 up failed!========="
+    fi
+
+    brlan=`ifconfig | grep br-lan | awk '{print $1}'`
+    if [ x$brlan=="xbr-lan" ]; then
+	    echo "change the default ip address 192.168.1.1"
+	    ifconfig br-lan 192.168.100.100
+    fi
+
+}
+
+stop_service() {
+    procd_open_instance
+    ifconfig wlan0 down
+    wpa=`ps | grep wpa_supplicant | grep -v grep`
+    [ -n "$wpa" ] && {
+        killall  wpa_supplicant
+		sleep 1
+    }
+    procd_close_instance
+}
+
+#restart() {
+#    stop $@
+#    start $@
+#}

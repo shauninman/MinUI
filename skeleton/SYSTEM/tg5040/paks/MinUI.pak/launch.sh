@@ -81,6 +81,8 @@ fi
 echo 243 > /sys/class/gpio/export
 echo -n in > /sys/class/gpio/gpio243/direction
 
+syslogd -S
+
 #######################################
 
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:/usr/trimui/lib:$LD_LIBRARY_PATH
@@ -101,12 +103,36 @@ CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
 CPU_SPEED_PERF=2000000
 echo $CPU_SPEED_PERF > $CPU_PATH
 
-# disable internet stuff
+# bt handling (todo, off for now)
 rfkill block bluetooth
-rfkill block wifi
-killall udhcpc
-killall MtpDaemon
-/etc/init.d/wpa_supplicant stop # not sure this is working
+killall MtpDaemon # I dont think we need to micro manage this one
+
+# BT handling
+# on by default, disable based on systemval setting
+#bton=`/usr/trimui/bin/systemval bluetooth`
+#if [ "$bton" != "1" ] ; then
+#	/etc/bluetooth/bluetoothd start
+#	/usr/bin/bluealsa -p a2dp-source&
+#	touch /tmp/bluetooth_ready
+#fi
+
+# wifi handling
+# on by default, disable based on systemval setting
+wifion=`/usr/trimui/bin/systemval wifi`
+if [ "$wifion" != "1" ] ; then
+	ifconfig wlan0 down
+	killall -15 wpa_supplicant
+	# this is pretty dumb, it also kills DHCP for e.g. USB-C ethernet adapters
+	# do we really care that much about a stray DHCP service running?
+	killall -9 udhcpc
+	# i guess this could theoretically conserve battery
+	rfkill block wifi
+	# probably unnecessary
+	# /etc/init.d/wpa_supplicant stop # shauninman: not sure this is working
+else
+	ifconfig wlan0 up
+	rfkill unblock wifi	
+fi
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
 batmon.elf & # &> $SDCARD_PATH/batmon.txt &

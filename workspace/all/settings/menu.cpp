@@ -7,8 +7,10 @@ extern "C"
 #include "utils.h"
 }
 
-// leftovers to port
-#define OPTION_PADDING 8
+#include <shared_mutex>
+typedef std::shared_mutex Lock;
+typedef std::unique_lock< Lock >  WriteLock;
+typedef std::shared_lock< Lock >  ReadLock;
 
 ///////////////////////////////////////////////////////////
 
@@ -291,13 +293,15 @@ MenuList::MenuList(MenuItemType type, const std::string &descp, std::vector<Menu
 
 MenuList::~MenuList()
 {
-   for (auto item : items)
-     delete item;
-   items.clear();
+    WriteLock w(itemLock);
+    for (auto item : items)
+        delete item;
+    items.clear();
 }
 
 void MenuList::performLayout(const SDL_Rect &dst)
 {
+    ReadLock r(itemLock);
     // TODO: consecutive calls to this should only update max_visible rows
     // and try to persist the current selection state
     // TODO: If we ever need to add menu entries dynamically, this potentially
@@ -340,6 +344,7 @@ bool MenuList::selectNext()
         scope.start++;
         scope.end++;
     }
+
     return true;
 }
 
@@ -357,16 +362,22 @@ bool MenuList::selectPrev()
         scope.start--;
         scope.end--;
     }
+
     return true;
 }
 
 // returns true if the input was handled
 InputReactionHint MenuList::handleInput(int &dirty, int &quit)
 {
+    ReadLock r(itemLock);
     InputReactionHint handled = items.at(scope.selected)->handleInput(dirty);
     if(handled == ResetAllItems) {
         resetAllItems();
         dirty = 1;
+        return NoOp;
+    }
+    else if (handled == Exit) {
+        quit = 1;
         return NoOp;
     }
     else if (handled != Unhandled)
@@ -463,9 +474,10 @@ SDL_Rect MenuList::itemSizeHint(const MenuItem &item)
 void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
 {
     assert(layout_called);
+    ReadLock r(itemLock);
 
-    auto cur = items.at(scope.selected);
-    if (cur->isDeferred())
+    auto cur = !items.empty() ? items.at(scope.selected) : nullptr;
+    if (cur && cur->isDeferred())
     {
         assert(cur->getSubMenu());
         cur->getSubMenu()->draw(surface, dst);
@@ -488,11 +500,14 @@ void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
         case MenuItemType::Main:
             drawMain(surface, dst);
             break;
+        case MenuItemType::Custom:
+            drawCustom(surface, dst);
+            return; // no further drawing over custom
         default:
             assert(false && "Unknown list type");
         }
 
-        // Handle overflow (anything but Main)
+        // Handle overflow (anything but Main and Custom)
         if (type != MenuItemType::Main && items.size() > scope.max_visible_options)
         {
             const int SCROLL_WIDTH = 24;
@@ -510,7 +525,7 @@ void MenuList::draw(SDL_Surface *surface, const SDL_Rect &dst)
                 GFX_blitAssetCPP(ASSET_SCROLL_DOWN, {}, surface, {rect.x, rect.h - SCALE1(PADDING + PILL_SIZE) + rect.y});
         }
 
-        if (cur->getDesc().length() > 0)
+        if (cur && cur->getDesc().length() > 0)
         {
             int w, h;
             const auto description = cur->getDesc();
@@ -622,7 +637,7 @@ void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const Me
     {
         text = TTF_RenderUTF8_Blended(font.tiny, item.getLabel().c_str(), COLOR_WHITE); // always white
 
-        if (item.getType() == Color)
+        if (item.getType() == ListItemType::Color)
         {
             uint32_t color = mapUint(surface, std::any_cast<uint32_t>(item.getValue()));
             SDL_Rect rect = {
@@ -637,8 +652,11 @@ void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const Me
 #define COLOR_PADDING 4
             SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + mw - text->w - SCALE1(OPTION_PADDING + COLOR_PADDING + FONT_TINY), dst.y + SCALE1(3)});
         }
-        else if(item.getType() == Button) {
+        else if(item.getType() == ListItemType::Button) {
             // dont draw anything for now, could be a button hint later
+        }
+        else if(item.getType() == ListItemType::Custom) {
+            item.drawCustomItem(surface, dst, item, selected);
         }
         else // Generic and fallback
             SDL_BlitSurfaceCPP(text, {}, surface, {dst.x + mw - text->w - SCALE1(OPTION_PADDING), dst.y + SCALE1(3)});
@@ -779,6 +797,7 @@ void MenuList::drawMainItem(SDL_Surface *surface, const SDL_Rect &dst, const Men
 
 void MenuList::resetAllItems()
 {
+    ReadLock r(itemLock);
     for(auto item : items) {
         if(item->on_reset) {
             item->on_reset();

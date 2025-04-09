@@ -124,6 +124,12 @@ Our community has currated a [list of favorite Paks](https://nextui.loveretro.ga
 
 ---
 
+## Credits
+
+[@josegonzalez](https://github.com/josegonzalez) for [minui-keyboard](https://github.com/josegonzalez/minui-keyboard/t)
+
+---
+
 ## Play Retro's review of NextUI
 
 [![image](https://github.com/user-attachments/assets/43217a30-e052-4f67-88a9-c4361f82e72f)](https://www.youtube.com/watch?v=m_7ObMHAFK4)
