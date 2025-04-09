@@ -1401,6 +1401,7 @@ bool PLAT_getNetworkTimeSync(void) {
 	pclose(fp);
 	bool result = (output[0] == '1');
 	free(output);
+	return result;
 }
 
 void PLAT_setNetworkTimeSync(bool on) {
