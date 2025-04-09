@@ -1881,12 +1881,11 @@ int main (int argc, char *argv[]) {
 				SDL_Surface *tmpsur = GFX_captureRendererToSurface();
 				GFX_clearLayers(0);
 				GFX_clear(screen);
-			
+				// update cpu surface
+				GFX_flipHidden();
 				if(lastScreen==SCREEN_GAMESWITCHER)
 					GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w,screen->h,screen->w*4,screen->h*4,255,0,CFG_getMenuTransitions() ? 150:20,1);
 				else {
-					// update cpu surface
-					GFX_flipHidden();
 					GFX_animateSurfaceOpacity(tmpsur,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 150:20,1);
 				}
 				SDL_FreeSurface(tmpsur);
