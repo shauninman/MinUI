@@ -206,6 +206,21 @@ SDL_Surface* GFX_init(int mode);
 #define GFX_setOverlay PLAT_setOverlay// (int effect)
 #define GFX_setOffsetX PLAT_setOffsetX// (int effect)
 #define GFX_setOffsetY PLAT_setOffsetY// (int effect)
+#define GFX_drawOnLayer PLAT_drawOnLayer //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_clearLayers PLAT_clearLayers //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_captureRendererToSurface PLAT_captureRendererToSurface //(void)
+#define GFX_animateSurface PLAT_animateSurface //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_animateSurfaceOpacity PLAT_animateSurfaceOpacity //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_animateSurfaceOpacityAndScale PLAT_animateSurfaceOpacityAndScale //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_animateAndFadeSurface PLAT_animateAndFadeSurface //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_revealSurface PLAT_revealSurface //(SDL_Surface *inputSurface,int x, int y)
+#define GFX_animateAndRevealSurfaces PLAT_animateAndRevealSurfaces
+#define GFX_resetScrollText PLAT_resetScrollText
+#define GFX_scrollTextTexture PLAT_scrollTextTexture
+#define GFX_flipHidden PLAT_flipHidden //(void)
+#define GFX_GPU_Flip PLAT_GPU_Flip//(void)
+
+#define GFX_present PLAT_present //(SDL_Surface *inputSurface,int x, int y)
 void GFX_setMode(int mode);
 int GFX_hdmiChanged(void);
 SDL_Color /*GFX_*/uintToColour(uint32_t colour);
@@ -216,6 +231,7 @@ SDL_Color /*GFX_*/uintToColour(uint32_t colour);
 void GFX_startFrame(void);
 void audioFPS(void);
 void GFX_flip(SDL_Surface* screen);
+void PLAT_flipHidden();
 void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps); // if target_fps is 0, then use the native screen FPS
 #define GFX_supportsOverscan PLAT_supportsOverscan // (void)
 void GFX_sync(void); // call this to maintain 60fps when not calling GFX_flip() this frame
@@ -233,7 +249,7 @@ int GFX_getVsync(void);
 void GFX_setVsync(int vsync);
 
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
-int GFX_resetScrollText(TTF_Font* font, const char* in_name,int max_width);
+int PLAT_resetScrollText(TTF_Font* font, const char* in_name,int max_width);
 void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width, int height, int padding, SDL_Color color,float heightratio); // returns final width
 int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
 int GFX_getTextHeight(TTF_Font* font, const char* in_name, char* out_name, int max_width, int padding); // returns final width
@@ -279,6 +295,7 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 void GFX_ApplyRoundedCorners(SDL_Surface* surface, SDL_Rect* rect, int radius);
 void GFX_ApplyRoundedCorners16(SDL_Surface* surface, SDL_Rect* rect, int radius);
 void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, SDL_Rect* rect, int radius);
+void GFX_ApplyRoundedCorners_RGBA8888(SDL_Surface* surface, SDL_Rect* rect, int radius);
 void BlitRGBA4444toRGB565(SDL_Surface* src, SDL_Surface* dest, SDL_Rect* dest_rect);
 ///////////////////////////////
 
@@ -435,10 +452,94 @@ void PLAT_setEffect(int effect);
 void PLAT_setOverlay(int select, const char* tag);
 void PLAT_setOffsetX(int x);
 void PLAT_setOffsetY(int y);
+void PLAT_drawOnLayer(SDL_Surface *inputSurface, int x, int y, int w, int h, float brightness, bool maintainAspectRatio,int layer);
+void PLAT_clearLayers(int layer);
+SDL_Surface* PLAT_captureRendererToSurface();
+void PLAT_animateSurface(
+	SDL_Surface *inputSurface,
+	int x, int y,
+	int target_x, int target_y,
+	int w, int h,
+	int duration_ms,
+	int start_opacity,
+	int target_opacity,
+	int layer
+);
+void PLAT_animateAndFadeSurface(
+	SDL_Surface *inputSurface,
+	int x, int y, int target_x, int target_y, int w, int h, int duration_ms,
+	SDL_Surface *fadeSurface,
+	int fade_x, int fade_y, int fade_w, int fade_h,
+	int start_opacity, int target_opacity
+);
+
+
+
+void PLAT_animateSurfaceOpacity(SDL_Surface *inputSurface, int x, int y, int w, int h,
+	int start_opacity, int target_opacity, int duration_ms, int layer);
+void PLAT_animateSurfaceOpacityAndScale(
+	SDL_Surface *inputSurface,
+	int x, int y,
+	int start_w, int start_h,
+	int target_w, int target_h,
+	int start_opacity, int target_opacity,
+	int duration_ms,
+	int layer
+);
+void PLAT_animateSurfaceOpacity(SDL_Surface *inputSurface, int x, int y, int w, int h,
+	int start_opacity, int target_opacity, int duration_ms, int layer);
+void PLAT_animateSurfaceOpacityAndScale(
+	SDL_Surface *inputSurface,
+	int x, int y,
+	int start_w, int start_h,
+	int target_w, int target_h,
+	int start_opacity, int target_opacity,
+	int duration_ms,
+	int layer
+);
+
+void PLAT_revealSurface(
+	SDL_Surface *inputSurface,
+	int x, int y,
+	int w, int h,
+	int duration_ms,
+	const char* direction,
+	int opacity,
+	int layer
+);
+
+void PLAT_animateAndRevealSurfaces(
+	SDL_Surface* inputMoveSurface,
+	SDL_Surface* inputRevealSurface,
+	int move_start_x, int move_start_y,
+	int move_target_x, int move_target_y,
+	int move_w, int move_h,
+	int reveal_x, int reveal_y,
+	int reveal_w, int reveal_h,
+	const char* reveal_direction,
+	int duration_ms,
+	int move_start_opacity,
+	int move_target_opacity,
+	int reveal_opacity,
+	int layer1,
+	int layer2
+);
+void PLAT_scrollTextTexture(
+    TTF_Font* font,
+    const char* in_name,
+    int x, int y,      // Position on target layer
+    int w, int h,      // Clipping width and height
+    int padding,
+    SDL_Color color,
+    float transparency
+);
+void drawTextWithCache(TTF_Font* font, const char* text, SDL_Color color, SDL_Rect* destRect);
+void PLAT_present();
 void PLAT_vsync(int remaining);
 scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
+void PLAT_GPU_Flip();
 int PLAT_supportsOverscan(void);
 
 SDL_Surface* PLAT_initOverlay(void);

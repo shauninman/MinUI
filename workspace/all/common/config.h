@@ -56,6 +56,7 @@ typedef struct
 	bool clock24h;
 	bool showBatteryPercent;
 	bool showMenuAnimations;
+	bool showMenuTransitions;
 	bool showRecents;
 	bool showGameArt;
 	bool romsUseFolderBackground;
@@ -88,6 +89,7 @@ typedef struct
 #define CFG_DEFAULT_CLOCK24H true
 #define CFG_DEFAULT_SHOWBATTERYPERCENT false
 #define CFG_DEFAULT_SHOWMENUANIMATIONS true
+#define CFG_DEFAULT_SHOWMENUTRANSITIONS true
 #define CFG_DEFAULT_SHOWRECENTS true
 #define CFG_DEFAULT_SHOWGAMEART true
 #define CFG_DEFAULT_GAMESWITCHERSCALING GFX_SCALE_FULLSCREEN
@@ -131,7 +133,10 @@ bool CFG_getShowBatteryPercent(void);
 void CFG_setShowBatteryPercent(bool show);
 // Show/hide menu animations in main menu.
 bool CFG_getMenuAnimations(void);
-void CFG_setMenuAnimations(bool anims);
+void CFG_setMenuAnimations(bool show);
+// Show/hide menu transitions between screens in main menu.
+bool CFG_getMenuTransitions(void);
+void CFG_setMenuTransitions(bool show);
 // Set thumbnail rounding radius.
 int CFG_getThumbnailRadius(void);
 void CFG_setThumbnailRadius(int radius);

@@ -28,6 +28,7 @@ static int simple_mode = 0;
 static int thread_video = 0;
 static int was_threaded = 0;
 static int should_run_core = 1; // used by threaded video
+enum retro_pixel_format fmt;
 
 static pthread_t		core_pt;
 static pthread_mutex_t	core_mx;
@@ -2529,20 +2530,30 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		break;
 	}
 	case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: { /* 10 */
-		const enum retro_pixel_format *format = (enum retro_pixel_format *)data;
-
-		if (*format != RETRO_PIXEL_FORMAT_RGB565) { // TODO: pull from platform.h?
-			/* 565 is only supported format */
-			return false;
-			// downsample = 1; // TODO: not ready for primetime yet
-		}
-		break;
+		const enum retro_pixel_format *format = (const enum retro_pixel_format *)data;
+		LOG_info("Requested pixel format by core: %d\n", *format); // Log the requested format (raw integer value)
+	
+		// Check if the requested format is supported
+		if (*format == RETRO_PIXEL_FORMAT_XRGB8888) {
+			fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+			LOG_info("Format supported: RETRO_PIXEL_FORMAT_XRGB8888\n");
+			return true;  // Indicate success
+		} else if (*format == RETRO_PIXEL_FORMAT_RGB565) {
+			fmt = RETRO_PIXEL_FORMAT_RGB565;
+			LOG_info("Format supported: RETRO_PIXEL_FORMAT_RGB565\n");
+			return true;  // Indicate success
+		} 
+		// Log unsupported formats
+		LOG_info("Format not supported, defaulting to RGB565\n");
+		fmt = RETRO_PIXEL_FORMAT_RGB565;
+		return false;  // Indicate failure
 	}
 	case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS: { /* 11 */
 		// puts("RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS\n");
 		Input_init((const struct retro_input_descriptor *)data);
 		return false;
-	} break;
+		break;
+	} 
 	case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE: { /* 13 */
 		const struct retro_disk_control_callback *var =
 			(const struct retro_disk_control_callback *)data;
@@ -3162,38 +3173,35 @@ static const char* bitmap_font[] = {
         "1   1",
 
 	};
-static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int stride, int width, int height) {
-	#define CHAR_WIDTH 5
-	#define CHAR_HEIGHT 9
-	#define LETTERSPACING 1
-	
-	int len = strlen(text);
-	int w = ((CHAR_WIDTH+LETTERSPACING)*len)-1;
-	int h = CHAR_HEIGHT;
-	
-	if (ox<0) ox = width-w+ox;
-	if (oy<0) oy = height-h+oy;
-	
-	data += oy * stride + ox;
-	uint16_t* row = data - stride; // TODO: this will crash and burn if ox,oy==0,0 but is fine as used currently :sweat_smile:
-	memset(row-1, 0, (w+2)*2);
-	for (int y=0; y<CHAR_HEIGHT; y++) {
-		row = data + y * stride;
-		memset(row-1, 0, (w+2)*2);
-		for (int i=0; i<len; i++) {
-			const char* c = bitmap_font[text[i]];
-			for (int x=0; x<CHAR_WIDTH; x++) {
-				int j = y * CHAR_WIDTH + x;
-				if (c[j]=='1') *row = 0xffff;
-				row++;
+	static void blitBitmapText(char* text, int ox, int oy, uint32_t* data, int stride, int width, int height) {
+		#define CHAR_WIDTH 5
+		#define CHAR_HEIGHT 9
+		#define LETTERSPACING 1
+		
+		int len = strlen(text);
+		int w = ((CHAR_WIDTH + LETTERSPACING) * len) - 1;
+		int h = CHAR_HEIGHT;
+		
+		if (ox < 0) ox = width - w + ox;
+		if (oy < 0) oy = height - h + oy;
+		
+		data += oy * stride + ox;
+		for (int y = 0; y < CHAR_HEIGHT; y++) {
+			uint32_t* row = data + y * stride;  
+			for (int i = 0; i < len; i++) {
+				const char* c = bitmap_font[(unsigned char)text[i]]; 
+				for (int x = 0; x < CHAR_WIDTH; x++) {
+					if (c[y * CHAR_WIDTH + x] == '1') {
+						*row = 0xFFFFFFFF;  // white in RGBA8888
+					}
+					row++; 
+				}
+				row += LETTERSPACING;
 			}
-			row += LETTERSPACING;
 		}
 	}
-	row = data + CHAR_HEIGHT * stride;
-	memset(row-1, 0, (w+2)*2);
-}
-
+	
+	
 void drawRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
 	for (int _x=x; _x<x+w; _x++) {
 		data[_x + y * stride] = c;
@@ -3215,17 +3223,20 @@ void fillRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
 }
 
 void drawGauge(int x, int y, float percent, int width, int height, uint16_t *data, int stride) {
-	// static float a = 0.0;
-	// percent = 0.5 + 0.5 * sin(a);
-	// a += 0.02;
-	int red   = (int) (percent * 31);
-	int green = (int) ((1.0 - percent) * 15);
-	int blue  = 0;
-	uint16_t color = (red << 11) | (green << 6) | blue;
-	fillRect(x, y, width, height, 0x0000, data, stride);
-	fillRect(x, y, (int) (percent * width), height, color, data, stride);
-	drawRect(x, y, width, height, 0xFFFF, data, stride);
+    int red   = (int) (percent * 255);   
+    int green = (int) ((1.0 - percent) * 255); 
+    int blue  = 0;                           
+    uint8_t alpha = 255;                   
+    
+    uint32_t color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+    
+    fillRect(x, y, width, height, 0x00000000, data, stride);  
+    
+    fillRect(x, y, (int) (percent * width), height, color, data, stride);
+    
+    drawRect(x, y, width, height, 0xFFFFFFFF, data, stride);  
 }
+
 
 ///////////////////////////////
 
@@ -3254,24 +3265,6 @@ static void buffer_realloc(int w, int h, int p) {
 	buffer_dealloc();
 	buffer = malloc((w * FIXED_BPP) * h);
 	// LOG_info("buffer_realloc(%i,%i,%i)\n", w,h,p);
-}
-static void buffer_downsample(const void *data, unsigned width, unsigned height, size_t pitch) {
-	// from picoarch! https://git.crowdedwood.com/picoarch/tree/video.c#n51
-	const uint32_t *input = data;
-	uint16_t *output = buffer;
-	size_t extra = pitch / sizeof(uint32_t) - width;
-
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
-			*output =  (*input & 0xF80000) >> 8;
-			*output |= (*input & 0xFC00) >> 5;
-			*output |= (*input & 0xF8) >> 3;
-			input++;
-			output++;
-		}
-
-		input += extra; // TODO: commenting this out fixes geolith when cropped, it appears to be lying about the pitch...
-	}
 }
 
 static void selectScaler(int src_w, int src_h, int src_p) {
@@ -3511,8 +3504,9 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		screen = GFX_resize(dst_w,dst_h,dst_p);
 	// }
 }
-
+static int firstframe = 1;
 static void screen_flip(SDL_Surface* screen) {
+	
 	if (use_core_fps) {
 		GFX_flip_fixed_rate(screen, core.fps);
 	}
@@ -3520,6 +3514,7 @@ static void screen_flip(SDL_Surface* screen) {
 		GFX_flip(screen);
 	}
 }
+
 
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
@@ -3571,50 +3566,84 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		if (scale==-1) scale = 1; // nearest neighbor flag
 
 		sprintf(debug_text, "%ix%i %ix %i/%i", renderer.src_w,renderer.src_h, scale,currentsampleratein,currentsamplerateout);
-		blitBitmapText(debug_text,x,y,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,x,y,(uint32_t*)data,pitch / 4, width,height);
 		
 		sprintf(debug_text, "%.03f/%i/%.0f/%i", currentratio,
 				currentbuffersize,currentbufferms, currentbufferfree);
-		blitBitmapText(debug_text, x, y + 14, (uint16_t*)data, pitch / 2, width,
+		blitBitmapText(debug_text, x, y + 14, (uint32_t*)data, pitch / 4, width,
 					height);
 
 		sprintf(debug_text, "%i,%i %ix%i", renderer.dst_x,renderer.dst_y, renderer.src_w*scale,renderer.src_h*scale);
-		blitBitmapText(debug_text,-x,y,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,-x,y,(uint32_t*)data,pitch / 4, width,height);
 	
 		sprintf(debug_text, "%ix%i", renderer.dst_w,renderer.dst_h);
-		blitBitmapText(debug_text,-x,-y,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,-x,-y,(uint32_t*)data,pitch / 4, width,height);
 
 		//want this to overwrite bottom right in case screen is too small this info more important tbh
 		PLAT_getCPUTemp();
 		sprintf(debug_text, "%.01f/%.01f/%.0f%%/%ihz/%ic", currentfps, currentreqfps,currentcpuse,currentcpuspeed,currentcputemp);
-		blitBitmapText(debug_text,x,-y,(uint16_t*)data,pitch/2, width,height);
+		blitBitmapText(debug_text,x,-y,(uint32_t*)data,pitch / 4, width,height);
 	
 		double buffer_fill = (double) (currentbuffersize - currentbufferfree) / (double) currentbuffersize;
-		drawGauge(x, y + 28, buffer_fill, width / 4, 10, (uint16_t*)data, pitch/2);
+		drawGauge(x, y + 30, buffer_fill, width / 2, 10, (uint16_t*)data, pitch / 2);
 	}
 	
-	if (downsample) {
-		buffer_downsample(data,width,height,pitch*2);
-		renderer.src = buffer;
-	}
-	else {
+
 		renderer.src = (void*)data;
-	}
+	
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
-	 
+	if(firstframe) {
+		GFX_clearLayers(0);
+		GFX_clear(screen);
+		SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
+		// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
+	
+		SDL_Surface* tmpSur = SDL_CreateRGBSurfaceWithFormat(0,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888); 
+		SDL_FillRect(tmpSur, NULL, SDL_MapRGBA(tmpSur->format, 0, 0, 0, 255)); 
+	
+		float src_aspect = (float)screendata->w / screendata->h;
+		float dst_aspect = (float)DEVICE_WIDTH / DEVICE_HEIGHT;
+	
+		int scaled_w = DEVICE_WIDTH;
+		int scaled_h = DEVICE_HEIGHT;
+	
+		if (src_aspect > dst_aspect) {
+			scaled_w = DEVICE_WIDTH;
+			scaled_h = (int)(DEVICE_WIDTH / src_aspect);
+		} else {
+			scaled_h = DEVICE_HEIGHT;
+			scaled_w = (int)(DEVICE_HEIGHT * src_aspect);
+		}
+	
+		SDL_Rect dst = {
+			screen_scaling!=SCALE_FULLSCREEN ? (DEVICE_WIDTH - scaled_w) / 2:0,
+			screen_scaling!=SCALE_FULLSCREEN ?(DEVICE_HEIGHT - scaled_h) / 2:0,
+			screen_scaling!=SCALE_FULLSCREEN ? scaled_w:screen->w,
+			screen_scaling!=SCALE_FULLSCREEN ? scaled_h:screen->h
+		};
+		SDL_BlitScaled(screendata, NULL, tmpSur, &dst);
+		GFX_animateSurfaceOpacity(tmpSur,0,0,screen->w,screen->h,0,255,CFG_getMenuTransitions() ? 200:20,1);
+		SDL_FreeSurface(tmpSur);
+		SDL_FreeSurface(screendata);
+		GFX_clearLayers(0);
+		firstframe=0;
+	} 
 
 	GFX_blitRenderer(&renderer);
 
-	if (!thread_video) screen_flip(screen);
+
+
+	screen_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
 
-
+Uint32* rgbaData;
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
-    bool can_dupe = false;
-    environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
+    // not needed currently
+	// bool can_dupe = false;
+    // environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
 
 	// fbneo now has auto rotation, but keeping this here maybe we need in the future?
 	// struct retro_variable var = { "fbneo-vertical-mode", NULL };
@@ -3641,42 +3670,66 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 	// 	should_rotate = 0;
 	// }
 
-    if (!data) {
-        if (lastframe) {
-            data = lastframe;
-        } else {
-            return; // No data to display
-        }
-    }
+	if(!rgbaData || (width * height * sizeof(Uint32)) != sizeof(rgbaData)) {
+		if(rgbaData) free(rgbaData);
+		rgbaData = (Uint32*)malloc(width * height * sizeof(Uint32));
+		if (!rgbaData) {
+			printf("Failed to allocate memory for RGBA8888 data.\n");
+			return;
+		}
+	}
 
-    lastframe = data;
-
-	if(!fast_forward ) {
+	if(!fast_forward && data) {
 		if(ambient_mode!=0) {
 			GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
 			LEDS_updateLeds();
 		}
 	}
 
-	if (thread_video) {
-		pthread_mutex_lock(&core_mx);
-		
-		if (backbuffer && (backbuffer->w!=width || backbuffer->h!=height || backbuffer->pitch!=pitch)) {
-			free(backbuffer->pixels);
-			SDL_FreeSurface(backbuffer);
-			backbuffer = NULL;
+    if (!data) {
+        if (lastframe) {
+            data = lastframe;
+        } else {
+            return; // No data to display
+        }
+    } else if (fmt == RETRO_PIXEL_FORMAT_XRGB8888) {
+		// convert XRGB8888 to RGBA8888
+		const uint32_t* src = (const uint32_t*)data;
+		for (unsigned i = 0; i < width * height; ++i) {
+			uint32_t pixel = src[i];
+			uint8_t r = (pixel >> 16) & 0xFF;
+			uint8_t g = (pixel >> 8) & 0xFF;
+			uint8_t b = (pixel >> 0) & 0xFF;
+			uint8_t a = 0xFF;
+			rgbaData[i] = (r << 24) | (g << 16) | (b << 8) | a;
 		}
-		if (!backbuffer) {
-			uint16_t* pixels = malloc(height*pitch);
-			// backbuffer = SDL_CreateRGBSurface(0,width,height,FIXED_DEPTH,RGBA_MASK_565);
-			backbuffer = SDL_CreateRGBSurfaceFrom(pixels, width, height, FIXED_DEPTH, pitch, RGBA_MASK_565);
+		data = rgbaData;
+	} else {
+		// if emulator doesnt support XRGB888 and uses RGB565
+		// convert RGB565 to RGBA8888
+		const uint16_t* srcData = (const uint16_t*)data;
+		unsigned srcPitchInPixels = pitch / sizeof(uint16_t); 
+
+		for (unsigned y = 0; y < height; ++y) {
+			for (unsigned x = 0; x < width; ++x) {
+				uint16_t pixel = srcData[y * srcPitchInPixels + x];
+
+				uint8_t r = ((pixel >> 11) & 0x1F) << 3; 
+				uint8_t g = ((pixel >> 5) & 0x3F) << 2;   
+				uint8_t b = (pixel & 0x1F) << 3;          
+
+				rgbaData[y * width + x] = (r << 24) | (g << 16) | (b << 8) | 0xFF;  
+			}
 		}
-		
-		memcpy(backbuffer->pixels, data, backbuffer->h*backbuffer->pitch);
-		pthread_cond_signal(&core_rq);
-		pthread_mutex_unlock(&core_mx);
+		data = rgbaData;
 	}
-	else video_refresh_callback_main(data,width,height,pitch);
+
+	pitch = width * sizeof(Uint32);
+	lastframe = data;
+	
+
+	
+     video_refresh_callback_main(data,width,height,pitch);
 }
 ///////////////////////////////
 
@@ -3922,9 +3975,10 @@ static struct {
 };
 
 void Menu_init(void) {
-	menu.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,FIXED_DEPTH,RGBA_MASK_AUTO);
-	SDLX_SetAlpha(menu.overlay, SDL_SRCALPHA, 0x80);
-	SDL_FillRect(menu.overlay, NULL, 0);
+	menu.overlay = SDL_CreateRGBSurfaceWithFormat(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888);
+	SDL_SetSurfaceBlendMode(menu.overlay, SDL_BLENDMODE_BLEND);
+	Uint32 color = SDL_MapRGBA(menu.overlay->format, 0, 0, 0, 0);
+	SDL_FillRect(screen, NULL, color);
 	
 	char emu_name[256];
 	getEmuName(game.path, emu_name);
@@ -5152,7 +5206,7 @@ static void Menu_saveState(void) {
 	}
 	
 	SDL_Surface* bitmap = menu.bitmap;
-	if (!bitmap) bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.true_w, renderer.true_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
+	if (!bitmap) bitmap = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
 	SDL_RWops* out = SDL_RWFromFile(menu.bmp_path, "wb");
 	SDL_SaveBMP_RW(bitmap, out, 1);
 	
@@ -5231,11 +5285,30 @@ static char* getAlias(char* path, char* alias) {
 }
 
 static void Menu_loop(void) {
-	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.true_w, renderer.true_h, FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
-	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
+	menu.bitmap = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
+	SDL_Surface* backing = SDL_CreateRGBSurfaceWithFormat(0,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888); 
 	
-	SDL_Surface* backing = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH,DEVICE_HEIGHT,FIXED_DEPTH,RGBA_MASK_565); 
-	Menu_scale(menu.bitmap, backing);
+	float src_aspect = (float)menu.bitmap->w / menu.bitmap->h;
+	float dst_aspect = (float)DEVICE_WIDTH / DEVICE_HEIGHT;
+
+	int scaled_w = DEVICE_WIDTH;
+	int scaled_h = DEVICE_HEIGHT;
+
+	if (src_aspect > dst_aspect) {
+		scaled_w = DEVICE_WIDTH;
+		scaled_h = (int)(DEVICE_WIDTH / src_aspect);
+	} else {
+		scaled_h = DEVICE_HEIGHT;
+		scaled_w = (int)(DEVICE_HEIGHT * src_aspect);
+	}
+
+	SDL_Rect dst = {
+		screen_scaling!=SCALE_FULLSCREEN ? (DEVICE_WIDTH - scaled_w) / 2:0,
+		screen_scaling!=SCALE_FULLSCREEN ?(DEVICE_HEIGHT - scaled_h) / 2:0,
+		screen_scaling!=SCALE_FULLSCREEN ? scaled_w:screen->w,
+		screen_scaling!=SCALE_FULLSCREEN ? scaled_h:screen->h
+	};
+	SDL_BlitScaled(menu.bitmap, NULL, backing, &dst);
 	
 	int restore_w = screen->w;
 	int restore_h = screen->h;
@@ -5256,7 +5329,7 @@ static void Menu_loop(void) {
 
 	// why are you even doing this? Because in menu you got no audio buffer to rely on for delaying your code and your GFX_flip code does nothing
 	// so this this would run wild and instead everywhere is GFX_sync() shit to keep it all under control, what a mess!!
-	// GFX_setVsync(VSYNC_STRICT);
+
 	GFX_setEffect(EFFECT_NONE);
 	
 	int rumble_strength = VIB_getStrength();
@@ -5293,11 +5366,11 @@ static void Menu_loop(void) {
 	int dirty = 1;
 	int ignore_menu = 0;
 	int menu_start = 0;
-	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,FIXED_DEPTH,RGBA_MASK_565); // TODO: retain until changed?
+	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,32,RGBA_MASK_8888); // TODO: retain until changed?
 
 	LEDS_initLeds();
 	LEDS_updateLeds();
-	
+	GFX_clearLayers(0);
 	while (show_menu) {
 
 		GFX_startFrame();
@@ -5392,9 +5465,8 @@ static void Menu_loop(void) {
 							restore_h = screen->h;
 							restore_p = screen->pitch;
 							screen = GFX_resize(DEVICE_WIDTH,DEVICE_HEIGHT,DEVICE_PITCH);
-						
-							SDL_FillRect(backing, NULL, 0);
-							Menu_scale(menu.bitmap, backing);
+							SDL_Rect dst = {0, 0, DEVICE_WIDTH, DEVICE_HEIGHT};
+							SDL_BlitScaled(menu.bitmap,NULL,backing,&dst);
 						}
 						dirty = 1;
 					}
@@ -5411,141 +5483,141 @@ static void Menu_loop(void) {
 
 		PWR_update(&dirty, &show_setting, Menu_beforeSleep, Menu_afterSleep);
 		
-		
-		GFX_clear(screen);
-		// if(!should_rotate) {
-			SDL_BlitSurface(backing, NULL, screen, NULL);
-		// } 
-		
-		SDL_BlitSurface(menu.overlay, NULL, screen, NULL);
+		if(dirty) {
+			GFX_clear(screen);
+			GFX_drawOnLayer(backing,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,1);
 
-		int ox, oy;
-		int ow = GFX_blitHardwareGroup(screen, show_setting);
-		int max_width = screen->w - SCALE1(PADDING * 2) - ow;
-		
-		char display_name[256];
-		int text_width = GFX_truncateText(font.large, rom_name, display_name, max_width, SCALE1(BUTTON_PADDING*2));
-		max_width = MIN(max_width, text_width);
 
-		SDL_Surface* text;
-		text = TTF_RenderUTF8_Blended(font.large, display_name, uintToColour(THEME_COLOR6_255));
-		GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-			SCALE1(PADDING),
-			SCALE1(PADDING),
-			max_width,
-			SCALE1(PILL_SIZE)
-		});
-		SDL_BlitSurface(text, &(SDL_Rect){
-			0,
-			0,
-			max_width-SCALE1(BUTTON_PADDING*2),
-			text->h
-		}, screen, &(SDL_Rect){
-			SCALE1(PADDING+BUTTON_PADDING),
-			SCALE1(PADDING+4)
-		});
-		SDL_FreeSurface(text);
-		
-		if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
-		else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, 0, screen, 0);
-		GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
-		
-		// list
-		oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
-		for (int i=0; i<MENU_ITEM_COUNT; i++) {
-			char* item = menu.items[i];
-			SDL_Color text_color = COLOR_WHITE;
+			int ox, oy;
+			int ow = GFX_blitHardwareGroup(screen, show_setting);
+			int max_width = screen->w - SCALE1(PADDING * 2) - ow;
 			
-			if (i==selected) {
-				text_color = uintToColour(THEME_COLOR5_255);
+			char display_name[256];
+			int text_width = GFX_truncateText(font.large, rom_name, display_name, max_width, SCALE1(BUTTON_PADDING*2));
+			max_width = MIN(max_width, text_width);
 
-				// disc change
-				if (menu.total_discs>1 && i==ITEM_CONT) {				
-					GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-						SCALE1(PADDING),
-						SCALE1(oy + PADDING),
-						screen->w - SCALE1(PADDING * 2),
-						SCALE1(PILL_SIZE)
-					});
-					text = TTF_RenderUTF8_Blended(font.large, disc_name, text_color);
-					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-						screen->w - SCALE1(PADDING + BUTTON_PADDING) - text->w,
-						SCALE1(oy + PADDING + 4)
-					});
-					SDL_FreeSurface(text);
-				}
-				
-				TTF_SizeUTF8(font.large, item, &ow, NULL);
-				ow += SCALE1(BUTTON_PADDING*2);
-				
-				// pill
-				GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
-					SCALE1(PADDING),
-					SCALE1(oy + PADDING + (i * PILL_SIZE)),
-					ow,
-					SCALE1(PILL_SIZE)
-				});
-			}
-		
-			
-			// text
-			text = TTF_RenderUTF8_Blended(font.large, item, text_color);
-			SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-				SCALE1(PADDING + BUTTON_PADDING),
-				SCALE1(oy + PADDING + (i * PILL_SIZE) + 4)
+			SDL_Surface* text;
+			text = TTF_RenderUTF8_Blended(font.large, display_name, uintToColour(THEME_COLOR6_255));
+			GFX_blitPillLight(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+				SCALE1(PADDING),
+				SCALE1(PADDING),
+				max_width,
+				SCALE1(PILL_SIZE)
+			});
+			SDL_BlitSurface(text, &(SDL_Rect){
+				0,
+				0,
+				max_width-SCALE1(BUTTON_PADDING*2),
+				text->h
+			}, screen, &(SDL_Rect){
+				SCALE1(PADDING+BUTTON_PADDING),
+				SCALE1(PADDING+4)
 			});
 			SDL_FreeSurface(text);
-		}
-		
-		// slot preview
-		if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
-			#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
-			#define PAGINATION_HEIGHT 6
-			// unscaled
-			int hw = DEVICE_WIDTH / 2;
-			int hh = DEVICE_HEIGHT / 2;
-			int pw = hw + SCALE1(WINDOW_RADIUS*2);
-			int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
-			ox = DEVICE_WIDTH - pw - SCALE1(PADDING);
-			oy = (DEVICE_HEIGHT - ph) / 2;
 			
-			// window
-			GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
-			ox += SCALE1(WINDOW_RADIUS);
-			oy += SCALE1(WINDOW_RADIUS);
+			if (show_setting && !GetHDMI()) GFX_blitHardwareHints(screen, show_setting);
+			else GFX_blitButtonGroup((char*[]){ BTN_SLEEP==BTN_POWER?"POWER":"MENU","SLEEP", NULL }, 0, screen, 0);
+			GFX_blitButtonGroup((char*[]){ "B","BACK", "A","OKAY", NULL }, 1, screen, 1);
 			
-			if (menu.preview_exists) { // has save, has preview
-				// lotta memory churn here
-				SDL_Surface* bmp = IMG_Load(menu.bmp_path);
-				SDL_Surface* raw_preview = SDL_ConvertSurface(bmp, screen->format, SDL_SWSURFACE);
+			// list
+			oy = (((DEVICE_HEIGHT / FIXED_SCALE) - PADDING * 2) - (MENU_ITEM_COUNT * PILL_SIZE)) / 2;
+			for (int i=0; i<MENU_ITEM_COUNT; i++) {
+				char* item = menu.items[i];
+				SDL_Color text_color = COLOR_WHITE;
 				
-				// LOG_info("raw_preview %ix%i\n", raw_preview->w,raw_preview->h);
+				if (i==selected) {
+					text_color = uintToColour(THEME_COLOR5_255);
+
+					// disc change
+					if (menu.total_discs>1 && i==ITEM_CONT) {				
+						GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+							SCALE1(PADDING),
+							SCALE1(oy + PADDING),
+							screen->w - SCALE1(PADDING * 2),
+							SCALE1(PILL_SIZE)
+						});
+						text = TTF_RenderUTF8_Blended(font.large, disc_name, text_color);
+						SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+							screen->w - SCALE1(PADDING + BUTTON_PADDING) - text->w,
+							SCALE1(oy + PADDING + 4)
+						});
+						SDL_FreeSurface(text);
+					}
+					
+					TTF_SizeUTF8(font.large, item, &ow, NULL);
+					ow += SCALE1(BUTTON_PADDING*2);
+					
+					// pill
+					GFX_blitPillDark(ASSET_WHITE_PILL, screen, &(SDL_Rect){
+						SCALE1(PADDING),
+						SCALE1(oy + PADDING + (i * PILL_SIZE)),
+						ow,
+						SCALE1(PILL_SIZE)
+					});
+				}
+			
 				
-				SDL_FillRect(preview, NULL, 0);
-				Menu_scale(raw_preview, preview);
-				SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){ox,oy});
-				SDL_FreeSurface(raw_preview);
-				SDL_FreeSurface(bmp);
-			}
-			else {
-				SDL_Rect preview_rect = {ox,oy,hw,hh};
-				SDL_FillRect(screen, &preview_rect, 0);
-				if (menu.save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
-				else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
+				// text
+				text = TTF_RenderUTF8_Blended(font.large, item, text_color);
+				SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+					SCALE1(PADDING + BUTTON_PADDING),
+					SCALE1(oy + PADDING + (i * PILL_SIZE) + 4)
+				});
+				SDL_FreeSurface(text);
 			}
 			
-			// pagination
-			ox += (pw-SCALE1(15*MENU_SLOT_COUNT))/2;
-			oy += hh+SCALE1(WINDOW_RADIUS);
-			for (int i=0; i<MENU_SLOT_COUNT; i++) {
-				if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15),oy});
-				else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});
+			// slot preview
+			if (selected==ITEM_SAVE || selected==ITEM_LOAD) {
+				#define WINDOW_RADIUS 4 // TODO: this logic belongs in blitRect?
+				#define PAGINATION_HEIGHT 6
+				// unscaled
+				int hw = DEVICE_WIDTH / 2;
+				int hh = DEVICE_HEIGHT / 2;
+				int pw = hw + SCALE1(WINDOW_RADIUS*2);
+				int ph = hh + SCALE1(WINDOW_RADIUS*2 + PAGINATION_HEIGHT + WINDOW_RADIUS);
+				ox = DEVICE_WIDTH - pw - SCALE1(PADDING);
+				oy = (DEVICE_HEIGHT - ph) / 2;
+				
+				// window
+				GFX_blitRect(ASSET_STATE_BG, screen, &(SDL_Rect){ox,oy,pw,ph});
+				ox += SCALE1(WINDOW_RADIUS);
+				oy += SCALE1(WINDOW_RADIUS);
+				
+				if (menu.preview_exists) { // has save, has preview
+					// lotta memory churn here
+					SDL_Surface* bmp = IMG_Load(menu.bmp_path);
+					SDL_Surface* raw_preview = SDL_ConvertSurfaceFormat(bmp, SDL_PIXELFORMAT_RGBA8888,0);
+					if (raw_preview) {
+						SDL_FreeSurface(bmp); 
+						bmp = raw_preview; 
+					}
+					// LOG_info("raw_preview %ix%i\n", raw_preview->w,raw_preview->h);
+				
+					SDL_BlitScaled(bmp,NULL,preview,NULL);
+					SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){ox,oy});
+					SDL_FreeSurface(bmp);
+				}
+				else {
+					SDL_Rect preview_rect = {ox,oy,hw,hh};
+					SDL_FillRect(screen, &preview_rect, SDL_MapRGBA(screen->format,0,0,0,255));
+					if (menu.save_exists) GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
+					else GFX_blitMessage(font.large, "Empty Slot", screen, &preview_rect);
+				}
+				
+				// pagination
+				ox += (pw-SCALE1(15*MENU_SLOT_COUNT))/2;
+				oy += hh+SCALE1(WINDOW_RADIUS);
+				for (int i=0; i<MENU_SLOT_COUNT; i++) {
+					if (i==menu.slot)GFX_blitAsset(ASSET_PAGE, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15),oy});
+					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});
+				}
 			}
+
+			GFX_flip(screen);
+			dirty = 0;
+		} else {
+			GFX_flip(screen);
 		}
-
-		GFX_flip(screen);
-		dirty = 0;
-
 		hdmimon();
 	}
 	
@@ -5565,18 +5637,11 @@ static void Menu_loop(void) {
 		GFX_setEffect(screen_effect);
 
 		GFX_clear(screen);
-		video_refresh_callback(renderer.src, renderer.true_w, renderer.true_h, renderer.src_p);
-		
+
 		setOverclock(overclock); // restore overclock value
 		if (rumble_strength) VIB_setStrength(rumble_strength);
 		
 		if (!HAS_POWER_BUTTON) PWR_disableSleep();
-
-		if (thread_video) {
-			pthread_mutex_lock(&core_mx);
-			should_run_core = 1;
-			pthread_mutex_unlock(&core_mx);
-		}
 
 		char act[PATH_MAX];
 		sprintf(act, "gametimectl.elf start '%s' &", replaceString2(game.path, "'", "'\\''"));
@@ -5738,6 +5803,10 @@ int main(int argc , char* argv[]) {
 	// Overrides_init();
 	
 	Core_open(core_path, tag_name);
+
+	fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+	environment_callback(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
+
 	Game_open(rom_path); // nes tries to load gamegenie setting before this returns ffs
 	if (!game.is_open) goto finish;
 	
@@ -5748,7 +5817,6 @@ int main(int argc , char* argv[]) {
 	Config_init();
 	Config_readOptions(); // cores with boot logo option (eg. gb) need to load options early
 	setOverclock(overclock);
-	GFX_setVsync(prevent_tearing);
 	
 	Core_init();
 	
@@ -5767,11 +5835,6 @@ int main(int argc , char* argv[]) {
 	Menu_init();
 	State_resume();
 	Menu_initState(); // make ready for state shortcuts
-	if (thread_video) {
-		core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-		core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-		pthread_create(&core_pt, NULL, &coreThread, NULL);
-	}
 	
 	PWR_warn(1);
 	PWR_disableAutosleep();
@@ -5779,6 +5842,7 @@ int main(int argc , char* argv[]) {
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
+	GFX_clearLayers(0);
 	GFX_flip(screen);
 	
 	Special_init(); // after config
@@ -5792,12 +5856,10 @@ int main(int argc , char* argv[]) {
 	while (!quit) {
 		GFX_startFrame();
 	
-	
-		if (!thread_video) {
-			core.run();
-			limitFF();
-			trackFPS();
-		}
+		core.run();
+		limitFF();
+		trackFPS();
+		
 
 		if (has_pending_opt_change) {
 			has_pending_opt_change = 0;
@@ -5809,17 +5871,6 @@ int main(int argc , char* argv[]) {
 			chooseSyncRef();
 		}
 
-		if (thread_video && !quit) {
-			pthread_mutex_lock(&core_mx);
-			pthread_cond_wait(&core_rq,&core_mx);
-			
-			if (backbuffer) {
-				video_refresh_callback_main(backbuffer->pixels,backbuffer->w,backbuffer->h,backbuffer->pitch);
-				screen_flip(screen);
-			}
-			core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-			pthread_mutex_unlock(&core_mx);
-		}
 		
 		if (show_menu) {
 			Menu_loop();
@@ -5829,60 +5880,65 @@ int main(int argc , char* argv[]) {
 			SND_resetAudio(core.sample_rate, core.fps);
 		}
 		
-		if (toggle_thread) {
-			toggle_thread = 0;
-			if (was_threaded && !thread_video) {
-				// LOG_info("was fast forwarding while previously threaded (%i) so re-enabling threading %i\n", thread_video, !thread_video);
-				// revert to pre-fast_forward state before toggling
-				was_threaded = 0;
-				thread_video = !thread_video;
-			}
-			// LOG_info("toggling thread from %i to %i\n", thread_video, !thread_video);
-			thread_video = !thread_video;
-			if (thread_video) {
-				// enable
-				core_mx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-				core_rq = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
-				pthread_create(&core_pt, NULL, &coreThread, NULL);
-			}
-			else {
-				// disable
-				pthread_cancel(core_pt);
-				pthread_join(core_pt,NULL);
-				
-				// force a vsync immediately before loop
-				// for better frame pacing?
-				GFX_clearAll();
-				screen_flip(screen);
-			}
-		}
-		// LOG_info("frame duration: %ims\n", SDL_GetTicks()-frame_start);
 		
 		hdmimon();
 	}
 	
 	Menu_quit();
 	QuitSettings();
+	SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
+	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
+
+	SDL_Surface* tmpSur = SDL_CreateRGBSurfaceWithFormat(0,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888); 
+	SDL_FillRect(tmpSur, NULL, SDL_MapRGBA(tmpSur->format, 0, 0, 0, 255)); // Change alpha to 0 if transparency is needed
+
+    // Calculate aspect ratio-preserving size
+    float src_aspect = (float)screendata->w / screendata->h;
+    float dst_aspect = (float)DEVICE_WIDTH / DEVICE_HEIGHT;
+
+    int scaled_w = DEVICE_WIDTH;
+    int scaled_h = DEVICE_HEIGHT;
+
+    if (src_aspect > dst_aspect) {
+        // Source is wider relative to destination
+        scaled_w = DEVICE_WIDTH;
+        scaled_h = (int)(DEVICE_WIDTH / src_aspect);
+    } else {
+        // Source is taller relative to destination
+        scaled_h = DEVICE_HEIGHT;
+        scaled_w = (int)(DEVICE_HEIGHT * src_aspect);
+    }
+
+    // Center the image
+	SDL_Rect dst = {
+		screen_scaling!=SCALE_FULLSCREEN ? (DEVICE_WIDTH - scaled_w) / 2:0,
+		screen_scaling!=SCALE_FULLSCREEN ?(DEVICE_HEIGHT - scaled_h) / 2:0,
+		screen_scaling!=SCALE_FULLSCREEN ? scaled_w:screen->w,
+		screen_scaling!=SCALE_FULLSCREEN ? scaled_h:screen->h
+	};
+	SDL_BlitScaled(screendata, NULL, tmpSur, &dst);
+	
+	GFX_animateSurfaceOpacity(tmpSur,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 200:20,1);
+	GFX_clearLayers(0);
+	GFX_clear(screen);
+	if(rgbaData) free(rgbaData);
+	SDL_FreeSurface(tmpSur);
+	SDL_FreeSurface(screendata);
 	
 finish:
 
 	Game_close();
 	Core_unload();
-	
 	Core_quit();
 	Core_close();
-	
 	Config_quit();
-	
 	Special_quit();
-
 	MSG_quit();
 	PWR_quit();
 	VIB_quit();
 	SND_quit();
 	PAD_quit();
 	GFX_quit();
-	
 	buffer_dealloc();
 	
 	return EXIT_SUCCESS;

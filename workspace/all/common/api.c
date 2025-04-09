@@ -241,6 +241,8 @@ int GFX_updateColors()
 	THEME_COLOR5 = mapUint(CFG_getColor(5));
 	THEME_COLOR6 = mapUint(CFG_getColor(6));
 	ALT_BUTTON_TEXT_COLOR = uintToColour(CFG_getColor(3));
+
+	return 0;
 }
 
 SDL_Surface* GFX_init(int mode)
@@ -311,10 +313,13 @@ SDL_Surface* GFX_init(int mode)
 	if (!exists(asset_path))
 		LOG_info("missing assets, you're about to segfault dummy!\n");
 	gfx.assets = IMG_Load(asset_path);
+	
+	PLAT_clearAll();
 
 	return gfx.screen;
 }
 void GFX_quit(void) {
+
 	TTF_CloseFont(font.large);
 	TTF_CloseFont(font.medium);
 	TTF_CloseFont(font.small);
@@ -325,8 +330,6 @@ void GFX_quit(void) {
 	CFG_quit();
 
 	GFX_freeAAScaler();
-	
-	GFX_clearAll();
 
 	PLAT_quitVideo();
 }
@@ -394,58 +397,79 @@ void chmodfile(const char *file, int writable)
     }
 }
 
-uint32_t GFX_extract_dominant_color(const void *data, unsigned width, unsigned height, size_t pitch) {
+uint32_t GFX_extract_average_color(const void *data, unsigned width, unsigned height, size_t pitch) {
 	if (!data) {
-        fprintf(stderr, "Error: data is NULL.\n");
         return 0;
     }
 
-    uint16_t *pixels = (uint16_t *)data;
+    const uint16_t *pixels = (const uint16_t *)data;
     int pixel_count = width * height;
 
     uint64_t total_r = 0;
     uint64_t total_g = 0;
     uint64_t total_b = 0;
-    uint8_t r, g, b;
+    uint32_t colorful_pixel_count = 0;
 
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            uint16_t pixel = pixels[y * (pitch / 2) + x];  // Access pixel data
+    for (unsigned y = 0; y < height; y++) {
+        for (unsigned x = 0; x < width; x++) {
+            uint16_t pixel = pixels[y * (pitch / 2) + x];
 
-            // Manually extract RGB values from RGB565 format
-            r = (pixel & 0xF800) >> 8;  // 5 bits red
-            g = (pixel & 0x07E0) >> 3;  // 6 bits green
-            b = (pixel & 0x001F) << 3;  // 5 bits blue
+            uint8_t r = ((pixel & 0xF800) >> 11) << 3;
+            uint8_t g = ((pixel & 0x07E0) >> 5) << 2;
+            uint8_t b = (pixel & 0x001F) << 3;
 
-            // Normalize RGB values to 8 bits
             r |= r >> 5;
             g |= g >> 6;
             b |= b >> 5;
 
-            // Accumulate the color components
-            total_r += r;
-            total_g += g;
-            total_b += b;
+            uint8_t max_c = fmaxf(fmaxf(r, g), b);
+            uint8_t min_c = fminf(fminf(r, g), b);
+            uint8_t saturation = max_c == 0 ? 0 : (max_c - min_c) * 255 / max_c;
+
+            if (saturation > 50 && max_c > 50) {
+                total_r += r;
+                total_g += g;
+                total_b += b;
+                colorful_pixel_count++;
+            }
         }
     }
 
-    // Calculate the average color components
-    uint8_t avg_r = total_r / pixel_count;
-    uint8_t avg_g = total_g / pixel_count;
-    uint8_t avg_b = total_b / pixel_count;
+    if (colorful_pixel_count == 0) {
 
-    // Combine average color components into a single uint32_t color
-    uint32_t average_color = (avg_r << 16) | (avg_g << 8) | avg_b;
+        colorful_pixel_count = pixel_count;
+        total_r = total_g = total_b = 0;
+        for (unsigned y = 0; y < height; y++) {
+            for (unsigned x = 0; x < width; x++) {
+                uint16_t pixel = pixels[y * (pitch / 2) + x];
+                uint8_t r = ((pixel & 0xF800) >> 11) << 3;
+                uint8_t g = ((pixel & 0x07E0) >> 5) << 2;
+                uint8_t b = (pixel & 0x001F) << 3;
 
-    return average_color;
+                r |= r >> 5;
+                g |= g >> 6;
+                b |= b >> 5;
 
+                total_r += r;
+                total_g += g;
+                total_b += b;
+            }
+        }
+    }
+
+    uint8_t avg_r = total_r / colorful_pixel_count;
+    uint8_t avg_g = total_g / colorful_pixel_count;
+    uint8_t avg_b = total_b / colorful_pixel_count;
+
+    return (avg_r << 16) | (avg_g << 8) | avg_b;
 }
+
 
 
 void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size_t pitch,int mode) {
 	if(mode==0) return;
 
-	uint32_t dominant_color = GFX_extract_dominant_color(data, width, height,pitch);
+	uint32_t dominant_color = GFX_extract_average_color(data, width, height,pitch);
    
 	if(mode==1 || mode==2 || mode==5) {
 		(*lights)[2].color1 = dominant_color;
@@ -468,9 +492,9 @@ void GFX_setAmbientColor(const void *data, unsigned width, unsigned height, size
 }
 
 void GFX_flip(SDL_Surface* screen) {
-	int should_vsync = (gfx.vsync!=VSYNC_OFF && (gfx.vsync==VSYNC_STRICT || frame_start==0 || SDL_GetTicks()-frame_start<FRAME_BUDGET));
-	PLAT_flip(screen, should_vsync);
-	
+
+	PLAT_flip(screen, 0);
+
 	currentfps = current_fps;
 	fps_counter++;
 
@@ -656,78 +680,6 @@ int GFX_getTextWidth(TTF_Font* font, const char* in_name, char* out_name, int ma
 	text_width += padding;
 	
 	return text_width;
-}
-
-// scrolling text stuff
-static int text_offset = 0;
-
-int GFX_resetScrollText(TTF_Font* font, const char* in_name,int max_width) {
-	int text_width, text_height;
-	
-    TTF_SizeUTF8(font, in_name, &text_width, &text_height);
-
-	text_offset = 0;
-
-	if (text_width <= max_width) {
-		return 0;
-	} else {
-		return 1;
-	}
-}
-
-void GFX_scrollTextSurface(TTF_Font* font, const char* in_name, SDL_Surface** out_surface, int max_width,int height, int padding, SDL_Color color, float transparency) {
-    
-    static int frame_counter = 0;
-    int text_width, text_height;
-	
-    TTF_SizeUTF8(font, in_name, &text_width, &text_height);
-
-    if (transparency < 0.0f) transparency = 0.0f;
-    if (transparency > 1.0f) transparency = 1.0f;
-
-    Uint8 alpha = (Uint8)(transparency * 255);
-    color.a = alpha;  
-
-    char scroll_text[1024]; 
-    snprintf(scroll_text, sizeof(scroll_text), "%s  %s", in_name, in_name); 
-    SDL_Surface* full_text_surface = TTF_RenderUTF8_Blended(font, scroll_text, color);
-    if (!full_text_surface) {
-        printf("Text rendering failed: %s\n", TTF_GetError());
-        return;
-    }
-
-    if (text_width <= max_width + padding) {
-        text_offset = 0;  
-    }
-	char adj_in_name[1024]; 
-	snprintf(adj_in_name, sizeof(adj_in_name), "%s  ", in_name); 
-    TTF_SizeUTF8(font, adj_in_name, &text_width, &text_height);
-    SDL_Rect src_rect = { text_offset, 0, text_width, height };
-	SDL_Surface *scrolling_surface = SDL_CreateRGBSurfaceWithFormat(
-		SDL_SWSURFACE, max_width, SCALE1(PILL_SIZE), 16, SDL_PIXELFORMAT_RGBA4444
-	);
-
-    SDL_BlitSurface(full_text_surface, &src_rect, scrolling_surface, NULL);
-    
-
-
-    SDL_FreeSurface(full_text_surface);
-
-    if (*out_surface) {
-        SDL_FreeSurface(*out_surface);
-    }
-    *out_surface = scrolling_surface;
-
-    if (text_width > max_width + padding) {
-        frame_counter++;
-        if (frame_counter >= 0) {  
-            text_offset += SCALE1(1);
-            if (text_offset >= text_width) {
-                text_offset = 0; 
-            }
-            frame_counter = 0;
-        }
-    }
 }
 
 
@@ -1121,7 +1073,7 @@ void GFX_ApplyRoundedCorners16(SDL_Surface* surface, SDL_Rect* rect, int radius)
 	if (rect)
 		target = *rect;
 
-	if (fmt->format != SDL_PIXELFORMAT_RGB565) {
+	if (fmt->format != SDL_PIXELFORMAT_RGBA8888) {
         SDL_Log("Unsupported pixel format: %s", SDL_GetPixelFormatName(fmt->format));
         return;
     }
@@ -1193,6 +1145,35 @@ void GFX_ApplyRoundedCorners_RGBA4444(SDL_Surface* surface, SDL_Rect* rect, int 
 		for (int x = xBeg; x < xEnd; ++x) {
             int dx = (x < xBeg + radius) ? xBeg + radius - x : (x >= xEnd - radius) ? x - (xEnd - radius - 1) : 0;
             int dy = (y < yBeg + radius) ? yBeg + radius - y : (y >= yEnd - radius) ? y - (yEnd - radius - 1) : 0;
+            if (dx * dx + dy * dy > radius * radius) {
+                pixels[y * pitch + x] = transparent_black; 
+            }
+        }
+    }
+}
+
+void GFX_ApplyRoundedCorners_RGBA8888(SDL_Surface* surface, SDL_Rect* rect, int radius) {
+    if (!surface || surface->format->format != SDL_PIXELFORMAT_RGBA8888) return;
+
+    Uint32* pixels = (Uint32*)surface->pixels; 
+    int pitch = surface->pitch / 4; // Since each pixel is 4 bytes in RGBA8888
+
+    SDL_Rect target = {0, 0, surface->w, surface->h};
+    if (rect) target = *rect;
+
+    Uint32 transparent_black = 0x00000000; // Fully transparent (RGBA8888: 0xAARRGGBB)
+
+    const int xBeg = target.x;
+    const int xEnd = target.x + target.w;
+    const int yBeg = target.y;
+    const int yEnd = target.y + target.h;
+
+    for (int y = yBeg; y < yEnd; ++y) {
+        for (int x = xBeg; x < xEnd; ++x) {
+            int dx = (x < xBeg + radius) ? xBeg + radius - x : (x >= xEnd - radius) ? x - (xEnd - radius - 1) : 0;
+            int dy = (y < yBeg + radius) ? yBeg + radius - y : (y >= yEnd - radius) ? y - (yEnd - radius - 1) : 0;
+            
+            // Check if the pixel is outside the rounded corner radius
             if (dx * dx + dy * dy > radius * radius) {
                 pixels[y * pitch + x] = transparent_black; 
             }
@@ -1319,14 +1300,14 @@ void GFX_blitPillColor(int asset, SDL_Surface* dst, SDL_Rect* dst_rect, uint32_t
 	GFX_blitAssetColor(asset, &(SDL_Rect){0,0,r,h}, dst, &(SDL_Rect){x,y}, asset_color);
 	x += r;
 	if (w>0) {
-		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, UintMult(fill_color, asset_color));
-		// SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_color);
+		// SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, UintMult(fill_color, asset_color));
+		SDL_FillRect(dst, &(SDL_Rect){x,y,w,h}, asset_color);
 		x += w;
 	}
 	GFX_blitAssetColor(asset, &(SDL_Rect){r,0,r,h}, dst, &(SDL_Rect){x,y}, asset_color);
 }
 void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
-	GFX_blitPillColor(asset, dst, dst_rect, RGB_WHITE, asset_rgbs[asset]);
+	GFX_blitPillColor(asset, dst, dst_rect,  asset_rgbs[asset],RGB_WHITE);
 }
 void GFX_blitPillLight(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	GFX_blitPillColor(asset, dst, dst_rect, THEME_COLOR2, RGB_WHITE);
@@ -3107,7 +3088,7 @@ FALLBACK_IMPLEMENTATION FILE *PLAT_WriteSettings(const char *filename)
 
 FALLBACK_IMPLEMENTATION void PLAT_initTimezones() {}
 FALLBACK_IMPLEMENTATION void PLAT_getTimezones(char timezones[MAX_TIMEZONES][MAX_TZ_LENGTH], int *tz_count){ tz_count = 0;}
-FALLBACK_IMPLEMENTATION char *PLAT_getCurrentTimezone() { "Foo/Bar"; }
+FALLBACK_IMPLEMENTATION char *PLAT_getCurrentTimezone() { return "Foo/Bar"; }
 FALLBACK_IMPLEMENTATION void PLAT_setCurrentTimezone(const char* tz) {}
 FALLBACK_IMPLEMENTATION bool PLAT_getNetworkTimeSync(void) { return true; }
 FALLBACK_IMPLEMENTATION void PLAT_setNetworkTimeSync(bool on) {}

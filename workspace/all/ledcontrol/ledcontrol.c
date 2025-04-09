@@ -216,7 +216,6 @@ void handle_light_input(LightSettings *light, SDL_Event *event, int selected_set
 
     
     LEDS_updateLeds();
-    LOG_debug("saving testtsttf\n");
     save_settings();
 }
 
@@ -238,17 +237,17 @@ int main(int argc, char *argv[])
     PLAT_initLeds(lightsDefault);
     PWR_setCPUSpeed(CPU_SPEED_MENU);
 
-    SDL_Surface* screen = GFX_init(MODE_MAIN);
-    TTF_Font *font_med = TTF_OpenFont("main.ttf", SCALE1(FONT_MEDIUM));
-    if (!font_med)
-    {
-        GFX_quit();
-        return EXIT_FAILURE;
-    }
 
+    SDL_Surface* screen = GFX_init(MODE_MENU);
 	PAD_init();
 	PWR_init();
 	InitSettings();
+
+    GFX_clearAll();
+	GFX_clearLayers(0);
+	GFX_flip(screen);
+
+
 
     SDL_Color hex_to_sdl_color(uint32_t hex)
     {
@@ -328,11 +327,11 @@ int main(int argc, char *argv[])
             snprintf(light_name_text, sizeof(light_name_text), "%s", lightnames[selected_light]);
 
             char title[256];
-            int text_width = GFX_truncateText(font_med, light_name_text, title, max_width, SCALE1(BUTTON_PADDING * 2));
+            int text_width = GFX_truncateText(font.medium, light_name_text, title, max_width, SCALE1(BUTTON_PADDING * 2));
             max_width = MIN(max_width, text_width);
 
             SDL_Surface *text;
-            text = TTF_RenderUTF8_Blended(font_med, title, COLOR_WHITE);
+            text = TTF_RenderUTF8_Blended(font.medium, title, COLOR_WHITE);
             GFX_blitPill(ASSET_BLACK_PILL, screen, &(SDL_Rect){SCALE1(PADDING), SCALE1(PADDING), max_width, SCALE1(PILL_SIZE)});
             SDL_BlitSurface(text, &(SDL_Rect){0, 0, max_width - SCALE1(BUTTON_PADDING * 2), text->h}, screen, &(SDL_Rect){SCALE1(PADDING + BUTTON_PADDING), SCALE1(PADDING + 4)});
             SDL_FreeSurface(text);
@@ -366,7 +365,7 @@ int main(int argc, char *argv[])
 
                 if (j == 0) { // Display effect name instead of number
                     snprintf(setting_text, sizeof(setting_text), "%s: %s", settings_labels[j], selected_light == 3 ? lr_effect_names[settings_values[j] - 1] : selected_light == 2 ? topbar_effect_names[settings_values[j] - 1] : effect_names[settings_values[j] - 1]);
-                    SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
+                    SDL_Surface *text = TTF_RenderUTF8_Blended(font.medium, setting_text, current_color);
                     int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
                     GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen,
                                     &(SDL_Rect){SCALE1(PADDING), y, text_width, SCALE1(PILL_SIZE)});
@@ -376,7 +375,7 @@ int main(int argc, char *argv[])
                     SDL_FreeSurface(text);
                 } else if (j == 1) { // Display color as hex code
                     snprintf(setting_text, sizeof(setting_text), "%s", settings_labels[j]);
-                    SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
+                    SDL_Surface *text = TTF_RenderUTF8_Blended(font.medium, setting_text, current_color);
                     int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
                     GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen, 
                         &(SDL_Rect){SCALE1(PADDING), y, text_width + SCALE1(BUTTON_MARGIN + BUTTON_SIZE), SCALE1(PILL_SIZE)});
@@ -391,7 +390,7 @@ int main(int argc, char *argv[])
                     }, settings_values[j]);
                 } else  {
                     snprintf(setting_text, sizeof(setting_text), "%s: %d", settings_labels[j], settings_values[j]);
-                    SDL_Surface *text = TTF_RenderUTF8_Blended(font_med, setting_text, current_color);
+                    SDL_Surface *text = TTF_RenderUTF8_Blended(font.medium, setting_text, current_color);
                     int text_width = text->w + SCALE1(BUTTON_PADDING * 2);
                     GFX_blitPill(selected ? ASSET_WHITE_PILL : ASSET_BLACK_PILL, screen, 
                         &(SDL_Rect){SCALE1(PADDING), y, text_width, SCALE1(PILL_SIZE)});
@@ -405,7 +404,7 @@ int main(int argc, char *argv[])
             GFX_flip(screen);
             dirty = 0;
         }
-    else GFX_sync();
+    else GFX_delay();
     }
     QuitSettings();
 	PWR_quit();
