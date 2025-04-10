@@ -1149,9 +1149,9 @@ void PLAT_animateAndFadeSurface(
 	int x, int y, int target_x, int target_y, int w, int h, int duration_ms,
 	SDL_Surface *fadeSurface,
 	int fade_x, int fade_y, int fade_w, int fade_h,
-	int start_opacity, int target_opacity
+	int start_opacity, int target_opacity,int layer
 ) {
-	if (!inputSurface || !vid.target_layer2 || !vid.renderer) return;
+	if (!inputSurface || !vid.renderer) return;
 
 	SDL_Texture* moveTexture = SDL_CreateTexture(vid.renderer,
 		SDL_PIXELFORMAT_RGBA8888,
@@ -1194,7 +1194,24 @@ void PLAT_animateAndFadeSurface(
 		if (current_opacity < 0) current_opacity = 0;
 		if (current_opacity > 255) current_opacity = 255;
 
-		SDL_SetRenderTarget(vid.renderer, vid.target_layer2);
+		switch (layer)
+		{
+		case 1:
+			SDL_SetRenderTarget(vid.renderer, vid.target_layer1);
+			break;
+		case 2:
+			SDL_SetRenderTarget(vid.renderer, vid.target_layer2);
+			break;
+		case 3:
+			SDL_SetRenderTarget(vid.renderer, vid.target_layer3);
+			break;
+		case 4:
+			SDL_SetRenderTarget(vid.renderer, vid.target_layer4);
+			break;
+		default:
+			SDL_SetRenderTarget(vid.renderer, vid.target_layer1);
+			break;
+		}
 		SDL_SetRenderDrawColor(vid.renderer, 0, 0, 0, 0);
 		SDL_RenderClear(vid.renderer);
 

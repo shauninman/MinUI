@@ -1234,7 +1234,6 @@ static void closeDirectory(void) {
 static void Entry_open(Entry* self) {
 	recent_alias = self->name;  // yiiikes
 	if (self->type==ENTRY_ROM) {
-		animationdirection = 3;
 		startgame = 1;
 		char *last = NULL;
 		if (prefixMatch(COLLECTIONS_PATH, top->path)) {
@@ -1795,13 +1794,12 @@ int main (int argc, char *argv[]) {
 								new_w = (int)(new_h / aspect_ratio);
 							}
 							
-							int target_x = (int)(screen->w * 0.75);
+							int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
 							int target_y = (int)(screen->h * 0.50);
-							int center_x = target_x - (new_w / 2); // FIX: use new_h instead of thumbbmp->h
 							int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
 							
 							GFX_ApplyRoundedCorners_RGBA8888(thumbbmp, &(SDL_Rect){0,0,thumbbmp->w, thumbbmp->h}, SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w)));
-							GFX_drawOnLayer(thumbbmp,center_x,center_y,new_w,new_h,1.0f,0,2);
+							GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
 							ox = (int)(screen->w - new_w) - SCALE1(BUTTON_MARGIN*5);
 
 							had_thumb = 1;
@@ -2008,16 +2006,16 @@ int main (int argc, char *argv[]) {
 					else {
 						SDL_Rect preview_rect = {ox,oy,hw,hh};
 						SDL_Surface * tmpsur = SDL_CreateRGBSurfaceWithFormat(0,screen->w,screen->h,32,SDL_PIXELFORMAT_RGBA8888);
+						SDL_FillRect(tmpsur, &preview_rect, SDL_MapRGBA(screen->format,0,0,0,255));
 						if(lastScreen == SCREEN_GAME) {
-							SDL_FillRect(tmpsur, &preview_rect, 0);
 							GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w*4,screen->h*4,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 150:20,1);
 						} else if(lastScreen == SCREEN_GAMELIST) { 
-							SDL_FillRect(tmpsur, &preview_rect, 0);
+							GFX_flipHidden();
+							GFX_drawOnLayer(background,0,0,screen->w, screen->h,1.0f,0,0);
+							GFX_drawOnLayer(tmpOldScreen,0,0,screen->w, screen->h,1.0f,0,0);
 							GFX_animateSurface(tmpsur,0,0-screen->h,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 100:20,255,255,0);
 						} else if(lastScreen == SCREEN_GAMESWITCHER) {
 							GFX_drawOnLayer(background,0,0,screen->w, screen->h,1.0f,0,0);
-							SDL_FillRect(tmpsur, &preview_rect, 0);
-	
 							if(gsanimdir==1) 
 								GFX_animateSurface(tmpsur,0+screen->w,0,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 80:20,0,255,0);
 							else if(gsanimdir==2)
@@ -2189,20 +2187,20 @@ int main (int argc, char *argv[]) {
 				GFX_flipHidden();
 				SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
 				SDL_SetSurfaceBlendMode(tmpNewScreen,SDL_BLENDMODE_BLEND);
-				GFX_clear(screen);
+				// GFX_clear(screen);
+				// GFX_flipHidden();
 				GFX_clearLayers(3);
-				if(animationdirection==1) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0-FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 150:20,tmpNewScreen,0,0,FIXED_WIDTH,FIXED_HEIGHT,0,255);
-				if(animationdirection==2) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0+FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 150:20,tmpNewScreen,0,0,FIXED_WIDTH,FIXED_HEIGHT,0,255);
-				if(animationdirection==3) GFX_animateSurface(tmpOldScreen,0,0,0-FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 150:20,255,255,0);
-				SDL_BlitSurface(tmpNewScreen,NULL,screen,&(SDL_Rect){0,0,FIXED_WIDTH,FIXED_HEIGHT});
+				if(animationdirection==1) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0-FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 200:20,tmpNewScreen,1,0,FIXED_WIDTH,FIXED_HEIGHT,0,255,3);
+				if(animationdirection==2) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0+FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 200:20,tmpNewScreen,1,0,FIXED_WIDTH,FIXED_HEIGHT,0,255,3);
+
 				GFX_clearLayers(3);
 				
 				SDL_FreeSurface(tmpNewScreen);
 				animationdirection=0;
-			} else {
+			} 
 				
 				GFX_flip(screen);
-			}
+			
 			
 			dirty = 0;
 			readytoscroll = 0;

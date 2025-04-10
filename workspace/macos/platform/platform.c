@@ -583,7 +583,7 @@ void PLAT_animateAndFadeSurface(
 	int x, int y, int target_x, int target_y, int w, int h, int duration_ms,
 	SDL_Surface *fadeSurface,
 	int fade_x, int fade_y, int fade_w, int fade_h,
-	int start_opacity, int target_opacity
+	int start_opacity, int target_opacity,int layer
 ) {
 	if (!inputSurface || !vid.animationlayer || !vid.renderer) return;
 
