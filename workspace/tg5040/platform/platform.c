@@ -663,7 +663,6 @@ void PLAT_animateSurface(
 	const int total_frames = duration_ms / frame_delay;
 
 	for (int frame = 0; frame <= total_frames; ++frame) {
-		Uint32 frame_start = SDL_GetTicks();
 
 		float t = (float)frame / total_frames;
 
@@ -732,7 +731,6 @@ void PLAT_revealSurface(
 	const int total_frames = duration_ms / frame_delay;
 
 	for (int frame = 0; frame <= total_frames; ++frame) {
-		Uint32 frame_start = SDL_GetTicks();
 		float t = (float)frame / total_frames;
 		if (t > 1.0f) t = 1.0f;
 
@@ -921,7 +919,6 @@ void PLAT_animateAndRevealSurfaces(
 	const int total_frames = duration_ms / frame_delay;
 
 	for (int frame = 0; frame <= total_frames; ++frame) {
-		Uint32 frame_start = SDL_GetTicks();
 		float t = (float)frame / total_frames;
 		if (t > 1.0f) t = 1.0f;
 
@@ -1016,7 +1013,6 @@ void PLAT_animateSurfaceOpacity(
 	}
 
 	for (int frame = 0; frame <= total_frames; ++frame) {
-		Uint32 frame_start = SDL_GetTicks();
 
 		float t = (float)frame / total_frames;
 		int current_opacity = start_opacity + (int)((target_opacity - start_opacity) * t);
@@ -1073,7 +1069,6 @@ void PLAT_animateSurfaceOpacityAndScale(
 	}
 
 	for (int frame = 0; frame <= total_frames; ++frame) {
-		Uint32 frame_start = SDL_GetTicks();
 
 		float t = (float)frame / total_frames;
 
@@ -1183,7 +1178,6 @@ void PLAT_animateAndFadeSurface(
 	Uint32 start_time = SDL_GetTicks();
 
 	for (int frame = 0; frame <= total_frames; ++frame) {
-		Uint32 frame_start = SDL_GetTicks();
 
 		float t = (float)frame / total_frames;
 

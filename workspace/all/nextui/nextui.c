@@ -1992,6 +1992,7 @@ int main (int argc, char *argv[]) {
 								SDL_FreeSurface(tmpNewScreen);
 								
 							} else if(lastScreen == SCREEN_GAMESWITCHER) {
+								GFX_flipHidden();
 								GFX_drawOnLayer(background,0,0,screen->w, screen->h,1.0f,0,1);
 								if(gsanimdir==1) 
 									GFX_animateSurface(bmp,ax+screen->w,ay,ax,ay,aw,ah,CFG_getMenuTransitions() ? 80:20,0,255,0);
@@ -2015,6 +2016,7 @@ int main (int argc, char *argv[]) {
 							GFX_drawOnLayer(tmpOldScreen,0,0,screen->w, screen->h,1.0f,0,0);
 							GFX_animateSurface(tmpsur,0,0-screen->h,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 100:20,255,255,0);
 						} else if(lastScreen == SCREEN_GAMESWITCHER) {
+							GFX_flipHidden();
 							GFX_drawOnLayer(background,0,0,screen->w, screen->h,1.0f,0,0);
 							if(gsanimdir==1) 
 								GFX_animateSurface(tmpsur,0+screen->w,0,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 80:20,0,255,0);
@@ -2159,6 +2161,7 @@ int main (int argc, char *argv[]) {
 								0,0, max_width, SCALE1(PILL_SIZE)
 							});
 							if(animationdirection == 0)	{
+								GFX_flipHidden();
 								GFX_animateAndRevealSurfaces(
 									pill,text,
 									SCALE1(BUTTON_MARGIN), SCALE1(previousY+PADDING),SCALE1(BUTTON_MARGIN),SCALE1(targetY+PADDING),max_width,SCALE1(PILL_SIZE),
