@@ -25,7 +25,6 @@ static SDL_Surface* screen;
 static int quit = 0;
 static int show_menu = 0;
 static int simple_mode = 0;
-static int thread_video = 0;
 static int was_threaded = 0;
 static int should_run_core = 1; // used by threaded video
 enum retro_pixel_format fmt;
@@ -34,7 +33,6 @@ static pthread_t		core_pt;
 static pthread_mutex_t	core_mx;
 static pthread_cond_t	core_rq; // not sure this is required
 
-static SDL_Surface*	backbuffer = NULL;
 static void* coreThread(void *arg);
 
 enum {
@@ -1076,7 +1074,6 @@ enum {
 	FE_OPT_TEARING,
 	FE_OPT_SYNC_REFERENCE,
 	FE_OPT_OVERCLOCK,
-	FE_OPT_THREAD,
 	FE_OPT_DEBUG,
 	FE_OPT_MAXFF,
 	FE_OPT_COUNT,
@@ -1375,16 +1372,6 @@ static struct Config {
 				.values = overclock_labels,
 				.labels = overclock_labels,
 			},
-			[FE_OPT_THREAD] = {
-				.key	= "minarch_thread_video",
-				.name	= "Prioritize Audio",
-				.desc	= "Can eliminate crackle but\nmay cause dropped frames.\nOnly turn on if necessary.",
-				.default_value = 0,
-				.value = 0,
-				.count = 2,
-				.values = onoff_labels,
-				.labels = onoff_labels,
-			},
 			[FE_OPT_DEBUG] = {
 				.key	= "minarch_debug_hud",
 				.name	= "Debug HUD",
@@ -1534,11 +1521,6 @@ static void Config_syncFrontend(char* key, int value) {
 	else if (exactMatch(key,config.frontend.options[FE_OPT_SYNC_REFERENCE].key)) {
 		sync_ref = value;
 		i = FE_OPT_SYNC_REFERENCE;
-	}
-	else if (exactMatch(key,config.frontend.options[FE_OPT_THREAD].key)) {
-		int old_value = thread_video || was_threaded;
-		toggle_thread = old_value!=value;
-		i = FE_OPT_THREAD;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERCLOCK].key)) {
 		overclock = value;
@@ -2259,16 +2241,6 @@ static void Menu_saveState(void);
 static void Menu_loadState(void);
 
 static int setFastForward(int enable) {
-	if (!fast_forward && enable && thread_video) {
-		// LOG_info("entered fast forward with threaded core...\n");
-		was_threaded = 1;
-		toggle_thread = 1;
-	}
-	else if (fast_forward && !enable && !thread_video && was_threaded) {
-		// LOG_info("exited fast forward with previously threaded core...\n");
-		was_threaded = 0;
-		toggle_thread = 1;
-	}
 	fast_forward = enable;
 	return enable;
 }
@@ -2297,18 +2269,10 @@ static void input_poll_callback(void) {
 	}
 	
 	if (PAD_justPressed(BTN_POWER)) {
-		if (thread_video) {
-			// LOG_info("pressed power with threaded core...\n");
-			was_threaded = 1;
-			toggle_thread = 1;
-		}
+		
 	}
 	else if (PAD_justReleased(BTN_POWER)) {
-		if (!thread_video && was_threaded) {
-			// LOG_info("released power with previously threaded core before power off...\n");
-			was_threaded = 0;
-			toggle_thread = 1;
-		}
+		
 	}
 	
 	static int toggled_ff_on = 0; // this logic only works because TOGGLE_FF is before HOLD_FF in the menu...
@@ -2371,12 +2335,6 @@ static void input_poll_callback(void) {
 	
 	if (!ignore_menu && PAD_justReleased(BTN_MENU)) {
 		show_menu = 1;
-		
-		if (thread_video) {
-			pthread_mutex_lock(&core_mx);
-			should_run_core = 0;
-			pthread_mutex_unlock(&core_mx);
-		}
 	}
 	
 	// TODO: figure out how to ignore button when MENU+button is handled first
@@ -3173,28 +3131,58 @@ static const char* bitmap_font[] = {
         "1   1",
 
 	};
+
+
+	void drawRect(int x, int y, int w, int h, uint32_t c, uint32_t *data, int stride) {
+		for (int _x = x; _x < x + w; _x++) {
+			data[_x + y * stride] = c;
+			data[_x + (y + h - 1) * stride] = c;
+		}
+		for (int _y = y; _y < y + h; _y++) {
+			data[x + _y * stride] = c;
+			data[x + w - 1 + _y * stride] = c;
+		}
+	}
+	
+	
+	void fillRect(int x, int y, int w, int h, uint32_t c, uint32_t *data, int stride) {
+		for (int _y = y; _y < y + h; _y++) {
+			for (int _x = x; _x < x + w; _x++) {
+				data[_x + _y * stride] = c;
+			}
+		}
+	}
+	
 	static void blitBitmapText(char* text, int ox, int oy, uint32_t* data, int stride, int width, int height) {
 		#define CHAR_WIDTH 5
 		#define CHAR_HEIGHT 9
 		#define LETTERSPACING 1
-		
+	
 		int len = strlen(text);
 		int w = ((CHAR_WIDTH + LETTERSPACING) * len) - 1;
 		int h = CHAR_HEIGHT;
-		
+	
 		if (ox < 0) ox = width - w + ox;
 		if (oy < 0) oy = height - h + oy;
-		
+	
+		// Clamp to screen bounds (optional but recommended)
+		if (ox + w > width) w = width - ox;
+		if (oy + h > height) h = height - oy;
+	
+		// Draw background rectangle (black RGBA8888)
+		fillRect(ox, oy, w, h, 0x000000FF, data, stride);
+	
 		data += oy * stride + ox;
+	
 		for (int y = 0; y < CHAR_HEIGHT; y++) {
-			uint32_t* row = data + y * stride;  
+			uint32_t* row = data + y * stride;
 			for (int i = 0; i < len; i++) {
-				const char* c = bitmap_font[(unsigned char)text[i]]; 
+				const char* c = bitmap_font[(unsigned char)text[i]];
 				for (int x = 0; x < CHAR_WIDTH; x++) {
 					if (c[y * CHAR_WIDTH + x] == '1') {
-						*row = 0xFFFFFFFF;  // white in RGBA8888
+						*row = 0xFFFFFFFF;  // white RGBA8888
 					}
-					row++; 
+					row++;
 				}
 				row += LETTERSPACING;
 			}
@@ -3202,40 +3190,35 @@ static const char* bitmap_font[] = {
 	}
 	
 	
-void drawRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
-	for (int _x=x; _x<x+w; _x++) {
-		data[_x + y * stride] = c;
-	}
-	for (int _y=y; _y<y+h; _y++) {
-		data[x + _y * stride] = data[x + w - 1 + _y * stride] = c;
-	}
-	for (int _x=x; _x<x+w; _x++) {
-		data[_x + (y + h) * stride] = c;
-	}
+	
+
+
+
+void drawGauge(int x, int y, float percent, int width, int height, uint32_t *data, int stride) {
+	// Clamp percent to 0.0 - 1.0
+	if (percent < 0.0f) percent = 0.0f;
+	if (percent > 1.0f) percent = 1.0f;
+
+	uint8_t red   = (uint8_t)(percent * 255.0f);
+	uint8_t green = (uint8_t)((1.0f - percent) * 255.0f);
+	uint8_t blue  = 0;
+	uint8_t alpha = 255;
+
+	uint32_t fillColor = (red << 24) | (green << 16) | (blue << 8) | alpha;
+	uint32_t borderColor = 0xFFFFFFFF;  // White RGBA
+	uint32_t bgColor = 0x000000FF;      // Black RGBA
+
+	// Background
+	fillRect(x, y, width, height, bgColor, data, stride);
+
+	// Filled portion
+	int filledWidth = (int)(percent * width);
+	fillRect(x, y, filledWidth, height, fillColor, data, stride);
+
+	// Outline
+	drawRect(x, y, width, height, borderColor, data, stride);
 }
 
-void fillRect(int x, int y, int w, int h, int c, uint16_t *data, int stride) {
-	for (int _y=y; _y<y+h; _y++) {
-		for (int _x=x; _x<x+w; _x++) {
-			data[_x + _y * stride] = c;
-		}
-	}
-}
-
-void drawGauge(int x, int y, float percent, int width, int height, uint16_t *data, int stride) {
-    int red   = (int) (percent * 255);   
-    int green = (int) ((1.0 - percent) * 255); 
-    int blue  = 0;                           
-    uint8_t alpha = 255;                   
-    
-    uint32_t color = (alpha << 24) | (red << 16) | (green << 8) | blue;
-    
-    fillRect(x, y, width, height, 0x00000000, data, stride);  
-    
-    fillRect(x, y, (int) (percent * width), height, color, data, stride);
-    
-    drawRect(x, y, width, height, 0xFFFFFFFF, data, stride);  
-}
 
 
 ///////////////////////////////
@@ -3254,23 +3237,8 @@ static uint32_t sec_start = 0;
 	static int fit = 0;
 #endif	
 
-// buffer to convert xrgb8888 to rgb565
-static void* buffer = NULL;
-static void buffer_dealloc(void) {
-	if (!buffer) return;
-	free(buffer);
-	buffer = NULL;
-}
-static void buffer_realloc(int w, int h, int p) {
-	buffer_dealloc();
-	buffer = malloc((w * FIXED_BPP) * h);
-	// LOG_info("buffer_realloc(%i,%i,%i)\n", w,h,p);
-}
-
 static void selectScaler(int src_w, int src_h, int src_p) {
 	LOG_info("selectScaler\n");
-	
-	if (downsample) buffer_realloc(src_w,src_h,src_p);
 	
 	int src_x,src_y,dst_x,dst_y,dst_w,dst_h,dst_p,scale;
 	double aspect;
@@ -3585,12 +3553,11 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		blitBitmapText(debug_text,x,-y,(uint32_t*)data,pitch / 4, width,height);
 	
 		double buffer_fill = (double) (currentbuffersize - currentbufferfree) / (double) currentbuffersize;
-		drawGauge(x, y + 30, buffer_fill, width / 2, 10, (uint16_t*)data, pitch / 2);
+		drawGauge(x, y + 30, buffer_fill, width / 2, 8, (uint32_t*)data, pitch / 4);
 	}
 	
 
-		renderer.src = (void*)data;
-	
+	renderer.src = (void*)data;
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
 	if(firstframe) {
@@ -3632,47 +3599,26 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 
 	GFX_blitRenderer(&renderer);
 
-
-
 	screen_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
 const void* lastframe = NULL;
 
-Uint32* rgbaData;
+static Uint32* rgbaData = NULL;
+static size_t rgbaDataSize = 0;
+
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
     // not needed currently
 	// bool can_dupe = false;
     // environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
 
-	// fbneo now has auto rotation, but keeping this here maybe we need in the future?
-	// struct retro_variable var = { "fbneo-vertical-mode", NULL };
-    // environment_callback(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
-	
-	// if (var.value)
-	// {
-	// 	if (strcmp(var.value, "enabled") == 0) {
-	// 		should_rotate = 1;
-	// 	} else if (strcmp(var.value, "alternate") == 0) {
-	// 		should_rotate = 2; // Adjust if different for alternate
-	// 	} else if (strcmp(var.value, "TATE") == 0) {
-	// 		should_rotate = 3;
-	// 	} else if (strcmp(var.value, "TATE alternate") == 0) {
-    //     	should_rotate = 4;
-	// 	}
-	// 	else
-	// 	{
-	// 		should_rotate = 0;
-	// 	}
-	// }
-	// else
-	// {
-	// 	should_rotate = 0;
-	// }
 
-	if(!rgbaData || (width * height * sizeof(Uint32)) != sizeof(rgbaData)) {
-		if(rgbaData) free(rgbaData);
-		rgbaData = (Uint32*)malloc(width * height * sizeof(Uint32));
+
+	
+	if (!rgbaData || rgbaDataSize != width * height) {
+		if (rgbaData) free(rgbaData);
+		rgbaDataSize = width * height;
+		rgbaData = (Uint32*)malloc(rgbaDataSize * sizeof(Uint32));
 		if (!rgbaData) {
 			printf("Failed to allocate memory for RGBA8888 data.\n");
 			return;
@@ -3726,8 +3672,6 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
 	pitch = width * sizeof(Uint32);
 	lastframe = data;
-	
-
 	
      video_refresh_callback_main(data,width,height,pitch);
 }
@@ -5327,9 +5271,6 @@ static void Menu_loop(void) {
 	if (!HAS_POWER_BUTTON) PWR_enableSleep();
 	PWR_setCPUSpeed(CPU_SPEED_MENU); // set Hz directly
 
-	// why are you even doing this? Because in menu you got no audio buffer to rely on for delaying your code and your GFX_flip code does nothing
-	// so this this would run wild and instead everywhere is GFX_sync() shit to keep it all under control, what a mess!!
-
 	GFX_setEffect(EFFECT_NONE);
 	
 	int rumble_strength = VIB_getStrength();
@@ -5338,12 +5279,6 @@ static void Menu_loop(void) {
 	PWR_enableAutosleep();
 	PAD_reset();
 	
-	// if (!HAS_POWER_BUTTON && !HAS_POWEROFF_BUTTON) {
-	// 	MenuItem* item = &options_menu.items[5];
-	// 	item->name = "Quicksave";
-	// 	item->desc = "Automatically resume current state next power on.";
-	// 	item->on_confirm = OptionQuicksave_onConfirm;
-	// }
 	
 	// path and string things
 	char* tmp;
@@ -5616,7 +5551,8 @@ static void Menu_loop(void) {
 			GFX_flip(screen);
 			dirty = 0;
 		} else {
-			GFX_flip(screen);
+			// please dont flip cause it will cause current_fps dip and audio is weird first seconds
+			GFX_delay();
 		}
 		hdmimon();
 	}
@@ -5843,6 +5779,10 @@ int main(int argc , char* argv[]) {
 	// for better frame pacing?
 	GFX_clearAll();
 	GFX_clearLayers(0);
+	GFX_clear(screen);
+
+	// need to draw real black background first otherwise u get weird pixels sometimes
+
 	GFX_flip(screen);
 	
 	Special_init(); // after config
@@ -5877,10 +5817,9 @@ int main(int argc , char* argv[]) {
 			has_pending_opt_change = config.core.changed;
 			resetFPSCounter();
 			chooseSyncRef();
-			SND_resetAudio(core.sample_rate, core.fps);
+			// this is not needed
+			// SND_resetAudio(core.sample_rate, core.fps);
 		}
-		
-		
 		hdmimon();
 	}
 	
@@ -5939,7 +5878,6 @@ finish:
 	SND_quit();
 	PAD_quit();
 	GFX_quit();
-	buffer_dealloc();
 	
 	return EXIT_SUCCESS;
 }

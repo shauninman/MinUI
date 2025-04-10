@@ -540,6 +540,7 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
 void PLAT_GPU_Flip();
+void PLAT_GPU_core_flip(const void *data,size_t pitch,int width,int height);
 int PLAT_supportsOverscan(void);
 
 SDL_Surface* PLAT_initOverlay(void);

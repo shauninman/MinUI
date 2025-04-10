@@ -54,7 +54,6 @@ static struct VID_Context {
 	SDL_Texture* target;
 	SDL_Texture* effect;
 	SDL_Texture* overlay;
-	SDL_Surface* buffer;
 	SDL_Surface* screen;
 	
 	GFX_Renderer* blit; // yeesh
@@ -133,10 +132,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	
 	vid.target	= NULL; // only needed for non-native sizes
 	
-	
-	vid.buffer	= SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA8888);
 	vid.screen = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA8888);
-	SDL_SetSurfaceBlendMode(vid.buffer, SDL_BLENDMODE_BLEND);
+
 	SDL_SetSurfaceBlendMode(vid.screen, SDL_BLENDMODE_BLEND);
 	SDL_SetTextureBlendMode(vid.stream_layer1, SDL_BLENDMODE_BLEND);
 	SDL_SetTextureBlendMode(vid.target_layer2, SDL_BLENDMODE_BLEND);
@@ -222,12 +219,7 @@ static void clearVideo(void) {
 	for (int i=0; i<3; i++) {
 		SDL_RenderClear(vid.renderer);
 		SDL_FillRect(vid.screen, NULL, SDL_transparentBlack);
-		
-		SDL_LockTexture(vid.stream_layer1,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
-		SDL_FillRect(vid.buffer, NULL,  SDL_transparentBlack);
-		SDL_UnlockTexture(vid.stream_layer1);
 		SDL_RenderCopy(vid.renderer, vid.stream_layer1, NULL, NULL);
-		
 		SDL_RenderPresent(vid.renderer);
 	}
 }
@@ -236,8 +228,7 @@ void PLAT_quitVideo(void) {
 	clearVideo();
 
 	SDL_FreeSurface(vid.screen);
-	// this segfaults idk why?
-	// if (vid.buffer) SDL_FreeSurface(vid.buffer);
+
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	if (vid.effect) SDL_DestroyTexture(vid.effect);
 	if (vid.overlay) SDL_DestroyTexture(vid.overlay);
@@ -281,7 +272,6 @@ static void resizeVideo(int w, int h, int p) {
 
 	LOG_info("resizeVideo(%i,%i,%i) hard_scale: %i crisp: %i\n",w,h,p, hard_scale,vid.sharpness==SHARPNESS_CRISP);
 
-	SDL_FreeSurface(vid.buffer);
 	SDL_DestroyTexture(vid.stream_layer1);
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	
@@ -290,14 +280,13 @@ static void resizeVideo(int w, int h, int p) {
 	SDL_SetTextureBlendMode(vid.stream_layer1, SDL_BLENDMODE_BLEND);
 	
 	if (vid.sharpness==SHARPNESS_CRISP) {
-		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1", SDL_HINT_OVERRIDE);
+		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "2", SDL_HINT_OVERRIDE);
 		vid.target = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w * hard_scale,h * hard_scale);
 	}
 	else {
 		vid.target = NULL;
 	}
 	
-	vid.buffer	= SDL_CreateRGBSurfaceWithFormat(SDL_SWSURFACE, w,h, 32, SDL_PIXELFORMAT_RGBA8888);
 
 	vid.width	= w;
 	vid.height	= h;
@@ -866,6 +855,28 @@ void PLAT_GPU_Flip() {
 	SDL_RenderPresent(vid.renderer);
 }
 
+void PLAT_GPU_core_flip(const void *data,size_t pitch,int width,int height) {
+
+	if (vid.width != width || vid.height != height) {
+		if (vid.stream_layer1) SDL_DestroyTexture(vid.stream_layer1);
+		vid.stream_layer1 = SDL_CreateTexture(
+			vid.renderer,
+			SDL_PIXELFORMAT_RGBA8888,
+			SDL_TEXTUREACCESS_STREAMING,
+			width,
+			height
+		);
+		vid.width = width;
+		vid.height = height;
+	}
+
+	
+	SDL_RenderClear(vid.renderer);
+	SDL_UpdateTexture(vid.stream_layer1, NULL, data, (int)pitch);
+	SDL_RenderCopy(vid.renderer, vid.stream_layer1, NULL, NULL);
+	SDL_RenderPresent(vid.renderer);
+}
+
 void PLAT_animateAndRevealSurfaces(
 	SDL_Surface* inputMoveSurface,
 	SDL_Surface* inputRevealSurface,
@@ -1300,12 +1311,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
     int w = vid.blit->src_w;
     int h = vid.blit->src_h;
     if (vid.sharpness == SHARPNESS_CRISP) {
+		
         SDL_SetRenderTarget(vid.renderer, vid.target);
-		SDL_RenderCopy(vid.renderer, vid.target_layer1, NULL, NULL);
-        SDL_RenderCopy(vid.renderer, vid.target_layer2, NULL, NULL);
         SDL_RenderCopy(vid.renderer, vid.stream_layer1, NULL, NULL);
-		SDL_RenderCopy(vid.renderer, vid.target_layer3, NULL, NULL);
-		SDL_RenderCopy(vid.renderer, vid.target_layer4, NULL, NULL);
         SDL_SetRenderTarget(vid.renderer, NULL);
         x *= hard_scale;
         y *= hard_scale;
@@ -1363,13 +1371,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
             dst_rect->h = device_height;
         }
     }
-
-	// FBneo now has auto rotate but keeping this here in case we need it in the future
-    // if (should_rotate) {
-    //     rotate_and_render(vid.renderer, target, src_rect, dst_rect);
-    // } else {
-	// below rendercopy goes here
-	// }
+	
     SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
     
 
@@ -1379,7 +1381,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
     }
 
 	updateOverlay();
-	SDL_RenderCopy(vid.renderer, vid.overlay, &(SDL_Rect){0, 0,device_width, device_height}, &(SDL_Rect){0, 0,device_width, device_height});
+	if(vid.overlay) {
+		SDL_RenderCopy(vid.renderer, vid.overlay, &(SDL_Rect){0, 0,device_width, device_height}, &(SDL_Rect){0, 0,device_width, device_height});
+	}
     SDL_RenderPresent(vid.renderer);
     vid.blit = NULL;
 }
