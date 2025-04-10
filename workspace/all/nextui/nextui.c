@@ -1795,12 +1795,13 @@ int main (int argc, char *argv[]) {
 								new_w = (int)(new_h / aspect_ratio);
 							}
 							
-							int target_x = (int)(screen->h * 0.70);
+							int target_x = (int)(screen->w * 0.75);
 							int target_y = (int)(screen->h * 0.50);
+							int center_x = target_x - (new_w / 2); // FIX: use new_h instead of thumbbmp->h
 							int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
 							
 							GFX_ApplyRoundedCorners_RGBA8888(thumbbmp, &(SDL_Rect){0,0,thumbbmp->w, thumbbmp->h}, SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w)));
-							GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
+							GFX_drawOnLayer(thumbbmp,center_x,center_y,new_w,new_h,1.0f,0,2);
 							ox = (int)(screen->w - new_w) - SCALE1(BUTTON_MARGIN*5);
 
 							had_thumb = 1;
