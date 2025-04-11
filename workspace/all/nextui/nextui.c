@@ -1960,20 +1960,35 @@ int main (int argc, char *argv[]) {
 							bmp = raw_preview; 
 						}
 						if(bmp) {
-							
 							int aw = screen->w;
 							int ah = screen->h;
 							int ax = 0;
 							int ay = 0;
-							if(CFG_getGameSwitcherScaling()) {
+							int scalingMode = CFG_getGameSwitcherScaling();
+							if (scalingMode == 1 || scalingMode == 2) {
 								float aspectRatio = (float)bmp->w / (float)bmp->h;
-								if (screen->w / (float)screen->h > aspectRatio) {
-									aw = (int)(screen->h * aspectRatio);
-								} else {
-									ah = (int)(screen->w / aspectRatio);
+								float screenRatio = (float)screen->w / (float)screen->h;
+
+								if (scalingMode == 1) { // FIT
+									if (screenRatio > aspectRatio) {
+										aw = (int)(screen->h * aspectRatio);
+										ah = screen->h;
+									} else {
+										aw = screen->w;
+										ah = (int)(screen->w / aspectRatio);
+									}
+								} else if (scalingMode == 2) { // FILL
+									if (screenRatio < aspectRatio) {
+										aw = (int)(screen->h * aspectRatio);
+										ah = screen->h;
+									} else {
+										aw = screen->w;
+										ah = (int)(screen->w / aspectRatio);
+									}
 								}
-								ax = (screen->w - aw)/2;
-								ay = (screen->h - ah)/2;
+
+								ax = (screen->w - aw) / 2;
+								ay = (screen->h - ah) / 2;
 							}
 							if(lastScreen == SCREEN_GAME) {
 								// need to flip once so streaming_texture1 is updated
