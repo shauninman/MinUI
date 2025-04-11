@@ -2261,10 +2261,11 @@ static void input_poll_callback(void) {
 	}
 	if (PAD_isPressed(BTN_MENU) && PAD_isPressed(BTN_SELECT)) {
 		ignore_menu = 1;
+		quit = 1;
 		Menu_saveState();
 		putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
 		GFX_clear(screen);
-		quit = 1;
+		
 	}
 	
 	if (PAD_justPressed(BTN_POWER)) {
@@ -2305,13 +2306,13 @@ static void input_poll_callback(void) {
 					case SHORTCUT_LOAD_STATE: Menu_loadState(); break;
 					case SHORTCUT_RESET_GAME: core.reset(); break;
 					case SHORTCUT_SAVE_QUIT:
-						Menu_saveState();
 						quit = 1;
+						Menu_saveState();
 						break;
 					case SHORTCUT_GAMESWITCHER:
+						quit = 1;
 						Menu_saveState();
 						putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
-						quit = 1;
 						break;
 					case SHORTCUT_CYCLE_SCALE:
 						screen_scaling += 1;
@@ -5142,7 +5143,9 @@ static void Menu_updateState(void) {
 }
 static void Menu_saveState(void) {
 	// LOG_info("Menu_saveState\n");
-	if(quit) SDL_PauseAudio(1);
+	if(quit) {
+		SDL_PauseAudio(1);
+	}
 	Menu_updateState();
 	
 	if (menu.total_discs) {
