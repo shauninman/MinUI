@@ -62,7 +62,6 @@ static int overclock = 3; // auto
 static int has_custom_controllers = 0;
 static int gamepad_type = 0; // index in gamepad_labels/gamepad_values
 static int downsample = 0; // set to 1 to convert from 8888 to 565
-static int currentVolume = 0;
 // these are no longer constants as of the RG CubeXX (even though they look like it)
 static int DEVICE_WIDTH = 0; // FIXED_WIDTH;
 static int DEVICE_HEIGHT = 0; // FIXED_HEIGHT;
@@ -3561,8 +3560,6 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
 	if(firstframe) {
-		currentVolume = GetVolume();
-		SetVolume(0);
 		GFX_clearLayers(0);
 		GFX_clear(screen);
 		SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
@@ -3597,7 +3594,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		SDL_FreeSurface(screendata);
 		GFX_clearLayers(0);
 		firstframe=0;
-		SetVolume(currentVolume);
+		SDL_PauseAudio(0);
 	
 	} 
 
@@ -5145,7 +5142,7 @@ static void Menu_updateState(void) {
 }
 static void Menu_saveState(void) {
 	// LOG_info("Menu_saveState\n");
-
+	if(quit) SDL_PauseAudio(1);
 	Menu_updateState();
 	
 	if (menu.total_discs) {
@@ -5797,7 +5794,7 @@ int main(int argc , char* argv[]) {
 	
 	int has_pending_opt_change = 0;
 
-	
+	SDL_PauseAudio(1);
 	while (!quit) {
 		GFX_startFrame();
 	
@@ -5828,8 +5825,6 @@ int main(int argc , char* argv[]) {
 	
 		hdmimon();
 	}
-	currentVolume = GetVolume();
-	SetVolume(0);
 
 	SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
 	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
@@ -5872,7 +5867,6 @@ int main(int argc , char* argv[]) {
 	SDL_FreeSurface(screendata);
 
 	Menu_quit();
-	SetVolume(currentVolume);
 	QuitSettings();
 	
 finish:
@@ -5886,7 +5880,8 @@ finish:
 	MSG_quit();
 	PWR_quit();
 	VIB_quit();
-	SND_quit();
+	// already happens on Core_unload
+	// SND_quit();
 	PAD_quit();
 	GFX_quit();
 	
