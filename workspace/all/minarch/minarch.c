@@ -3561,6 +3561,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
 	if(firstframe) {
+		currentVolume = GetVolume();
 		SetVolume(0);
 		GFX_clearLayers(0);
 		GFX_clear(screen);
@@ -5796,7 +5797,7 @@ int main(int argc , char* argv[]) {
 	
 	int has_pending_opt_change = 0;
 
-	currentVolume = GetVolume();
+	
 	while (!quit) {
 		GFX_startFrame();
 	
@@ -5824,8 +5825,10 @@ int main(int argc , char* argv[]) {
 			// this is not needed
 			// SND_resetAudio(core.sample_rate, core.fps);
 		}
+	
 		hdmimon();
 	}
+	currentVolume = GetVolume();
 	SetVolume(0);
 
 	SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
