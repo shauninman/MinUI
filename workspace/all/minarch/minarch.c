@@ -62,7 +62,7 @@ static int overclock = 3; // auto
 static int has_custom_controllers = 0;
 static int gamepad_type = 0; // index in gamepad_labels/gamepad_values
 static int downsample = 0; // set to 1 to convert from 8888 to 565
-
+static int currentVolume = 0;
 // these are no longer constants as of the RG CubeXX (even though they look like it)
 static int DEVICE_WIDTH = 0; // FIXED_WIDTH;
 static int DEVICE_HEIGHT = 0; // FIXED_HEIGHT;
@@ -3561,6 +3561,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	renderer.dst = screen->pixels;
 	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
 	if(firstframe) {
+		SetVolume(0);
 		GFX_clearLayers(0);
 		GFX_clear(screen);
 		SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
@@ -3595,6 +3596,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		SDL_FreeSurface(screendata);
 		GFX_clearLayers(0);
 		firstframe=0;
+		SetVolume(currentVolume);
+	
 	} 
 
 	GFX_blitRenderer(&renderer);
@@ -5723,7 +5726,7 @@ int main(int argc , char* argv[]) {
 	getEmuName(rom_path, tag_name);
 	
 	LOG_info("rom_path: %s\n", rom_path);
-
+	
 	screen = GFX_init(MODE_MENU);
 	PAD_init();
 	DEVICE_WIDTH = screen->w;
@@ -5793,6 +5796,7 @@ int main(int argc , char* argv[]) {
 	
 	int has_pending_opt_change = 0;
 
+	currentVolume = GetVolume();
 	while (!quit) {
 		GFX_startFrame();
 	
@@ -5822,9 +5826,8 @@ int main(int argc , char* argv[]) {
 		}
 		hdmimon();
 	}
-	
-	Menu_quit();
-	QuitSettings();
+	SetVolume(0);
+
 	SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
 	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
 
@@ -5856,13 +5859,18 @@ int main(int argc , char* argv[]) {
 		screen_scaling!=SCALE_FULLSCREEN ? scaled_h:screen->h
 	};
 	SDL_BlitScaled(screendata, NULL, tmpSur, &dst);
-	
+
 	GFX_animateSurfaceOpacity(tmpSur,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 200:20,1);
+	
 	GFX_clearLayers(0);
 	GFX_clear(screen);
 	if(rgbaData) free(rgbaData);
 	SDL_FreeSurface(tmpSur);
 	SDL_FreeSurface(screendata);
+
+	Menu_quit();
+	SetVolume(currentVolume);
+	QuitSettings();
 	
 finish:
 
