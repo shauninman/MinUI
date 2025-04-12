@@ -388,12 +388,12 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 int screenx = 0;
 int screeny = 0;
 void PLAT_setOffsetX(int x) {
-    if (x < 0 || x > 100) return;
-    screenx = x - 50;
+    if (x < 0 || x > 128) return;
+    screenx = x - 64;
 }
 void PLAT_setOffsetY(int y) {
-    if (y < 0 || y > 100) return;
-    screeny = y - 50;  
+    if (y < 0 || y > 128) return;
+    screeny = y - 64;  
 }
 
 void applyRoundedCorners(SDL_Surface* surface, SDL_Rect* rect, int radius) {
