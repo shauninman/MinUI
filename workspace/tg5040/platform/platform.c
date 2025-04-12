@@ -2315,13 +2315,14 @@ bool PLAT_wifiEnabled() {
 
 void PLAT_wifiEnable(bool on) {
 	if(on) {
+		LOG_info("turning wifi on...\n");
+		
 		// This shouldnt be needed, but we cant really rely on nobody else messing with this stuff. 
 		// Make sure supplicant is up and rfkill doesnt block.
-		//system("rfkill unblock wifi");
-		//system("/etc/init.d/wpa_supllicant enable");
-		//system("/etc/init.d/wpa_supllicant start");
+		system("rfkill unblock wifi");
+		system("/etc/init.d/wpa_supplicant enable");
+		system("/etc/init.d/wpa_supplicant start&");
 
-		LOG_info("turning wifi on...\n");
 		int event_label = 42;
 		for (int i = 0 ; i<= MAX_CONNECTION_ATTEMPTS ;i++) {
 			wifi.interface = aw_wifi_on(wifi_state_handle, event_label);
