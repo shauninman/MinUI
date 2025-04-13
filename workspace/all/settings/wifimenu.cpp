@@ -95,9 +95,19 @@ void Menu::updater()
             for (int i = 0; i < cnt; i++)
                 scanSsids.emplace(scanResults[i].ssid, scanResults[i]);
 
+            // dont repopulate if any submenu is open
+            bool menuOpen = false;
+            for(auto i : items){
+                if(i->isDeferred()){
+                    menuOpen = true;
+                    break;
+                }
+            }
+
             // something changed?
-            if (prevSsid != std::string(connection.ssid) 
-                || !key_compare(prevScan, scanSsids))
+            if (!menuOpen &&
+                (prevSsid != std::string(connection.ssid) 
+                || !key_compare(prevScan, scanSsids)))
             {
                 prevScan = scanSsids;
                 prevSsid = connection.ssid;
