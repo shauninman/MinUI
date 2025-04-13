@@ -130,8 +130,9 @@ if [ "$wifion" != "1" ] ; then
 	# probably unnecessary
 	# /etc/init.d/wpa_supplicant stop # shauninman: not sure this is working
 else
-	ifconfig wlan0 up
 	rfkill unblock wifi	
+	ifconfig wlan0 up
+	udhcpc -i wlan0 -n &
 fi
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
