@@ -198,6 +198,7 @@ public:
     }
     const std::string &getName() const { return name; }
     const std::string &getDesc() const { return desc; }
+    void setDesc(const std::string &d) { desc = d; }
     const ListItemType getType() const { return type; }
     const std::vector<std::any> &getValues() const { return values; }
     const std::vector<std::string> &getLabels() const { return labels; }

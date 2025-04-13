@@ -158,6 +158,8 @@ void Menu::updater()
                         });
 
                     auto itm = new NetworkItem{r, connected, options};
+                    if(connected && !std::string(connection.ip).empty())
+                        itm->setDesc(std::string(r.bssid) + " | " + std::string(connection.ip));
                     items.push_back(itm);
                 }
                 workerDirty = true;
