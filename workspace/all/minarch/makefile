@@ -28,6 +28,10 @@ CFLAGS  += $(ARCH) -fomit-frame-pointer
 CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -DUSE_$(SDL) -O3 -Ofast -std=gnu99 -I/usr/local/include/ -I~/workspace/SDL2_image-2.8.5/include/ -I/root/workspace/SDL_ttf-release-2.24.0/
 CFLAGS	+= -march=armv8-a+simd -mtune=cortex-a53 -flto
 LDFLAGS	 += -ldl $(LIBS) -lmsettings -l$(SDL) -l$(SDL)_image -l$(SDL)_ttf -lpthread -lm -lz
+
+# libsamplerate is not available on the Brick so it needs to be included in the binary you need to link the library like this instead of using dynamically linking with -lsamplerate
+LDFLAGS += /usr/lib/aarch64-linux-gnu/libsamplerate.a
+
 # CFLAGS  += -Wall -Wno-unused-variable -Wno-unused-function -Wno-format-overflow
 # CFLAGS  += -fsanitize=address -fno-common
 # LDFLAGS += -lasan
