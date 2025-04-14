@@ -24,10 +24,9 @@ INCDIR = -I. -I../common/ -I../../$(PLATFORM)/platform/
 SOURCE = $(TARGET).c ../common/utils.c ../common/api.c ../../$(PLATFORM)/platform/platform.c
 
 CC = $(CROSS_COMPILE)gcc
-CFLAGS   = $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -DUSE_$(SDL)  -Ofast 
-LDFLAGS	 = -ldl $(LIBS) -l$(SDL) -l$(SDL)_image -l$(SDL)_ttf -lsqlite3 -lpthread -lm -lz
-LDFLAGS += -lmsettings -lbatmondb
+CFLAGS  += $(ARCH) -fomit-frame-pointer
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -std=gnu99
+LDFLAGS	 += -lmsettings -lbatmondb
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 

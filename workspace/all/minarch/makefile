@@ -25,9 +25,8 @@ SOURCE = $(TARGET).c ../common/scaler.c ../common/utils.c ../common/config.c ../
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS  += $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -DUSE_$(SDL) -O3 -Ofast -std=gnu99 -I/usr/local/include/ -I~/workspace/SDL2_image-2.8.5/include/ -I/root/workspace/SDL_ttf-release-2.24.0/
-CFLAGS	+= -march=armv8-a+simd -mtune=cortex-a53 -flto
-LDFLAGS	 += -ldl $(LIBS) -lmsettings -l$(SDL) -l$(SDL)_image -l$(SDL)_ttf -lpthread -lm -lz
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -O3 -Ofast -std=gnu99
+LDFLAGS	 += -lmsettings -lsamplerate -lzip
 # CFLAGS  += -Wall -Wno-unused-variable -Wno-unused-function -Wno-format-overflow
 # CFLAGS  += -fsanitize=address -fno-common
 # LDFLAGS += -lasan
@@ -40,6 +39,8 @@ PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 
 all: libretro-common $(PREFIX)/include/msettings.h
 	mkdir -p build/$(PLATFORM)
+	cp /usr/lib/aarch64-linux-gnu/libsamplerate.so build/$(PLATFORM)
+	cp /usr/local/lib/libzip.so build/$(PLATFORM)
 	$(CC) $(SOURCE) -o $(PRODUCT) $(CFLAGS) $(LDFLAGS)
 clean:
 	rm -f $(PRODUCT)
