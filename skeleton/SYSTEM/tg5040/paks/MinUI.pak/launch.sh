@@ -126,7 +126,7 @@ if [ "$wifion" != "1" ] ; then
 	# do we really care that much about a stray DHCP service running?
 	killall -9 udhcpc
 	# i guess this could theoretically conserve battery
-	# rfkill block wifi
+	rfkill block wifi
 	# probably unnecessary
 	# /etc/init.d/wpa_supplicant stop # shauninman: not sure this is working
 else
