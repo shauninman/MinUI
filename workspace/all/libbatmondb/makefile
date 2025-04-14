@@ -34,11 +34,10 @@ SYSROOT     := $(shell $(CC) --print-sysroot)
 
 INCDIR = -I. -I../common/ -I../../$(PLATFORM)/platform/
 SOURCE = $(TARGET).c ../common/utils.c ../common/api.c ../../$(PLATFORM)/platform/platform.c
-# INCLUDEDIR = $(SYSROOT)/usr/include
 
-CFLAGS   = $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -DUSE_$(SDL) -Ofast 
-LDFLAGS = -ldl -lrt $(LIBS) -l$(SDL) -l$(SDL)_image -l$(SDL)_ttf -lsqlite3 -s
+CFLAGS  += $(ARCH) -fomit-frame-pointer
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -std=gnu99
+LDFLAGS += -s
 
 PRODUCT= build/$(PLATFORM)/lib$(TARGET).so
 
