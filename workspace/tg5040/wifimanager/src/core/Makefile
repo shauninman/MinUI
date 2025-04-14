@@ -35,9 +35,9 @@ install:
 #         SRCS += libwpa_client_softft.a
 #    else
 #         ifeq ($(TARGET_ARCH), riscv)
-              SRCS += libwpa_client_riscv.a
+#              SRCS += libwpa_client_riscv.a
 #         else
-              SRCS += libwpa_client.a
+#              SRCS += libwpa_client.a
 #         endif
 #    endif
 #endif
