@@ -52,6 +52,6 @@ $(target): $(SRCS)
 	@cp $@ $(PREFIX)/lib
 
 ####################################################################
-all: install $(target)
+all: $(target) install 
 clean:
 	rm -rf $(target)
