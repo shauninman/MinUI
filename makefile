@@ -70,6 +70,10 @@ system:
 ifeq ($(PLATFORM), tg5040)
 	cp ./workspace/all/ledcontrol/build/$(PLATFORM)/ledcontrol.elf ./build/EXTRAS/Tools/$(PLATFORM)/LedControl.pak/
 	cp ./workspace/all/bootlogo/build/$(PLATFORM)/bootlogo.elf ./build/EXTRAS/Tools/$(PLATFORM)/Bootlogo.pak/
+	
+	# lib dependencies
+	cp ./workspace/all/minarch/build/$(PLATFORM)/libsamplerate.so ./build/SYSTEM/$(PLATFORM)/lib/libsamplerate.so.0
+	cp ./workspace/all/minarch/build/$(PLATFORM)/libzip.so ./build/SYSTEM/$(PLATFORM)/lib/libzip.so.5
 endif
 
 

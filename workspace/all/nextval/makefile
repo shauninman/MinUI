@@ -23,9 +23,8 @@ INCDIR = -I. -I../common/ -I../../$(PLATFORM)/platform/
 SOURCE = $(TARGET).c ../common/utils.c ../common/config.c
 
 CC = $(CROSS_COMPILE)gcc
-CFLAGS   = $(ARCH) -fomit-frame-pointer
-CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -Ofast 
-LDFLAGS	 = -ldl $(LIBS) -lpthread -lm -lz
+CFLAGS  += $(ARCH) -fomit-frame-pointer
+CFLAGS  += $(INCDIR) -DPLATFORM=\"$(PLATFORM)\" -std=gnu99
 
 PRODUCT= build/$(PLATFORM)/$(TARGET).elf
 
