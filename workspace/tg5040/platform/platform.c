@@ -2319,8 +2319,8 @@ void PLAT_wifiEnable(bool on) {
 		
 		// This shouldnt be needed, but we cant really rely on nobody else messing with this stuff. 
 		// Make sure supplicant is up and rfkill doesnt block.
-		//system("rfkill unblock wifi");
-		system("ifconfig wlan0 down");
+		system("rfkill unblock wifi");
+		//system("ifconfig wlan0 down");
 		system("/etc/init.d/wpa_supplicant enable");
 		system("/etc/init.d/wpa_supplicant start&");
 
@@ -2345,8 +2345,8 @@ void PLAT_wifiEnable(bool on) {
 
 		// Honestly, I'd rather not do this but it seems to keep the  questionable wifi implementation
 		// on Trimui from randomly reconnecting automatically
-		//system("rfkill block wifi");
-		system("ifconfig wlan0 up");
+		system("rfkill block wifi");
+		//system("ifconfig wlan0 up");
 		system("/etc/init.d/wpa_supplicant stop&");
 
 		int ret = aw_wifi_off(wifi.interface);

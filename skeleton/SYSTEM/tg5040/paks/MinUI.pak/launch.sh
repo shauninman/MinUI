@@ -130,7 +130,7 @@ if [ "$wifion" != "1" ] ; then
 	# probably unnecessary
 	# /etc/init.d/wpa_supplicant stop # shauninman: not sure this is working
 else
-	rfkill unblock wifi	
+	rfkill unblock wifi
 	ifconfig wlan0 up
 	udhcpc -i wlan0 -n &
 fi
