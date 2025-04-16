@@ -214,7 +214,7 @@ void NetworkItem::drawCustomItem(SDL_Surface *surface, const SDL_Rect &dst, cons
     int ix = dst.x + dst.w - SCALE1(OPTION_PADDING + rect.w);
     int y = dst.y + SCALE1(BUTTON_SIZE - rect.h) / 2;
     SDL_Rect tgt{ix, y};
-    GFX_blitAssetColor(asset, NULL, surface, &tgt, THEME_COLOR3);
+    GFX_blitAssetColor(asset, NULL, surface, &tgt, THEME_COLOR6);
 
     // connected
     if(connected) {
@@ -222,7 +222,7 @@ void NetworkItem::drawCustomItem(SDL_Surface *surface, const SDL_Rect &dst, cons
         ix = ix - SCALE1(OPTION_PADDING + rect.w);
         int y = dst.y + SCALE1(BUTTON_SIZE - rect.h) / 2;
         SDL_Rect tgt{ix, y};
-        GFX_blitAssetColor(ASSET_CHECKCIRCLE, NULL, surface, &tgt, THEME_COLOR3);
+        GFX_blitAssetColor(ASSET_CHECKCIRCLE, NULL, surface, &tgt, THEME_COLOR6);
     }
     // encrypted
     else if(net.security != SECURITY_NONE) {
@@ -230,7 +230,7 @@ void NetworkItem::drawCustomItem(SDL_Surface *surface, const SDL_Rect &dst, cons
         ix = ix - SCALE1(OPTION_PADDING + rect.w + 2);
         int y = dst.y + SCALE1(BUTTON_SIZE - rect.h) / 2;
         SDL_Rect tgt{ix, y};
-        GFX_blitAssetColor(ASSET_LOCK, NULL, surface, &tgt, THEME_COLOR3);
+        GFX_blitAssetColor(ASSET_LOCK, NULL, surface, &tgt, THEME_COLOR6);
     }
 
     if (selected)
