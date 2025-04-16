@@ -27,6 +27,7 @@ all:
 	cd ./all/batmon/ && make
 	cd ./all/libgametimedb/ && make
 	cd ./all/gametime/ && make
+	cd ./all/minput/ && make
 	cd ./all/gametimectl/ && make
 	cd ./all/syncsettings/ && make
 	cd ./all/nextval/ && make
