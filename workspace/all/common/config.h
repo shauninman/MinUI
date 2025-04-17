@@ -44,8 +44,9 @@ typedef struct
 	uint32_t backgroundColor_255; // not screen mapped
 	int thumbRadius;
 	int gameSwitcherScaling; // enum
+	double gameArtWidth;	 // [0,1] -> 0-100% of screen width
 
-    // font loading/unloading callback
+	// font loading/unloading callback
     FontLoad_callback_t onFontChange;
 
     // color update callback
@@ -99,6 +100,7 @@ typedef struct
 #define CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND true
 #define CFG_DEFAULT_SAVEFORMAT SAVE_FORMAT_SAV
 #define CFG_DEFAULT_MUTELEDS false
+#define CFG_DEFAULT_GAMEARTWIDTH 0.45
 
 void CFG_init(FontLoad_callback_t fontCallback, ColorSet_callback_t ccb);
 void CFG_print(void);
@@ -163,6 +165,9 @@ void CFG_setSaveFormat(int);
 // Enable/disable mute also shutting off LEDs.
 bool CFG_getMuteLEDs(void);
 void CFG_setMuteLEDs(bool);
+// Set game art width percentage.
+double CFG_getGameArtWidth(void);
+void CFG_setGameArtWidth(double zeroToOne);
 
 void CFG_sync(void);
 void CFG_quit(void);

@@ -148,10 +148,15 @@ int main(int argc, char *argv[])
                 []() -> std::any{ return CFG_getMenuTransitions(); },
                 [](const std::any &value) { CFG_setMenuTransitions(std::any_cast<bool>(value)); },
                 []() { CFG_setMenuTransitions(CFG_DEFAULT_SHOWMENUTRANSITIONS);}},
-                new MenuItem{ListItemType::Generic, "Thumb radius", "Set the thumb radius for the status pill", 0, 24, 
+                new MenuItem{ListItemType::Generic, "Game art corner radius", "Set the radius for the rounded corners of game art", 0, 24, "px",
                 []() -> std::any{ return CFG_getThumbnailRadius(); }, 
                 [](const std::any &value) { CFG_setThumbnailRadius(std::any_cast<int>(value)); },
                 []() { CFG_setThumbnailRadius(CFG_DEFAULT_THUMBRADIUS);}},
+                new MenuItem{ListItemType::Generic, "Game art width", "Set the percentage of screen width used for game art.\nUI elements might overrule this to avoid clipping.", 
+                5, 100, "%",
+                []() -> std::any{ return (int)(CFG_getGameArtWidth() * 100); }, 
+                [](const std::any &value) { CFG_setGameArtWidth((double)std::any_cast<int>(value) / 100.0); },
+                []() { CFG_setGameArtWidth(CFG_DEFAULT_GAMEARTWIDTH);}},
                 new MenuItem{ListItemType::Generic, "Show recents", "Show \"Recently Played\" menu entry.\nThis also disables Game Switcher.", {false, true}, on_off, 
                 []() -> std::any { return CFG_getShowRecents(); },
                 [](const std::any &value) { CFG_setShowRecents(std::any_cast<bool>(value)); },
@@ -177,23 +182,23 @@ int main(int argc, char *argv[])
 
         auto displayMenu = new MenuList(MenuItemType::Fixed, "Display",
         {
-            new MenuItem{ListItemType::Generic, "Brightness", "Display brightness (0 to 10)", 0, 10, []() -> std::any
+            new MenuItem{ListItemType::Generic, "Brightness", "Display brightness (0 to 10)", 0, 10, "",[]() -> std::any
             { return GetBrightness(); }, [](const std::any &value)
             { SetBrightness(std::any_cast<int>(value)); },
             []() { SetBrightness(SETTINGS_DEFAULT_BRIGHTNESS);}},
-            new MenuItem{ListItemType::Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, []() -> std::any
+            new MenuItem{ListItemType::Generic, "Color temperature", "Color temperature (0 to 40)", 0, 40, "",[]() -> std::any
             { return GetColortemp(); }, [](const std::any &value)
             { SetColortemp(std::any_cast<int>(value)); },
             []() { SetColortemp(SETTINGS_DEFAULT_COLORTEMP);}},
-            new MenuItem{ListItemType::Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, []() -> std::any
+            new MenuItem{ListItemType::Generic, "Contrast", "Contrast enhancement (-4 to 5)", -4, 5, "",[]() -> std::any
             { return GetContrast(); }, [](const std::any &value)
             { SetContrast(std::any_cast<int>(value)); },
             []() { SetContrast(SETTINGS_DEFAULT_CONTRAST);}},
-            new MenuItem{ListItemType::Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, []() -> std::any
+            new MenuItem{ListItemType::Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, "",[]() -> std::any
             { return GetSaturation(); }, [](const std::any &value)
             { SetSaturation(std::any_cast<int>(value)); },
             []() { SetSaturation(SETTINGS_DEFAULT_SATURATION);}},
-            new MenuItem{ListItemType::Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, []() -> std::any
+            new MenuItem{ListItemType::Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, "",[]() -> std::any
             { return GetExposure(); }, [](const std::any &value)
             { SetExposure(std::any_cast<int>(value)); },
             []() { SetExposure(SETTINGS_DEFAULT_EXPOSURE);}},

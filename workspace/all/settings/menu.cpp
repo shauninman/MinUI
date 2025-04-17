@@ -36,7 +36,8 @@ MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string
     initSelection();
 }
 
-MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, int min, int max,
+MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc, 
+                   int min, int max, const std::string suffix,
                    ValueGetCallback on_get, ValueSetCallback on_set, ValueResetCallback on_reset,
                    MenuListCallback on_confirm, MenuList *submenu)
     : type(type), name(name), desc(desc),
@@ -48,14 +49,14 @@ MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string
     for (int i = 0; i < num; i++)
         values.push_back(min + i * step);
 
-    generateDefaultLabels();
+    generateDefaultLabels(suffix);
     initSelection();
     assert(valueIdx >= 0);
 }
 
 MenuItem::MenuItem(ListItemType type, const std::string &name, const std::string &desc,
     MenuListCallback on_confirm, MenuList *submenu)
-    : MenuItem(type, name, desc, 0,0, nullptr, nullptr, nullptr, on_confirm, submenu)
+    : MenuItem(type, name, desc, 0,0, "", nullptr, nullptr, nullptr, on_confirm, submenu)
 {
     
 }
@@ -65,21 +66,21 @@ MenuItem::~MenuItem()
     // delete submenu;
 }
 
-void MenuItem::generateDefaultLabels()
+void MenuItem::generateDefaultLabels(const std::string& suffix)
 {
     labels.clear();
     for (auto v : values)
     {
         if (v.type() == typeid(std::string))
-            labels.push_back(std::any_cast<std::string>(v));
+            labels.push_back(std::any_cast<std::string>(v) + suffix);
         else if (v.type() == typeid(float))
-            labels.push_back(std::to_string(std::any_cast<float>(v)));
+            labels.push_back(std::to_string(std::any_cast<float>(v)) + suffix);
         else if (v.type() == typeid(int))
-            labels.push_back(std::to_string(std::any_cast<int>(v)));
+            labels.push_back(std::to_string(std::any_cast<int>(v)) + suffix);
         else if (v.type() == typeid(uint32_t))
-            labels.push_back(std::to_string(std::any_cast<uint32_t>(v)));
+            labels.push_back(std::to_string(std::any_cast<uint32_t>(v)) + suffix);
         else if (v.type() == typeid(bool))
-            labels.push_back(std::any_cast<bool>(v) ? "On" : "Off");
+            labels.push_back((std::any_cast<bool>(v) ? "On" : "Off") + suffix);
         else
             assert(false); // needs more string conversion
     }

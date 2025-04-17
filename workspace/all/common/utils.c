@@ -496,3 +496,8 @@ int clamp(int x, int lower, int upper)
 {
     return min(upper, max(x, lower));
 }
+
+double clampd(double x, double lower, double upper)
+{
+    return min(upper, max(x, lower));
+}

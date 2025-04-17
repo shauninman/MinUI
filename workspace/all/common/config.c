@@ -33,6 +33,7 @@ void CFG_defaults(NextUISettings *cfg)
         .color6_255 = CFG_DEFAULT_COLOR6,
         .backgroundColor_255 = CFG_DEFAULT_BACKGROUNDCOLOR,
         .thumbRadius = CFG_DEFAULT_THUMBRADIUS,
+        .gameArtWidth = CFG_DEFAULT_GAMEARTWIDTH,
 
         .showClock = CFG_DEFAULT_SHOWCLOCK,
         .clock24h = CFG_DEFAULT_CLOCK24H,
@@ -188,6 +189,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
             if (sscanf(line, "muteLeds=%i", &temp_value) == 1)
             {
                 CFG_setMuteLEDs(temp_value);
+                continue;
+            }
+            if (sscanf(line, "artWidth=%i", &temp_value) == 1)
+            {
+                CFG_setGameArtWidth((double)temp_value / 100.0);
                 continue;
             }
         }
@@ -437,6 +443,16 @@ void CFG_setMuteLEDs(bool on)
     settings.muteLeds = on;
 }
 
+double CFG_getGameArtWidth(void)
+{
+    return settings.gameArtWidth;
+}
+
+void CFG_setGameArtWidth(double zeroToOne)
+{
+    settings.gameArtWidth = clampd(zeroToOne, 0.0, 1.0);
+}
+
 void CFG_get(const char *key, char *value)
 {
     if (strcmp(key, "font") == 0)
@@ -527,6 +543,10 @@ void CFG_get(const char *key, char *value)
     {
         sprintf(value, "%i", CFG_getMuteLEDs());
     }
+    else if (strcmp(key, "artWidth") == 0)
+    {
+        sprintf(value, "%i", (int)(CFG_getGameArtWidth()) * 100);
+    }
 
     // meta, not a real setting
     else if (strcmp(key, "fontpath") == 0)
@@ -579,6 +599,7 @@ void CFG_sync(void)
     fprintf(file, "romfolderbg=%i\n", settings.romsUseFolderBackground);
     fprintf(file, "saveFormat=%i\n", settings.saveFormat);
     fprintf(file, "muteLeds=%i\n", settings.muteLeds);
+    fprintf(file, "artWidth=%i\n", (int)(settings.gameArtWidth * 100));
 
     fclose(file);
 }
@@ -609,6 +630,7 @@ void CFG_print(void)
     printf("\t\"romfolderbg\": %i,\n", settings.romsUseFolderBackground);
     printf("\t\"saveFormat\": %i,\n", settings.saveFormat);
     printf("\t\"muteLeds\": %i,\n", settings.muteLeds);
+    printf("\t\"artWidth\": %i,\n", (int)(settings.gameArtWidth * 100));
 
     // meta, not a real setting
     if (settings.font == 1)

@@ -1783,7 +1783,7 @@ int main (int argc, char *argv[]) {
 							int img_h = thumbbmp->h;
 							double aspect_ratio = (double)img_h / img_w;
 							
-							int max_w = (int)(screen->w * 0.45); 
+							int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
 							int max_h = (int)(screen->h * 0.6);  
 							
 							int new_w = max_w;

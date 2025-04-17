@@ -153,7 +153,7 @@ class MenuItem
     MenuList *submenu{nullptr};
     bool deferred{false};
 
-    void generateDefaultLabels();
+    void generateDefaultLabels(const std::string& suffix = "");
     void initSelection();
     bool nextValue();
     bool prevValue();
@@ -172,7 +172,7 @@ public:
              ValueResetCallback on_reset = nullptr, MenuListCallback on_confirm = nullptr, 
              MenuList *submenu = nullptr);
 
-    MenuItem(ListItemType type, const std::string &name, const std::string &desc, int min, int max,
+    MenuItem(ListItemType type, const std::string &name, const std::string &desc, int min, int max, const std::string suffix,
              ValueGetCallback on_get = nullptr, ValueSetCallback on_set = nullptr, 
              ValueResetCallback on_reset = nullptr, MenuListCallback on_confirm = nullptr, 
              MenuList *submenu = nullptr);
