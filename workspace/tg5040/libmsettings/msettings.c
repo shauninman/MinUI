@@ -300,13 +300,9 @@ void InitSettings(void) {
 	system("amixer sset 'digital volume' 0"); // 100%
 	system("amixer sset 'DAC Swap' Off"); // Fix L/R channels
 	// volume is set with 'digital volume'
-	
-	SetVolume(GetVolume());
-	SetBrightness(GetBrightness());
-	SetColortemp(GetColortemp());
-	SetContrast(GetContrast());
-	SetExposure(GetExposure());
-	SetSaturation(GetSaturation());
+
+	// This will implicitly update all other settings based on FN switch state
+	SetMute(settings->mute);
 }
 void QuitSettings(void) {
 	munmap(settings, shm_size);
@@ -386,15 +382,12 @@ int GetMutedVolume(void)
 ///////// Setters exposed in public API
 
 void SetBrightness(int value) {
-
-	int raw = scaleBrightness(value);
-	SetRawBrightness(raw);
+	SetRawBrightness(scaleBrightness(value));
 	settings->brightness = value;
 	SaveSettings();
 }
 void SetColortemp(int value) {
-	int raw = scaleColortemp(value);
-	SetRawColortemp(raw);
+	SetRawColortemp(scaleColortemp(value));
 	settings->colortemperature = value;
 	SaveSettings();
 }
@@ -406,8 +399,7 @@ void SetVolume(int value) { // 0-20
 	if (settings->jack) settings->headphones = value;
 	else settings->speaker = value;
 
-	int raw = scaleVolume(value);
-	SetRawVolume(raw);
+	SetRawVolume(scaleVolume(value));
 	SaveSettings();
 }
 // monitored and set by thread in keymon
@@ -454,22 +446,19 @@ void SetMute(int value) {
 }
 void SetContrast(int value)
 {
-	int raw = scaleContrast(value);
-	SetRawContrast(raw);
+	SetRawContrast(scaleContrast(value));
 	settings->contrast = value;
 	SaveSettings();
 }
 void SetSaturation(int value)
 {
-	int raw = scaleSaturation(value);
-	SetRawSaturation(raw);
+	SetRawSaturation(scaleSaturation(value));
 	settings->saturation = value;
 	SaveSettings();
 }
 void SetExposure(int value)
 {
-	int raw = scaleExposure(value);
-	SetRawExposure(raw);
+	SetRawExposure(scaleExposure(value));
 	settings->exposure = value;
 	SaveSettings();
 }
