@@ -41,16 +41,18 @@ int GetMute(void);
 
 // custom mute mode persistence layer
 
-int  GetMutedBrightness(void);
-int  GetMutedColortemp(void);
-int  GetMutedContrast(void);
-int  GetMutedSaturation(void);
-int  GetMutedExposure(void);
+int GetMutedBrightness(void);
+int GetMutedColortemp(void);
+int GetMutedContrast(void);
+int GetMutedSaturation(void);
+int GetMutedExposure(void);
+int GetMutedVolume(void);
 
 void SetMutedBrightness(int);
 void SetMutedColortemp(int);
 void SetMutedContrast(int);
 void SetMutedSaturation(int);
 void SetMutedExposure(int);
+void SetMutedVolume(int);
 
 #endif  // __msettings_h__

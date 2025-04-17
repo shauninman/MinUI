@@ -203,8 +203,10 @@ int main(int argc, char *argv[])
 
         auto systemMenu = new MenuList(MenuItemType::Fixed, "System",
         {
-            new MenuItem{ListItemType::Generic, "Volume", "Speaker volume (0-20)", 0, 20, []() -> std::any
-            { return GetVolume(); }, [](const std::any &value)
+            new MenuItem{ListItemType::Generic, "Volume", "Speaker volume", 
+            {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}, 
+            {"Muted", "5%","10%","15%","20%","25%","30%","35%","40%","45%","50%","55%","60%","65%","70%","75%","80%","85%","90%","95%","100%"}, 
+            []() -> std::any{ return GetVolume(); }, [](const std::any &value)
             { SetVolume(std::any_cast<int>(value)); },
             []() { SetVolume(SETTINGS_DEFAULT_VOLUME);}},
             new MenuItem{ListItemType::Generic, "Screen timeout", "Time before screen turns off (0-600s)", timeout_secs, timeout_labels, []() -> std::any
@@ -245,38 +247,43 @@ int main(int argc, char *argv[])
             new MenuItem{ListItemType::Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
 
-        auto muteMenu = new MenuList(MenuItemType::Fixed, "Mute Switch",
+        auto muteMenu = new MenuList(MenuItemType::Fixed, "FN Switch",
         {
-            new MenuItem{ListItemType::Generic, "Mute switch disables LED", "Mute will also disable LEDs", {false, true}, on_off, 
+            new MenuItem{ListItemType::Generic, "Volume when toggled", "Speaker volume (0-20)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}, 
+            {"Unchanged", "Muted", "5%","10%","15%","20%","25%","30%","35%","40%","45%","50%","55%","60%","65%","70%","75%","80%","85%","90%","95%","100%"}, 
+            []() -> std::any { return GetMutedVolume(); },
+            [](const std::any &value) { SetMutedVolume(std::any_cast<int>(value)); },
+            []() { SetMutedVolume(0); }},
+            new MenuItem{ListItemType::Generic, "FN switch disables LED", "Switch will also disable LEDs", {false, true}, on_off, 
             []() -> std::any { return CFG_getMuteLEDs(); },
             [](const std::any &value) { CFG_setMuteLEDs(std::any_cast<bool>(value)); },
             []() { CFG_setMuteLEDs(CFG_DEFAULT_MUTELEDS); }},
-
-            new MenuItem{ListItemType::Generic, "Brightness when muted", "Display brightness (0 to 10)", 
+            new MenuItem{ListItemType::Generic, "Brightness when toggled", "Display brightness (0 to 10)", 
             {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, 0,1,2,3,4,5,6,7,8,9,10}, 
             {"Unchanged","0","1","2","3","4","5","6","7","8","9","10"},
             []() -> std::any { return GetMutedBrightness(); }, [](const std::any &value)
             { SetMutedBrightness(std::any_cast<int>(value)); },
             []() { SetMutedBrightness(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
-            new MenuItem{ListItemType::Generic, "Color temperature when muted", "Color temperature (0 to 40)", 
+            new MenuItem{ListItemType::Generic, "Color temperature when toggled", "Color temperature (0 to 40)", 
             {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40}, 
             {"Unchanged","0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"},
             []() -> std::any{ return GetMutedColortemp(); }, [](const std::any &value)
             { SetMutedColortemp(std::any_cast<int>(value)); },
             []() { SetMutedColortemp(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
-            new MenuItem{ListItemType::Generic, "Contrast when muted", "Contrast enhancement (-4 to 5)", 
+            new MenuItem{ListItemType::Generic, "Contrast when toggled", "Contrast enhancement (-4 to 5)", 
             {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -4,-3,-2,-1,0,1,2,3,4,5}, 
             {"Unchanged","-4","-3","-2","-1","0","1","2","3","4","5"}, 
             []() -> std::any  { return GetMutedContrast(); }, [](const std::any &value)
             { SetMutedContrast(std::any_cast<int>(value)); },
             []() { SetMutedContrast(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
-            new MenuItem{ListItemType::Generic, "Saturation when muted", "Saturation enhancement (-4 to 5)", 
+            new MenuItem{ListItemType::Generic, "Saturation when toggled", "Saturation enhancement (-4 to 5)", 
             {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -4,-3,-2,-1,0,1,2,3,4,5}, 
             {"Unchanged","-4","-3","-2","-1","0","1","2","3","4","5"}, 
             []() -> std::any{ return GetMutedSaturation(); }, [](const std::any &value)
             { SetMutedSaturation(std::any_cast<int>(value)); },
             []() { SetMutedSaturation(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
-            new MenuItem{ListItemType::Generic, "Exposure when muted", "Exposure enhancement (-5 to 5)", 
+            new MenuItem{ListItemType::Generic, "Exposure when toggled", "Exposure enhancement (-5 to 5)", 
             {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -5,-4,-3,-2,-1,0,1,2,3,4,5}, 
             {"Unchanged","-5","-4","-3","-2","-1","0","1","2","3","4","5"}, 
             []() -> std::any  { return GetMutedExposure(); }, [](const std::any &value)
@@ -294,7 +301,7 @@ int main(int argc, char *argv[])
             new MenuItem{ListItemType::Generic, "Appearance", "UI customization", {}, {}, nullptr, nullptr, DeferToSubmenu, appearanceMenu},
             new MenuItem{ListItemType::Generic, "Display", "", {}, {}, nullptr, nullptr, DeferToSubmenu, displayMenu},
             new MenuItem{ListItemType::Generic, "System", "", {}, {}, nullptr, nullptr, DeferToSubmenu, systemMenu},
-            new MenuItem{ListItemType::Generic, "Mute switch", "Mute switch settings", {}, {}, nullptr, nullptr, DeferToSubmenu, muteMenu},
+            new MenuItem{ListItemType::Generic, "FN switch", "FN switch settings", {}, {}, nullptr, nullptr, DeferToSubmenu, muteMenu},
             new MenuItem{ListItemType::Generic, "Network", "", {}, {}, nullptr, nullptr, DeferToSubmenu, networkMenu},
         });
 

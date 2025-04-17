@@ -157,17 +157,19 @@ int GetSaturation(void) { return 0; }
 int GetExposure(void) { return 0; }
 int GetVolume(void) { return 0; }
 
-int  GetMutedBrightness(void) { return 0; }
-int  GetMutedColortemp(void) { return 0; }
-int  GetMutedContrast(void) { return 0; }
-int  GetMutedSaturation(void) { return 0; }
-int  GetMutedExposure(void) { return 0; }
+int GetMutedBrightness(void) { return 0; }
+int GetMutedColortemp(void) { return 0; }
+int GetMutedContrast(void) { return 0; }
+int GetMutedSaturation(void) { return 0; }
+int GetMutedExposure(void) { return 0; }
+int GetMutedVolume(void) { return 0; }
 
 void SetMutedBrightness(int value){}
 void SetMutedColortemp(int value){}
 void SetMutedContrast(int value){}
 void SetMutedSaturation(int value){}
 void SetMutedExposure(int value){}
+void SetMutedVolume(int value){}
 
 void SetRawBrightness(int value) {}
 void SetRawVolume(int value){}

@@ -88,10 +88,31 @@ typedef struct SettingsV7 {
 	int jack; 
 } SettingsV7;
 
+typedef struct SettingsV8 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int contrast;
+	int saturation;
+	int exposure;
+	int toggled_brightness;
+	int toggled_colortemperature;
+	int toggled_contrast;
+	int toggled_saturation;
+	int toggled_exposure;
+	int toggled_volume;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV8;
+
 // When incrementing SETTINGS_VERSION, update the Settings typedef and add
 // backwards compatibility to InitSettings!
-#define SETTINGS_VERSION 7
-typedef SettingsV7 Settings;
+#define SETTINGS_VERSION 8
+typedef SettingsV8 Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
 	.brightness = SETTINGS_DEFAULT_BRIGHTNESS,
@@ -102,11 +123,12 @@ static Settings DefaultSettings = {
 	.contrast = SETTINGS_DEFAULT_CONTRAST,
 	.saturation = SETTINGS_DEFAULT_SATURATION,
 	.exposure = SETTINGS_DEFAULT_EXPOSURE,
-	.mutedbrightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
-	.mutedcolortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
-	.mutedcontrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
-	.mutedsaturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
-	.mutedexposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_brightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_colortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_contrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_saturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_exposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_volume = 0, // mute is default
 	.jack = 0,
 };
 static Settings* settings;
@@ -117,16 +139,12 @@ static int shm_fd = -1;
 static int is_host = 0;
 static int shm_size = sizeof(Settings);
 
-// #define BACKLIGHT_PATH "/sys/class/backlight/backlight/bl_power"
-// #define BRIGHTNESS_PATH "/sys/class/backlight/backlight/brightness"
-// #define JACK_STATE_PATH "/sys/bus/platform/devices/singleadc-joypad/hp"
-// #define HDMI_STATE_PATH "/sys/class/extcon/hdmi/cable.0/state"
-
 int scaleBrightness(int);
 int scaleColortemp(int);
 int scaleContrast(int);
 int scaleSaturation(int);
 int scaleExposure(int);
+int scaleVolume(int);
 
 int getInt(char* path) {
 	int i = 0;
@@ -183,15 +201,37 @@ void InitSettings(void) {
 				if (version == SETTINGS_VERSION) {
 					read(fd, settings, shm_size);
 				}
+				else if(version==7) {
+					SettingsV7 old;
+					read(fd, &old, sizeof(SettingsV7));
+					// default muted
+					settings->toggled_volume = 0;
+					// muted* -> toggled*
+					settings->toggled_brightness = old.mutedbrightness;
+					settings->toggled_colortemperature = old.mutedcolortemperature;
+					settings->toggled_contrast = old.mutedcontrast;
+					settings->toggled_exposure = old.mutedexposure;
+					settings->toggled_saturation = old.mutedsaturation;
+					// copy the rest
+					settings->saturation = old.saturation;
+					settings->contrast = old.contrast;
+					settings->exposure = old.exposure;
+					settings->colortemperature = old.colortemperature;
+					settings->brightness = old.brightness;
+					settings->headphones = old.headphones;
+					settings->speaker = old.speaker;
+					settings->mute = old.mute;
+					settings->jack = old.jack;
+				}
 				else if(version==6) {
 					SettingsV6 old;
 					read(fd, &old, sizeof(SettingsV6));
 					// no muted* settings yet, default values used.
-					settings->mutedbrightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
-					settings->mutedcolortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
-					settings->mutedcontrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
-					settings->mutedexposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
-					settings->mutedsaturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->toggled_brightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->toggled_colortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->toggled_contrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->toggled_exposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+					settings->toggled_saturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
 					// copy the rest
 					settings->saturation = old.saturation;
 					settings->contrast = old.contrast;
@@ -264,6 +304,9 @@ void InitSettings(void) {
 	SetVolume(GetVolume());
 	SetBrightness(GetBrightness());
 	SetColortemp(GetColortemp());
+	SetContrast(GetContrast());
+	SetExposure(GetExposure());
+	SetSaturation(GetSaturation());
 }
 void QuitSettings(void) {
 	munmap(settings, shm_size);
@@ -287,7 +330,8 @@ int GetColortemp(void) { // 0-10
 	return settings->colortemperature;
 }
 int GetVolume(void) { // 0-20
-	if (settings->mute) return 0;
+	if (settings->mute && GetMutedVolume() != SETTINGS_DEFAULT_MUTE_NO_CHANGE)
+		return GetMutedVolume();
 	return settings->jack ? settings->headphones : settings->speaker;
 }
 // monitored and set by thread in keymon
@@ -316,23 +360,27 @@ int GetExposure(void)
 }
 int GetMutedBrightness(void)
 {
-	return settings->mutedbrightness;
+	return settings->toggled_brightness;
 }
 int GetMutedColortemp(void)
 {
-	return settings->mutedcolortemperature;
+	return settings->toggled_colortemperature;
 }
 int GetMutedContrast(void)
 {
-	return settings->mutedcontrast;
+	return settings->toggled_contrast;
 }
 int GetMutedSaturation(void)
 {
-	return settings->mutedsaturation;
+	return settings->toggled_saturation;
 }
 int GetMutedExposure(void)
 {
-	return settings->mutedexposure;
+	return settings->toggled_exposure;
+}
+int GetMutedVolume(void)
+{
+	return settings->toggled_volume;
 }
 
 ///////// Setters exposed in public API
@@ -351,13 +399,14 @@ void SetColortemp(int value) {
 	SaveSettings();
 }
 void SetVolume(int value) { // 0-20
-	if (settings->mute) return SetRawVolume(0);
+	if (settings->mute) 
+		return SetRawVolume(scaleVolume(GetMutedVolume()));
 	// if (settings->hdmi) return;
 	
 	if (settings->jack) settings->headphones = value;
 	else settings->speaker = value;
 
-	int raw = value * 5;
+	int raw = scaleVolume(value);
 	SetRawVolume(raw);
 	SaveSettings();
 }
@@ -380,9 +429,10 @@ void SetHDMI(int value) {
 void SetMute(int value) {
 	settings->mute = value;
 	if (settings->mute) {
-		SetRawVolume(0);
+		if (GetMutedVolume() != SETTINGS_DEFAULT_MUTE_NO_CHANGE)
+			SetRawVolume(scaleVolume(GetMutedVolume()));
 		// custom mute mode display settings
-		if(GetMutedBrightness() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+		if (GetMutedBrightness() != SETTINGS_DEFAULT_MUTE_NO_CHANGE)
 			SetRawBrightness(scaleBrightness(GetMutedBrightness()));
 		if(GetMutedColortemp() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
 			SetRawColortemp(scaleColortemp(GetMutedColortemp()));
@@ -426,35 +476,45 @@ void SetExposure(int value)
 
 void SetMutedBrightness(int value)
 {
-	settings->mutedbrightness = value;
+	settings->toggled_brightness = value;
 	SaveSettings();
 }
 
 void SetMutedColortemp(int value)
 {
-	settings->mutedcolortemperature = value;
+	settings->toggled_colortemperature = value;
 	SaveSettings();
 }
 
 void SetMutedContrast(int value)
 {
-	settings->mutedcontrast = value;
+	settings->toggled_contrast = value;
 	SaveSettings();
 }
 
 void SetMutedSaturation(int value)
 {
-	settings->mutedsaturation = value;
+	settings->toggled_saturation = value;
 	SaveSettings();
 }
 
 void SetMutedExposure(int value)
 {
-	settings->mutedexposure = value;
+	settings->toggled_exposure = value;
+	SaveSettings();
+}
+
+void SetMutedVolume(int value)
+{
+	settings->toggled_volume = value;
 	SaveSettings();
 }
 
 ///////// Platform specific scaling
+
+int scaleVolume(int value) {
+	return value * 5;
+}
 
 int scaleBrightness(int value) {
 	int raw;
@@ -621,7 +681,7 @@ void SetRawColortemp(int val) { // 0 - 255
 }
 void SetRawVolume(int val) { // 0-100
 	printf("SetRawVolume(%i)\n", val); fflush(stdout);
-	if (settings->mute) val = 0;
+	if (settings->mute) val = scaleVolume(GetMutedVolume());
 	
 	// Note: 'digital volume' mapping is reversed
 	char cmd[256];
