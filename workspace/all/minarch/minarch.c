@@ -57,6 +57,7 @@ static int use_core_fps = 0;
 static int sync_ref = 0;
 static int show_debug = 0;
 static int max_ff_speed = 3; // 4x
+static int ff_audio = 0;
 static int fast_forward = 0;
 static int overclock = 3; // auto
 static int has_custom_controllers = 0;
@@ -1024,6 +1025,7 @@ enum {
 	FE_OPT_OVERCLOCK,
 	FE_OPT_DEBUG,
 	FE_OPT_MAXFF,
+	FE_OPT_FF_AUDIO,
 	FE_OPT_COUNT,
 };
 
@@ -1340,6 +1342,16 @@ static struct Config {
 				.values = max_ff_labels,
 				.labels = max_ff_labels,
 			},
+			[FE_OPT_FF_AUDIO] = {
+				.key	= "minarch__ff_audio", 
+				.name	= "Fast forward audio",
+				.desc	= "Play or mute audio when fast forwarding.",
+				.default_value = 0,
+				.value = 0,
+				.count = 2,
+				.values = onoff_labels,
+				.labels = onoff_labels,
+			},
 			[FE_OPT_COUNT] = {NULL}
 		}
 	},
@@ -1481,6 +1493,10 @@ static void Config_syncFrontend(char* key, int value) {
 	else if (exactMatch(key,config.frontend.options[FE_OPT_MAXFF].key)) {
 		max_ff_speed = value;
 		i = FE_OPT_MAXFF;
+	}
+	else if (exactMatch(key,config.frontend.options[FE_OPT_FF_AUDIO].key)) {
+		ff_audio = value;
+		i = FE_OPT_FF_AUDIO;
 	}
 	if (i==-1) return;
 	Option* option = &config.frontend.options[i];
@@ -3630,7 +3646,7 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 
 // NOTE: sound must be disabled for fast forward to work...
 static void audio_sample_callback(int16_t left, int16_t right) {
-	if (!fast_forward) {
+	if (!fast_forward || ff_audio) {
 		if (use_core_fps) {
 			SND_batchSamples_fixed_rate(&(const SND_Frame){left,right}, 1);
 		}
@@ -3640,7 +3656,7 @@ static void audio_sample_callback(int16_t left, int16_t right) {
 	}
 }
 static size_t audio_sample_batch_callback(const int16_t *data, size_t frames) { 
-	if (!fast_forward) {
+	if (!fast_forward || ff_audio) {
 		if (use_core_fps) {
 			return SND_batchSamples_fixed_rate((const SND_Frame*)data, frames);
 		}
