@@ -10,5 +10,5 @@ $(PLATFORM):
 	cp ./workspace/$@/show/show.elf ./build/BOOT/common/$@/
 	cp ./workspace/$@/other/unzip60/unzip ./build/BOOT/common/$@/
 	# extras
-	cp ./workspace/$@/other/DinguxCommander-sdl2/DinguxCommander ./build/EXTRAS/Tools/$@/Files.pak/
-	cp -r ./workspace/$@/other/DinguxCommander-sdl2/res ./build/EXTRAS/Tools/$@/Files.pak/
+	cp ./workspace/$@/other/NextCommander/output/NextCommander ./build/EXTRAS/Tools/$@/Files.pak/
+	cp -r ./workspace/$@/other/NextCommander/res ./build/EXTRAS/Tools/$@/Files.pak/
