@@ -54,6 +54,10 @@ void LOG_note(int level, const char* fmt, ...);
 #ifndef SCREEN_FPS
 #define SCREEN_FPS 60.0
 #endif
+
+#define SHADERS_FOLDER SDCARD_PATH "/Shaders"
+#define SYSSHADERS_FOLDER SYSTEM_PATH "/shaders"
+
 ///////////////////////////////
 
 extern uint32_t RGB_WHITE;
@@ -224,6 +228,7 @@ SDL_Surface* GFX_init(int mode);
 #define GFX_scrollTextTexture PLAT_scrollTextTexture
 #define GFX_flipHidden PLAT_flipHidden //(void)
 #define GFX_GPU_Flip PLAT_GPU_Flip//(void)
+#define GFX_GL_Swap PLAT_GL_Swap //(void)
 
 #define GFX_present PLAT_present //(SDL_Surface *inputSurface,int x, int y)
 void GFX_setMode(int mode);
@@ -262,6 +267,9 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 
 #define GFX_getScaler PLAT_getScaler		// scaler_t:(GFX_Renderer* renderer)
 #define GFX_blitRenderer PLAT_blitRenderer	// void:(GFX_Renderer* renderer)
+#define GFX_setShaders PLAT_setShaders	// void:(GFX_Renderer* renderer)
+#define GFX_resetShaders PLAT_resetShaders	// void:(GFX_Renderer* renderer)
+#define GFX_updateShader PLAT_updateShader	// void:(GFX_Renderer* renderer)
 
 scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
 void GFX_freeAAScaler(void);
@@ -544,8 +552,20 @@ void PLAT_vsync(int remaining);
 scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
+void PLAT_GL_Swap();
 void PLAT_GPU_Flip();
-void PLAT_GPU_core_flip(const void *data,size_t pitch,int width,int height);
+void PLAT_setShaders(int nr);
+void PLAT_resetShaders();
+void PLAT_setShader1Filter(int value);
+void PLAT_setShader2Filter(int value);
+void PLAT_setShader3Filter(int value);
+void PLAT_setShaderUpscale1(int nr);
+void PLAT_setShaderUpscale2(int nr);
+void PLAT_setShaderUpscale3(int nr);
+void PLAT_setShader1(const char* filename);
+void PLAT_setShader2(const char* filename);
+void PLAT_setShader3(const char* filename);
+void PLAT_updateShader(int i, const char *filename, int *scale, int *filter);
 int PLAT_supportsOverscan(void);
 
 SDL_Surface* PLAT_initOverlay(void);
