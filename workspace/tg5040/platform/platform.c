@@ -1872,11 +1872,6 @@ void PLAT_GL_Swap() {
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			printf("Framebuffer not complete in pass %d!\n", i);
 		}
-		LOG_info("shader pass: %i\n",i);
-		// LOG_info("src_w: %i\n",src_w);
-		// LOG_info("dst_w: %i\n",dst_w);
-		// LOG_info("src_h: %i\n",src_h);
-		// LOG_info("dst_h: %i\n",dst_h);
 
 		GLfloat texelPass[2] = {1.0f / src_w, 1.0f / src_h};
         runShaderPass(i==0?initial_texture:pass_textures[i-1], shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
@@ -1887,14 +1882,6 @@ void PLAT_GL_Swap() {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// LOG_info("downscaling from: %i\n",last_w);
-	// LOG_info("dst_rect.x %i\n",dst_rect.x);
-	// LOG_info("dst_rect.y %i\n",dst_rect.y);
-	// LOG_info("dst_rect.w %i\n",dst_rect.w);
-	// LOG_info("dst_rect.h %i\n",dst_rect.h);
-	// LOG_info("last_w %i\n",last_w);
-	// LOG_info("last_h %i\n",last_h);
-	// LOG_info("nrofshaders %i\n",nrofshaders);
 	GLfloat texelSizeOutput[2] = {1.0f / last_w, 1.0f / last_h};
     runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,

@@ -20,7 +20,7 @@ void main() {
     vec2 offsetX = vec2(texelSize.x, 0.0);
     vec2 offsetY = vec2(0.0, texelSize.y);
 
-    float sharpenStrength = 0.1; // Change this value to control sharpness
+    float sharpenStrength = 0.3; // Change this value to control sharpness
 
     vec4 center = texture2D(Texture, vTexCoord);
     vec4 up     = texture2D(Texture, vTexCoord - offsetY);
