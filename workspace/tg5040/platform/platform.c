@@ -424,11 +424,10 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter) {
             char infoLog[512];
             glGetProgramInfoLog(shader->shader_p, 512, NULL, infoLog);
             LOG_error("Shader Program Linking Failed: %s\n", infoLog);
-        }
-        
-        LOG_info("Shader set now to %s\n", filename);
+        } else {
+			LOG_info("Shader Program Linking Success %s shader ID is %i\n", filename,shader->shader_p);
+		}
     }
-
     // Only update scale if it's not NULL
     if (scale != NULL) {
         shader->scale = *scale +1;
@@ -1874,9 +1873,16 @@ void PLAT_GL_Swap() {
 		}
 
 		GLfloat texelPass[2] = {1.0f / src_w, 1.0f / src_h};
-        runShaderPass(i==0?initial_texture:pass_textures[i-1], shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
-			 dst_w, dst_h,src_w, src_h,
-			texelPass, shaders[i]->filter , 0,dst_rect.w,dst_rect.h);
+		// check if program loaded otherwise just use default instead
+		if(shaders[i]->shader_p) {
+			runShaderPass(i==0?initial_texture:pass_textures[i-1], shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
+				dst_w, dst_h,src_w, src_h,
+				texelPass, shaders[i]->filter , 0,dst_rect.w,dst_rect.h);
+		} else {
+			runShaderPass(i==0?initial_texture:pass_textures[i-1], g_shader_default, &fbo, &pass_textures[i], 0, 0,
+				dst_w, dst_h,src_w, src_h,
+			   texelPass, shaders[i]->filter , 0,dst_rect.w,dst_rect.h);
+		}
 	}
 
 
