@@ -36,6 +36,7 @@ volatile int useAutoCpu = 1;
 typedef struct Shader {
 	GLuint shader_p;
 	int scale;
+	int scaletype;
 	int filter;
 } Shader;
 
@@ -44,9 +45,9 @@ GLuint g_shader_color = 0;
 GLuint g_shader_overlay = 0;
 
 Shader* shaders[3] = {
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR }, 
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR }, 
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR }
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1 }, 
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1  }, 
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1  }
 };
 
 static int nrofshaders = 0; // choose between 1 and 3 pipelines, > pipelines = more cpu usage, but more shader options and shader upscaling stuff
@@ -395,7 +396,7 @@ void PLAT_resetShaders() {
 	shadersupdated = 1;
 }
 
-void PLAT_updateShader(int i, const char *filename, int *scale, int *filter) {
+void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype) {
     // Check if the shader index is valid
     if (i < 0 || i >= 3) {
         LOG_error("Invalid shader index %d\n", i);
@@ -431,6 +432,9 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter) {
     // Only update scale if it's not NULL
     if (scale != NULL) {
         shader->scale = *scale +1;
+    }
+    if (scaletype != NULL) {
+        shader->scaletype = *scaletype;
     }
 
     // Only update filter if it's not NULL
@@ -1624,7 +1628,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 
 static int frame_count = 0;
 void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* tex,
-                   int x, int y, int width, int height, int input_tex_w, int input_tex_h, GLfloat texelSize[2],
+                   int x, int y, int width, int height, int input_tex_w, int input_tex_h, int src_w, int src_h, GLfloat texelSize[2],
                    GLenum filter, int layer) {
 
 	static GLuint static_VAO = 0, static_VBO = 0;
@@ -1668,13 +1672,16 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 	GLint u_OutputSize = glGetUniformLocation(shader_program, "OutputSize");
 	GLint u_TextureSize = glGetUniformLocation(shader_program, "TextureSize");
 	GLint u_InputSize = glGetUniformLocation(shader_program, "InputSize");
-
+	GLint u_gamma = glGetUniformLocation(shader_program, "gamma");
+	GLint u_grid_strength = glGetUniformLocation(shader_program, "GRID_STRENGTH");
 
 	if (u_FrameDirection >= 0) glUniform1i(u_FrameDirection, 1);
 	if (u_FrameCount >= 0) glUniform1i(u_FrameCount, frame_count);
 	if (u_OutputSize >= 0) glUniform2f(u_OutputSize, width, height);
 	if (u_TextureSize >= 0) glUniform2f(u_TextureSize, input_tex_w, input_tex_h); 
-	if (u_InputSize >= 0) glUniform2f(u_InputSize, input_tex_w, input_tex_h); 
+	if (u_InputSize >= 0) glUniform2f(u_InputSize, src_w, src_h); 
+	if (u_gamma >= 0) glUniform1f(u_gamma, 2.2f);
+	if (u_grid_strength >= 0) glUniform1f(u_grid_strength, 0.05f); 
 
 	GLint u_MVP = glGetUniformLocation(shader_program, "MVPMatrix");
 	if (u_MVP >= 0) {
@@ -1860,7 +1867,7 @@ void PLAT_GL_Swap() {
 
 	if (!initial_texture) glGenTextures(1, &initial_texture);
 	runShaderPass(src_texture, g_shader_color, &fbo, &initial_texture, 0, 0,
-		vid.blit->src_w, vid.blit->src_h, vid.blit->src_w, vid.blit->src_h,
+		vid.blit->src_w, vid.blit->src_h, vid.blit->src_w, vid.blit->src_h,vid.blit->src_w,vid.blit->src_h,
 				  texelSizeSource, GL_NEAREST, 0);
 
 	static int last_w=0;
@@ -1878,8 +1885,11 @@ void PLAT_GL_Swap() {
 		
 		int src_w = i == 0 ? vid.blit->src_w:last_w;
     	int src_h = i == 0 ? vid.blit->src_h:last_h;
-		int dst_w = vid.blit->src_w * shaders[i]->scale;
-    	int dst_h = vid.blit->src_h * shaders[i]->scale;
+		int dst_w = src_w * shaders[i]->scale;
+    	int dst_h = src_h * shaders[i]->scale;
+		int screen_w = dst_rect.w * shaders[i]->scale;
+		int screen_h = dst_rect.h * shaders[i]->scale;
+
 		if(shaders[i]->scale == 9) {
 			dst_w = dst_rect.w;
 			dst_h = dst_rect.h;
@@ -1898,15 +1908,18 @@ void PLAT_GL_Swap() {
 			printf("Framebuffer not complete in pass %d!\n", i);
 		}
 
-		GLfloat texelPass[2] = {1.0f / src_w, 1.0f / src_h};
+		GLfloat texelPass[2] = {1.0f / shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w, 1.0f / shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h};
 		// check if program loaded otherwise just use default instead
+		// LOG_info("source w: %i\n",shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w);
+		// LOG_info("source h: %i\n",shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h);
+		// LOG_info("-------- new pass ----------\n\n\n\n\n");
 		if(shaders[i]->shader_p) {
 			runShaderPass(i==0?initial_texture:pass_textures[i-1], shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
-				dst_w, dst_h,src_w, src_h,
+				dst_w, dst_h,shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w, shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h,vid.blit->src_w,vid.blit->src_h,
 				texelPass, shaders[i]->filter , 0);
 		} else {
 			runShaderPass(i==0?initial_texture:pass_textures[i-1], g_shader_default, &fbo, &pass_textures[i], 0, 0,
-				dst_w, dst_h,src_w, src_h,
+				dst_w, dst_h,shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w, shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h,vid.blit->src_w,vid.blit->src_h,
 			   texelPass, shaders[i]->filter , 0);
 		}
 	}
@@ -1915,19 +1928,20 @@ void PLAT_GL_Swap() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	GLfloat texelSizeOutput[2] = {1.0f / last_w, 1.0f / last_h};
+
     runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-                  last_w, last_h, texelSizeOutput, GL_NEAREST, 0);
+                  last_w, last_h,vid.blit->src_w,vid.blit->src_h, texelSizeOutput, GL_NEAREST, 0);
 
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
-					  effect_w, effect_h, texelSizeOutput, GL_NEAREST, 1);
+					  effect_w, effect_h,vid.blit->src_w,vid.blit->src_h, texelSizeOutput, GL_NEAREST, 1);
     }
     if (overlay_tex) {
         runShaderPass(overlay_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
-					  overlay_w, overlay_h, texelSizeOutput, GL_NEAREST, 1);
+					  overlay_w, overlay_h,vid.blit->src_w,vid.blit->src_h, texelSizeOutput, GL_NEAREST, 1);
     }
     SDL_GL_SwapWindow(vid.window);
     shadersupdated = 0;
