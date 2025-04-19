@@ -3056,12 +3056,20 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	case RETRO_ENVIRONMENT_SET_HW_RENDER:
 	{
 		struct retro_hw_render_callback *cb = (struct retro_hw_render_callback*)data;
-
-		// You can log some of the requested values:
-		LOG_info("Core requested GL context type: %d, version %d.%d\n",
+		
+		// Log the requested context
+		LOG_info("Core requested GL context type: %d, version %d.%d\n", 
 			cb->context_type, cb->version_major, cb->version_minor);
 
-		return true; // Tell the core we support this
+		// Fallback if version is 0.0 or other unexpected values
+		if (cb->context_type == 4 && cb->version_major == 0 && cb->version_minor == 0) {
+			LOG_info("Core requested invalid GL context type or version, defaulting to GLES 2.0\n");
+			cb->context_type = RETRO_HW_CONTEXT_OPENGLES3;
+			cb->version_major = 3;
+			cb->version_minor = 0;
+		}
+
+		return true;
 	}
 	default:
 		// LOG_debug("Unsupported environment cmd: %u\n", cmd);
