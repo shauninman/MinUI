@@ -597,7 +597,8 @@ void GFX_flip_fixed_rate(SDL_Surface* screen, double target_fps) {
 			}
 		}
 	}
-	PLAT_flip(screen, 0);
+	// PLAT_flip(screen, 0);
+	PLAT_GL_Swap();
 
 	double elapsed_time_s = (double)(SDL_GetPerformanceCounter() - per_frame_start) / perf_freq;
 	double tempfps = 1.0 / elapsed_time_s;
