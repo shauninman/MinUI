@@ -2071,7 +2071,11 @@ static void Config_write(int override) {
 	}
 	for (int i=0; config.shaders.options[i].key; i++) {
 		Option* option = &config.shaders.options[i];
-		fprintf(file, "%s = %s\n", option->key,  option->values[option->value]);
+		int count = 0;
+		while ( option->values &&  option->values[count]) count++;
+		if (option->value >= 0 && option->value < count) {
+			fprintf(file, "%s = %s\n", option->key, option->values[option->value]);
+		}
 	}
 	
 	if (has_custom_controllers) fprintf(file, "%s = %i\n", "minarch_gamepad_type", gamepad_type);

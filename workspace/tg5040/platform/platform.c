@@ -630,7 +630,7 @@ static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b
     *g = (green << 2) | (green >> 4);
     *b = (blue << 3) | (blue >> 2);
 }
-
+static char* effect_path;
 static void updateEffect(void) {
 	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	
@@ -643,7 +643,6 @@ static void updateEffect(void) {
 	if (effect.type==EFFECT_NONE) return; // disabled
 	if (effect.type==effect.live_type && effect.scale==live_scale && effect.color==live_color) return; // already loaded
 	
-	char* effect_path;
 	int opacity = 128; // 1 - 1/2 = 50%
 	if (effect.type==EFFECT_LINE) {
 		if (effect.scale<3) {
@@ -697,39 +696,6 @@ static void updateEffect(void) {
 		}
 	}
 	
-	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
-	SDL_Surface* tmp = IMG_Load(effect_path);
-	if (tmp) {
-		if (effect.type==EFFECT_GRID) {
-			if (effect.color) {
-				// LOG_info("dmg color grid...\n");
-			
-				uint8_t r,g,b;
-				rgb565_to_rgb888(effect.color,&r,&g,&b);
-				// LOG_info("rgb %i,%i,%i\n",r,g,b); 
-			
-				uint32_t* pixels = (uint32_t*)tmp->pixels;
-				int width = tmp->w;
-				int height = tmp->h;
-				for (int y = 0; y < height; ++y) {
-				    for (int x = 0; x < width; ++x) {
-				        uint32_t pixel = pixels[y * width + x];
-				        uint8_t _,a;
-				        SDL_GetRGBA(pixel, tmp->format, &_, &_, &_, &a);
-				        if (a) pixels[y * width + x] = SDL_MapRGBA(tmp->format, r,g,b, a);
-				    }
-				}
-				
-				// if (r==247 && g==243 & b==247) opacity = 64;
-			}
-		}
-
-		if (vid.effect) SDL_DestroyTexture(vid.effect);
-		vid.effect = SDL_CreateTextureFromSurface(vid.renderer, tmp);
-		SDL_SetTextureAlphaMod(vid.effect, opacity);
-		SDL_FreeSurface(tmp);
-		effect.live_type = effect.type;
-	}
 }
 int screenx = 0;
 int screeny = 0;
@@ -790,7 +756,6 @@ void PLAT_setOverlay(int select, const char* tag) {
 
 static void updateOverlay(void) {
 	
-	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	if(!vid.overlay) {
 		if(overlay_path) {
 			SDL_Surface* tmp = IMG_Load(overlay_path);
@@ -1640,10 +1605,10 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
     SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
     
 
-    updateEffect();
-    if (vid.blit && effect.type != EFFECT_NONE && vid.effect) {
-        SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0, 0, dst_rect->w, dst_rect->h}, dst_rect);
-    }
+    // updateEffect();
+    // if (vid.blit && effect.type != EFFECT_NONE && vid.effect) {
+    //     SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0, 0, dst_rect->w, dst_rect->h}, dst_rect);
+    // }
 
 	updateOverlay();
 	if(vid.overlay) {
@@ -1775,6 +1740,58 @@ void PLAT_GL_Swap() {
 
     SDL_GL_MakeCurrent(vid.window, vid.gl_context);
 
+
+    static GLuint effect_tex = 0;
+	static int effect_w, effect_h;
+	static int effectLoaded = 0;
+	updateEffect();
+    if (effect_path && !effectLoaded) {
+		SDL_Surface* tmp = IMG_Load(effect_path);
+		if (tmp) {
+			// Define the crop region (x, y, width, height)
+			int crop_x = 0;
+			int crop_y = 0;
+			int crop_width = device_width;
+			int crop_height = device_height;
+
+			// Ensure the crop area is within the bounds of the image
+			if (crop_x + crop_width > tmp->w) crop_width = tmp->w - crop_x;
+			if (crop_y + crop_height > tmp->h) crop_height = tmp->h - crop_y;
+
+			// Create a new surface for the cropped image
+			SDL_Surface* cropped = SDL_CreateRGBSurfaceWithFormat(0, crop_width, crop_height, tmp->format->BitsPerPixel, tmp->format->format);
+			if (!cropped) {
+				LOG_error("Failed to create cropped surface: %s\n", SDL_GetError());
+			} else {
+				// Copy the cropped area to the new surface
+				SDL_Rect crop_rect = {crop_x, crop_y, crop_width, crop_height};
+				SDL_BlitSurface(tmp, &crop_rect, cropped, NULL);
+
+				// Create OpenGL texture
+				glGenTextures(1, &effect_tex);
+				glBindTexture(GL_TEXTURE_2D, effect_tex);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+				
+				// Upload the cropped image to OpenGL
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cropped->w, cropped->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, cropped->pixels);
+
+				// Log the texture ID
+				LOG_info("opengl texture id is %i\n", effect_tex);
+
+				// Store width and height of the cropped texture
+				effect_w = cropped->w;
+				effect_h = cropped->h;
+
+				// Free the surfaces
+				SDL_FreeSurface(tmp);
+				SDL_FreeSurface(cropped);
+			}
+		}
+		effectLoaded = 1;
+	}
     static GLuint overlay_tex = 0;
     static int overlayload = 0;
 	if(overlayUpdated) {
@@ -1890,6 +1907,11 @@ void PLAT_GL_Swap() {
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
                   last_w, last_h, texelSizeOutput, GL_NEAREST, 0,dst_rect.w,dst_rect.h);
 
+    if (effect_tex) {
+        runShaderPass(effect_tex, g_shader_overlay, NULL, NULL,
+                      0, 0, device_width, device_height,
+					  effect_w, effect_h, texelSizeOutput, GL_NEAREST, 1,dst_rect.w,dst_rect.h);
+    }
     if (overlay_tex) {
         runShaderPass(overlay_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
