@@ -704,10 +704,12 @@ int screeny = 0;
 void PLAT_setOffsetX(int x) {
     if (x < 0 || x > 128) return;
     screenx = x - 64;
+	LOG_info("screenx: %i\n",screenx);
 }
 void PLAT_setOffsetY(int y) {
     if (y < 0 || y > 128) return;
-    screeny = y - 64;  
+    screeny = y - 64; 
+	LOG_info("screeny: %i\n",screeny);
 }
 static int overlayUpdated=0;
 void PLAT_setOverlay(int select, const char* tag) {
@@ -1506,7 +1508,7 @@ void setRectToAspectRatio(SDL_Rect* dst_rect) {
         w = vid.blit->src_w * vid.blit->scale;
         h = vid.blit->src_h * vid.blit->scale;
         dst_rect->x = (device_width - w) / 2 + screenx;
-        dst_rect->y = (device_height - h) / 2 + screeny;
+        dst_rect->y = (device_height - h) / 2 - screeny;
         dst_rect->w = w;
         dst_rect->h = h;
     } else if (vid.blit->aspect > 0) {
