@@ -1682,8 +1682,20 @@ char** list_files_in_folder(const char* folderPath, int* fileCount) {
         snprintf(fullPath, sizeof(fullPath), "%s/%s", folderPath, entry->d_name);
 
         if (stat(fullPath, &fileStat) == 0 && S_ISREG(fileStat.st_mode)) {
-            fileList = realloc(fileList, sizeof(char*) * (*fileCount + 1));
+            char** temp = realloc(fileList, sizeof(char*) * (*fileCount + 2)); // +1 for new file, +1 for NULL
+            if (!temp) {
+                perror("realloc");
+                // free previously allocated strings
+                for (int i = 0; i < *fileCount; ++i) {
+                    free(fileList[i]);
+                }
+                free(fileList);
+                closedir(dir);
+                return NULL;
+            }
+            fileList = temp;
             fileList[*fileCount] = strdup(entry->d_name);
+            fileList[*fileCount + 1] = NULL; // maintain NULL-termination
             (*fileCount)++;
         }
     }
@@ -1714,7 +1726,7 @@ static void Config_syncShaders(char* key, int value) {
 	if (exactMatch(key, config.shaders.options[SH_SHADER1].key)) {
 		char** shaderList = config.shaders.options[SH_SHADER1].values;
 		if (shaderList) {
-			LOG_info("minarch: updating shader 1\n");
+			LOG_info("minarch: updating shader 1 - %i\n",value);
 			int count = 0;
 			while (shaderList && shaderList[count]) count++;
 			if (value >= 0 && value < count) {
@@ -1734,7 +1746,7 @@ static void Config_syncShaders(char* key, int value) {
 	if (exactMatch(key, config.shaders.options[SH_SHADER2].key)) {
 		char** shaderList = config.shaders.options[SH_SHADER2].values;
 		if (shaderList) {
-			LOG_info("minarch: updating shader 2\n");
+			LOG_info("minarch: updating shader 2 - %i\n",value);
 			int count = 0;
 			while (shaderList && shaderList[count]) count++;
 			if (value >= 0 && value < count) {
@@ -1754,7 +1766,7 @@ static void Config_syncShaders(char* key, int value) {
 	if (exactMatch(key, config.shaders.options[SH_SHADER3].key)) {
 		char** shaderList = config.shaders.options[SH_SHADER3].values;
 		if (shaderList) {
-			LOG_info("minarch: updating shader 3\n");
+			LOG_info("minarch: updating shader 3 - %i\n",value);
 			int count = 0;
 			while (shaderList && shaderList[count]) count++;
 			if (value >= 0 && value < count) {

@@ -1670,8 +1670,8 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 
 	if (u_FrameDirection >= 0) glUniform1i(u_FrameDirection, 1);
 	if (u_FrameCount >= 0) glUniform1i(u_FrameCount, frame_count);
-	if (u_OutputSize >= 0) glUniform2f(u_OutputSize, screen_w, screen_h);
-	if (u_TextureSize >= 0) glUniform2f(u_TextureSize, width, height); 
+	if (u_OutputSize >= 0) glUniform2f(u_OutputSize, width, height);
+	if (u_TextureSize >= 0) glUniform2f(u_TextureSize, input_tex_w, input_tex_h); 
 	if (u_InputSize >= 0) glUniform2f(u_InputSize, input_tex_w, input_tex_h); 
 
 	GLint u_MVP = glGetUniformLocation(shader_program, "MVPMatrix");
