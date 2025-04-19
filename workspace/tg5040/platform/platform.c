@@ -49,7 +49,7 @@ Shader* shaders[3] = {
     &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR }
 };
 
-int nrofshaders = 3; // choose between 1 and 3 pipelines, > pipelines = more cpu usage, but more shader options and shader upscaling stuff
+static int nrofshaders = 0; // choose between 1 and 3 pipelines, > pipelines = more cpu usage, but more shader options and shader upscaling stuff
 ///////////////////////////////
 
 static SDL_Joystick *joystick;
@@ -344,32 +344,20 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_GL_MakeCurrent(vid.window, vid.gl_context);
 	glViewport(0, 0, w, h);
 	
+	GLuint vertex;
+	GLuint fragment;
 
-	GLuint default_vertex = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SYSSHADERS_FOLDER);
-	GLuint default_fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SYSSHADERS_FOLDER);
-	g_shader_default = link_program(default_vertex, default_fragment);
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SYSSHADERS_FOLDER);
+	g_shader_default = link_program(vertex, fragment);
 
-	GLuint color_vshader = load_shader_from_file(GL_VERTEX_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
-	GLuint color_shader = load_shader_from_file(GL_FRAGMENT_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
-	g_shader_color = link_program(color_vshader, color_shader);
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
+	g_shader_color = link_program(vertex, fragment);
 
-	GLuint overlay_vshader = load_shader_from_file(GL_VERTEX_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
-	GLuint overlay_shader = load_shader_from_file(GL_FRAGMENT_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
-	g_shader_overlay = link_program(overlay_vshader, overlay_shader);
-
-	GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SHADERS_FOLDER);
-	GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SHADERS_FOLDER); 
-	shaders[0]->shader_p = link_program(vertex_shader1, fragment_shader1);
-
-	GLuint vertex_shader2 = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SHADERS_FOLDER);
-	GLuint fragment_shader2 = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SHADERS_FOLDER); 
-	shaders[1]->shader_p =  link_program(vertex_shader2, fragment_shader2);
-
-	GLuint vertex_shader3 = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SHADERS_FOLDER);
-	GLuint fragment_shader3 = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SHADERS_FOLDER); 
-	shaders[2]->shader_p =  link_program(vertex_shader3, fragment_shader3);
-
-
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
+	g_shader_overlay = link_program(vertex, fragment);
 
 	vid.stream_layer1 = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w,h);
 	vid.target_layer1 = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET , w,h);
@@ -386,7 +374,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_SetTextureBlendMode(vid.target_layer2, SDL_BLENDMODE_BLEND);
 	SDL_SetTextureBlendMode(vid.target_layer3, SDL_BLENDMODE_BLEND);
 	SDL_SetTextureBlendMode(vid.target_layer4, SDL_BLENDMODE_BLEND);
-	
 	
 	vid.width	= w;
 	vid.height	= h;
@@ -1853,10 +1840,12 @@ void PLAT_GL_Swap() {
 
 	static int last_w=0;
 	static int last_h=0;
+	last_w = vid.blit->src_w;
+	last_h = vid.blit->src_h;
 	static int texture_initialized[3] = {0};
 	if(shadersupdated) {
-		last_w = 0;
-		last_h = 0;
+		last_w = vid.blit->src_w;
+		last_h = vid.blit->src_h;
 	}
 	for(int i=0;i<nrofshaders;i++) {
 		if (!pass_textures[i]) glGenTextures(1, &pass_textures[i]);
@@ -1883,7 +1872,7 @@ void PLAT_GL_Swap() {
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			printf("Framebuffer not complete in pass %d!\n", i);
 		}
-		// LOG_info("shader pass: %i\n",i);
+		LOG_info("shader pass: %i\n",i);
 		// LOG_info("src_w: %i\n",src_w);
 		// LOG_info("dst_w: %i\n",dst_w);
 		// LOG_info("src_h: %i\n",src_h);
@@ -1899,8 +1888,15 @@ void PLAT_GL_Swap() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// LOG_info("downscaling from: %i\n",last_w);
+	// LOG_info("dst_rect.x %i\n",dst_rect.x);
+	// LOG_info("dst_rect.y %i\n",dst_rect.y);
+	// LOG_info("dst_rect.w %i\n",dst_rect.w);
+	// LOG_info("dst_rect.h %i\n",dst_rect.h);
+	// LOG_info("last_w %i\n",last_w);
+	// LOG_info("last_h %i\n",last_h);
+	// LOG_info("nrofshaders %i\n",nrofshaders);
 	GLfloat texelSizeOutput[2] = {1.0f / last_w, 1.0f / last_h};
-    runShaderPass(pass_textures[nrofshaders-1], g_shader_default, NULL, NULL,
+    runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
                   last_w, last_h, texelSizeOutput, GL_NEAREST, 0,dst_rect.w,dst_rect.h);
 

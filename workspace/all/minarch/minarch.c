@@ -1432,8 +1432,8 @@ static struct Config {
 				.key	= "minarch_shader1", 
 				.name	= "Shader 1",
 				.desc	= "Shader 1 program to run", // will call getScreenScalingDesc()
-				.default_value = 0,
-				.value = 0,
+				.default_value = 1,
+				.value = 1,
 				.count = 2,
 				.values = NULL,
 				.labels = NULL,
@@ -1442,8 +1442,8 @@ static struct Config {
 				.key	= "minarch_shader1_filter", 
 				.name	= "Shader 1 Filter",
 				.desc	= "Method of upscaling, NEAREST or LINEAR", // will call getScreenScalingDesc()
-				.default_value = 0,
-				.value = 0,
+				.default_value = 1,
+				.value = 1,
 				.count = 2,
 				.values = shfilter_labels,
 				.labels = shfilter_labels,
@@ -1452,8 +1452,8 @@ static struct Config {
 				.key	= "minarch_shader1_upscale", 
 				.name	= "Shader 1 Scale",
 				.desc	= "This will scale images x times, screen scales to screens resolution (can hit performance)", // will call getScreenScalingDesc()
-				.default_value = 0,
-				.value = 0,
+				.default_value = 1,
+				.value = 1,
 				.count = 9,
 				.values = shupscale_labels,
 				.labels = shupscale_labels,
@@ -1462,8 +1462,8 @@ static struct Config {
 				.key	= "minarch_shader2", 
 				.name	= "Shader 2",
 				.desc	= "Shader 2 program to run", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
+				.default_value = 0,
+				.value = 0,
 				.count = 2,
 				.values = NULL,
 				.labels = NULL,
@@ -1689,8 +1689,21 @@ char** list_files_in_folder(const char* folderPath, int* fileCount) {
     }
 
     closedir(dir);
+
+    // Inline alphabetical sort
+    for (int i = 0; i < *fileCount - 1; ++i) {
+        for (int j = i + 1; j < *fileCount; ++j) {
+            if (strcmp(fileList[i], fileList[j]) > 0) {
+                char* temp = fileList[i];
+                fileList[i] = fileList[j];
+                fileList[j] = temp;
+            }
+        }
+    }
+
     return fileList;
 }
+
 
 static void Config_syncShaders(char* key, int value) {
 	int i = -1;
@@ -4837,43 +4850,48 @@ static MenuList ShaderOptions_menu = {
 static int OptionShaders_openMenu(MenuList* list, int i) {
 	LOG_info("OptionShaders_openMenu\n");
 
-	if (ShaderOptions_menu.items==NULL) {
-		ShaderOptions_menu.items = calloc(config.shaders.count + 1, sizeof(MenuItem));
+	if (ShaderOptions_menu.items == NULL) {
 		int filecount;
 		char** filelist = list_files_in_folder(SHADERS_FOLDER, &filecount);
+
+		// Check if folder read failed or no files found
+		if (!filelist || filecount == 0) {
+			Menu_message("No shaders available\n/Shaders folder or shader files not found", (char*[]){"B", "BACK", NULL});
+			return MENU_CALLBACK_NOP;
+		}
+
+		// NULL-terminate filelist just in case
 		filelist = realloc(filelist, sizeof(char*) * (filecount + 1));
 		filelist[filecount] = NULL;
-		for (int i=0; i<config.shaders.count; i++) {
-			LOG_info("hi\n");
+
+		ShaderOptions_menu.items = calloc(config.shaders.count + 1, sizeof(MenuItem));
+		for (int i = 0; i < config.shaders.count; i++) {
 			MenuItem* item = &ShaderOptions_menu.items[i];
 			item->id = i;
 			item->name = config.shaders.options[i].name;
 			item->desc = config.shaders.options[i].desc;
 			item->value = config.shaders.options[i].value;
-			if(strcmp(config.shaders.options[i].key, "minarch_shader1") == 0 || strcmp(config.shaders.options[i].key, "minarch_shader2") == 0 || strcmp(config.shaders.options[i].key, "minarch_shader3") == 0) {
+
+			if (strcmp(config.shaders.options[i].key, "minarch_shader1") == 0 ||
+			    strcmp(config.shaders.options[i].key, "minarch_shader2") == 0 ||
+			    strcmp(config.shaders.options[i].key, "minarch_shader3") == 0) {
 				item->values = filelist;
 				config.shaders.options[i].values = filelist;
-			}	else {
+			} else {
 				item->values = config.shaders.options[i].values;
 			}
 		}
 	}
-	// } else {
-	// 	// update values
-	// 	for (int j=0; j<config.shaders.count; j++) {
-	// 		MenuItem* item = &ShaderOptions_menu.items[j];
-	// 	}
-	// }
-	
+
 	if (ShaderOptions_menu.items[0].name) {
 		Menu_options(&ShaderOptions_menu);
-	}
-	else {
-		Menu_message("No shaders available", (char*[]){ "B","BACK", NULL });
+	} else {
+		Menu_message("No shaders available\n/Shaders folder or shader files not found", (char*[]){"B", "BACK", NULL});
 	}
 
 	return MENU_CALLBACK_NOP;
 }
+
 
 
 static MenuList options_menu = {
@@ -4986,6 +5004,11 @@ static int Menu_options(MenuList* list) {
 					dirty = 1;
 				}
 				else if (PAD_justRepeated(BTN_RIGHT)) {
+					// first check if its not out of bounds already
+					int i = 0;
+					while (item->values[i]) i++; 
+					if (item->value >= i) item->value = 0;
+				
 					if (item->values[item->value+1]) item->value += 1;
 					else item->value = 0;
 				

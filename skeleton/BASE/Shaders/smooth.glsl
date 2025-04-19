@@ -16,7 +16,7 @@ uniform vec2 texelSize;
 varying vec2 vTexCoord;
 
 void main() {
-    vec2 offset = texelSize * 0.4;
+    vec2 offset = texelSize * 0.5;
 
     vec4 color       = texture2D(Texture, vTexCoord);
     vec4 colorRight  = texture2D(Texture, vTexCoord + vec2(offset.x, 0.0));
