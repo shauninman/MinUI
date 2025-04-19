@@ -1623,7 +1623,7 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 static int frame_count = 0;
 void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* tex,
                    int x, int y, int width, int height, int input_tex_w, int input_tex_h, GLfloat texelSize[2],
-                   GLenum filter, int layer, int screen_w, int screen_h) {
+                   GLenum filter, int layer) {
 
 	static GLuint static_VAO = 0, static_VBO = 0;
 	static GLuint last_program = 0;
@@ -1859,7 +1859,7 @@ void PLAT_GL_Swap() {
 	if (!initial_texture) glGenTextures(1, &initial_texture);
 	runShaderPass(src_texture, g_shader_color, &fbo, &initial_texture, 0, 0,
 		vid.blit->src_w, vid.blit->src_h, vid.blit->src_w, vid.blit->src_h,
-				  texelSizeSource, GL_NEAREST, 0,dst_rect.w,dst_rect.h);
+				  texelSizeSource, GL_NEAREST, 0);
 
 	static int last_w=0;
 	static int last_h=0;
@@ -1901,11 +1901,11 @@ void PLAT_GL_Swap() {
 		if(shaders[i]->shader_p) {
 			runShaderPass(i==0?initial_texture:pass_textures[i-1], shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
 				dst_w, dst_h,src_w, src_h,
-				texelPass, shaders[i]->filter , 0,dst_rect.w,dst_rect.h);
+				texelPass, shaders[i]->filter , 0);
 		} else {
 			runShaderPass(i==0?initial_texture:pass_textures[i-1], g_shader_default, &fbo, &pass_textures[i], 0, 0,
 				dst_w, dst_h,src_w, src_h,
-			   texelPass, shaders[i]->filter , 0,dst_rect.w,dst_rect.h);
+			   texelPass, shaders[i]->filter , 0);
 		}
 	}
 
@@ -1915,17 +1915,17 @@ void PLAT_GL_Swap() {
 	GLfloat texelSizeOutput[2] = {1.0f / last_w, 1.0f / last_h};
     runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-                  last_w, last_h, texelSizeOutput, GL_NEAREST, 0,dst_rect.w,dst_rect.h);
+                  last_w, last_h, texelSizeOutput, GL_NEAREST, 0);
 
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
-					  effect_w, effect_h, texelSizeOutput, GL_NEAREST, 1,dst_rect.w,dst_rect.h);
+					  effect_w, effect_h, texelSizeOutput, GL_NEAREST, 1);
     }
     if (overlay_tex) {
         runShaderPass(overlay_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
-					  overlay_w, overlay_h, texelSizeOutput, GL_NEAREST, 1,dst_rect.w,dst_rect.h);
+					  overlay_w, overlay_h, texelSizeOutput, GL_NEAREST, 1);
     }
     SDL_GL_SwapWindow(vid.window);
     shadersupdated = 0;
