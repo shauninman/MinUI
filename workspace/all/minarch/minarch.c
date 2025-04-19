@@ -1024,6 +1024,7 @@ static char* offset_labels[] = {
 	NULL,
 };
 static char* nrofshaders_labels[] = {
+	"off",
 	"1",
 	"2",
 	"3",
@@ -1057,7 +1058,7 @@ enum {
 	FE_OPT_OVERLAY,
 	FE_OPT_SCREENX,
 	FE_OPT_SCREENY,
-	FE_OPT_SHARPNESS,
+	// FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_SYNC_REFERENCE,
 	FE_OPT_OVERCLOCK,
@@ -1334,16 +1335,16 @@ static struct Config {
 				.values = offset_labels,
 				.labels = offset_labels,
 			},
-			[FE_OPT_SHARPNESS] = {
-				.key	= "minarch_screen_sharpness",
-				.name	= "Screen Sharpness",
-				.desc	= "Sharp uses nearest neighbor sampling.\nCrisp integer upscales before linear sampling.\nSoft uses linear sampling.",
-				.default_value = 2,
-				.value = 2,
-				.count = 3,
-				.values = sharpness_labels,
-				.labels = sharpness_labels,
-			},
+			// [FE_OPT_SHARPNESS] = {
+			// 	.key	= "minarch_screen_sharpness",
+			// 	.name	= "Screen Sharpness",
+			// 	.desc	= "Sharp uses nearest neighbor sampling.\nCrisp integer upscales before linear sampling.\nSoft uses linear sampling.",
+			// 	.default_value = 2,
+			// 	.value = 2,
+			// 	.count = 3,
+			// 	.values = sharpness_labels,
+			// 	.labels = sharpness_labels,
+			// },
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
 				.name	= "VSync",
@@ -1420,9 +1421,9 @@ static struct Config {
 				.key	= "minarch_nrofshaders", 
 				.name	= "Number of Shaders",
 				.desc	= "Number of shaders 1 to 3", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
-				.count = 3,
+				.default_value = 0,
+				.value = 0,
+				.count = 4,
 				.values = nrofshaders_labels,
 				.labels = nrofshaders_labels,
 			},
@@ -1431,8 +1432,8 @@ static struct Config {
 				.key	= "minarch_shader1", 
 				.name	= "Shader 1",
 				.desc	= "Shader 1 program to run", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
+				.default_value = 0,
+				.value = 0,
 				.count = 2,
 				.values = NULL,
 				.labels = NULL,
@@ -1451,8 +1452,8 @@ static struct Config {
 				.key	= "minarch_shader1_upscale", 
 				.name	= "Shader 1 Scale",
 				.desc	= "This will scale images x times, screen scales to screens resolution (can hit performance)", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
+				.default_value = 0,
+				.value = 0,
 				.count = 9,
 				.values = shupscale_labels,
 				.labels = shupscale_labels,
@@ -1482,8 +1483,8 @@ static struct Config {
 				.key	= "minarch_shader2_upscale", 
 				.name	= "Shader 2 Scale",
 				.desc	= "This will scale images x times, screen scales to screens resolution (can hit performance)", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
+				.default_value = 0,
+				.value = 0,
 				.count = 9,
 				.values = shupscale_labels,
 				.labels = shupscale_labels,
@@ -1492,8 +1493,8 @@ static struct Config {
 				.key	= "minarch_shader3", 
 				.name	= "Shader 3",
 				.desc	= "Shader 3 program to run", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
+				.default_value = 2,
+				.value = 2,
 				.count = 2,
 				.values = NULL,
 				.labels = NULL,
@@ -1513,8 +1514,8 @@ static struct Config {
 				.key	= "minarch_shader3_upscale", 
 				.name	= "Shader 3 Scale",
 				.desc	= "This will scale images x times, screen scales to screens resolution (can hit performance)", // will call getScreenScalingDesc()
-				.default_value = 1,
-				.value = 1,
+				.default_value = 0,
+				.value = 0,
 				.count = 9,
 				.values = shupscale_labels,
 				.labels = shupscale_labels,
@@ -1626,15 +1627,15 @@ static void Config_syncFrontend(char* key, int value) {
 		GFX_setOffsetY(value);
 		i = FE_OPT_SCREENY;
 	}
-	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
-		screen_sharpness = value;
+	// else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
+	// 	screen_sharpness = value;
 		
-		if (screen_scaling==SCALE_NATIVE) GFX_setSharpness(SHARPNESS_SHARP);
-		else GFX_setSharpness(screen_sharpness);
+	// 	if (screen_scaling==SCALE_NATIVE) GFX_setSharpness(SHARPNESS_SHARP);
+	// 	else GFX_setSharpness(screen_sharpness);
 
-		renderer.dst_p = 0;
-		i = FE_OPT_SHARPNESS;
-	}
+	// 	renderer.dst_p = 0;
+	// 	i = FE_OPT_SHARPNESS;
+	// }
 	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
 		prevent_tearing = value;
 		i = FE_OPT_TEARING;
@@ -1695,7 +1696,7 @@ static void Config_syncShaders(char* key, int value) {
 	int i = -1;
 
 	if (exactMatch(key,config.shaders.options[SH_NROFSHADERS].key)) {
-		GFX_setShaders(value+1);
+		GFX_setShaders(value);
 		i = SH_NROFSHADERS;
 	}
 	if (exactMatch(key,config.shaders.options[SH_SHADER1].key)) {
@@ -4794,7 +4795,7 @@ static int OptionShaders_optionChanged(MenuList* list, int i) {
 	int filecount;
 	char** filelist = list_files_in_folder(SHADERS_FOLDER, &filecount);
 	if(i == SH_NROFSHADERS) {
-		GFX_setShaders(item->value+1);
+		GFX_setShaders(item->value);
 	}
 	if(i == SH_UPSCALE1) {
 		GFX_updateShader(0,NULL,&item->value,NULL);
