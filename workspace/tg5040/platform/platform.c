@@ -1730,9 +1730,6 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
         glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tex, 0);
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            printf("Framebuffer not complete!\n");
-        }
     } else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
