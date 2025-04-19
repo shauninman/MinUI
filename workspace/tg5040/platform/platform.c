@@ -631,6 +631,7 @@ static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b
     *b = (blue << 3) | (blue >> 2);
 }
 static char* effect_path;
+static int effectUpdated = 0;
 static void updateEffect(void) {
 	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	
@@ -695,6 +696,7 @@ static void updateEffect(void) {
 			opacity = 136; // 1 - 57/121 = ~52%
 		}
 	}
+	effectUpdated = 1;
 	
 }
 int screenx = 0;
@@ -713,7 +715,8 @@ void PLAT_setOverlay(int select, const char* tag) {
         SDL_DestroyTexture(vid.overlay);
         vid.overlay = NULL;
     }
-
+	overlay_path = NULL;
+	overlayUpdated=1;
     // Array of overlay filenames
     static const char* overlay_files[] = {
         "",
@@ -726,8 +729,7 @@ void PLAT_setOverlay(int select, const char* tag) {
     
     int overlay_count = sizeof(overlay_files) / sizeof(overlay_files[0]);
 
-    if (select < 0 || select >= overlay_count) {
-        printf("Invalid selection. Skipping overlay update.\n");
+    if (select < 1 || select >= overlay_count) {
         return;
     }
 
@@ -751,7 +753,7 @@ void PLAT_setOverlay(int select, const char* tag) {
 
     snprintf(overlay_path, path_len, "%s/%s/%s", OVERLAYS_FOLDER, tag, filename);
     printf("Overlay path set to: %s\n", overlay_path);
-	overlayUpdated=1;
+
 }
 
 static void updateOverlay(void) {
@@ -1743,9 +1745,10 @@ void PLAT_GL_Swap() {
 
     static GLuint effect_tex = 0;
 	static int effect_w, effect_h;
-	static int effectLoaded = 0;
+	
+	
 	updateEffect();
-    if (effect_path && !effectLoaded) {
+    if (effect_path && effectUpdated) {
 		SDL_Surface* tmp = IMG_Load(effect_path);
 		if (tmp) {
 			// Define the crop region (x, y, width, height)
@@ -1790,14 +1793,21 @@ void PLAT_GL_Swap() {
 				SDL_FreeSurface(cropped);
 			}
 		}
-		effectLoaded = 1;
+		effectUpdated = 0;
 	}
-    static GLuint overlay_tex = 0;
+    if(effect.type == EFFECT_NONE && effect_tex) {
+		glDeleteTextures(1,&effect_tex);
+		effect_tex = 0;
+	}
+	
+	static GLuint overlay_tex = 0;
     static int overlayload = 0;
 	if(overlayUpdated) {
+		glDeleteTextures(1,&overlay_tex);
 		overlay_tex=0;
 		overlayload=0;
 		overlayUpdated = 0;
+		
 	}
 	static int overlay_w = 0;
 	static int overlay_h = 0;
