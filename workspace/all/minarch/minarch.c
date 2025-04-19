@@ -3053,7 +3053,16 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 	// 	puts("RETRO_ENVIRONMENT_GET_FASTFORWARDING"); fflush(stdout);
 	// 	break;
 	// };
-	
+	case RETRO_ENVIRONMENT_SET_HW_RENDER:
+	{
+		struct retro_hw_render_callback *cb = (struct retro_hw_render_callback*)data;
+
+		// You can log some of the requested values:
+		LOG_info("Core requested GL context type: %d, version %d.%d\n",
+			cb->context_type, cb->version_major, cb->version_minor);
+
+		return true; // Tell the core we support this
+	}
 	default:
 		// LOG_debug("Unsupported environment cmd: %u\n", cmd);
 		return false;
