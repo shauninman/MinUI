@@ -1628,12 +1628,14 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 
 static int frame_count = 0;
 void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* tex,
-                   int x, int y, int width, int height, int input_tex_w, int input_tex_h, int src_w, int src_h, GLfloat texelSize[2],
+                   int x, int y, int dst_width, int dst_height, int tex_width, int tex_height, int in_w , int in_h,
                    GLenum filter, int layer) {
 
 	static GLuint static_VAO = 0, static_VBO = 0;
 	static GLuint last_program = 0;
 	static GLfloat last_texelSize[2] = {-1.0f, -1.0f};
+	GLfloat texelSize[2] = {1.0f / tex_width, 1.0 / tex_height};
+	glViewport(0, 0, dst_width, dst_height);
 
 	glUseProgram(shader_program);
 	if (static_VAO == 0 || shader_program != last_program) {
@@ -1656,13 +1658,15 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		GLint posAttrib = glGetAttribLocation(shader_program, "VertexCoord");
 		if (posAttrib >= 0) {
-			glEnableVertexAttribArray(posAttrib);
+			
 			glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(posAttrib);
 		}
 		GLint texAttrib = glGetAttribLocation(shader_program, "TexCoord");
 		if (texAttrib >= 0) {
-			glEnableVertexAttribArray(texAttrib);
+			
 			glVertexAttribPointer(texAttrib, 4, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(2 * sizeof(float)));
+			glEnableVertexAttribArray(texAttrib);
 		}
 		last_program = shader_program;
 	}
@@ -1677,9 +1681,9 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 
 	if (u_FrameDirection >= 0) glUniform1i(u_FrameDirection, 1);
 	if (u_FrameCount >= 0) glUniform1i(u_FrameCount, frame_count);
-	if (u_OutputSize >= 0) glUniform2f(u_OutputSize, width, height);
-	if (u_TextureSize >= 0) glUniform2f(u_TextureSize, input_tex_w, input_tex_h); 
-	if (u_InputSize >= 0) glUniform2f(u_InputSize, src_w, src_h); 
+	if (u_OutputSize >= 0) glUniform2f(u_OutputSize, dst_width, dst_height);
+	if (u_TextureSize >= 0) glUniform2f(u_TextureSize, tex_width, tex_height); 
+	if (u_InputSize >= 0) glUniform2f(u_InputSize, in_w, in_h); 
 	if (u_gamma >= 0) glUniform1f(u_gamma, 2.2f);
 	if (u_grid_strength >= 0) glUniform1f(u_grid_strength, 0.05f); 
 
@@ -1702,8 +1706,9 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dst_width, dst_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tex, 0);
 
     } else {
@@ -1722,7 +1727,6 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 	}
 
 	glBindTexture(GL_TEXTURE_2D, texture);
-    glViewport(x, y, width, height);
 
 
 	GLint texLocation = glGetUniformLocation(shader_program, "Texture");
@@ -1736,11 +1740,12 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
         last_texelSize[0] = texelSize[0];
         last_texelSize[1] = texelSize[1];
     }
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void PLAT_GL_Swap() {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     SDL_Rect dst_rect = {0, 0, device_width, device_height};
     setRectToAspectRatio(&dst_rect);
 
@@ -1760,26 +1765,21 @@ void PLAT_GL_Swap() {
     if (effect_path && effectUpdated) {
 		SDL_Surface* tmp = IMG_Load(effect_path);
 		if (tmp) {
-			// Define the crop region (x, y, width, height)
 			int crop_x = 0;
 			int crop_y = 0;
 			int crop_width = device_width;
 			int crop_height = device_height;
 
-			// Ensure the crop area is within the bounds of the image
 			if (crop_x + crop_width > tmp->w) crop_width = tmp->w - crop_x;
 			if (crop_y + crop_height > tmp->h) crop_height = tmp->h - crop_y;
 
-			// Create a new surface for the cropped image
 			SDL_Surface* cropped = SDL_CreateRGBSurfaceWithFormat(0, crop_width, crop_height, tmp->format->BitsPerPixel, tmp->format->format);
 			if (!cropped) {
 				LOG_error("Failed to create cropped surface: %s\n", SDL_GetError());
 			} else {
-				// Copy the cropped area to the new surface
 				SDL_Rect crop_rect = {crop_x, crop_y, crop_width, crop_height};
 				SDL_BlitSurface(tmp, &crop_rect, cropped, NULL);
 
-				// Create OpenGL texture
 				glGenTextures(1, &effect_tex);
 				glBindTexture(GL_TEXTURE_2D, effect_tex);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1787,17 +1787,13 @@ void PLAT_GL_Swap() {
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 				
-				// Upload the cropped image to OpenGL
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cropped->w, cropped->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, cropped->pixels);
 
-				// Log the texture ID
 				LOG_info("opengl texture id is %i\n", effect_tex);
 
-				// Store width and height of the cropped texture
 				effect_w = cropped->w;
 				effect_h = cropped->h;
 
-				// Free the surfaces
 				SDL_FreeSurface(tmp);
 				SDL_FreeSurface(cropped);
 			}
@@ -1862,90 +1858,101 @@ void PLAT_GL_Swap() {
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, vid.blit->src_w, vid.blit->src_h, GL_RGBA, GL_UNSIGNED_BYTE, vid.blit->src);
 
     if (!fbo) glGenFramebuffers(1, &fbo);
- 
-    GLfloat texelSizeSource[2] = {1.0f / vid.blit->src_w, 1.0f / vid.blit->src_h};
 
 	if (!initial_texture) glGenTextures(1, &initial_texture);
 	runShaderPass(src_texture, g_shader_color, &fbo, &initial_texture, 0, 0,
 		vid.blit->src_w, vid.blit->src_h, vid.blit->src_w, vid.blit->src_h,vid.blit->src_w,vid.blit->src_h,
-				  texelSizeSource, GL_NEAREST, 0);
+				   GL_NEAREST, 0);
 
-	static int last_w=0;
-	static int last_h=0;
-	last_w = vid.blit->src_w;
-	last_h = vid.blit->src_h;
+	static int last_w = 0;
+	static int last_h = 0;
 	static int texture_initialized[3] = {0};
-	if(shadersupdated) {
+	
+	if (shadersupdated) {
+		last_w = vid.blit->src_w;
+		last_h = vid.blit->src_h;
+		for (int i = 0; i < 3; i++) texture_initialized[i] = 0; // reset texture init state
+	} else {
 		last_w = vid.blit->src_w;
 		last_h = vid.blit->src_h;
 	}
-	for(int i=0;i<nrofshaders;i++) {
-		if (!pass_textures[i]) glGenTextures(1, &pass_textures[i]);
-        glBindTexture(GL_TEXTURE_2D, pass_textures[i]);
-		
-		int src_w = i == 0 ? vid.blit->src_w:last_w;
-    	int src_h = i == 0 ? vid.blit->src_h:last_h;
+	
+	for (int i = 0; i < nrofshaders; i++) {
+		if (!pass_textures[i])
+			glGenTextures(1, &pass_textures[i]);
+	
+		glBindTexture(GL_TEXTURE_2D, pass_textures[i]);
+	
+		int src_w = last_w;
+		int src_h = last_h;
 		int dst_w = src_w * shaders[i]->scale;
-    	int dst_h = src_h * shaders[i]->scale;
-		int screen_w = dst_rect.w * shaders[i]->scale;
-		int screen_h = dst_rect.h * shaders[i]->scale;
-
-		if(shaders[i]->scale == 9) {
+		int dst_h = src_h * shaders[i]->scale;
+	
+		if (shaders[i]->scale == 9) {
 			dst_w = dst_rect.w;
 			dst_h = dst_rect.h;
 		}
+	
 		if (!texture_initialized[i] || dst_w != last_w || dst_h != last_h) {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dst_w, dst_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			texture_initialized[i] = 1;
 		}
-		last_w = dst_w;
-		last_h = dst_h;
-
+	
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pass_textures[i], 0);
-
+	
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			printf("Framebuffer not complete in pass %d!\n", i);
 		}
+	
+		GLuint input_texture = (i == 0) ? initial_texture : pass_textures[i - 1];
+		int real_input_w = (i == 0) ? vid.blit->src_w : last_w;
+		int real_input_h = (i == 0) ? vid.blit->src_h : last_h;
 
-		GLfloat texelPass[2] = {1.0f / shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w, 1.0f / shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h};
-		// check if program loaded otherwise just use default instead
-		// LOG_info("source w: %i\n",shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w);
-		// LOG_info("source h: %i\n",shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h);
-		// LOG_info("-------- new pass ----------\n\n\n\n\n");
-		if(shaders[i]->shader_p) {
-			runShaderPass(i==0?initial_texture:pass_textures[i-1], shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
-				dst_w, dst_h,shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w, shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h,vid.blit->src_w,vid.blit->src_h,
-				texelPass, shaders[i]->filter , 0);
+		int final_src_w = shaders[i]->scaletype == 0 ? vid.blit->src_w :
+						shaders[i]->scaletype == 2 ? dst_rect.w : real_input_w;
+		int final_src_h = shaders[i]->scaletype == 0 ? vid.blit->src_h :
+                  shaders[i]->scaletype == 2 ? dst_rect.h : real_input_h;
+
+		if (shaders[i]->shader_p) {
+			runShaderPass(input_texture, shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
+							dst_w, dst_h,
+							final_src_w, final_src_h,
+							real_input_w, real_input_h,
+							shaders[i]->filter, 0);
 		} else {
-			runShaderPass(i==0?initial_texture:pass_textures[i-1], g_shader_default, &fbo, &pass_textures[i], 0, 0,
-				dst_w, dst_h,shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_w:src_w:vid.blit->src_w, shaders[i]->scaletype > 0 ? shaders[i]->scaletype > 1 ? screen_h: src_h:vid.blit->src_h,vid.blit->src_w,vid.blit->src_h,
-			   texelPass, shaders[i]->filter , 0);
+			runShaderPass(input_texture, g_shader_default, &fbo, &pass_textures[i], 0, 0,
+							dst_w, dst_h,
+							final_src_w, final_src_h,
+							real_input_w, real_input_h,
+							shaders[i]->filter, 0);
 		}
+	
+		last_w = dst_w;
+		last_h = dst_h;
+		
 	}
-
-
+	
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	GLfloat texelSizeOutput[2] = {1.0f / last_w, 1.0f / last_h};
 
     runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-                  last_w, last_h,vid.blit->src_w,vid.blit->src_h, texelSizeOutput, GL_NEAREST, 0);
+                  last_w, last_h,vid.blit->src_w,vid.blit->src_h, GL_NEAREST, 0);
 
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
-					  effect_w, effect_h,vid.blit->src_w,vid.blit->src_h, texelSizeOutput, GL_NEAREST, 1);
+					  effect_w, effect_h,vid.blit->src_w,vid.blit->src_h,  GL_NEAREST, 1);
     }
     if (overlay_tex) {
         runShaderPass(overlay_tex, g_shader_overlay, NULL, NULL,
                       0, 0, device_width, device_height,
-					  overlay_w, overlay_h,vid.blit->src_w,vid.blit->src_h, texelSizeOutput, GL_NEAREST, 1);
+					  overlay_w, overlay_h,vid.blit->src_w,vid.blit->src_h, GL_NEAREST, 1);
     }
     SDL_GL_SwapWindow(vid.window);
     shadersupdated = 0;
     frame_count++;
+
 }
 
 
