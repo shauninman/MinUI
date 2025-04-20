@@ -49,8 +49,8 @@ static int resampling_quality = 2;
 static int ambient_mode = 0;
 static int screen_sharpness = SHARPNESS_SOFT;
 static int screen_effect = EFFECT_NONE;
-static int screenx = 65;
-static int screeny = 65;
+static int screenx = 64;
+static int screeny = 64;
 static int overlay = 0; 
 static int prevent_tearing = 1; // lenient
 static int use_core_fps = 0;
@@ -861,10 +861,15 @@ static char* overlay_labels[] = {
 	"overlay5.png",
 	NULL
 };
+// static char* sharpness_labels[] = {
+// 	"Sharp",
+// 	"Crisp",
+// 	"Soft",
+// 	NULL
+// };
 static char* sharpness_labels[] = {
-	"Sharp",
-	"Crisp",
-	"Soft",
+	"NEAREST",
+	"LINEAR",
 	NULL
 };
 static char* tearing_labels[] = {
@@ -1063,7 +1068,7 @@ enum {
 	FE_OPT_OVERLAY,
 	FE_OPT_SCREENX,
 	FE_OPT_SCREENY,
-	// FE_OPT_SHARPNESS,
+	FE_OPT_SHARPNESS,
 	FE_OPT_TEARING,
 	FE_OPT_SYNC_REFERENCE,
 	FE_OPT_OVERCLOCK,
@@ -1324,35 +1329,37 @@ static struct Config {
 				.labels = overlay_labels,
 			},
 			[FE_OPT_SCREENX] = {
-				.key	= "minarch_screenx",
+				.key	= "minarch_screen_offsetx",
 				.name	= "Offset screen X",
 				.desc	= "Offset X pixels",
-				.default_value = 65,
-				.value = 65,
+				.default_value = 64,
+				.value = 64,
 				.count = 129,
 				.values = offset_labels,
 				.labels = offset_labels,
 			},
 			[FE_OPT_SCREENY] = {
-				.key	= "minarch_screeny",
+				.key	= "minarch_screen_offsety",
 				.name	= "Offset screen Y",
 				.desc	= "Offset Y pixels",
-				.default_value = 65,
-				.value = 65,
+				.default_value = 64,
+				.value = 64,
 				.count = 129,
 				.values = offset_labels,
 				.labels = offset_labels,
 			},
-			// [FE_OPT_SHARPNESS] = {
-			// 	.key	= "minarch_screen_sharpness",
-			// 	.name	= "Screen Sharpness",
-			// 	.desc	= "Sharp uses nearest neighbor sampling.\nCrisp integer upscales before linear sampling.\nSoft uses linear sampling.",
-			// 	.default_value = 2,
-			// 	.value = 2,
-			// 	.count = 3,
-			// 	.values = sharpness_labels,
-			// 	.labels = sharpness_labels,
-			// },
+			[FE_OPT_SHARPNESS] = {
+				// 	.key	= "minarch_screen_sharpness",
+				.key	= "minarch_scale_filter",
+				.name	= "Screen Sharpness",
+				.desc	= "LINEAR looks better but uses more CPU/GPU",
+				.default_value = 1,
+				.value = 1,
+				// .count = 3,
+				.count = 2,
+				.values = sharpness_labels,
+				.labels = sharpness_labels,
+			},
 			[FE_OPT_TEARING] = {
 				.key	= "minarch_prevent_tearing",
 				.name	= "VSync",
@@ -1458,7 +1465,7 @@ static struct Config {
 			},
 			[SH_SCALETYPE1] = {
 				.key	= "minarch_shader1_scaletype", 
-				.name	= "Scale from",
+				.name	= "Shader 1 Scale Type",
 				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
@@ -1499,7 +1506,7 @@ static struct Config {
 			},
 			[SH_SCALETYPE2] = {
 				.key	= "minarch_shader2_scaletype", 
-				.name	= "Scale from",
+				.name	= "Shader 2 Scale Type",
 				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
@@ -1540,7 +1547,7 @@ static struct Config {
 			},
 			[SH_SCALETYPE3] = {
 				.key	= "minarch_shader3_scaletype", 
-				.name	= "Scale from",
+				.name	= "Shader 3 Scale Type",
 				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
@@ -1665,15 +1672,16 @@ static void Config_syncFrontend(char* key, int value) {
 		GFX_setOffsetY(value);
 		i = FE_OPT_SCREENY;
 	}
-	// else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
-	// 	screen_sharpness = value;
+	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
+		// screen_sharpness = value;
 		
-	// 	if (screen_scaling==SCALE_NATIVE) GFX_setSharpness(SHARPNESS_SHARP);
-	// 	else GFX_setSharpness(screen_sharpness);
+		// if (screen_scaling==SCALE_NATIVE) GFX_setSharpness(SHARPNESS_SHARP);
+		// else GFX_setSharpness(screen_sharpness);
 
-	// 	renderer.dst_p = 0;
-	// 	i = FE_OPT_SHARPNESS;
-	// }
+		// renderer.dst_p = 0;
+		GFX_setSharpness(value);
+		i = FE_OPT_SHARPNESS;
+	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_TEARING].key)) {
 		prevent_tearing = value;
 		i = FE_OPT_TEARING;

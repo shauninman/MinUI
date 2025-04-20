@@ -29,7 +29,7 @@
 
 int is_brick = 0;
 volatile int useAutoCpu = 1;
-
+static int finalScaleFilter=GL_LINEAR;
 
 // shader stuff
 
@@ -596,12 +596,22 @@ void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 void PLAT_setNearestNeighbor(int enabled) {
 	// always enabled?
 }
+// void PLAT_setSharpness(int sharpness) {
+// 	if (vid.sharpness==sharpness) return;
+// 	int p = vid.pitch;
+// 	vid.pitch = 0;
+// 	vid.sharpness = sharpness;
+// 	resizeVideo(vid.width,vid.height,p);
+// }
 void PLAT_setSharpness(int sharpness) {
-	if (vid.sharpness==sharpness) return;
-	int p = vid.pitch;
-	vid.pitch = 0;
-	vid.sharpness = sharpness;
-	resizeVideo(vid.width,vid.height,p);
+	if(sharpness==1) {
+		LOG_info("finalScaleFilter set to GL_LINEAR\n");
+		finalScaleFilter=GL_LINEAR;
+	}
+	else {
+		LOG_info("finalScaleFilter set to GL_NEAREST\n");
+		finalScaleFilter = GL_NEAREST;
+	}
 }
 
 static struct FX_Context {
@@ -708,12 +718,12 @@ int screeny = 0;
 void PLAT_setOffsetX(int x) {
     if (x < 0 || x > 128) return;
     screenx = x - 64;
-	LOG_info("screenx: %i\n",screenx);
+	LOG_info("screenx: %i %i\n",screenx,x);
 }
 void PLAT_setOffsetY(int y) {
     if (y < 0 || y > 128) return;
     screeny = y - 64; 
-	LOG_info("screeny: %i\n",screeny);
+	LOG_info("screeny: %i %i\n",screeny,y);
 }
 static int overlayUpdated=0;
 void PLAT_setOverlay(int select, const char* tag) {
@@ -1629,12 +1639,15 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 static int frame_count = 0;
 void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* tex,
                    int x, int y, int dst_width, int dst_height, int tex_width, int tex_height, int in_w , int in_h,
-                   GLenum filter, int layer) {
+                   GLenum filter, int alpha) {
 
 	static GLuint static_VAO = 0, static_VBO = 0;
 	static GLuint last_program = 0;
 	static GLfloat last_texelSize[2] = {-1.0f, -1.0f};
-	GLfloat texelSize[2] = {1.0f / tex_width, 1.0 / tex_height};
+	static GLfloat texelSize[2] = {-1.0f, -1.0f};
+	texelSize[0] = 1.0f / tex_width;
+	texelSize[1] = 1.0f / tex_height;
+
 
 	glUseProgram(shader_program);
 	if (static_VAO == 0 || shader_program != last_program) {
@@ -1716,12 +1729,12 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 
 	glBindVertexArray(static_VAO);
 	
-	if(layer==1) {
-		glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE0);
+
+	if(alpha==1) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	} else {
-		glActiveTexture(GL_TEXTURE0);
 		glDisable(GL_BLEND);
 	}
 
@@ -1730,7 +1743,7 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 
 	GLint texLocation = glGetUniformLocation(shader_program, "Texture");
     if (texLocation >= 0) {
-        glUniform1i(texLocation, layer);  
+        glUniform1i(texLocation, 0);  
     }
 
     GLint texelSizeLocation = glGetUniformLocation(shader_program, "texelSize");
@@ -1739,7 +1752,6 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
         last_texelSize[0] = texelSize[0];
         last_texelSize[1] = texelSize[1];
     }
-
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
@@ -1949,12 +1961,10 @@ void PLAT_GL_Swap() {
 		last_h = dst_h;
 		
 	}
-	
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-                  last_w, last_h,last_w,last_h, GL_NEAREST, 0);
+                  last_w, last_h,last_w,last_h, finalScaleFilter, 0);
 
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL, NULL,
