@@ -1913,6 +1913,24 @@ void PLAT_GL_Swap() {
 		int final_src_h = shaders[i]->scaletype == 0 ? vid.blit->src_h :
                   shaders[i]->scaletype == 2 ? dst_rect.h : real_input_h;
 
+		// some info on the debug screen flipping between shaderpass information every 5 seconds (at 60fps) frames
+		static int shaderinfocount = 0;
+		static int shaderinfoscreen = 0;		  
+		if(shaderinfocount > 600 && shaderinfoscreen == i) {
+			currentshaderpass = i+1;
+			currentshadertexw = final_src_w;
+			currentshadertexh = final_src_h;
+			currentshadersrcw = real_input_w;
+			currentshadersrch = real_input_h;
+			currentshaderdstw = dst_w;
+			currentshaderdsth = dst_h;
+			shaderinfocount = 0;
+			shaderinfoscreen++;
+			if(shaderinfoscreen>=nrofshaders) shaderinfoscreen = 0;
+			
+		}
+		shaderinfocount++;
+
 		if (shaders[i]->shader_p) {
 			runShaderPass(input_texture, shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
 							dst_w, dst_h,
@@ -1936,7 +1954,7 @@ void PLAT_GL_Swap() {
 
     runShaderPass(nrofshaders > 0 ? pass_textures[nrofshaders-1]:initial_texture, g_shader_default, NULL, NULL,
                   dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-                  last_w, last_h,vid.blit->src_w,vid.blit->src_h, GL_NEAREST, 0);
+                  last_w, last_h,last_w,last_h, GL_NEAREST, 0);
 
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL, NULL,
