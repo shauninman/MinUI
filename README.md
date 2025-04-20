@@ -43,6 +43,8 @@ For other devices we recommend checking out [MinUI](https://github.com/shauninma
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
 - Shaders!
+- Fully OpenGL/GPU based for faster performance!
+- native WiFi support
 - Game art/media support
 - Game time tracker!
 - Cheats support
