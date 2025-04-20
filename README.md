@@ -42,11 +42,14 @@ For other devices we recommend checking out [MinUI](https://github.com/shauninma
 - Game switcher menu (Onion OS style) by [@frysee](https://github.com/frysee)
 - High audio quality, due to advanced resampling engine using [libsamplerate](https://github.com/libsndfile/libsamplerate) (with quality/performance setting per emulator)
 - Much lower latency (average 20ms, 1 frame of 60fps)
+- Shaders!
 - Game art/media support
 - Game time tracker!
 - Cheats support
+- Integrated WiFi
 - Overlays support!
 - Dynamic cpu speed scaling (keeps your device cool and extends battery life, but gives the performance right when needed)
+- Fully GPU OpenGL based for faster performance
 - Custom bootlogos contributed by [@SolvalouArt](https://bsky.app/profile/solvalouart.bsky.social)
 - Color and font settings to customize the NextUI interface
 - Menu animations
@@ -80,7 +83,6 @@ For other devices we recommend checking out [MinUI](https://github.com/shauninma
 - Configurable FN and switch buttons
 - More compatibility testing with different emulators and fix/improve if nessecary
 - Retroachievements
-- Shaders
 - Probably we think of a lot of other stuff a long the way to add :D
 - Once everything is to my liking I will look into porting this to more devices
 - Clean up all MinUI code and strip it from all stuff for legacy devices etc.
