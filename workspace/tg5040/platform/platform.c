@@ -1635,7 +1635,7 @@ void runShaderPass(GLuint texture, GLuint shader_program, GLuint* fbo, GLuint* t
 	static GLuint last_program = 0;
 	static GLfloat last_texelSize[2] = {-1.0f, -1.0f};
 	GLfloat texelSize[2] = {1.0f / tex_width, 1.0 / tex_height};
-	glViewport(0, 0, dst_width, dst_height);
+	glViewport(x, y, dst_width, dst_height);
 
 	glUseProgram(shader_program);
 	if (static_VAO == 0 || shader_program != last_program) {
