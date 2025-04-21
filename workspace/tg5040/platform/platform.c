@@ -1517,43 +1517,47 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 }
 
 void setRectToAspectRatio(SDL_Rect* dst_rect) {
-    int x = vid.blit->src_x;
-    int y = vid.blit->src_y;
-    int w = vid.blit->src_w;
-    int h = vid.blit->src_h;
+    int src_w = vid.blit->src_w;
+    int src_h = vid.blit->src_h;
+    float aspect = vid.blit->aspect;
+    float scale;
 
-    if (vid.blit->aspect == 0) {
-        w = vid.blit->src_w * vid.blit->scale;
-        h = vid.blit->src_h * vid.blit->scale;
+    if (aspect == 0.0f) {
+        // No aspect ratio handling; just scale uniformly
+        int w = src_w * vid.blit->scale;
+        int h = src_h * vid.blit->scale;
         dst_rect->x = (device_width - w) / 2 + screenx;
         dst_rect->y = (device_height - h) / 2 - screeny;
         dst_rect->w = w;
         dst_rect->h = h;
-    } else if (vid.blit->aspect > 0) {
-        if (should_rotate) {
-            h = device_width;
-            w = h * vid.blit->aspect;
-            if (w > device_height) {
-                w = device_height;
-                h = w / vid.blit->aspect;
-            }
-        } else {
-            h = device_height;
-            w = h * vid.blit->aspect;
-            if (w > device_width) {
-                w = device_width;
-                h = w / vid.blit->aspect;
-            }
+    } else if (aspect > 0.0f) {
+        // Target aspect ratio handling
+        float target_w = device_width;
+        float target_h = target_w / aspect;
+
+        if (target_h > device_height) {
+            target_h = device_height;
+            target_w = target_h * aspect;
         }
+
+        // Now, scale uniformly based on the original resolution
+        scale = target_w / (float)src_w;
+        if (scale > device_height / (float)src_h) {
+            scale = device_height / (float)src_h;
+        }
+
+        int w = (int)(src_w * scale);
+        int h = (int)(src_h * scale);
         dst_rect->x = (device_width - w) / 2 + screenx;
         dst_rect->y = (device_height - h) / 2 + screeny;
         dst_rect->w = w;
         dst_rect->h = h;
     } else {
+        // Aspect < 0: stretch full screen
         dst_rect->x = screenx;
         dst_rect->y = screeny;
-        dst_rect->w = should_rotate ? device_height : device_width;
-        dst_rect->h = should_rotate ? device_width : device_height;
+        dst_rect->w = device_width;
+        dst_rect->h = device_height;
     }
 }
 
