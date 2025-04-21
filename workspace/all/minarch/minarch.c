@@ -5820,6 +5820,8 @@ static void Menu_loop(void) {
 	LEDS_initLeds();
 	LEDS_updateLeds();
 	GFX_clearLayers(0);
+	GFX_flip(screen);
+	SDL_Surface *screenshot = GFX_captureRendererToSurface();
 	while (show_menu) {
 
 		GFX_startFrame();
@@ -5935,7 +5937,9 @@ static void Menu_loop(void) {
 			GFX_clear(screen);
 			if(dirty==-1)
 				GFX_flip(screen);
-			GFX_drawOnLayer(backing,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,1);
+				
+				
+			GFX_drawOnLayer(screenshot,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,1);
 
 
 			int ox, oy;
@@ -6073,7 +6077,7 @@ static void Menu_loop(void) {
 	}
 	
 	SDL_FreeSurface(preview);
-	
+	SDL_FreeSurface(screenshot);
 	PAD_reset();
 
 	GFX_clearAll();
