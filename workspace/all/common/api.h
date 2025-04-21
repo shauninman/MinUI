@@ -572,7 +572,7 @@ void PLAT_setShaderUpscale3(int nr);
 void PLAT_setShader1(const char* filename);
 void PLAT_setShader2(const char* filename);
 void PLAT_setShader3(const char* filename);
-void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype);
+void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype, int *inputtype);
 int PLAT_supportsOverscan(void);
 
 SDL_Surface* PLAT_initOverlay(void);

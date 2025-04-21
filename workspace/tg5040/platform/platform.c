@@ -36,6 +36,7 @@ static int finalScaleFilter=GL_LINEAR;
 typedef struct Shader {
 	GLuint shader_p;
 	int scale;
+	int srctype;
 	int scaletype;
 	int filter;
 } Shader;
@@ -45,9 +46,9 @@ GLuint g_shader_color = 0;
 GLuint g_shader_overlay = 0;
 
 Shader* shaders[3] = {
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1 }, 
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1  }, 
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1  }
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0 }, 
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0 }, 
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0 }
 };
 
 static int nrofshaders = 0; // choose between 1 and 3 pipelines, > pipelines = more cpu usage, but more shader options and shader upscaling stuff
@@ -396,7 +397,7 @@ void PLAT_resetShaders() {
 	shadersupdated = 1;
 }
 
-void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype) {
+void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype, int *srctype) {
     // Check if the shader index is valid
     if (i < 0 || i >= 3) {
         LOG_error("Invalid shader index %d\n", i);
@@ -435,6 +436,9 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
     }
     if (scaletype != NULL) {
         shader->scaletype = *scaletype;
+    }
+    if (srctype != NULL) {
+        shader->srctype = *srctype;
     }
 
     // Only update filter if it's not NULL
@@ -1920,9 +1924,13 @@ void PLAT_GL_Swap() {
 		int real_input_w = (i == 0) ? vid.blit->src_w : last_w;
 		int real_input_h = (i == 0) ? vid.blit->src_h : last_h;
 
-		int final_src_w = shaders[i]->scaletype == 0 ? vid.blit->src_w :
+		int fnl_input_w = shaders[i]->srctype == 0 ? vid.blit->src_w :
+						shaders[i]->srctype == 2 ? dst_rect.w : real_input_w;
+		int fnl_input_h = shaders[i]->srctype == 0 ? vid.blit->src_h :
+                  shaders[i]->srctype == 2 ? dst_rect.h : real_input_h;
+		int fnl_tex_w = shaders[i]->scaletype == 0 ? vid.blit->src_w :
 						shaders[i]->scaletype == 2 ? dst_rect.w : real_input_w;
-		int final_src_h = shaders[i]->scaletype == 0 ? vid.blit->src_h :
+		int fnl_tex_h = shaders[i]->scaletype == 0 ? vid.blit->src_h :
                   shaders[i]->scaletype == 2 ? dst_rect.h : real_input_h;
 
 		// some info on the debug screen flipping between shaderpass information every 5 seconds (at 60fps) frames
@@ -1930,10 +1938,10 @@ void PLAT_GL_Swap() {
 		static int shaderinfoscreen = 0;		  
 		if(shaderinfocount > 600 && shaderinfoscreen == i) {
 			currentshaderpass = i+1;
-			currentshadertexw = final_src_w;
-			currentshadertexh = final_src_h;
-			currentshadersrcw = real_input_w;
-			currentshadersrch = real_input_h;
+			currentshadertexw = fnl_tex_w;
+			currentshadertexh = fnl_tex_h;
+			currentshadersrcw = fnl_input_w;
+			currentshadersrch = fnl_input_h;
 			currentshaderdstw = dst_w;
 			currentshaderdsth = dst_h;
 			shaderinfocount = 0;
@@ -1946,14 +1954,14 @@ void PLAT_GL_Swap() {
 		if (shaders[i]->shader_p) {
 			runShaderPass(input_texture, shaders[i]->shader_p, &fbo, &pass_textures[i], 0, 0,
 							dst_w, dst_h,
-							final_src_w, final_src_h,
-							real_input_w, real_input_h,
+							fnl_tex_w, fnl_tex_h,
+							fnl_input_w, fnl_input_h,
 							shaders[i]->filter, 0);
 		} else {
 			runShaderPass(input_texture, g_shader_default, &fbo, &pass_textures[i], 0, 0,
 							dst_w, dst_h,
-							final_src_w, final_src_h,
-							real_input_w, real_input_h,
+							fnl_tex_w, fnl_tex_h,
+							fnl_input_w, fnl_input_h,
 							shaders[i]->filter, 0);
 		}
 	

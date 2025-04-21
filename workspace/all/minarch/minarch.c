@@ -1100,14 +1100,17 @@ enum {
 	SH_NROFSHADERS,
 	SH_SHADER1,
 	SH_SHADER1_FILTER,
+	SH_SRCTYPE1,
 	SH_SCALETYPE1,
 	SH_UPSCALE1,
 	SH_SHADER2,
 	SH_SHADER2_FILTER,
+	SH_SRCTYPE2,
 	SH_SCALETYPE2,
 	SH_UPSCALE2,
 	SH_SHADER3,
 	SH_SHADER3_FILTER,
+	SH_SRCTYPE3,
 	SH_SCALETYPE3,
 	SH_UPSCALE3,
 	SH_NONE
@@ -1430,7 +1433,7 @@ static struct Config {
 		},
 	},
 	.shaders = { // (OptionList)
-		.count = 13,
+		.count = 16,
 		.options = (Option[]){
 			[SH_NROFSHADERS] = {
 				.key	= "minarch_nrofshaders", 
@@ -1463,9 +1466,19 @@ static struct Config {
 				.values = shfilter_labels,
 				.labels = shfilter_labels,
 			},
+			[SH_SRCTYPE1] = {
+				.key	= "minarch_shader1_srctype", 
+				.name	= "Shader 1 Source type",
+				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
+				.default_value = 0,
+				.value = 0,
+				.count = 3,
+				.values = shscaletype_labels,
+				.labels = shscaletype_labels,
+			},
 			[SH_SCALETYPE1] = {
 				.key	= "minarch_shader1_scaletype", 
-				.name	= "Shader 1 Scale Type",
+				.name	= "Shader 1 Texture Type",
 				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
@@ -1504,9 +1517,19 @@ static struct Config {
 				.values = shfilter_labels,
 				.labels = shfilter_labels,
 			},
+			[SH_SRCTYPE2] = {
+				.key	= "minarch_shader2_srctype", 
+				.name	= "Shader 2 Source type",
+				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
+				.default_value = 0,
+				.value = 0,
+				.count = 3,
+				.values = shscaletype_labels,
+				.labels = shscaletype_labels,
+			},
 			[SH_SCALETYPE2] = {
 				.key	= "minarch_shader2_scaletype", 
-				.name	= "Shader 2 Scale Type",
+				.name	= "Shader 2 Texture Type",
 				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
@@ -1545,9 +1568,19 @@ static struct Config {
 				.values = shfilter_labels,
 				.labels = shfilter_labels,
 			},
+			[SH_SRCTYPE3] = {
+				.key	= "minarch_shader3_srctype", 
+				.name	= "Shader 3 Source type",
+				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
+				.default_value = 0,
+				.value = 0,
+				.count = 3,
+				.values = shscaletype_labels,
+				.labels = shscaletype_labels,
+			},
 			[SH_SCALETYPE3] = {
 				.key	= "minarch_shader3_scaletype", 
-				.name	= "Shader 3 Scale Type",
+				.name	= "Shader 3 Texture Type",
 				.desc	= "This will choose resolution source to scale from", // will call getScreenScalingDesc()
 				.default_value = 1,
 				.value = 1,
@@ -1776,21 +1809,25 @@ static void Config_syncShaders(char* key, int value) {
 			int count = 0;
 			while (shaderList && shaderList[count]) count++;
 			if (value >= 0 && value < count) {
-				GFX_updateShader(0, shaderList[value], NULL, NULL,NULL);
+				GFX_updateShader(0, shaderList[value], NULL, NULL,NULL,NULL);
 				i = SH_SHADER1;
 			} 
 		}
 	}
 	if (exactMatch(key,config.shaders.options[SH_SHADER1_FILTER].key)) {
-		GFX_updateShader(0,NULL,NULL,&value,NULL);
+		GFX_updateShader(0,NULL,NULL,&value,NULL,NULL);
 		i = SH_SHADER1_FILTER;
 	}
+	if (exactMatch(key,config.shaders.options[SH_SRCTYPE1].key)) {
+		GFX_updateShader(0,NULL,NULL,NULL,NULL,&value);
+		i = SH_SRCTYPE1;
+	}
 	if (exactMatch(key,config.shaders.options[SH_SCALETYPE1].key)) {
-		GFX_updateShader(0,NULL,NULL,NULL,&value);
+		GFX_updateShader(0,NULL,NULL,NULL,&value,NULL);
 		i = SH_SCALETYPE1;
 	}
 	if (exactMatch(key,config.shaders.options[SH_UPSCALE1].key)) {
-		GFX_updateShader(0,NULL,&value,NULL,NULL);
+		GFX_updateShader(0,NULL,&value,NULL,NULL,NULL);
 		i = SH_UPSCALE1;
 	}
 	if (exactMatch(key, config.shaders.options[SH_SHADER2].key)) {
@@ -1800,21 +1837,25 @@ static void Config_syncShaders(char* key, int value) {
 			int count = 0;
 			while (shaderList && shaderList[count]) count++;
 			if (value >= 0 && value < count) {
-				GFX_updateShader(1, shaderList[value], NULL, NULL,NULL);
+				GFX_updateShader(1, shaderList[value], NULL, NULL,NULL,NULL);
 				i = SH_SHADER2;
 			}
 		}
 	}
 	if (exactMatch(key,config.shaders.options[SH_SHADER2_FILTER].key)) {
-		GFX_updateShader(1,NULL,NULL,&value,NULL);
+		GFX_updateShader(1,NULL,NULL,&value,NULL,NULL);
 		i = SH_SHADER2_FILTER;
 	}
+	if (exactMatch(key,config.shaders.options[SH_SRCTYPE2].key)) {
+		GFX_updateShader(1,NULL,NULL,NULL,NULL,&value);
+		i = SH_SRCTYPE2;
+	}
 	if (exactMatch(key,config.shaders.options[SH_SCALETYPE2].key)) {
-		GFX_updateShader(1,NULL,NULL,NULL,&value);
+		GFX_updateShader(1,NULL,NULL,NULL,&value,NULL);
 		i = SH_SCALETYPE2;
 	}
 	if (exactMatch(key,config.shaders.options[SH_UPSCALE2].key)) {
-		GFX_updateShader(1,NULL,&value,NULL,NULL);
+		GFX_updateShader(1,NULL,&value,NULL,NULL,NULL);
 		i = SH_UPSCALE2;
 	}
 	if (exactMatch(key, config.shaders.options[SH_SHADER3].key)) {
@@ -1824,21 +1865,25 @@ static void Config_syncShaders(char* key, int value) {
 			int count = 0;
 			while (shaderList && shaderList[count]) count++;
 			if (value >= 0 && value < count) {
-				GFX_updateShader(2, shaderList[value], NULL, NULL,NULL);
+				GFX_updateShader(2, shaderList[value], NULL, NULL,NULL,NULL);
 				i = SH_SHADER3;
 			}
 		}
 	}
 	if (exactMatch(key,config.shaders.options[SH_SHADER3_FILTER].key)) {
-		GFX_updateShader(2,NULL,NULL,&value,NULL);
+		GFX_updateShader(2,NULL,NULL,&value,NULL,NULL);
 		i = SH_SHADER3_FILTER;
 	}
+	if (exactMatch(key,config.shaders.options[SH_SRCTYPE3].key)) {
+		GFX_updateShader(2,NULL,NULL,NULL,NULL,&value);
+		i = SH_SRCTYPE3;
+	}
 	if (exactMatch(key,config.shaders.options[SH_SCALETYPE3].key)) {
-		GFX_updateShader(2,NULL,NULL,NULL,&value);
+		GFX_updateShader(2,NULL,NULL,NULL,&value,NULL);
 		i = SH_SCALETYPE3;
 	}
 	if (exactMatch(key,config.shaders.options[SH_UPSCALE3].key)) {
-		GFX_updateShader(2,NULL,&value,NULL,NULL);
+		GFX_updateShader(2,NULL,&value,NULL,NULL,NULL);
 		i = SH_UPSCALE3;
 	}
 	
@@ -4929,41 +4974,50 @@ static int OptionShaders_optionChanged(MenuList* list, int i) {
 	if(i == SH_NROFSHADERS) {
 		GFX_setShaders(item->value);
 	}
+	if(i == SH_SRCTYPE1) {
+		GFX_updateShader(0,NULL,NULL,NULL,NULL,&item->value);
+	}
+	if(i == SH_SRCTYPE2) {
+		GFX_updateShader(1,NULL,NULL,NULL,NULL,&item->value);
+	}
+	if(i == SH_SRCTYPE3) {
+		GFX_updateShader(2,NULL,NULL,NULL,NULL,&item->value);
+	}
 	if(i == SH_SCALETYPE1) {
-		GFX_updateShader(0,NULL,NULL,NULL,&item->value);
+		GFX_updateShader(0,NULL,NULL,NULL,&item->value,NULL);
 	}
 	if(i == SH_SCALETYPE2) {
-		GFX_updateShader(1,NULL,NULL,NULL,&item->value);
+		GFX_updateShader(1,NULL,NULL,NULL,&item->value,NULL);
 	}
 	if(i == SH_SCALETYPE3) {
-		GFX_updateShader(2,NULL,NULL,NULL,&item->value);
+		GFX_updateShader(2,NULL,NULL,NULL,&item->value,NULL);
 	}
 	if(i == SH_UPSCALE1) {
-		GFX_updateShader(0,NULL,&item->value,NULL,NULL);
+		GFX_updateShader(0,NULL,&item->value,NULL,NULL,NULL);
 	}
 	if(i == SH_UPSCALE2) {
-		GFX_updateShader(1,NULL,&item->value,NULL,NULL);
+		GFX_updateShader(1,NULL,&item->value,NULL,NULL,NULL);
 	}
 	if(i == SH_UPSCALE3) {
-		GFX_updateShader(2,NULL,&item->value,NULL,NULL);
+		GFX_updateShader(2,NULL,&item->value,NULL,NULL,NULL);
 	}
 	if(i == SH_SHADER1 && item->value <= filecount) {
-		GFX_updateShader(0,filelist[item->value],NULL,NULL,NULL);
+		GFX_updateShader(0,filelist[item->value],NULL,NULL,NULL,NULL);
 	}
 	if(i == SH_SHADER2 && item->value <= filecount) {
-		GFX_updateShader(1,filelist[item->value],NULL,NULL,NULL);
+		GFX_updateShader(1,filelist[item->value],NULL,NULL,NULL,NULL);
 	}
 	if(i == SH_SHADER3 && item->value <= filecount) {
-		GFX_updateShader(2,filelist[item->value],NULL,NULL,NULL);
+		GFX_updateShader(2,filelist[item->value],NULL,NULL,NULL,NULL);
 	}
 	if(i == SH_SHADER1_FILTER) {
-		GFX_updateShader(0,NULL,NULL,&item->value,NULL);
+		GFX_updateShader(0,NULL,NULL,&item->value,NULL,NULL);
 	}
 	if(i == SH_SHADER2_FILTER) {
-		GFX_updateShader(1,NULL,NULL,&item->value,NULL);
+		GFX_updateShader(1,NULL,NULL,&item->value,NULL,NULL);
 	}
 	if(i == SH_SHADER3_FILTER) {
-		GFX_updateShader(2,NULL,NULL,&item->value,NULL);
+		GFX_updateShader(2,NULL,NULL,&item->value,NULL,NULL);
 	}
 	config.shaders.options[i].value = item->value;
 	return MENU_CALLBACK_NOP;
