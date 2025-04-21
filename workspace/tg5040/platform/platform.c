@@ -381,6 +381,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.height	= h;
 	vid.pitch	= p;
 
+	PWR_disablePowerOff();
+	
 	SDL_transparentBlack = SDL_MapRGBA(vid.screen->format, 0, 0, 0, 0);
 	
 	device_width	= w;
@@ -392,10 +394,11 @@ SDL_Surface* PLAT_initVideo(void) {
 	return vid.screen;
 }
 int shadersupdated = 0;
-
 void PLAT_resetShaders() {
 	shadersupdated = 1;
 }
+
+
 
 void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype, int *srctype) {
     // Check if the shader index is valid
@@ -1577,6 +1580,10 @@ void rotate_and_render(SDL_Renderer* renderer, SDL_Texture* texture, SDL_Rect* s
     
 }
 
+void PLAT_clearShaders() {
+
+}
+
 void PLAT_flipHidden() {
 	SDL_RenderClear(vid.renderer);
 	resizeVideo(device_width, device_height, FIXED_PITCH); // !!!???
@@ -1591,8 +1598,8 @@ void PLAT_flipHidden() {
 
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	// dont think we need this here tbh
-	// SDL_RenderClear(vid.renderer);
-    if (!vid.blit) {
+	// SDL_RenderClear(vid.renderer);    
+	if (!vid.blit) {
         resizeVideo(device_width, device_height, FIXED_PITCH); // !!!???
         SDL_UpdateTexture(vid.stream_layer1, NULL, vid.screen->pixels, vid.screen->pitch);
 		SDL_RenderCopy(vid.renderer, vid.target_layer1, NULL, NULL);
@@ -1629,12 +1636,6 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
     setRectToAspectRatio(dst_rect);
 	
     SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
-    
-
-    // updateEffect();
-    // if (vid.blit && effect.type != EFFECT_NONE && vid.effect) {
-    //     SDL_RenderCopy(vid.renderer, vid.effect, &(SDL_Rect){0, 0, dst_rect->w, dst_rect->h}, dst_rect);
-    // }
 
 	updateOverlay();
 	if(vid.overlay) {

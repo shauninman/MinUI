@@ -276,6 +276,7 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 #define GFX_blitRenderer PLAT_blitRenderer	// void:(GFX_Renderer* renderer)
 #define GFX_setShaders PLAT_setShaders	// void:(GFX_Renderer* renderer)
 #define GFX_resetShaders PLAT_resetShaders	// void:(GFX_Renderer* renderer)
+#define GFX_clearShaders PLAT_clearShaders	// void:(GFX_Renderer* renderer)
 #define GFX_updateShader PLAT_updateShader	// void:(GFX_Renderer* renderer)
 
 scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
@@ -563,6 +564,7 @@ void PLAT_GL_Swap();
 void PLAT_GPU_Flip();
 void PLAT_setShaders(int nr);
 void PLAT_resetShaders();
+void PLAT_clearShaders();
 void PLAT_setShader1Filter(int value);
 void PLAT_setShader2Filter(int value);
 void PLAT_setShader3Filter(int value);

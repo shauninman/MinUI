@@ -4376,7 +4376,7 @@ void Menu_quit(void) {
 	SDL_FreeSurface(menu.overlay);
 }
 void Menu_beforeSleep() {
-	// LOG_info("beforeSleep\n");
+	LOG_info("beforeSleep\n");
 	SRAM_write();
 	RTC_write();
 	State_autosave();
@@ -4384,7 +4384,7 @@ void Menu_beforeSleep() {
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 }
 void Menu_afterSleep() {
-	// LOG_info("beforeSleep\n");
+	LOG_info("beforeSleep\n");
 	unlink(AUTO_RESUME_PATH);
 	setOverclock(overclock);
 }
@@ -5931,9 +5931,10 @@ static void Menu_loop(void) {
 		}
 
 		PWR_update(&dirty, &show_setting, Menu_beforeSleep, Menu_afterSleep);
-		// idk with opengl i need to do 2 draws before the menu appears, need to figure out why but for now this works
 		if(dirty || dirty==-1) {
 			GFX_clear(screen);
+			if(dirty==-1)
+				GFX_flip(screen);
 			GFX_drawOnLayer(backing,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,1);
 
 
@@ -6063,10 +6064,7 @@ static void Menu_loop(void) {
 			}
 
 			GFX_flip(screen);
-			if(dirty==-1)
-				dirty=1;
-			else 
-				dirty=0;
+			dirty=0;
 		} else {
 			// please dont flip cause it will cause current_fps dip and audio is weird first seconds
 			GFX_delay();
