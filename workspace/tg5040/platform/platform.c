@@ -1584,7 +1584,9 @@ void rotate_and_render(SDL_Renderer* renderer, SDL_Texture* texture, SDL_Rect* s
 }
 
 void PLAT_clearShaders() {
-
+	// this funciton was empty so am abusing it for now for this, later need to make a seperate function for it
+	// set blit to 0 maybe should be seperate function later
+	vid.blit = NULL;
 }
 
 void PLAT_flipHidden() {

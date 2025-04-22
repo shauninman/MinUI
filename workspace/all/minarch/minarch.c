@@ -5955,9 +5955,8 @@ static void Menu_loop(void) {
 	LEDS_initLeds();
 	LEDS_updateLeds();
 
-	// pull back to sdl with gfx_flip
-	GFX_flip(screen);
-	SDL_Surface *screenshot = GFX_captureRendererToSurface();
+	//set vid.blit to null for menu drawing no need for blitrender drawing
+	GFX_clearShaders();
 	while (show_menu) {
 
 		GFX_startFrame();
@@ -6072,8 +6071,8 @@ static void Menu_loop(void) {
 		if(dirty) {
 			GFX_clear(screen);
 
-			GFX_drawOnLayer(screenshot,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,1);
-
+			GFX_drawOnLayer(menu.bitmap,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,0);
+			
 
 			int ox, oy;
 			int ow = GFX_blitHardwareGroup(screen, show_setting);
@@ -6200,7 +6199,6 @@ static void Menu_loop(void) {
 					else GFX_blitAsset(ASSET_DOT, NULL, screen, &(SDL_Rect){ox+SCALE1(i*15)+4,oy+SCALE1(2)});
 				}
 			}
-
 			GFX_flip(screen);
 			dirty=0;
 		} else {
@@ -6211,7 +6209,7 @@ static void Menu_loop(void) {
 	}
 	
 	SDL_FreeSurface(preview);
-	SDL_FreeSurface(screenshot);
+	if(menu.bitmap) SDL_FreeSurface(menu.bitmap);
 	PAD_reset();
 
 	GFX_clearAll();
