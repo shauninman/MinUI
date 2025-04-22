@@ -5793,15 +5793,12 @@ static void Menu_saveState(void) {
 	if(newScreenshot) {
 		int cw, ch;
 		unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
-		int scaledW, scaledH;
-		unsigned char* smallPixels = GFX_pixelscaler(pixels, cw, ch, 2, &scaledW, &scaledH);
 		SDL_Surface* rawSurface = SDL_CreateRGBSurfaceWithFormatFrom(
-			smallPixels, scaledW, scaledH, 32, scaledW * 4, SDL_PIXELFORMAT_ABGR8888
+			pixels, cw, ch, 32, cw * 4, SDL_PIXELFORMAT_ABGR8888
 		);
 		SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
 		SDL_FreeSurface(rawSurface);
 		free(pixels); 
-		free(smallPixels); 
 		SDL_SaveBMP(converted , menu.bmp_path);
 		SDL_FreeSurface(converted);
 	} else {
