@@ -3886,6 +3886,140 @@ static void screen_flip(SDL_Surface* screen) {
 }
 
 
+// couple of animation functions for pixel data keeping them all cause wanna use them later
+void applyFadeIn(uint32_t **data, size_t pitch, unsigned width, unsigned height, int *frame_counter, int max_frames) {
+    size_t pixels_per_row = pitch / sizeof(uint32_t);
+    static uint32_t temp_buffer[1920 * 1080]; 
+
+    if (*frame_counter >= max_frames) {
+        return; 
+    }
+
+    float progress = (float)(*frame_counter) / (float)max_frames;
+    float eased = progress * progress * (3 - 2 * progress); 
+
+    float fade_alpha = eased;
+
+    for (unsigned y = 0; y < height; ++y) {
+        for (unsigned x = 0; x < width; ++x) {
+            size_t idx = y * pixels_per_row + x;
+
+            uint32_t color = (*data)[idx];
+
+            uint8_t r = (color >> 24) & 0xFF;
+            uint8_t g = (color >> 16) & 0xFF;
+            uint8_t b = (color >> 8) & 0xFF;
+            uint8_t a = color & 0xFF;
+
+            r = (uint8_t)(r * fade_alpha);
+            g = (uint8_t)(g * fade_alpha);
+            b = (uint8_t)(b * fade_alpha);
+            a = (uint8_t)(a * fade_alpha);
+
+            temp_buffer[idx] = (r << 24) | (g << 16) | (b << 8) | a;
+        }
+    }
+
+    (*frame_counter)++;
+    *data = temp_buffer;
+}
+
+
+void applyZoomFadeIn(uint32_t **data, size_t pitch, unsigned width, unsigned height, int *frame_counter, int max_frames) {
+    size_t pixels_per_row = pitch / sizeof(uint32_t);
+    static uint32_t temp_buffer[1920 * 1080];
+
+    if (*frame_counter >= max_frames) {
+        return; 
+    }
+
+    float progress = (float)(*frame_counter) / (float)max_frames;
+    float eased = progress * progress * (3 - 2 * progress); 
+
+    float start_zoom = 6.0f;
+    float end_zoom = 1.0f;
+    float zoom = start_zoom - eased * (start_zoom - end_zoom);
+
+    float fade_alpha = eased; 
+
+    int center_x = width / 2;
+    int center_y = height / 2;
+
+    for (int y = 0; y < (int)height; ++y) {
+        for (int x = 0; x < (int)width; ++x) {
+            float src_x = center_x + (x - center_x) / zoom;
+            float src_y = center_y + (y - center_y) / zoom;
+
+            int ix = (int)src_x;
+            int iy = (int)src_y;
+
+            size_t dst_i = y * pixels_per_row + x;
+
+            uint32_t color = 0xFF000000; 
+
+            if (ix >= 0 && ix < (int)width && iy >= 0 && iy < (int)height) {
+                size_t src_i = iy * pixels_per_row + ix;
+                color = (*data)[src_i]; 
+            }
+
+            uint8_t r = (color >> 24) & 0xFF;
+            uint8_t g = (color >> 16) & 0xFF;
+            uint8_t b = (color >> 8) & 0xFF;
+            uint8_t a = color & 0xFF;
+
+            r = (uint8_t)(r * fade_alpha);
+            g = (uint8_t)(g * fade_alpha);
+            b = (uint8_t)(b * fade_alpha);
+            a = (uint8_t)(a * fade_alpha);
+
+            temp_buffer[dst_i] = (r << 24) | (g << 16) | (b << 8) | a;
+        }
+    }
+
+    (*frame_counter)++;
+
+    *data = temp_buffer;
+}
+
+// Looney Tunes opening effect :D
+void applyCircleReveal(uint32_t **data, size_t pitch, unsigned width, unsigned height, int *frame_counter, int max_frames) {
+    static uint32_t temp_buffer[1920 * 1080]; // Max resolution (adjust if needed)
+
+    if (*frame_counter >= max_frames) return;
+
+    uint32_t *src = *data;
+    size_t pixels_per_row = pitch / sizeof(uint32_t);
+    float progress = (float)(*frame_counter) / (float)max_frames;
+
+    float eased = progress * progress * (3.0f - 2.0f * progress);
+
+    float max_radius = sqrtf((float)(width * width + height * height)) * 0.5f;
+    float radius = eased * max_radius;
+
+    int cx = (int)(width / 2);
+    int cy = (int)(height / 2);
+
+    for (unsigned y = 0; y < height; ++y) {
+        for (unsigned x = 0; x < width; ++x) {
+            size_t i = y * pixels_per_row + x;
+            float dx = (float)x - (float)cx;
+            float dy = (float)y - (float)cy;
+            float dist = sqrtf(dx * dx + dy * dy);
+
+            if (dist <= radius) {
+                temp_buffer[i] = src[i];
+            } else {
+                uint32_t color = src[i];
+                uint8_t a = color & 0xFF;
+                temp_buffer[i] = (0 << 24) | (0 << 16) | (0 << 8) | a;
+            }
+        }
+    }
+
+    (*frame_counter)++;
+    *data = temp_buffer;
+}
+
 static void video_refresh_callback_main(const void *data, unsigned width, unsigned height, size_t pitch) {
 	// return;
 	
@@ -3962,54 +4096,26 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 		drawGauge(x, y + 30, buffer_fill, width / 2, 8, (uint32_t*)data, pitch / 4);
 	}
 	
+	static int frame_counter = 0;
+	const int max_frames = 8; 
+	if(frame_counter<9) {
+		applyFadeIn((uint32_t **) &data, pitch, width, height, &frame_counter, max_frames);
+	}
+
+	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
+
 
 	renderer.src = (void*)data;
 	renderer.dst = screen->pixels;
-	// LOG_info("video_refresh_callback: %ix%i@%i %ix%i@%i\n",width,height,pitch,screen->w,screen->h,screen->pitch);
-	if(firstframe) {
-		GFX_clearLayers(0);
-		GFX_clear(screen);
-		SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
-		// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
-	
-		SDL_Surface* tmpSur = SDL_CreateRGBSurfaceWithFormat(0,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888); 
-		SDL_FillRect(tmpSur, NULL, SDL_MapRGBA(tmpSur->format, 0, 0, 0, 255)); 
-	
-		float src_aspect = (float)screendata->w / screendata->h;
-		float dst_aspect = (float)DEVICE_WIDTH / DEVICE_HEIGHT;
-	
-		int scaled_w = DEVICE_WIDTH;
-		int scaled_h = DEVICE_HEIGHT;
-	
-		if (src_aspect > dst_aspect) {
-			scaled_w = DEVICE_WIDTH;
-			scaled_h = (int)(DEVICE_WIDTH / src_aspect);
-		} else {
-			scaled_h = DEVICE_HEIGHT;
-			scaled_w = (int)(DEVICE_HEIGHT * src_aspect);
-		}
-	
-		SDL_Rect dst = {
-			screen_scaling!=SCALE_FULLSCREEN ? (DEVICE_WIDTH - scaled_w) / 2:0,
-			screen_scaling!=SCALE_FULLSCREEN ?(DEVICE_HEIGHT - scaled_h) / 2:0,
-			screen_scaling!=SCALE_FULLSCREEN ? scaled_w:screen->w,
-			screen_scaling!=SCALE_FULLSCREEN ? scaled_h:screen->h
-		};
-		SDL_BlitScaled(screendata, NULL, tmpSur, &dst);
-		GFX_animateSurfaceOpacity(tmpSur,0,0,screen->w,screen->h,0,255,CFG_getMenuTransitions() ? 200:20,1);
-		SDL_FreeSurface(tmpSur);
-		SDL_FreeSurface(screendata);
-		GFX_clearLayers(0);
-		firstframe=0;
-		SDL_PauseAudio(0);
-	
-	} 
 
+	SDL_PauseAudio(0);
 	GFX_blitRenderer(&renderer);
 
 	screen_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
+
+
 const void* lastframe = NULL;
 
 static Uint32* rgbaData = NULL;
@@ -4020,65 +4126,67 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 	// bool can_dupe = false;
     // environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
 
-
-	if (!rgbaData || rgbaDataSize != width * height) {
-		if (rgbaData) free(rgbaData);
-		rgbaDataSize = width * height;
-		rgbaData = (Uint32*)malloc(rgbaDataSize * sizeof(Uint32));
-		if (!rgbaData) {
-			printf("Failed to allocate memory for RGBA8888 data.\n");
-			return;
-		}
-	}
-
-	if(!fast_forward && data) {
-		if(ambient_mode!=0) {
-			GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
-			LEDS_updateLeds();
-		}
-	}
-
-    if (!data) {
-        if (lastframe) {
-            data = lastframe;
-        } else {
-            return; // No data to display
-        }
-    } else if (fmt == RETRO_PIXEL_FORMAT_XRGB8888) {
-		// convert XRGB8888 to RGBA8888
-		const uint32_t* src = (const uint32_t*)data;
-		for (unsigned i = 0; i < width * height; ++i) {
-			uint32_t pixel = src[i];
-			uint8_t r = (pixel >> 16) & 0xFF;
-			uint8_t g = (pixel >> 8) & 0xFF;
-			uint8_t b = (pixel >> 0) & 0xFF;
-			uint8_t a = 0xFF;
-			rgbaData[i] = (r << 24) | (g << 16) | (b << 8) | a;
-		}
-		data = rgbaData;
-	} else {
-		// convert RGB565 to RGBA8888
-		const uint16_t* srcData = (const uint16_t*)data;
-		unsigned srcPitchInPixels = pitch / sizeof(uint16_t); 
-
-		for (unsigned y = 0; y < height; ++y) {
-			for (unsigned x = 0; x < width; ++x) {
-				uint16_t pixel = srcData[y * srcPitchInPixels + x];
-
-				uint8_t r = ((pixel >> 11) & 0x1F) << 3; 
-				uint8_t g = ((pixel >> 5) & 0x3F) << 2;   
-				uint8_t b = (pixel & 0x1F) << 3;          
-
-				rgbaData[y * width + x] = (r << 24) | (g << 16) | (b << 8) | 0xFF;  
+	// I need to check quit here because sometimes quit is true but callback is still called by the core after and it still runs one more frame and it looks ugly :D
+	if(!quit) {
+		if (!rgbaData || rgbaDataSize != width * height) {
+			if (rgbaData) free(rgbaData);
+			rgbaDataSize = width * height;
+			rgbaData = (Uint32*)malloc(rgbaDataSize * sizeof(Uint32));
+			if (!rgbaData) {
+				printf("Failed to allocate memory for RGBA8888 data.\n");
+				return;
 			}
 		}
-		data = rgbaData;
-	}
 
-	pitch = width * sizeof(Uint32);
-	lastframe = data;
-	
-     video_refresh_callback_main(data,width,height,pitch);
+		if(!fast_forward && data) {
+			if(ambient_mode!=0) {
+				GFX_setAmbientColor(data, width, height,pitch,ambient_mode);
+				LEDS_updateLeds();
+			}
+		}
+
+		if (!data) {
+			if (lastframe) {
+				data = lastframe;
+			} else {
+				return; // No data to display
+			}
+		} else if (fmt == RETRO_PIXEL_FORMAT_XRGB8888) {
+			// convert XRGB8888 to RGBA8888
+			const uint32_t* src = (const uint32_t*)data;
+			for (unsigned i = 0; i < width * height; ++i) {
+				uint32_t pixel = src[i];
+				uint8_t r = (pixel >> 16) & 0xFF;
+				uint8_t g = (pixel >> 8) & 0xFF;
+				uint8_t b = (pixel >> 0) & 0xFF;
+				uint8_t a = 0xFF;
+				rgbaData[i] = (r << 24) | (g << 16) | (b << 8) | a;
+			}
+			data = rgbaData;
+		} else {
+			// convert RGB565 to RGBA8888
+			const uint16_t* srcData = (const uint16_t*)data;
+			unsigned srcPitchInPixels = pitch / sizeof(uint16_t); 
+
+			for (unsigned y = 0; y < height; ++y) {
+				for (unsigned x = 0; x < width; ++x) {
+					uint16_t pixel = srcData[y * srcPitchInPixels + x];
+
+					uint8_t r = ((pixel >> 11) & 0x1F) << 3; 
+					uint8_t g = ((pixel >> 5) & 0x3F) << 2;   
+					uint8_t b = (pixel & 0x1F) << 3;          
+
+					rgbaData[y * width + x] = (r << 24) | (g << 16) | (b << 8) | 0xFF;  
+				}
+			}
+			data = rgbaData;
+		}
+
+		pitch = width * sizeof(Uint32);
+		lastframe = data;
+		
+		video_refresh_callback_main(data,width,height,pitch);
+	}
 }
 ///////////////////////////////
 
@@ -6290,7 +6398,6 @@ int main(int argc , char* argv[]) {
 	
 	int has_pending_opt_change = 0;
 
-	SDL_PauseAudio(1);
 	while (!quit) {
 		GFX_startFrame();
 	
@@ -6322,44 +6429,14 @@ int main(int argc , char* argv[]) {
 		hdmimon();
 	}
 
-	SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
-	// LOG_info("Menu_loop:menu.bitmap %ix%i\n", menu.bitmap->w,menu.bitmap->h);
-
-	SDL_Surface* tmpSur = SDL_CreateRGBSurfaceWithFormat(0,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888); 
-	SDL_FillRect(tmpSur, NULL, SDL_MapRGBA(tmpSur->format, 0, 0, 0, 255)); // Change alpha to 0 if transparency is needed
-
-    // Calculate aspect ratio-preserving size
-    float src_aspect = (float)screendata->w / screendata->h;
-    float dst_aspect = (float)DEVICE_WIDTH / DEVICE_HEIGHT;
-
-    int scaled_w = DEVICE_WIDTH;
-    int scaled_h = DEVICE_HEIGHT;
-
-    if (src_aspect > dst_aspect) {
-        // Source is wider relative to destination
-        scaled_w = DEVICE_WIDTH;
-        scaled_h = (int)(DEVICE_WIDTH / src_aspect);
-    } else {
-        // Source is taller relative to destination
-        scaled_h = DEVICE_HEIGHT;
-        scaled_w = (int)(DEVICE_HEIGHT * src_aspect);
-    }
-
-    // Center the image
-	SDL_Rect dst = {
-		screen_scaling!=SCALE_FULLSCREEN ? (DEVICE_WIDTH - scaled_w) / 2:0,
-		screen_scaling!=SCALE_FULLSCREEN ?(DEVICE_HEIGHT - scaled_h) / 2:0,
-		screen_scaling!=SCALE_FULLSCREEN ? scaled_w:screen->w,
-		screen_scaling!=SCALE_FULLSCREEN ? scaled_h:screen->h
-	};
-	SDL_BlitScaled(screendata, NULL, tmpSur, &dst);
-
-	GFX_animateSurfaceOpacity(tmpSur,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 200:20,1);
+	// SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
+	GFX_flip(screen);
+	SDL_Surface *screendata = GFX_captureRendererToSurface();
+	GFX_animateSurfaceOpacity(screendata,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 200:20,0);
 	
 	GFX_clearLayers(0);
 	GFX_clear(screen);
 	if(rgbaData) free(rgbaData);
-	SDL_FreeSurface(tmpSur);
 	SDL_FreeSurface(screendata);
 
 	Menu_quit();
@@ -6377,7 +6454,7 @@ finish:
 	PWR_quit();
 	VIB_quit();
 	// already happens on Core_unload
-	// SND_quit();
+	SND_quit();
 	PAD_quit();
 	GFX_quit();
 	
