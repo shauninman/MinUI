@@ -236,6 +236,8 @@ SDL_Surface* GFX_init(int mode);
 #define GFX_flipHidden PLAT_flipHidden //(void)
 #define GFX_GPU_Flip PLAT_GPU_Flip//(void)
 #define GFX_GL_Swap PLAT_GL_Swap //(void)
+#define GFX_GL_screenCapture PLAT_GL_screenCapture //(void)
+#define GFX_pixelscaler PLAT_pixelscaler //(void)
 
 #define GFX_present PLAT_present //(SDL_Surface *inputSurface,int x, int y)
 void GFX_setMode(int mode);
@@ -561,6 +563,8 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer);
 void PLAT_blitRenderer(GFX_Renderer* renderer);
 void PLAT_flip(SDL_Surface* screen, int sync);
 void PLAT_GL_Swap();
+unsigned char* PLAT_GL_screenCapture(int* outWidth, int* outHeight);
+unsigned char* PLAT_pixelscaler(const unsigned char* src, int sw, int sh, int scale, int* outW, int* outH);
 void PLAT_GPU_Flip();
 void PLAT_setShaders(int nr);
 void PLAT_resetShaders();

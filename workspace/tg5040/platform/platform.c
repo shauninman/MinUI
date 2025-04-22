@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "opengl.h"
+#include <arm_neon.h>
 
 int is_brick = 0;
 volatile int useAutoCpu = 1;
@@ -573,12 +574,12 @@ static void resizeVideo(int w, int h, int p) {
 	SDL_DestroyTexture(vid.stream_layer1);
 	if (vid.target) SDL_DestroyTexture(vid.target);
 	
-	SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, vid.sharpness==SHARPNESS_SOFT?"1":"0", SDL_HINT_OVERRIDE);
+	// SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, vid.sharpness==SHARPNESS_SOFT?"1":"0", SDL_HINT_OVERRIDE);
 	vid.stream_layer1 = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w,h);
 	SDL_SetTextureBlendMode(vid.stream_layer1, SDL_BLENDMODE_BLEND);
 	
 	if (vid.sharpness==SHARPNESS_CRISP) {
-		SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "2", SDL_HINT_OVERRIDE);
+		// SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1", SDL_HINT_OVERRIDE);
 		vid.target = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w * hard_scale,h * hard_scale);
 	}
 	else {
@@ -1298,6 +1299,8 @@ void PLAT_animateSurfaceOpacity(
 		SDL_RenderCopy(vid.renderer, tempTexture, NULL, &dstRect);
 
 		SDL_SetRenderTarget(vid.renderer, NULL);
+		// blit to 0 for normal draw
+		vid.blit = 0;
 		PLAT_flip(vid.screen,0);
 
 	}
@@ -1610,7 +1613,6 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
         SDL_RenderPresent(vid.renderer);
         return;
     }
-
     SDL_UpdateTexture(vid.stream_layer1, NULL, vid.blit->src, vid.blit->src_p);
 
     SDL_Texture* target = vid.stream_layer1;
@@ -1637,10 +1639,6 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	
     SDL_RenderCopy(vid.renderer, target, src_rect, dst_rect);
 
-	updateOverlay();
-	if(vid.overlay) {
-		SDL_RenderCopy(vid.renderer, vid.overlay, &(SDL_Rect){0, 0,device_width, device_height}, &(SDL_Rect){0, 0,device_width, device_height});
-	}
     SDL_RenderPresent(vid.renderer);
     vid.blit = NULL;
 }
@@ -1995,6 +1993,77 @@ void PLAT_GL_Swap() {
 
 }
 
+// tryin to some arm neon optimization for first time for flipping image upside down, they sit in platform cause not all have neon extensions
+void PLAT_pixelFlipper(uint8_t* pixels, int width, int height) {
+    const int rowBytes = width * 4;
+    uint8_t* rowTop;
+    uint8_t* rowBottom;
+
+    for (int y = 0; y < height / 2; ++y) {
+        rowTop = pixels + y * rowBytes;
+        rowBottom = pixels + (height - 1 - y) * rowBytes;
+
+        int x = 0;
+        for (; x + 15 < rowBytes; x += 16) {
+            uint8x16_t top = vld1q_u8(rowTop + x);
+            uint8x16_t bottom = vld1q_u8(rowBottom + x);
+
+            vst1q_u8(rowTop + x, bottom);
+            vst1q_u8(rowBottom + x, top);
+        }
+        for (; x < rowBytes; ++x) {
+            uint8_t temp = rowTop[x];
+            rowTop[x] = rowBottom[x];
+            rowBottom[x] = temp;
+        }
+    }
+}
+
+unsigned char* PLAT_pixelscaler(const unsigned char* src, int sw, int sh, int scale, int* outW, int* outH) {
+    int dw = sw / scale;
+    int dh = sh / scale;
+    *outW = dw;
+    *outH = dh;
+
+    unsigned char* dst = malloc(dw * dh * 4); 
+
+    for (int y = 0; y < dh; ++y) {
+        for (int x = 0; x < dw; x += 4) { 
+            int sx = x * scale;
+            int sy = y * scale;
+
+            unsigned char* srcPixel = (unsigned char*)(src + (sy * sw + sx) * 4);
+            uint8x16_t srcPixels = vld1q_u8(srcPixel);
+
+            unsigned char* dstPixel = dst + (y * dw + x) * 4;
+
+            vst1q_u8(dstPixel, srcPixels); 
+        }
+    }
+    return dst;
+}
+
+unsigned char* PLAT_GL_screenCapture(int* outWidth, int* outHeight) {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, device_width, device_height);
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+	
+    int width = viewport[2];
+    int height = viewport[3];
+
+    if (outWidth) *outWidth = width;
+    if (outHeight) *outHeight = height;
+
+    unsigned char* pixels = malloc(width * height * 4); // RGBA
+    if (!pixels) return NULL;
+
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+	PLAT_pixelFlipper(pixels, width, height);
+
+    return pixels; // caller must free
+}
 
 ///////////////////////////////
 

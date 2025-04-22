@@ -24,6 +24,7 @@
 
 static SDL_Surface* screen;
 static int quit = 0;
+static int newScreenshot = 0;
 static int show_menu = 0;
 static int simple_mode = 0;
 static int was_threaded = 0;
@@ -2648,6 +2649,7 @@ static void input_poll_callback(void) {
 	}
 	if (PAD_isPressed(BTN_MENU) && PAD_isPressed(BTN_SELECT)) {
 		ignore_menu = 1;
+		newScreenshot = 1;
 		quit = 1;
 		Menu_saveState();
 		putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
@@ -2693,10 +2695,12 @@ static void input_poll_callback(void) {
 					case SHORTCUT_LOAD_STATE: Menu_loadState(); break;
 					case SHORTCUT_RESET_GAME: core.reset(); break;
 					case SHORTCUT_SAVE_QUIT:
+						newScreenshot = 1;
 						quit = 1;
 						Menu_saveState();
 						break;
 					case SHORTCUT_GAMESWITCHER:
+						newScreenshot = 1;
 						quit = 1;
 						Menu_saveState();
 						putFile(GAME_SWITCHER_PERSIST_PATH, game.path + strlen(SDCARD_PATH));
@@ -5772,6 +5776,7 @@ static void Menu_updateState(void) {
 	// LOG_info("save_path: %s (%i)\n", save_path, menu.save_exists);
 	// LOG_info("bmp_path: %s txt_path: %s (%i)\n", menu.bmp_path, menu.txt_path, menu.preview_exists);
 }
+
 static void Menu_saveState(void) {
 	// LOG_info("Menu_saveState\n");
 	if(quit) {
@@ -5784,14 +5789,27 @@ static void Menu_saveState(void) {
 		putFile(menu.txt_path, disc_path + strlen(menu.base_path));
 	}
 	
-	SDL_Surface* bitmap = menu.bitmap;
-	if (!bitmap) bitmap = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
-	SDL_RWops* out = SDL_RWFromFile(menu.bmp_path, "wb");
-	SDL_SaveBMP_RW(bitmap, out, 1);
-	
-	// LOG_info("%s %ix%i\n", menu.bmp_path, bitmap->w,bitmap->h);
-	
-	if (bitmap!=menu.bitmap) SDL_FreeSurface(bitmap);
+	// if already and in menu use menu.bitmap instead for saving screenshots otherwise create new one on the fly
+	if(newScreenshot) {
+		int cw, ch;
+		unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
+		int scaledW, scaledH;
+		unsigned char* smallPixels = GFX_pixelscaler(pixels, cw, ch, 2, &scaledW, &scaledH);
+		SDL_Surface* rawSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+			smallPixels, scaledW, scaledH, 32, scaledW * 4, SDL_PIXELFORMAT_ABGR8888
+		);
+		SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
+		SDL_FreeSurface(rawSurface);
+		free(pixels); 
+		free(smallPixels); 
+		SDL_SaveBMP(converted , menu.bmp_path);
+		SDL_FreeSurface(converted);
+	} else {
+		SDL_Surface* converted = SDL_CreateRGBSurfaceWithFormat(0,screen->w/2,screen->h/2,32,SDL_PIXELFORMAT_RGBA8888);
+		SDL_BlitScaled(menu.bitmap,NULL,converted,&(SDL_Rect){0,0,screen->w/2,screen->h/2});
+		SDL_SaveBMP(converted , menu.bmp_path);
+		SDL_FreeSurface(converted);
+	}
 	
 	state_slot = menu.slot;
 	putInt(menu.slot_path, menu.slot);
@@ -5864,7 +5882,19 @@ static char* getAlias(char* path, char* alias) {
 }
 
 static void Menu_loop(void) {
-	menu.bitmap = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
+
+	int cw, ch;
+	unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
+	
+	renderer.dst = pixels;
+	SDL_Surface* rawSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pixels, cw, ch, 32, cw * 4, SDL_PIXELFORMAT_ABGR8888
+	);
+	SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
+	SDL_FreeSurface(rawSurface);
+	free(pixels); 
+
+	menu.bitmap = converted;
 	SDL_Surface* backing = SDL_CreateRGBSurfaceWithFormat(0,DEVICE_WIDTH,DEVICE_HEIGHT,32,SDL_PIXELFORMAT_RGBA8888); 
 	
 
@@ -5920,14 +5950,15 @@ static void Menu_loop(void) {
 	
 	int status = STATUS_CONT; // TODO: no longer used?
 	int show_setting = 0;
-	int dirty = -1;
+	int dirty = 1;
 	int ignore_menu = 0;
 	int menu_start = 0;
 	SDL_Surface* preview = SDL_CreateRGBSurface(SDL_SWSURFACE,DEVICE_WIDTH/2,DEVICE_HEIGHT/2,32,RGBA_MASK_8888); // TODO: retain until changed?
 
 	LEDS_initLeds();
 	LEDS_updateLeds();
-	GFX_clearLayers(0);
+
+	// pull back to sdl with gfx_flip
 	GFX_flip(screen);
 	SDL_Surface *screenshot = GFX_captureRendererToSurface();
 	while (show_menu) {
@@ -6041,12 +6072,9 @@ static void Menu_loop(void) {
 		}
 
 		PWR_update(&dirty, &show_setting, Menu_beforeSleep, Menu_afterSleep);
-		if(dirty || dirty==-1) {
+		if(dirty) {
 			GFX_clear(screen);
-			if(dirty==-1)
-				GFX_flip(screen);
-				
-				
+
 			GFX_drawOnLayer(screenshot,0,0,DEVICE_WIDTH,DEVICE_HEIGHT,0.4f,1,1);
 
 
@@ -6154,7 +6182,8 @@ static void Menu_loop(void) {
 						bmp = raw_preview; 
 					}
 					// LOG_info("raw_preview %ix%i\n", raw_preview->w,raw_preview->h);
-				
+					SDL_Rect preview_rect = {ox,oy,hw,hh};
+					SDL_FillRect(screen, &preview_rect, SDL_MapRGBA(screen->format,0,0,0,255));
 					SDL_BlitScaled(bmp,NULL,preview,NULL);
 					SDL_BlitSurface(preview, NULL, screen, &(SDL_Rect){ox,oy});
 					SDL_FreeSurface(bmp);
@@ -6212,8 +6241,7 @@ static void Menu_loop(void) {
 	}
 	else if (exists(NOUI_PATH)) PWR_powerOff(); // TODO: won't work with threaded core, only check this once per launch
 	
-	SDL_FreeSurface(menu.bitmap);
-	menu.bitmap = NULL;
+
 	SDL_FreeSurface(backing);
 	PWR_disableAutosleep();
 }
@@ -6428,16 +6456,22 @@ int main(int argc , char* argv[]) {
 	
 		hdmimon();
 	}
-
-	// SDL_Surface * screendata = SDL_CreateRGBSurfaceWithFormatFrom(renderer.src, renderer.true_w, renderer.true_h, 32, renderer.src_p, SDL_PIXELFORMAT_RGBA8888);
-	GFX_flip(screen);
-	SDL_Surface *screendata = GFX_captureRendererToSurface();
-	GFX_animateSurfaceOpacity(screendata,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 200:20,0);
+	int cw, ch;
+	unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
 	
-	GFX_clearLayers(0);
-	GFX_clear(screen);
+	renderer.dst = pixels;
+	SDL_Surface* rawSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pixels, cw, ch, 32, cw * 4, SDL_PIXELFORMAT_ABGR8888
+	);
+	SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
+	screen = converted;
+	SDL_FreeSurface(rawSurface);
+	free(pixels); 
+	GFX_animateSurfaceOpacity(converted, 0, 0, cw, ch,
+							  255, 0, CFG_getMenuTransitions() ? 200 : 20, 1);
+	SDL_FreeSurface(converted); 
+	
 	if(rgbaData) free(rgbaData);
-	SDL_FreeSurface(screendata);
 
 	Menu_quit();
 	QuitSettings();
