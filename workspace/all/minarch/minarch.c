@@ -19,6 +19,7 @@
 #include "utils.h"
 #include "scaler.h"
 #include <dirent.h>
+#include <SDL/SDL_image.h>
 
 ///////////////////////////////////////
 
@@ -5799,12 +5800,18 @@ static void Menu_saveState(void) {
 		SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
 		SDL_FreeSurface(rawSurface);
 		free(pixels); 
-		SDL_SaveBMP(converted , menu.bmp_path);
+		// SDL_RWops* rw = SDL_RWFromFile(menu.bmp_path, "wb");
+		// SDL_SaveBMP_RW(converted, rw, 1);  // The '1' flag allows SDL to manage the file closing.
+		// SDL_RWclose(rw);
+		IMG_SavePNG(converted, menu.bmp_path);
 		SDL_FreeSurface(converted);
 	} else {
 		SDL_Surface* converted = SDL_CreateRGBSurfaceWithFormat(0,screen->w/2,screen->h/2,32,SDL_PIXELFORMAT_RGBA8888);
 		SDL_BlitScaled(menu.bitmap,NULL,converted,&(SDL_Rect){0,0,screen->w/2,screen->h/2});
-		SDL_SaveBMP(converted , menu.bmp_path);
+		// SDL_RWops* rw = SDL_RWFromFile(menu.bmp_path, "wb");
+		// SDL_SaveBMP_RW(converted, rw, 1);  // The '1' flag allows SDL to manage the file closing.
+		// SDL_RWclose(rw);
+		IMG_SavePNG(converted, menu.bmp_path);
 		SDL_FreeSurface(converted);
 	}
 	
@@ -6365,7 +6372,7 @@ int main(int argc , char* argv[]) {
 	PWR_init();
 	if (!HAS_POWER_BUTTON) PWR_disableSleep();
 	MSG_init();
-	
+	IMG_Init(IMG_INIT_PNG);
 	Core_open(core_path, tag_name);
 
 	fmt = RETRO_PIXEL_FORMAT_XRGB8888;

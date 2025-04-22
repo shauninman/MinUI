@@ -339,7 +339,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	// SDL_GetRendererInfo(vid.renderer, &info);
 	// LOG_info("Current render driver: %s\n", info.name);
 	
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1");
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER,"opengl");
 	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION,"1");
 

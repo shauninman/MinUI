@@ -171,11 +171,12 @@ int main(int argc, char *argv[])
                 [](const std::any &value)
                 { CFG_setRomsUseFolderBackground(std::any_cast<bool>(value)); },
                 []() { CFG_setRomsUseFolderBackground(CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND);}},
-                new MenuItem{ListItemType::Generic, "Game switcher scaling", "The scaling algorithm used to display the savegame image.", scaling, scaling_strings, []() -> std::any
-                { return CFG_getGameSwitcherScaling(); },
-                [](const std::any &value)
-                { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); },
-                []() { CFG_setGameSwitcherScaling(CFG_DEFAULT_GAMESWITCHERSCALING);}},
+                // not needed anymore
+                // new MenuItem{ListItemType::Generic, "Game switcher scaling", "The scaling algorithm used to display the savegame image.", scaling, scaling_strings, []() -> std::any
+                // { return CFG_getGameSwitcherScaling(); },
+                // [](const std::any &value)
+                // { CFG_setGameSwitcherScaling(std::any_cast<int>(value)); },
+                // []() { CFG_setGameSwitcherScaling(CFG_DEFAULT_GAMESWITCHERSCALING);}},
 
                 new MenuItem{ListItemType::Button, "Reset to defaults", "Resets all options in this menu to their default values.", ResetCurrentMenu},
         });
