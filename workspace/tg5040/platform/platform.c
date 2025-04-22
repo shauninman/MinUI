@@ -526,6 +526,9 @@ static void clearVideo(void) {
 void PLAT_quitVideo(void) {
 	clearVideo();
 
+
+	glFinish();
+	SDL_GL_DeleteContext(vid.gl_context);
 	SDL_FreeSurface(vid.screen);
 
 	if (vid.target) SDL_DestroyTexture(vid.target);
@@ -2046,7 +2049,6 @@ unsigned char* PLAT_pixelscaler(const unsigned char* src, int sw, int sh, int sc
 }
 
 unsigned char* PLAT_GL_screenCapture(int* outWidth, int* outHeight) {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, device_width, device_height);
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);

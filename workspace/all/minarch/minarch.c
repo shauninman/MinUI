@@ -19,7 +19,8 @@
 #include "utils.h"
 #include "scaler.h"
 #include <dirent.h>
-#include <SDL/SDL_image.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL.h>
 
 ///////////////////////////////////////
 
@@ -1893,6 +1894,14 @@ static void Config_syncShaders(char* key, int value) {
 	Option* option = &config.shaders.options[i];
 	option->value = value;
 }
+
+void initShaders() {
+	LOG_info("Init shaders\n");
+	for (int i=0; config.shaders.options[i].key; i++) {
+		Option* option = &config.shaders.options[i];
+		Config_syncShaders(option->key, option->value);
+	}
+}
 static void OptionList_setOptionValue(OptionList* list, const char* key, const char* value);
 enum {
 	CONFIG_WRITE_ALL,
@@ -2019,7 +2028,6 @@ static void Config_readOptionsString(char* cfg) {
 		Option* option = &config.shaders.options[i];
 		if (!Config_getValue(cfg, option->key, value, &option->lock)) continue;
 		OptionList_setOptionValue(&config.shaders, option->key, value);
-		Config_syncShaders(option->key, option->value);
 	}
 }
 static void Config_readControlsString(char* cfg) {
@@ -4061,6 +4069,7 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	// if source has changed size (or forced by dst_p==0)
 	// eg. true src + cropped src + fixed dst + cropped dst
 	if (renderer.dst_p==0 || width!=renderer.true_w || height!=renderer.true_h) {
+		LOG_info("resized\n\n\n");
 		selectScaler(width, height, pitch);
 		GFX_clearAll();
 		GFX_resetShaders();
@@ -5080,60 +5089,9 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 
 
 static int OptionShaders_optionChanged(MenuList* list, int i) {
-	MenuItem* item = &list->items[i];
-	int filecount;
-	char** filelist = list_files_in_folder(SHADERS_FOLDER, &filecount);
-
-	if(i == SH_NROFSHADERS) {
-		GFX_setShaders(item->value);
-	}
-	if(i == SH_SRCTYPE1) {
-		GFX_updateShader(0,NULL,NULL,NULL,NULL,&item->value);
-	}
-	if(i == SH_SRCTYPE2) {
-		GFX_updateShader(1,NULL,NULL,NULL,NULL,&item->value);
-	}
-	if(i == SH_SRCTYPE3) {
-		GFX_updateShader(2,NULL,NULL,NULL,NULL,&item->value);
-	}
-	if(i == SH_SCALETYPE1) {
-		GFX_updateShader(0,NULL,NULL,NULL,&item->value,NULL);
-	}
-	if(i == SH_SCALETYPE2) {
-		GFX_updateShader(1,NULL,NULL,NULL,&item->value,NULL);
-	}
-	if(i == SH_SCALETYPE3) {
-		GFX_updateShader(2,NULL,NULL,NULL,&item->value,NULL);
-	}
-	if(i == SH_UPSCALE1) {
-		GFX_updateShader(0,NULL,&item->value,NULL,NULL,NULL);
-	}
-	if(i == SH_UPSCALE2) {
-		GFX_updateShader(1,NULL,&item->value,NULL,NULL,NULL);
-	}
-	if(i == SH_UPSCALE3) {
-		GFX_updateShader(2,NULL,&item->value,NULL,NULL,NULL);
-	}
-	if(i == SH_SHADER1 && item->value <= filecount) {
-		GFX_updateShader(0,filelist[item->value],NULL,NULL,NULL,NULL);
-	}
-	if(i == SH_SHADER2 && item->value <= filecount) {
-		GFX_updateShader(1,filelist[item->value],NULL,NULL,NULL,NULL);
-	}
-	if(i == SH_SHADER3 && item->value <= filecount) {
-		GFX_updateShader(2,filelist[item->value],NULL,NULL,NULL,NULL);
-	}
-	if(i == SH_SHADER1_FILTER) {
-		GFX_updateShader(0,NULL,NULL,&item->value,NULL,NULL);
-	}
-	if(i == SH_SHADER2_FILTER) {
-		GFX_updateShader(1,NULL,NULL,&item->value,NULL,NULL);
-	}
-	if(i == SH_SHADER3_FILTER) {
-		GFX_updateShader(2,NULL,NULL,&item->value,NULL,NULL);
-	}
-	config.shaders.options[i].value = item->value;
-	return MENU_CALLBACK_NOP;
+		MenuItem* item = &list->items[i];
+		Config_syncShaders(item->key, item->value);
+		return MENU_CALLBACK_NOP;
 }
 
 static MenuList ShaderOptions_menu = {
@@ -5166,6 +5124,7 @@ static int OptionShaders_openMenu(MenuList* list, int i) {
 			item->name = config.shaders.options[i].name;
 			item->desc = config.shaders.options[i].desc;
 			item->value = config.shaders.options[i].value;
+			item->key = config.shaders.options[i].key;
 
 			if (strcmp(config.shaders.options[i].key, "minarch_shader1") == 0 ||
 			    strcmp(config.shaders.options[i].key, "minarch_shader2") == 0 ||
@@ -5778,6 +5737,36 @@ static void Menu_updateState(void) {
 	// LOG_info("bmp_path: %s txt_path: %s (%i)\n", menu.bmp_path, menu.txt_path, menu.preview_exists);
 }
 
+typedef struct {
+    char* pixels;
+    char* path;
+	int w;
+	int h;
+} SaveImageArgs;
+
+int save_screenshot_thread(void* data) {
+
+    SaveImageArgs* args = (SaveImageArgs*)data;
+	SDL_Surface* rawSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		args->pixels, args->w, args->h, 32, args->w * 4, SDL_PIXELFORMAT_ABGR8888
+	);
+	SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
+	SDL_FreeSurface(rawSurface);
+
+    SDL_RWops* rw = SDL_RWFromFile(args->path, "wb");
+    if (!rw) {
+        SDL_Log("Failed to open file for writing: %s", SDL_GetError());
+    } else {
+        if (IMG_SavePNG_RW(converted, rw, 1) != 0) {
+            SDL_Log("Failed to save PNG: %s", SDL_GetError());
+        }
+    }
+	LOG_info("saved screenshot\n");
+    free(args->path);
+    free(args);
+    return 0;
+}
+SDL_Thread* screenshotsavethread;
 static void Menu_saveState(void) {
 	// LOG_info("Menu_saveState\n");
 	if(quit) {
@@ -5790,29 +5779,19 @@ static void Menu_saveState(void) {
 		putFile(menu.txt_path, disc_path + strlen(menu.base_path));
 	}
 	
-	// if already and in menu use menu.bitmap instead for saving screenshots otherwise create new one on the fly
+	// if already in menu use menu.bitmap instead for saving screenshots otherwise create new one on the fly
 	if(newScreenshot) {
 		int cw, ch;
 		unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
-		SDL_Surface* rawSurface = SDL_CreateRGBSurfaceWithFormatFrom(
-			pixels, cw, ch, 32, cw * 4, SDL_PIXELFORMAT_ABGR8888
-		);
-		SDL_Surface* converted = SDL_ConvertSurfaceFormat(rawSurface, SDL_PIXELFORMAT_RGBA8888, 0);
-		SDL_FreeSurface(rawSurface);
-		free(pixels); 
-		// SDL_RWops* rw = SDL_RWFromFile(menu.bmp_path, "wb");
-		// SDL_SaveBMP_RW(converted, rw, 1);  // The '1' flag allows SDL to manage the file closing.
-		// SDL_RWclose(rw);
-		IMG_SavePNG(converted, menu.bmp_path);
-		SDL_FreeSurface(converted);
-	} else {
-		SDL_Surface* converted = SDL_CreateRGBSurfaceWithFormat(0,screen->w/2,screen->h/2,32,SDL_PIXELFORMAT_RGBA8888);
-		SDL_BlitScaled(menu.bitmap,NULL,converted,&(SDL_Rect){0,0,screen->w/2,screen->h/2});
-		// SDL_RWops* rw = SDL_RWFromFile(menu.bmp_path, "wb");
-		// SDL_SaveBMP_RW(converted, rw, 1);  // The '1' flag allows SDL to manage the file closing.
-		// SDL_RWclose(rw);
-		IMG_SavePNG(converted, menu.bmp_path);
-		SDL_FreeSurface(converted);
+		SaveImageArgs* args = malloc(sizeof(SaveImageArgs));
+		args->pixels = pixels;
+		args->w = cw;
+		args->h = ch;
+		args->path = SDL_strdup(menu.bmp_path); 
+		screenshotsavethread = SDL_CreateThread(save_screenshot_thread, "SaveScreenshotThread", args);
+	} else if(menu.bitmap) {
+		SDL_RWops* rw = SDL_RWFromFile(menu.bmp_path, "wb");
+		IMG_SavePNG_RW(menu.bitmap, rw,1);
 	}
 	
 	state_slot = menu.slot;
@@ -5820,8 +5799,6 @@ static void Menu_saveState(void) {
 	State_write();
 }
 static void Menu_loadState(void) {
-	// LOG_info("Menu_loadState\n");
-
 	Menu_updateState();
 	
 	if (menu.save_exists) {
@@ -6428,6 +6405,8 @@ int main(int argc , char* argv[]) {
 	
 	int has_pending_opt_change = 0;
 
+	initShaders();
+
 	while (!quit) {
 		GFX_startFrame();
 	
@@ -6493,6 +6472,6 @@ finish:
 	SND_quit();
 	PAD_quit();
 	GFX_quit();
-	
+	SDL_WaitThread(screenshotsavethread, NULL);
 	return EXIT_SUCCESS;
 }

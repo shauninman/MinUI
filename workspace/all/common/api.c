@@ -1809,6 +1809,7 @@ static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 static int soundQuality = 2;
 static int resetSrcState = 0;
 void SND_setQuality(int quality) {
+	LOG_info("Set sound quality\n\n\n");
 	soundQuality = qualityLevels[quality];
 	resetSrcState = 1;
 }

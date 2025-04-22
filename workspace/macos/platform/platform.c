@@ -26,6 +26,7 @@ typedef struct Shader {
 	GLuint shader_p;
 	int scale;
 	int filter;
+	char *filename;
 } Shader;
 
 GLuint g_shader_default = 0;
@@ -577,7 +578,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter) {
     Shader* shader = shaders[i];
 
     // Only update shader_p if filename is not NULL
-    if (filename != NULL) {
+    if (filename != NULL && filename != shader->filename) {
         SDL_GL_MakeCurrent(vid.window, vid.gl_context);
         
         GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER);
