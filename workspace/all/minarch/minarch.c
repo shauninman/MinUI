@@ -2700,7 +2700,10 @@ static void input_poll_callback(void) {
 			}
 			else if (PAD_justPressed(btn)) {
 				switch (i) {
-					case SHORTCUT_SAVE_STATE: Menu_saveState(); break;
+					case SHORTCUT_SAVE_STATE: 
+						newScreenshot = 1;
+						Menu_saveState(); 
+						break;
 					case SHORTCUT_LOAD_STATE: Menu_loadState(); break;
 					case SHORTCUT_RESET_GAME: core.reset(); break;
 					case SHORTCUT_SAVE_QUIT:
@@ -5780,7 +5783,7 @@ static void Menu_saveState(void) {
 	}
 	
 	// if already in menu use menu.bitmap instead for saving screenshots otherwise create new one on the fly
-	if(newScreenshot) {
+	if (newScreenshot) {
 		int cw, ch;
 		unsigned char* pixels = GFX_GL_screenCapture(&cw, &ch);
 		SaveImageArgs* args = malloc(sizeof(SaveImageArgs));
@@ -5788,10 +5791,13 @@ static void Menu_saveState(void) {
 		args->w = cw;
 		args->h = ch;
 		args->path = SDL_strdup(menu.bmp_path); 
+		SDL_WaitThread(screenshotsavethread, NULL);
 		screenshotsavethread = SDL_CreateThread(save_screenshot_thread, "SaveScreenshotThread", args);
-	} else if(menu.bitmap) {
+		newScreenshot = 0;
+	} else {
 		SDL_RWops* rw = SDL_RWFromFile(menu.bmp_path, "wb");
 		IMG_SavePNG_RW(menu.bitmap, rw,1);
+		LOG_info("saved screenshot\n");
 	}
 	
 	state_slot = menu.slot;
