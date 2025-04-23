@@ -2240,7 +2240,7 @@ void PLAT_powerOff(void) {
 	system("rm -f /tmp/nextui_exec && sync");
 	sleep(2);
 
-	SetVolume(MUTE_VOLUME_RAW);
+	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
 	SND_quit();
 	VIB_quit();
