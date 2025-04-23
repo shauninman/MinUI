@@ -50,7 +50,7 @@ after() {
 
 	if [ -n "$wpa_running" ]; then
 		>&2 echo "Starting wpa_supplicant..."
-		wpa_supplicant -B -D nl80211 -iwlan0 -c /etc/wifi/wpa_supplicant.conf -O /etc/wifi/sockets || true
+		wpa_supplicant -B -iwlan0 -Dnl80211 -c/etc/wifi/wpa_supplicant.conf -I/etc/wifi/wpa_supplicant_overlay.conf -O/etc/wifi/sockets || true
 		(( udhcpc -i wlan0 &)&)
 	fi
 

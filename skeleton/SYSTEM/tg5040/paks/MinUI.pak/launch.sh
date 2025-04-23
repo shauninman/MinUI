@@ -132,7 +132,7 @@ if [ "$wifion" != "1" ] ; then
 else
 	rfkill unblock wifi
 	ifconfig wlan0 up
-	udhcpc -i wlan0 -n &
+	(( udhcpc -i wlan0 &)&)
 fi
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
