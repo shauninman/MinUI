@@ -2015,11 +2015,32 @@ static void Config_init(void) {
 	config.shaders.options[SH_SHADER3].count = filecount;
 	
 	char overlaypath[255];
-	snprintf(overlaypath,sizeof(overlaypath),"%s/%s",OVERLAYS_FOLDER,core.tag);
+	snprintf(overlaypath, sizeof(overlaypath), "%s/%s", OVERLAYS_FOLDER, core.tag);
 	char** overlaylist = list_files_in_folder(overlaypath, &filecount);
-	config.frontend.options[FE_OPT_OVERLAY].labels = overlaylist;
-	config.frontend.options[FE_OPT_OVERLAY].values = overlaylist;
-	config.frontend.options[FE_OPT_OVERLAY].count = filecount;
+
+	if (overlaylist) {
+		int newcount = filecount + 1;
+		char** newlist = malloc(sizeof(char*) * (newcount + 1)); // +1 for NULL terminator
+		if (!newlist) {
+			LOG_info("failed to make newlist");
+			return;
+		}
+		for (int i = 0; i < filecount; i++) {
+			newlist[i + 1] = overlaylist[i];
+		}
+
+		newlist[0] = strdup("None");  
+		newlist[newcount] = NULL;  
+		
+		free(overlaylist);
+
+		overlaylist = newlist;
+		filecount = newcount;
+
+		config.frontend.options[FE_OPT_OVERLAY].labels = overlaylist;
+		config.frontend.options[FE_OPT_OVERLAY].values = overlaylist;
+		config.frontend.options[FE_OPT_OVERLAY].count = filecount;
+	}
 	config.initialized = 1;
 }
 static void Config_quit(void) {
