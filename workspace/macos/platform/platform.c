@@ -77,17 +77,84 @@ typedef struct SettingsV5 {
 	int jack; 
 } SettingsV5;
 
+
+// Third NextUI settings format
+typedef struct SettingsV6 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int contrast;
+	int saturation;
+	int exposure;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV6;
+
+typedef struct SettingsV7 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int contrast;
+	int saturation;
+	int exposure;
+	int mutedbrightness;
+	int mutedcolortemperature;
+	int mutedcontrast;
+	int mutedsaturation;
+	int mutedexposure;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV7;
+
+typedef struct SettingsV8 {
+	int version; // future proofing
+	int brightness;
+	int colortemperature;
+	int headphones;
+	int speaker;
+	int mute;
+	int contrast;
+	int saturation;
+	int exposure;
+	int toggled_brightness;
+	int toggled_colortemperature;
+	int toggled_contrast;
+	int toggled_saturation;
+	int toggled_exposure;
+	int toggled_volume;
+	int unused[2]; // for future use
+	// NOTE: doesn't really need to be persisted but still needs to be shared
+	int jack; 
+} SettingsV8;
+
 // When incrementing SETTINGS_VERSION, update the Settings typedef and add
 // backwards compatibility to InitSettings!
-#define SETTINGS_VERSION 5
-typedef SettingsV5 Settings;
+#define SETTINGS_VERSION 8
+typedef SettingsV8 Settings;
 static Settings DefaultSettings = {
 	.version = SETTINGS_VERSION,
-	.brightness = 2,
-	.colortemperature = 20,
-	.headphones = 4,
-	.speaker = 8,
+	.brightness = SETTINGS_DEFAULT_BRIGHTNESS,
+	.colortemperature = SETTINGS_DEFAULT_COLORTEMP,
+	.headphones = SETTINGS_DEFAULT_HEADPHONE_VOLUME,
+	.speaker = SETTINGS_DEFAULT_VOLUME,
 	.mute = 0,
+	.contrast = SETTINGS_DEFAULT_CONTRAST,
+	.saturation = SETTINGS_DEFAULT_SATURATION,
+	.exposure = SETTINGS_DEFAULT_EXPOSURE,
+	.toggled_brightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_colortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_contrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_saturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_exposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE,
+	.toggled_volume = 0, // mute is default
 	.jack = 0,
 };
 static Settings* msettings;
@@ -116,12 +183,65 @@ void InitSettings(void){
 		// fopen file pointer
 		int fd = open(SettingsPath, O_RDONLY);
 		if(fd) {
-			if (version == SETTINGS_VERSION)
-			{
-				printf("Found settings v5.\n");
-				// changes: colortemp 0-40
-				// read the rest
-				read(fd, msettings, sizeof(SettingsV5));
+			if (version == SETTINGS_VERSION) {
+				read(fd, msettings, sizeof(Settings));
+			}
+			else if(version==7) {
+				SettingsV7 old;
+				read(fd, &old, sizeof(SettingsV7));
+				// default muted
+				msettings->toggled_volume = 0;
+				// muted* -> toggled*
+				msettings->toggled_brightness = old.mutedbrightness;
+				msettings->toggled_colortemperature = old.mutedcolortemperature;
+				msettings->toggled_contrast = old.mutedcontrast;
+				msettings->toggled_exposure = old.mutedexposure;
+				msettings->toggled_saturation = old.mutedsaturation;
+				// copy the rest
+				msettings->saturation = old.saturation;
+				msettings->contrast = old.contrast;
+				msettings->exposure = old.exposure;
+				msettings->colortemperature = old.colortemperature;
+				msettings->brightness = old.brightness;
+				msettings->headphones = old.headphones;
+				msettings->speaker = old.speaker;
+				msettings->mute = old.mute;
+				msettings->jack = old.jack;
+			}
+			else if(version==6) {
+				SettingsV6 old;
+				read(fd, &old, sizeof(SettingsV6));
+				// no muted* settings yet, default values used.
+				msettings->toggled_brightness = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+				msettings->toggled_colortemperature = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+				msettings->toggled_contrast = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+				msettings->toggled_exposure = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+				msettings->toggled_saturation = SETTINGS_DEFAULT_MUTE_NO_CHANGE;
+				// copy the rest
+				msettings->saturation = old.saturation;
+				msettings->contrast = old.contrast;
+				msettings->exposure = old.exposure;
+				msettings->colortemperature = old.colortemperature;
+				msettings->brightness = old.brightness;
+				msettings->headphones = old.headphones;
+				msettings->speaker = old.speaker;
+				msettings->mute = old.mute;
+				msettings->jack = old.jack;
+			}
+			else if(version==5) {
+				SettingsV5 old;
+				read(fd, &old, sizeof(SettingsV5));
+				// no display settings yet, default values used. 
+				msettings->saturation = 0;
+				msettings->contrast = 0;
+				msettings->exposure = 0;
+				// copy the rest
+				msettings->colortemperature = old.colortemperature;
+				msettings->brightness = old.brightness;
+				msettings->headphones = old.headphones;
+				msettings->speaker = old.speaker;
+				msettings->mute = old.mute;
+				msettings->jack = old.jack;
 			}
 			else if(version==4) {
 				printf("Found settings v4.\n");
