@@ -134,13 +134,27 @@ static struct Game {
 } game;
 static void Game_open(char* path) {
 	LOG_info("Game_open\n");
+	int skipzip = 0;
 	memset(&game, 0, sizeof(game));
 	
 	strcpy((char*)game.path, path);
 	strcpy((char*)game.name, strrchr(path, '/')+1);
-	
+
+	// check first if the rom already is alive in tmp folder if so skip unzipping shit
+	char tmpfldr[255];
+	snprintf(tmpfldr, sizeof(tmpfldr), "/tmp/nextarch/%s", core.tag);
+	char *tmppath = PLAT_findFileInDir(tmpfldr, game.name);
+	if (tmppath) {
+		printf("File exists skipping unzipping and setting game.tmp_path: %s\n", tmppath);
+		strcpy((char*)game.tmp_path, tmppath);
+		skipzip = 1;
+		free(tmppath);
+	} else {
+		printf("File does not exist in %s\n",tmpfldr);
+	}
+		
 	// if we have a zip file
-	if (suffixMatch(".zip", game.path)) {
+	if (suffixMatch(".zip", game.path) && !skipzip) {
 		LOG_info("is zip file\n");
 		int supports_zip = 0;
 		int i = 0;
@@ -173,7 +187,7 @@ static void Game_open(char* path) {
 	// if the frontend tries to load a 500MB file itself bad things happen
 	if (!core.need_fullpath) {
 		path = game.tmp_path[0]=='\0'?game.path:game.tmp_path;
-		
+
 		FILE *file = fopen(path, "r");
 		if (file==NULL) {
 			LOG_error("Error opening game: %s\n\t%s\n", path, strerror(errno));
@@ -228,7 +242,8 @@ static void Game_open(char* path) {
 }
 static void Game_close(void) {
 	if (game.data) free(game.data);
-	if (game.tmp_path[0]) remove(game.tmp_path);
+	// why delete tempfile? keep it for next time when loading the game its much faster from /tmp ram folder
+	// if (game.tmp_path[0]) remove(game.tmp_path);
 	game.is_open = 0;
 	VIB_setStrength(0); // just in case
 }
@@ -262,9 +277,13 @@ int extract_zip(char** extensions)
 		return 1;
 	}
 
-	char tmp_template[MAX_PATH];
-	strcpy(tmp_template, "/tmp/minarch-XXXXXX");
-	char* tmp_dirname = mkdtemp(tmp_template);
+	// char tmp_template[MAX_PATH];
+	// strcpy(tmp_template, "/tmp/minarch-XXXXXX");
+	
+	mkdir("/tmp/nextarch",0777);
+	char tmp_dirname[255];
+	snprintf(tmp_dirname, sizeof(tmp_dirname), "%s/%s", "/tmp/nextarch",core.tag);
+	mkdir(tmp_dirname,0777);
 
 	int i, len;
 	int fd;
@@ -5094,6 +5113,8 @@ static int OptionCheats_openMenu(MenuList* list, int i) {
 static int OptionShaders_optionChanged(MenuList* list, int i) {
 		MenuItem* item = &list->items[i];
 		Config_syncShaders(item->key, item->value);
+		if(i==SH_NROFSHADERS)
+			initShaders();
 		return MENU_CALLBACK_NOP;
 }
 
@@ -6344,7 +6365,13 @@ int main(int argc , char* argv[]) {
 	
 	LOG_info("rom_path: %s\n", rom_path);
 	
+
+	
 	screen = GFX_init(MODE_MENU);
+
+	// initialize default shaders
+	GFX_initShaders();
+
 	PAD_init();
 	DEVICE_WIDTH = screen->w;
 	DEVICE_HEIGHT = screen->h;
@@ -6371,9 +6398,9 @@ int main(int argc , char* argv[]) {
 	Config_init();
 	Config_readOptions(); // cores with boot logo option (eg. gb) need to load options early
 	setOverclock(overclock);
-	
+
 	Core_init();
-	
+
 	// TODO: find a better place to do this
 	// mixing static and loaded data is messy
 	// why not move to Core_init()?
@@ -6389,10 +6416,10 @@ int main(int argc , char* argv[]) {
 	Menu_init();
 	State_resume();
 	Menu_initState(); // make ready for state shortcuts
-	
+
 	PWR_warn(1);
 	PWR_disableAutosleep();
-	
+
 	// force a vsync immediately before loop
 	// for better frame pacing?
 	GFX_clearAll();
@@ -6402,17 +6429,21 @@ int main(int argc , char* argv[]) {
 	// need to draw real black background first otherwise u get weird pixels sometimes
 
 	GFX_flip(screen);
-	
+
 	Special_init(); // after config
-	
+
 	sec_start = SDL_GetTicks();
 	resetFPSCounter();
 	chooseSyncRef();
 	
 	int has_pending_opt_change = 0;
+	LOG_info("Starting shaders %ims\n\n",SDL_GetTicks());
 
+
+	// then initialize custom  shaders from settings
 	initShaders();
 
+	LOG_info("total startup time %ims\n\n",SDL_GetTicks());
 	while (!quit) {
 		GFX_startFrame();
 	

@@ -27,7 +27,9 @@
 
 #include "opengl.h"
 #include <arm_neon.h>
+#include <libgen.h>  
 
+#include <dirent.h>
 int is_brick = 0;
 volatile int useAutoCpu = 1;
 static int finalScaleFilter=GL_LINEAR;
@@ -40,6 +42,7 @@ typedef struct Shader {
 	int srctype;
 	int scaletype;
 	int filter;
+	char *filename;
 } Shader;
 
 GLuint g_shader_default = 0;
@@ -47,9 +50,9 @@ GLuint g_shader_color = 0;
 GLuint g_shader_overlay = 0;
 
 Shader* shaders[3] = {
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0 }, 
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0 }, 
-    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0 }
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0, .filename ="stock.glsl" }, 
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0, .filename ="stock.glsl" }, 
+    &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0, .filename ="stock.glsl" }
 };
 
 static int nrofshaders = 0; // choose between 1 and 3 pipelines, > pipelines = more cpu usage, but more shader options and shader upscaling stuff
@@ -102,14 +105,46 @@ static uint32_t SDL_transparentBlack = 0;
 static char* overlay_path = NULL;
 
 
-GLuint link_program(GLuint vertex_shader, GLuint fragment_shader) {
+GLuint link_program(GLuint vertex_shader, GLuint fragment_shader, const char* cache_key) {
+    char cache_path[512];
+    snprintf(cache_path, sizeof(cache_path), "/mnt/SDCARD/.shadercache/%s.bin", cache_key);
+
     GLuint program = glCreateProgram();
+    GLint success;
+
+    // Try to load cached binary first
+    FILE *f = fopen(cache_path, "rb");
+    if (f) {
+        GLint binaryFormat;
+        fread(&binaryFormat, sizeof(GLint), 1, f);
+        fseek(f, 0, SEEK_END);
+        size_t length = ftell(f) - sizeof(GLint);
+        fseek(f, sizeof(GLint), SEEK_SET);
+        void *binary = malloc(length);
+        fread(binary, 1, length, f);
+        fclose(f);
+
+        glProgramBinary(program, binaryFormat, binary, length);
+        free(binary);
+
+        glGetProgramiv(program, GL_LINK_STATUS, &success);
+        if (success) {
+            LOG_info("Loaded shader program from cache: %s\n", cache_key);
+            return program;
+        } else {
+            LOG_info("Cache load failed, falling back to compile.\n");
+            glDeleteProgram(program);
+            program = glCreateProgram();
+        }
+    }
+
+    // Compile and link if cache failed
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
+    glProgramParameteri(program, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE);
     glLinkProgram(program);
-
-    GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
+
     if (!success) {
         GLint logLength;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
@@ -117,8 +152,26 @@ GLuint link_program(GLuint vertex_shader, GLuint fragment_shader) {
         glGetProgramInfoLog(program, logLength, &logLength, log);
         printf("Program link error: %s\n", log);
         free(log);
+        return program;
     }
-	LOG_info("program linked\n");
+
+    GLint binaryLength;
+    GLenum binaryFormat;
+    glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+    void* binary = malloc(binaryLength);
+    glGetProgramBinary(program, binaryLength, NULL, &binaryFormat, binary);
+
+    mkdir("/mnt/SDCARD/.shadercache", 0755); 
+    f = fopen(cache_path, "wb");
+    if (f) {
+        fwrite(&binaryFormat, sizeof(GLenum), 1, f);
+        fwrite(binary, 1, binaryLength, f);
+        fclose(f);
+        LOG_info("Saved shader program to cache: %s\n", cache_key);
+    }
+    free(binary);
+
+    LOG_info("Program linked and cached\n");
     return program;
 }
 
@@ -285,6 +338,33 @@ GLuint load_shader_from_file(GLenum type, const char* filename, const char* path
     return shader;
 }
 
+void PLAT_initShaders() {
+	SDL_GL_MakeCurrent(vid.window, vid.gl_context);
+	glViewport(0, 0, device_width, device_height);
+	
+	GLuint vertex;
+	GLuint fragment;
+
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SYSSHADERS_FOLDER);
+	g_shader_default = link_program(vertex, fragment,"default.glsl");
+
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "colorfix.glsl", SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
+	g_shader_color = link_program(vertex, fragment,"colorfix.glsl");
+
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
+	g_shader_overlay = link_program(vertex, fragment,"overlay.glsl");
+	
+	LOG_info("default shaders loaded, %i\n\n",g_shader_default);
+	// for (int i=0; i<nrofshaders; i++) {
+	// 	Shader* shader = shaders[i];
+	// 	LOG_info("shader filename: %s\n",shader->filename);
+	// 	PLAT_updateShader(i, shader->filename,NULL,NULL,NULL,NULL);
+	// }
+}
+
 
 SDL_Surface* PLAT_initVideo(void) {
 	char* device = getenv("DEVICE");
@@ -346,21 +426,6 @@ SDL_Surface* PLAT_initVideo(void) {
 	vid.gl_context = SDL_GL_CreateContext(vid.window);
 	SDL_GL_MakeCurrent(vid.window, vid.gl_context);
 	glViewport(0, 0, w, h);
-	
-	GLuint vertex;
-	GLuint fragment;
-
-	vertex = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SYSSHADERS_FOLDER);
-	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SYSSHADERS_FOLDER);
-	g_shader_default = link_program(vertex, fragment);
-
-	vertex = load_shader_from_file(GL_VERTEX_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
-	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
-	g_shader_color = link_program(vertex, fragment);
-
-	vertex = load_shader_from_file(GL_VERTEX_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
-	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
-	g_shader_overlay = link_program(vertex, fragment);
 
 	vid.stream_layer1 = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, w,h);
 	vid.target_layer1 = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET , w,h);
@@ -398,16 +463,56 @@ int shadersupdated = 0;
 void PLAT_resetShaders() {
 	shadersupdated = 1;
 }
+char* PLAT_findFileInDir(const char *directory, const char *filename) {
+    char *filename_copy = strdup(filename);
+    if (!filename_copy) {
+        perror("strdup");
+        return NULL;
+    }
 
+    // Strip extension from filename
+    char *dot_pos = strrchr(filename_copy, '.');
+    if (dot_pos) {
+        *dot_pos = '\0';
+    }
 
+    DIR *dir = opendir(directory);
+    if (!dir) {
+        perror("opendir");
+        free(filename_copy);
+        return NULL;
+    }
+
+    struct dirent *entry;
+    char *full_path = NULL;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strstr(entry->d_name, filename_copy) == entry->d_name) {
+            full_path = (char *)malloc(strlen(directory) + strlen(entry->d_name) + 2); // +1 for slash, +1 for '\0'
+            if (!full_path) {
+                perror("malloc");
+                closedir(dir);
+                free(filename_copy);
+                return NULL;
+            }
+
+            snprintf(full_path, strlen(directory) + strlen(entry->d_name) + 2, "%s/%s", directory, entry->d_name);
+            closedir(dir);
+            free(filename_copy);
+            return full_path;
+        }
+    }
+
+    closedir(dir);
+    free(filename_copy);
+    return NULL;
+}
 
 void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype, int *srctype) {
     // Check if the shader index is valid
-    if (i < 0 || i >= 3) {
-        LOG_error("Invalid shader index %d\n", i);
+    if (i < 0 || i >= nrofshaders) {
         return;
     }
-
     Shader* shader = shaders[i];
 
     // Only update shader_p if filename is not NULL
@@ -422,7 +527,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 			LOG_info("Deleting previous shader %i\n",shader->shader_p);
 			glDeleteProgram(shader->shader_p);
 		}
-        shader->shader_p = link_program(vertex_shader1, fragment_shader1);
+        shader->shader_p = link_program(vertex_shader1, fragment_shader1,filename);
         
         if (shader->shader_p == 0) {
             LOG_error("Shader linking failed for %s\n", filename);
@@ -437,6 +542,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
         } else {
 			LOG_info("Shader Program Linking Success %s shader ID is %i\n", filename,shader->shader_p);
 		}
+		shader->filename = strdup(filename);
     }
     // Only update scale if it's not NULL
     if (scale != NULL) {

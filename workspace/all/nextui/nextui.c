@@ -1472,7 +1472,7 @@ int main (int argc, char *argv[]) {
 
 	pthread_t cpucheckthread;
     pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
-	
+	LOG_info("Start time time %ims\n",SDL_GetTicks());
 	while (!quit) {
 
 		GFX_startFrame();
