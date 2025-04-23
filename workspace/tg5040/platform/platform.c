@@ -847,30 +847,13 @@ void PLAT_setOffsetY(int y) {
 	LOG_info("screeny: %i %i\n",screeny,y);
 }
 static int overlayUpdated=0;
-void PLAT_setOverlay(int select, const char* tag) {
+void PLAT_setOverlay(const char* filename, const char* tag) {
     if (vid.overlay) {
         SDL_DestroyTexture(vid.overlay);
         vid.overlay = NULL;
     }
 	overlay_path = NULL;
 	overlayUpdated=1;
-    // Array of overlay filenames
-    static const char* overlay_files[] = {
-        "",
-        "overlay1.png",
-        "overlay2.png",
-        "overlay3.png",
-        "overlay4.png",
-        "overlay5.png"
-    };
-    
-    int overlay_count = sizeof(overlay_files) / sizeof(overlay_files[0]);
-
-    if (select < 1 || select >= overlay_count) {
-        return;
-    }
-
-    const char* filename = overlay_files[select];
 
     if (!filename || strcmp(filename, "") == 0) {
 		overlay_path = strdup("");

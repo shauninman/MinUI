@@ -876,11 +876,6 @@ static char* effect_labels[] = {
 };
 static char* overlay_labels[] = {
 	"None",
-	"overlay1.png",
-	"overlay2.png",
-	"overlay3.png",
-	"overlay4.png",
-	"overlay5.png",
 	NULL
 };
 // static char* sharpness_labels[] = {
@@ -1349,7 +1344,7 @@ static struct Config {
 				.desc	= "Choose a custom overlay png from the Overlays folder",
 				.default_value = 0,
 				.value = 0,
-				.count = 6,
+				.count = 1,
 				.values = overlay_labels,
 				.labels = overlay_labels,
 			},
@@ -1712,10 +1707,19 @@ static void Config_syncFrontend(char* key, int value) {
 		i = FE_OPT_EFFECT;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_OVERLAY].key)) {
-		overlay = value;
-		GFX_setOverlay(value,core.tag);
-		renderer.dst_p = 0;
-		i = FE_OPT_OVERLAY;
+		char** overlayList = config.frontend.options[FE_OPT_OVERLAY].values;
+		if (overlayList) {
+			
+			int count = 0;
+			while (overlayList && overlayList[count]) count++;
+			if (value >= 0 && value < count) {
+				LOG_info("minarch: updating overlay - %s\n", overlayList[value]);
+				GFX_setOverlay(overlayList[value], core.tag);
+				overlay = value;
+				renderer.dst_p = 0;
+				i = FE_OPT_OVERLAY;
+			}
+		}
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_SCREENX].key)) {
 		screenx = value;
@@ -2009,7 +2013,13 @@ static void Config_init(void) {
 	config.shaders.options[SH_SHADER1].count = filecount;
 	config.shaders.options[SH_SHADER2].count = filecount;
 	config.shaders.options[SH_SHADER3].count = filecount;
-		
+	
+	char overlaypath[255];
+	snprintf(overlaypath,sizeof(overlaypath),"%s/%s",OVERLAYS_FOLDER,core.tag);
+	char** overlaylist = list_files_in_folder(overlaypath, &filecount);
+	config.frontend.options[FE_OPT_OVERLAY].labels = overlaylist;
+	config.frontend.options[FE_OPT_OVERLAY].values = overlaylist;
+	config.frontend.options[FE_OPT_OVERLAY].count = filecount;
 	config.initialized = 1;
 }
 static void Config_quit(void) {
@@ -2207,7 +2217,11 @@ static void Config_write(int override) {
 	
 	for (int i=0; config.frontend.options[i].key; i++) {
 		Option* option = &config.frontend.options[i];
-		fprintf(file, "%s = %s\n", option->key, option->values[option->value]);
+		int count = 0;
+		while ( option->values &&  option->values[count]) count++;
+		if (option->value >= 0 && option->value < count) {
+			fprintf(file, "%s = %s\n", option->key, option->values[option->value]);
+		}
 	}
 	for (int i=0; config.core.options[i].key; i++) {
 		Option* option = &config.core.options[i];
@@ -2612,8 +2626,13 @@ static Option* OptionList_getOption(OptionList* list, const char* key) {
 static char* OptionList_getOptionValue(OptionList* list, const char* key) {
 	Option* item = OptionList_getOption(list, key);
 	// if (item) LOG_info("\tGET %s (%s) = %s (%s)\n", item->name, item->key, item->labels[item->value], item->values[item->value]);
-	
-	if (item) return item->values[item->value];
+	if (item) {
+		int count = 0;
+		while ( item->values && item->values[count]) count++;
+		if (item->value >= 0 && item->value < count) {
+			return item->values[item->value];
+		}
+	}
 	// else LOG_warn("unknown option %s \n", key);
 	return NULL;
 }
@@ -4630,7 +4649,6 @@ static int OptionFrontend_openMenu(MenuList* list, int i) {
 				j += 1;
 			}
 		}
-
 		OptionFrontend_menu.items = calloc(config.frontend.enabled_count+1, sizeof(MenuItem));
 		for (int j=0; j<config.frontend.enabled_count; j++) {
 			Option* option = config.frontend.enabled_options[j];
@@ -4650,7 +4668,6 @@ static int OptionFrontend_openMenu(MenuList* list, int i) {
 			item->value = option->value;
 		}
 	}
-	
 	Menu_options(&OptionFrontend_menu);
 	return MENU_CALLBACK_NOP;
 }
@@ -5237,7 +5254,6 @@ static int Menu_options(MenuList* list) {
 		
 		GFX_startFrame();
 		PAD_poll();
-		
 		if (PAD_justRepeated(BTN_UP)) {
 			selected -= 1;
 			if (selected<0) {
@@ -5444,14 +5460,18 @@ static int Menu_options(MenuList* list) {
 				}
 				else {
 					if (item->value>=0) {
-						const char *str = item->values[item->value];
-						text = TTF_RenderUTF8_Blended(font.tiny, str ? str : "none", str ? COLOR_WHITE : COLOR_GRAY); // always white
-						if (text) {
-							SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-								ox + mw - text->w - SCALE1(OPTION_PADDING),
-								oy+SCALE1((j*BUTTON_SIZE)+3)
-							});
-							SDL_FreeSurface(text);
+						int count = 0;
+						while ( item->values && item->values[count]) count++;
+						if (item->value >= 0 && item->value < count) {
+							const char *str = item->values[item->value];
+							text = TTF_RenderUTF8_Blended(font.tiny, str ? str : "none", str ? COLOR_WHITE : COLOR_GRAY); // always white
+							if (text) {
+								SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+									ox + mw - text->w - SCALE1(OPTION_PADDING),
+									oy+SCALE1((j*BUTTON_SIZE)+3)
+								});
+								SDL_FreeSurface(text);
+							}
 						}
 					}
 				}
@@ -5491,14 +5511,15 @@ static int Menu_options(MenuList* list) {
 					int lw = 0;
 					int rw = 0;
 					TTF_SizeUTF8(font.small, item->name, &lw, NULL);
-					
 					// every value list in an input table is the same
 					// so only calculate rw for the first item...
 					if (!mrw || type!=MENU_INPUT) {
-						for (int j=0; item->values[j]; j++) {
-							TTF_SizeUTF8(font.tiny, item->values[j], &rw, NULL);
-							if (lw+rw>w) w = lw+rw;
-							if (rw>mrw) mrw = rw;
+						if(item->values) {
+							for (int j=0; item->values[j]; j++) {
+								TTF_SizeUTF8(font.tiny, item->values[j], &rw, NULL);
+								if (lw+rw>w) w = lw+rw;
+								if (rw>mrw) mrw = rw;
+							}
 						}
 					}
 					else {
@@ -5511,7 +5532,6 @@ static int Menu_options(MenuList* list) {
 				// cache the result
 				list->max_width = mw = MIN(mw, screen->w - SCALE1(PADDING *2));
 			}
-			
 			int ox = (screen->w - mw) / 2;
 			int oy = SCALE1(PADDING + PILL_SIZE);
 			int selected_row = selected - start;
@@ -5554,12 +5574,16 @@ static int Menu_options(MenuList* list) {
 					// buh
 				}
 				else if (item->value>=0) {
-					text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
-					SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
-						ox + mw - text->w - SCALE1(OPTION_PADDING),
-						oy+SCALE1((j*BUTTON_SIZE)+3)
-					});
-					SDL_FreeSurface(text);
+					int count = 0;
+					while ( item->values && item->values[count]) count++;
+					if (item->value >= 0 && item->value < count) {
+						text = TTF_RenderUTF8_Blended(font.tiny, item->values[item->value], COLOR_WHITE); // always white
+						SDL_BlitSurface(text, NULL, screen, &(SDL_Rect){
+							ox + mw - text->w - SCALE1(OPTION_PADDING),
+							oy+SCALE1((j*BUTTON_SIZE)+3)
+						});
+						SDL_FreeSurface(text);
+					}
 				}
 			}
 		}
@@ -6225,7 +6249,14 @@ static void Menu_loop(void) {
 
 	GFX_clearAll();
 	PWR_warn(1);
-	GFX_setOverlay(overlay,core.tag);
+	
+	int count = 0;
+	char** overlayList = config.frontend.options[FE_OPT_OVERLAY].values;
+	while ( overlayList && overlayList[count]) count++;
+	if (overlay >= 0 && overlay < count) {
+		GFX_setOverlay(overlayList[overlay],core.tag);
+	}
+
 	GFX_setOffsetX(screenx);
 	GFX_setOffsetY(screeny);
 	if (!quit) {

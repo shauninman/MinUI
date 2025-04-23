@@ -57,6 +57,7 @@ void LOG_note(int level, const char* fmt, ...);
 
 #define SHADERS_FOLDER SDCARD_PATH "/Shaders"
 #define SYSSHADERS_FOLDER SYSTEM_PATH "/shaders"
+#define OVERLAYS_FOLDER SDCARD_PATH "/Overlays"
 
 ///////////////////////////////
 
@@ -474,7 +475,7 @@ void PLAT_setNearestNeighbor(int enabled);
 void PLAT_setSharpness(int sharpness);
 void PLAT_setEffectColor(int color);
 void PLAT_setEffect(int effect);
-void PLAT_setOverlay(int select, const char* tag);
+void PLAT_setOverlay(const char* filename, const char* tag);
 void PLAT_setOffsetX(int x);
 void PLAT_setOffsetY(int y);
 void PLAT_drawOnLayer(SDL_Surface *inputSurface, int x, int y, int w, int h, float brightness, bool maintainAspectRatio,int layer);
