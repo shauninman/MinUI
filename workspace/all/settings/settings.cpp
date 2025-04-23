@@ -78,6 +78,9 @@ int main(int argc, char *argv[])
 {
     try
     {
+        char version[128];
+        PLAT_getOsVersionInfo(version, 128);
+        LOG_info("This is TrimUI stock OS version %s\n", version);
         InitSettings();
 
         PWR_setCPUSpeed(CPU_SPEED_MENU);

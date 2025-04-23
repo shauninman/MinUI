@@ -18,8 +18,13 @@ endif
 ###########################################################
 
 BUILD_HASH:=$(shell git rev-parse --short HEAD)
+BUILD_BRANCH:=$(shell git rev-parse --abbrev-ref HEAD)
 RELEASE_TIME:=$(shell TZ=GMT date +%Y%m%d)
-RELEASE_BETA=
+ifeq ($(BUILD_BRANCH),main)
+  RELEASE_BETA :=
+else
+  RELEASE_BETA := -$(BUILD_BRANCH)
+endif
 RELEASE_BASE=NextUI-$(RELEASE_TIME)$(RELEASE_BETA)
 RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
 RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)

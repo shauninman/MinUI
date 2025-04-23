@@ -3064,7 +3064,7 @@ int PLAT_wifiScan(struct WIFI_network *networks, int max)
 		return -1;
 	}
 
-	LOG_debug("%s\n", results);
+	LOG_info("%s\n", results);
 
 	// Results will be in this form:
 	//[INFO] bssid / frequency / signal level / flags / ssid
@@ -3087,18 +3087,26 @@ int PLAT_wifiScan(struct WIFI_network *networks, int max)
 		char features[128];
 		sscanf(line, "%17[0-9a-fA-F:]\t%d\t%d\t%127[^\t]\t%127[^\n]", network->bssid, &network->freq, &network->rssi,
 			   features, network->ssid);
-
-		if(containsString(features,"WPA2-PSK"))
-			network->security = SECURITY_WPA2_PSK;
-		else if(containsString(features,"WPA-PSK"))
-			network->security = SECURITY_WPA_PSK;
-		else if(containsString(features,"WEP"))
-			network->security = SECURITY_WEP;
-		else if(containsString(features,"EAP"))
-			network->security = SECURITY_UNSUPPORTED;
-
+		
 		line = strtok(NULL, "\n");
-		count++;
+		
+		// skip over "hidden" networks with empty SSID. We would need to adapt wifimgr classes
+		// to properly support them, I dont think anyone will miss them.
+		if(!network->ssid || !network->ssid[0]) {
+			LOG_info("Ignoring network %s with empty SSID\n", network->bssid);
+		}
+		else {
+			if(containsString(features,"WPA2-PSK"))
+				network->security = SECURITY_WPA2_PSK;
+			else if(containsString(features,"WPA-PSK"))
+				network->security = SECURITY_WPA_PSK;
+			else if(containsString(features,"WEP"))
+				network->security = SECURITY_WEP;
+			else if(containsString(features,"EAP"))
+				network->security = SECURITY_UNSUPPORTED;
+			
+			count++;
+		}
 	}
 	return count;
 }
