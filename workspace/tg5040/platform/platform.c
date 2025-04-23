@@ -418,6 +418,10 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
         GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, filename,SHADERS_FOLDER);
         
         // Link the shader program
+		if (shader->shader_p != 0) {
+			LOG_info("Deleting previous shader %i\n",shader->shader_p);
+			glDeleteProgram(shader->shader_p);
+		}
         shader->shader_p = link_program(vertex_shader1, fragment_shader1);
         
         if (shader->shader_p == 0) {
