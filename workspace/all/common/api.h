@@ -600,6 +600,7 @@ void PLAT_setRumble(int strength);
 int PLAT_pickSampleRate(int requested, int max);
 
 char* PLAT_getModel(void);
+void PLAT_getOsVersionInfo(char *output_str, size_t max_len);
 int PLAT_isOnline(void);
 int PLAT_setDateTime(int y, int m, int d, int h, int i, int s);
 

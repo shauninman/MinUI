@@ -2353,6 +2353,11 @@ char* PLAT_getModel(void) {
 	return "Trimui Smart Pro";
 }
 
+void PLAT_getOsVersionInfo(char* output_str, size_t max_len)
+{
+	return getFile("/etc/version", output_str,max_len);
+}
+
 int PLAT_isOnline(void) {
 	return online;
 }

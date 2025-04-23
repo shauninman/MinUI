@@ -1889,6 +1889,11 @@ char* PLAT_getModel(void) {
 	return "macOS";
 }
 
+void PLAT_getOsVersionInfo(char *output_str, size_t max_len)
+{
+	sprintf(output_str, "%s", "1.2.3");
+}
+
 int PLAT_isOnline(void) {
 	return online;
 }
