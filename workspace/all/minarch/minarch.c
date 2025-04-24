@@ -587,23 +587,27 @@ static void Cheat_getPath(char* filename) {
 }
 
 ///////////////////////////////////////
-
-static void formatSRMPath(char* work_name, char* filename) {
+static void formatSavePath(char* work_name, char* filename, const char* suffix) {
 	char* tmp = strrchr(work_name, '.');
 	if (tmp != NULL && strlen(tmp) > 2 && strlen(tmp) <= 5) {
-		tmp[0] = '\0';
+			tmp[0] = '\0';
 	}
-	sprintf(filename, "%s/%s.srm", core.saves_dir, work_name);
+	sprintf(filename, "%s/%s%s", core.saves_dir, work_name, suffix);
 }
 
 static void SRAM_getPath(char* filename) {
 	char work_name[MAX_PATH];
 
-	if (CFG_getSaveFormat() == SAVE_FORMAT_SRM || exists(SHARED_USERDATA_PATH "/use_srm_saves")) {
-		strcpy(work_name, game.name);
-		formatSRMPath(work_name, filename);
-	} else {
-		sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
+	if (CFG_getSaveFormat() == SAVE_FORMAT_SRM) {
+			strcpy(work_name, game.name);
+			formatSavePath(work_name, filename, ".srm");
+	}
+	else if (CFG_getSaveFormat() == SAVE_FORMAT_GEN) {
+			strcpy(work_name, game.name);
+			formatSavePath(work_name, filename, ".sav");
+	}
+	else {
+			sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
 	}
 
 	LOG_info("SRAM_getPath %s\n", filename);

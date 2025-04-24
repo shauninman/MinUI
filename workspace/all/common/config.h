@@ -21,7 +21,8 @@ typedef int (*ColorSet_callback_t)(void);
 enum
 {
 	SAVE_FORMAT_SAV,
-	SAVE_FORMAT_SRM
+	SAVE_FORMAT_SRM,
+	SAVE_FORMAT_GEN
 };
 
 typedef struct
