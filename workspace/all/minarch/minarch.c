@@ -1729,12 +1729,6 @@ static void Config_syncFrontend(char* key, int value) {
 		i = FE_OPT_SCREENY;
 	}
 	else if (exactMatch(key,config.frontend.options[FE_OPT_SHARPNESS].key)) {
-		// screen_sharpness = value;
-		
-		// if (screen_scaling==SCALE_NATIVE) GFX_setSharpness(SHARPNESS_SHARP);
-		// else GFX_setSharpness(screen_sharpness);
-
-		// renderer.dst_p = 0;
 		GFX_setSharpness(value);
 		i = FE_OPT_SHARPNESS;
 	}
