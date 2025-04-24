@@ -1685,9 +1685,6 @@ static void Config_syncFrontend(char* key, int value) {
 	if (exactMatch(key,config.frontend.options[FE_OPT_SCALING].key)) {
 		screen_scaling 	= value;
 		
-		if (screen_scaling==SCALE_NATIVE) GFX_setSharpness(SHARPNESS_SHARP);
-		else GFX_setSharpness(screen_sharpness);
-		
 		renderer.dst_p = 0;
 		i = FE_OPT_SCALING;
 	}
