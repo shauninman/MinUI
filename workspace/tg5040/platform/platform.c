@@ -2070,10 +2070,10 @@ void PLAT_GL_Swap() {
 
 	// draw the final screen
 	if(nrofshaders > 0) {
-    runShaderPass(initial_texture, g_shader_default, NULL,
-                  dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-                 &(Shader){.srcw=last_w, .srch=last_h,.texw=last_w,.texh=last_h}, 0,GL_NEAREST);
-				}
+		runShaderPass( shaders[nrofshaders - 1]->texture, g_shader_default, NULL,
+					dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
+					&(Shader){.srcw=last_w, .srch=last_h,.texw=last_w,.texh=last_h}, 0,GL_NEAREST);
+	}
 	// draw screen effect lines/grid
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL,
