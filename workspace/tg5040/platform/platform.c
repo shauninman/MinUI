@@ -1843,12 +1843,8 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 			
 		}
 		lastfbo = fbo;
-		// bind target texture to fbo only need to do this if texture changed
-		static GLuint last_bound_target_texture = 0;
-		if (*target_texture != last_bound_target_texture) {
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *target_texture, 0);
-			last_bound_target_texture = *target_texture;
-		}
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *target_texture, 0);
+		
     } else {
 		// things like overlays and stuff we don't need to write to another texture so they can be directly written to screen framebuffer
 		if (lastfbo != 0) {
