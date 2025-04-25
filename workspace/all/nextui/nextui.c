@@ -1981,6 +1981,7 @@ int main (int argc, char *argv[]) {
 				// draw background
 				static int lastType = -1;
 				if(((entry->type == ENTRY_DIR || entry->type == ENTRY_ROM) && CFG_getRomsUseFolderBackground())) {
+					LOG_info("entry path %s %s\n",entry->path,rompath);
 					char *newBg = entry->type == ENTRY_DIR ? entry->path:rompath;
 					if((strcmp(newBg, folderBgPath) != 0 || lastType != entry->type) && sizeof(folderBgPath) != 1) {
 						lastType = entry->type;

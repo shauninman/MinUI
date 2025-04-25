@@ -77,7 +77,9 @@
 #ifndef MAX_LIGHTS
 #define MAX_LIGHTS 0
 #endif
-
+#ifndef MAXSHADERS
+#define MAXSHADERS 3
+#endif
 enum
 {
 	GFX_SCALE_FULLSCREEN = 0,
