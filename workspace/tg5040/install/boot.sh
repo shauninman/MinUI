@@ -33,9 +33,9 @@ fi
 echo 0 > /sys/class/led_anim/max_scale
 
 # generic NextUI package install
-for pakz in $PAKZ_PATH
-do
-	echo $pakz
+for pakz in $PAKZ_PATH; do
+	if [ ! -e "$pakz" ]; then continue; fi
+	echo "Installing $pakz"
 	cd $(dirname "$0")/$PLATFORM
 	./show.elf ./$DEVICE/installing.png
 

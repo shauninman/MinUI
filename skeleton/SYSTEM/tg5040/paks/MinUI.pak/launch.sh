@@ -48,13 +48,14 @@ export IS_NEXT="yes"
 
 #######################################
 
-##REmove Old Led Daemon
-LCDAEMON_PATH="/etc/LedControl"
-
-cd $(dirname "$0")
-rm -R $LCDAEMON_PATH
-/etc/init.d/lcservice disable
-rm /etc/init.d/lcservice
+##Remove Old Led Daemon
+if [ -f "/etc/LedControl" ]; then
+	rm -Rf "/etc/LedControl"
+fi
+if [ -f "/etc/init.d/lcservice" ]; then
+	/etc/init.d/lcservice disable
+	rm /etc/init.d/lcservice
+fi
 
 #PD11 pull high for VCC-5v
 echo 107 > /sys/class/gpio/export
