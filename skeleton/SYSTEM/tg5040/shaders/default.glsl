@@ -4,7 +4,8 @@ attribute vec2 TexCoord;
 varying vec2 vTexCoord;
 
 void main() {
-    vTexCoord = TexCoord;
+    // Flip Y-axis in the vertex shader
+    vTexCoord = vec2(TexCoord.x, 1.0 - TexCoord.y);  // Flip Y
     gl_Position = vec4(VertexCoord, 0.0, 1.0);
 }
 #endif
@@ -15,6 +16,6 @@ uniform sampler2D Texture;
 varying vec2 vTexCoord;
 
 void main() {
-    gl_FragColor = texture2D(Texture, vec2(vTexCoord.x, vTexCoord.y));
+    gl_FragColor = texture2D(Texture, vTexCoord);
 }
 #endif

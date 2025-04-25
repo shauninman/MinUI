@@ -4227,9 +4227,10 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 				uint8_t g = (pixel >> 8) & 0xFF;
 				uint8_t b = (pixel >> 0) & 0xFF;
 				uint8_t a = 0xFF;
-				rgbaData[i] = (r << 24) | (g << 16) | (b << 8) | a;
+				rgbaData[i] = (a << 24) | (b << 16) | (g << 8) | r;
 			}
 			data = rgbaData;
+
 		} else {
 			// convert RGB565 to RGBA8888
 			const uint16_t* srcData = (const uint16_t*)data;
@@ -4242,11 +4243,13 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 					uint8_t r = ((pixel >> 11) & 0x1F) << 3; 
 					uint8_t g = ((pixel >> 5) & 0x3F) << 2;   
 					uint8_t b = (pixel & 0x1F) << 3;          
+					uint8_t a = 0xFF;
 
-					rgbaData[y * width + x] = (r << 24) | (g << 16) | (b << 8) | 0xFF;  
+					rgbaData[y * width + x] = (a << 24) | (b << 16) | (g << 8) | r;
 				}
 			}
 			data = rgbaData;
+
 		}
 
 		pitch = width * sizeof(Uint32);

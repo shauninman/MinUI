@@ -30,6 +30,7 @@
 #include <libgen.h>  
 
 #include <dirent.h>
+
 int is_brick = 0;
 volatile int useAutoCpu = 1;
 static int finalScaleFilter=GL_LINEAR;
@@ -57,7 +58,6 @@ typedef struct Shader {
 } Shader;
 
 GLuint g_shader_default = 0;
-GLuint g_shader_color = 0;
 GLuint g_shader_overlay = 0;
 
 Shader* shaders[MAXSHADERS] = {
@@ -358,11 +358,7 @@ void PLAT_initShaders() {
 
 	vertex = load_shader_from_file(GL_VERTEX_SHADER, "default.glsl",SYSSHADERS_FOLDER);
 	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "default.glsl",SYSSHADERS_FOLDER);
-	g_shader_default = link_program(vertex, fragment,"default.glsl");
-
-	vertex = load_shader_from_file(GL_VERTEX_SHADER, "colorfix.glsl", SYSSHADERS_FOLDER);
-	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "colorfix.glsl",SYSSHADERS_FOLDER);
-	g_shader_color = link_program(vertex, fragment,"colorfix.glsl");
+	g_shader_default = link_program(vertex, fragment,"defaultv2.glsl");
 
 	vertex = load_shader_from_file(GL_VERTEX_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
 	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
@@ -711,6 +707,8 @@ static void resizeVideo(int w, int h, int p) {
 	vid.width	= w;
 	vid.height	= h;
 	vid.pitch	= p;
+
+	reloadShaderTextures = 1;
 }
 
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
@@ -1756,7 +1754,8 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 	texelSize[1] = 1.0f / shader->texh;
 
 
-	glUseProgram(shader_program);
+	if (shader_program != last_program)
+    	glUseProgram(shader_program);
 	if (static_VAO == 0 || shader_program != last_program) {
 		if (static_VAO) glDeleteVertexArrays(1, &static_VAO);
 		if (static_VBO) glDeleteBuffers(1, &static_VBO);
@@ -1845,8 +1844,10 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 		}
 		lastfbo = fbo;
 		// bind target texture to fbo only need to do this if texture changed
-		if(shader_program != last_program) {
+		static GLuint last_bound_target_texture = 0;
+		if (*target_texture != last_bound_target_texture) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *target_texture, 0);
+			last_bound_target_texture = *target_texture;
 		}
     } else {
 		// things like overlays and stuff we don't need to write to another texture so they can be directly written to screen framebuffer
@@ -1863,7 +1864,11 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 		glDisable(GL_BLEND);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, src_texture);
+	static GLuint last_bound_texture = 0;
+	if (src_texture != last_bound_texture) {
+		glBindTexture(GL_TEXTURE_2D, src_texture);
+		last_bound_texture = src_texture;
+	}
 	glViewport(x, y, dst_width, dst_height);
 
 	GLint texLocation = glGetUniformLocation(shader_program, "Texture");
@@ -1977,7 +1982,9 @@ void PLAT_GL_Swap() {
 
 
     static int src_w_last = 0, src_h_last = 0;
- 
+	static int last_w = 0;
+	static int last_h = 0;
+
     if (!src_texture || reloadShaderTextures) {
 		if(src_texture) {
 			glDeleteTextures(1,&src_texture);
@@ -1986,11 +1993,13 @@ void PLAT_GL_Swap() {
 		}
 		glGenTextures(1, &src_texture);
 		glBindTexture(GL_TEXTURE_2D, src_texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, nrofshaders>0?GL_NEAREST:finalScaleFilter);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, nrofshaders>0?GL_NEAREST:finalScaleFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, nrofshaders>0?shaders[0]->filter:finalScaleFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, nrofshaders>0?shaders[0]->filter:finalScaleFilter);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		
 	}
+
 	glBindTexture(GL_TEXTURE_2D, src_texture);
     if (vid.blit->src_w != src_w_last || vid.blit->src_h != src_h_last  || reloadShaderTextures) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vid.blit->src_w, vid.blit->src_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, vid.blit->src);
@@ -2000,14 +2009,13 @@ void PLAT_GL_Swap() {
     	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, vid.blit->src_w, vid.blit->src_h, GL_RGBA, GL_UNSIGNED_BYTE, vid.blit->src);
 	}
 
+	if(nrofshaders<1) {
+		static GLuint initial_texture = 0;
+		runShaderPass(src_texture, g_shader_default, NULL, dst_rect.x, dst_rect.y,
+			dst_rect.w,dst_rect.h, &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=vid.blit->src_w,.texh=vid.blit->src_h
+					}, 0, GL_NONE);
+	}
 
-	static GLuint initial_texture = 0;
-	runShaderPass(src_texture, g_shader_color, nrofshaders> 0 ? &initial_texture:NULL, nrofshaders> 0 ? 0:dst_rect.x, nrofshaders> 0 ? 0:dst_rect.y,
-		nrofshaders> 0 ? vid.blit->src_w:dst_rect.w,nrofshaders> 0 ? vid.blit->src_h:dst_rect.h, &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=vid.blit->src_w,.texh=vid.blit->src_h
-				   }, 0, nrofshaders>0 ? shaders[0]->filter:GL_NEAREST);
-
-	static int last_w = 0;
-	static int last_h = 0;
 	last_w = vid.blit->src_w;
 	last_h = vid.blit->src_h;
 	
@@ -2054,11 +2062,11 @@ void PLAT_GL_Swap() {
 		shaderinfocount++;
 
 		if (shaders[i]->shader_p) {
-			runShaderPass( (i == 0) ? initial_texture : shaders[i - 1]->texture, shaders[i]->shader_p, &shaders[i]->texture, 0, 0,
+			runShaderPass( (i == 0) ? src_texture : shaders[i - 1]->texture, shaders[i]->shader_p, &shaders[i]->texture, 0, 0,
 							dst_w, dst_h,
 							shaders[i], 0,i==nrofshaders-1? finalScaleFilter: shaders[i+1]->filter);
 		} else {
-			runShaderPass( (i == 0) ? initial_texture : shaders[i - 1]->texture, g_shader_default, &shaders[i]->texture, 0, 0,
+			runShaderPass( (i == 0) ? src_texture : shaders[i - 1]->texture, g_shader_default, &shaders[i]->texture, 0, 0,
 							dst_w, dst_h,
 							shaders[i], 0,i==nrofshaders-1? finalScaleFilter: shaders[i+1]->filter);
 		}
@@ -2072,19 +2080,19 @@ void PLAT_GL_Swap() {
 	if(nrofshaders > 0) {
 		runShaderPass( shaders[nrofshaders - 1]->texture, g_shader_default, NULL,
 					dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-					&(Shader){.srcw=last_w, .srch=last_h,.texw=last_w,.texh=last_h}, 0,GL_NEAREST);
+					&(Shader){.srcw=last_w, .srch=last_h,.texw=last_w,.texh=last_h}, 0,GL_NONE);
 	}
 	// draw screen effect lines/grid
     if (effect_tex) {
         runShaderPass(effect_tex, g_shader_overlay, NULL,
                       0, 0, device_width, device_height,
-					  &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=effect_w,.texh=effect_h}, 1,GL_NEAREST);
+					  &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=effect_w,.texh=effect_h}, 1,GL_NONE);
     }
 	// draw overlay
     if (overlay_tex) {
         runShaderPass(overlay_tex, g_shader_overlay, NULL,
                       0, 0, device_width, device_height,
-					  &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=overlay_w,.texh=overlay_h}, 1,GL_NEAREST);
+					  &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=overlay_w,.texh=overlay_h}, 1,GL_NONE);
     }
     SDL_GL_SwapWindow(vid.window);
     frame_count++;
