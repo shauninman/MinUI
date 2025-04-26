@@ -39,4 +39,28 @@ namespace Wifi
 
         void drawCustomItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected) const override;
     };
+
+    class ConnectKnownItem : public MenuItem
+    {
+        WIFI_network net;
+
+    public:
+        ConnectKnownItem(WIFI_network n, bool& dirty);
+    };
+
+    class ConnectNewItem : public MenuItem
+    {
+        WIFI_network net;
+
+    public:
+        ConnectNewItem(WIFI_network n, bool& dirty);
+    };
+
+    class ForgetItem : public MenuItem
+    {
+        WIFI_network net;
+
+    public:
+        ForgetItem(WIFI_network n, bool& dirty);
+    };
 }

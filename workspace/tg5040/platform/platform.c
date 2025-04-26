@@ -3030,56 +3030,10 @@ static void wifi_state_handle(struct Manager *w, int event_label)
     }
 }
 
-// this calls for templates, but realistically theres two types we care about: numerical and string.
-//namespace SystemVal
-//{
-	int systemval_get(const char* key) {
-		if(key == NULL) {
-			assert(false);
-			return 0;
-		}
-		char *systemval = (char *)malloc(256);
-		if (!systemval){
-			assert(false);
-			return 0;
-		}
-		snprintf(systemval, 256, "/usr/trimui/bin/systemval %s", key);
-
-		FILE *fp = popen(systemval, "r");
-		if (!fp) {
-			free(systemval);
-			assert(false);
-			return 0;
-		}
-		char *output = (char *)malloc(256);
-		if (!output) {
-			assert(false);
-			return 0;
-		}
-		fgets(output, 256, fp);
-		pclose(fp);
-		int val = atoi(output);
-		free(output);
-		return val;
-	}
-
-	void systemval_set(const char* key, int val) {
-		if(key == NULL)
-			return;
-
-		char *systemval = (char *)malloc(256);
-		if (!systemval)
-			return;
-		snprintf(systemval, 256, "/usr/trimui/bin/systemval %s %d", key, val);
-		system(systemval);
-		free(systemval);
-	}
-//};
-
 bool PLAT_hasWifi() { return true; }
 void PLAT_wifiInit() {
 	LOG_info("Wifi init\n");
-	wifi.enabled = systemval_get("wifi");
+	wifi.enabled = CFG_getWifi();
 	PLAT_wifiEnable(wifi.enabled);
 }
 
@@ -3140,8 +3094,8 @@ void PLAT_wifiEnable(bool on) {
 		wifi.enabled = false;
 	}
 
-	// Keep systemval in sync, we'll use it on the next boot
-	systemval_set("wifi", wifi.enabled);
+	// Keep config in sync
+	CFG_setWifi(wifi.enabled);
 }
 
 int PLAT_wifiScan(struct WIFI_network *networks, int max)

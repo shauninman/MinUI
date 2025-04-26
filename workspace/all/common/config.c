@@ -52,6 +52,8 @@ void CFG_defaults(NextUISettings *cfg)
         .haptics = CFG_DEFAULT_HAPTICS,
         .romsUseFolderBackground = CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND,
         .saveFormat = CFG_DEFAULT_SAVEFORMAT,
+
+        .wifi = CFG_DEFAULT_WIFI,
 };
 
     *cfg = defaults;
@@ -194,6 +196,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
             if (sscanf(line, "artWidth=%i", &temp_value) == 1)
             {
                 CFG_setGameArtWidth((double)temp_value / 100.0);
+                continue;
+            }
+            if (sscanf(line, "wifi=%i", &temp_value) == 1)
+            {
+                CFG_setWifi((bool)temp_value);
                 continue;
             }
         }
@@ -453,6 +460,16 @@ void CFG_setGameArtWidth(double zeroToOne)
     settings.gameArtWidth = clampd(zeroToOne, 0.0, 1.0);
 }
 
+bool CFG_getWifi(void)
+{
+    return settings.wifi;
+}
+
+void CFG_setWifi(bool on)
+{
+    settings.wifi = on;
+}
+
 void CFG_get(const char *key, char *value)
 {
     if (strcmp(key, "font") == 0)
@@ -547,6 +564,10 @@ void CFG_get(const char *key, char *value)
     {
         sprintf(value, "%i", (int)(CFG_getGameArtWidth()) * 100);
     }
+    else if (strcmp(key, "wifi") == 0)
+    {
+        sprintf(value, "%i", (int)(CFG_getWifi()));
+    }
 
     // meta, not a real setting
     else if (strcmp(key, "fontpath") == 0)
@@ -600,6 +621,7 @@ void CFG_sync(void)
     fprintf(file, "saveFormat=%i\n", settings.saveFormat);
     fprintf(file, "muteLeds=%i\n", settings.muteLeds);
     fprintf(file, "artWidth=%i\n", (int)(settings.gameArtWidth * 100));
+    fprintf(file, "wifi=%i\n", settings.wifi);
 
     fclose(file);
 }
@@ -631,6 +653,7 @@ void CFG_print(void)
     printf("\t\"saveFormat\": %i,\n", settings.saveFormat);
     printf("\t\"muteLeds\": %i,\n", settings.muteLeds);
     printf("\t\"artWidth\": %i,\n", (int)(settings.gameArtWidth * 100));
+    printf("\t\"wifi\": %i,\n", settings.wifi);
 
     // meta, not a real setting
     if (settings.font == 1)
