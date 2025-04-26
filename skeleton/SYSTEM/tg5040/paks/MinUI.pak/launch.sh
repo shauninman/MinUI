@@ -119,8 +119,8 @@ killall MtpDaemon # I dont think we need to micro manage this one
 
 # wifi handling
 # on by default, disable based on systemval setting
-wifion=`/usr/trimui/bin/systemval wifi`
-if [ "$wifion" != "1" ] ; then
+wifion=$(nextval.elf wifi | sed -n 's/.*"wifi": \([0-9]*\).*/\1/p')
+if [ "$wifion" -eq 0 ]; then
 	ifconfig wlan0 down
 	killall -15 wpa_supplicant
 	# this is pretty dumb, it also kills DHCP for e.g. USB-C ethernet adapters

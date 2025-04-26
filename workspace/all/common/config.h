@@ -75,6 +75,9 @@ typedef struct
 	// Haptic
 	bool haptics;
 
+	// Network
+	bool wifi;
+
 } NextUISettings;
 
 #define CFG_DEFAULT_FONT_ID 1  // Next
@@ -101,6 +104,7 @@ typedef struct
 #define CFG_DEFAULT_SAVEFORMAT SAVE_FORMAT_SAV
 #define CFG_DEFAULT_MUTELEDS false
 #define CFG_DEFAULT_GAMEARTWIDTH 0.45
+#define CFG_DEFAULT_WIFI false
 
 void CFG_init(FontLoad_callback_t fontCallback, ColorSet_callback_t ccb);
 void CFG_print(void);
@@ -168,6 +172,10 @@ void CFG_setMuteLEDs(bool);
 // Set game art width percentage.
 double CFG_getGameArtWidth(void);
 void CFG_setGameArtWidth(double zeroToOne);
+// WiFi on/off (if available)
+bool CFG_getWifi(void);
+void CFG_setWifi(bool on);
+
 
 void CFG_sync(void);
 void CFG_quit(void);
