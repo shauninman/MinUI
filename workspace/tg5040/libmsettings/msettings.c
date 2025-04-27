@@ -392,7 +392,7 @@ void SetColortemp(int value) {
 	SaveSettings();
 }
 void SetVolume(int value) { // 0-20
-	if (settings->mute && GetMutedVolume() != SETTINGS_DEFAULT_MUTE_NO_CHANGE) 
+	if (settings->mute) 
 		return SetRawVolume(scaleVolume(GetMutedVolume()));
 	// if (settings->hdmi) return;
 	

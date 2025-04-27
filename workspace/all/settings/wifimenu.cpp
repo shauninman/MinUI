@@ -132,30 +132,12 @@ void Menu::updater()
                                                    new MenuItem{ListItemType::Button, "Disconnect", "Disconnect from this network.",
                                                                 [&](MenuItem &item) -> InputReactionHint
                                                                 { WIFI_disconnect(); workerDirty = true; return Exit; }},
-                                                   new MenuItem{ListItemType::Button, "Forget", "Removes credentials for this network.",
-                                                                [&](MenuItem &item) -> InputReactionHint
-                                                                { WIFI_forget(r.ssid, r.security); workerDirty = true; return Exit; }},
+                                                   new ForgetItem(r, workerDirty)
                                                });
                     else if (hasCredentials)
-                        options = new MenuList(MenuItemType::List, "Options",
-                        {
-                            new MenuItem{ListItemType::Button, "Connect", "Connect to this network.", [&](MenuItem &item) -> InputReactionHint
-                                        {
-                                            std::thread([&](){ WIFI_connect(r.ssid, r.security); }).detach();
-                                            workerDirty = true; 
-                                            return Exit;
-                                        }},
-                        });
+                        options = new MenuList(MenuItemType::List, "Options", { new ConnectKnownItem(r, workerDirty), new ForgetItem(r, workerDirty) });
                     else
-                        options = new MenuList(MenuItemType::List, "Options",
-                        {
-                            new MenuItem{ListItemType::Button, "Enter WiFi passcode", "Connect to this network.", DeferToSubmenu, new KeyboardPrompt("Enter Wifi passcode", 
-                                [&](MenuItem &item) -> InputReactionHint {
-                                    std::thread([=](){ WIFI_connectPass(r.ssid, r.security, item.getName().c_str()); }).detach();
-                                    workerDirty = true; 
-                                    return Exit; 
-                                })},
-                        });
+                        options = new MenuList(MenuItemType::List, "Options", { new ConnectNewItem(r, workerDirty) });
 
                     auto itm = new NetworkItem{r, connected, options};
                     if(connected && !std::string(connection.ip).empty())
@@ -185,6 +167,32 @@ void Menu::updater()
         std::this_thread::sleep_for(std::chrono::seconds(pollSecs));
     }
 }
+
+ConnectKnownItem::ConnectKnownItem(WIFI_network n, bool& dirty)
+    : MenuItem(ListItemType::Button, "Connect", "Connect to this network.", [&](MenuItem &item) -> InputReactionHint{
+        WIFI_connect(net.ssid, net.security); 
+        dirty = true;
+        return Exit;
+    }), net(n)
+{}
+
+ConnectNewItem::ConnectNewItem(WIFI_network n, bool& dirty)
+    : MenuItem(ListItemType::Button, "Enter WiFi passcode", "Connect to this network.", DeferToSubmenu, new KeyboardPrompt("Enter Wifi passcode", 
+        [&](MenuItem &item) -> InputReactionHint {
+            WIFI_connectPass(net.ssid, net.security, item.getName().c_str()); 
+            dirty = true;
+            return Exit; 
+        })), net(n)
+{}
+
+ForgetItem::ForgetItem(WIFI_network n, bool& dirty)
+    : MenuItem(ListItemType::Button, "Forget", "Removes credentials for this network.",
+        [&](MenuItem &item) -> InputReactionHint { 
+            WIFI_forget(net.ssid, net.security); 
+            dirty = true; 
+            return Exit;
+        }), net(n)
+{}
 
 
 NetworkItem::NetworkItem(WIFI_network n, bool connected, MenuList* submenu)
