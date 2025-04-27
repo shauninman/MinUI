@@ -65,6 +65,7 @@ typedef struct Shader {
 
 GLuint g_shader_default = 0;
 GLuint g_shader_overlay = 0;
+GLuint g_noshader = 0;
 
 Shader* shaders[MAXSHADERS] = {
     &(Shader){ .shader_p = 0, .scale = 1, .filter = GL_LINEAR, .scaletype = 1, .srctype = 0, .filename ="stock.glsl", .texture = 0, .updated = 1 },
@@ -369,6 +370,10 @@ void PLAT_initShaders() {
 	vertex = load_shader_from_file(GL_VERTEX_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
 	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "overlay.glsl",SYSSHADERS_FOLDER);
 	g_shader_overlay = link_program(vertex, fragment,"overlay.glsl");
+
+	vertex = load_shader_from_file(GL_VERTEX_SHADER, "noshader.glsl",SYSSHADERS_FOLDER);
+	fragment = load_shader_from_file(GL_FRAGMENT_SHADER, "noshader.glsl",SYSSHADERS_FOLDER);
+	g_noshader = link_program(vertex, fragment,"noshader.glsl");
 	
 	LOG_info("default shaders loaded, %i\n\n",g_shader_default);
 }
@@ -525,7 +530,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 
     if (filename != NULL) {
         SDL_GL_MakeCurrent(vid.window, vid.gl_context);
-        
+        LOG_info("loading shader \n");
         GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER);
         GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, filename,SHADERS_FOLDER);
         
@@ -547,7 +552,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 		shader->texelSizeLocation = glGetUniformLocation(shader->shader_p, "texelSize");
 
         if (shader->shader_p == 0) {
-            LOG_error("Shader linking failed for %s\n", filename);
+            LOG_info("Shader linking failed for %s\n", filename);
         }
 
         GLint success = 0;
@@ -555,7 +560,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
         if (!success) {
             char infoLog[512];
             glGetProgramInfoLog(shader->shader_p, 512, NULL, infoLog);
-            LOG_error("Shader Program Linking Failed: %s\n", infoLog);
+            LOG_info("Shader Program Linking Failed: %s\n", infoLog);
         } else {
 			LOG_info("Shader Program Linking Success %s shader ID is %i\n", filename,shader->shader_p);
 		}
@@ -2121,7 +2126,7 @@ void PLAT_GL_Swap() {
         } else {
             runShaderPass(
                 (i == 0) ? src_texture : shaders[i - 1]->texture,
-                g_shader_default,
+                g_noshader,
                 &shaders[i]->texture,
                 0, 0, dst_w, dst_h,
                 shaders[i],
