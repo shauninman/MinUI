@@ -4188,9 +4188,6 @@ static Uint32* rgbaData = NULL;
 static size_t rgbaDataSize = 0;
 
 static void video_refresh_callback(const void* data, unsigned width, unsigned height, size_t pitch) {
-    // not needed currently
-	// bool can_dupe = false;
-    // environment_callback(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
 
 	// I need to check quit here because sometimes quit is true but callback is still called by the core after and it still runs one more frame and it looks ugly :D
 	if(!quit) {

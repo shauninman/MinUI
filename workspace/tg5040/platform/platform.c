@@ -39,14 +39,12 @@ static int reloadShaderTextures = 1;
 // shader stuff
 
 typedef struct Shader {
-	// keep these 5 first
 	int srcw;
 	int srch;
 	int texw;
 	int texh;
 	int filter;
 
-	// here can be the rest
 	GLuint shader_p;
 	int scale;
 	int srctype;
@@ -54,7 +52,15 @@ typedef struct Shader {
 	char *filename;
 	GLuint texture;
 	int updated;
-
+	GLint u_FrameDirection;
+	GLint u_FrameCount;
+	GLint u_OutputSize;
+	GLint u_TextureSize;
+	GLint u_InputSize;
+	GLint u_gamma;
+	GLint u_grid_strength;
+	GLint texLocation;
+	GLint texelSizeLocation;
 } Shader;
 
 GLuint g_shader_default = 0;
@@ -530,6 +536,16 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 		}
         shader->shader_p = link_program(vertex_shader1, fragment_shader1,filename);
         
+		shader->u_FrameDirection = glGetUniformLocation( shader->shader_p, "FrameDirection");
+		shader->u_FrameCount = glGetUniformLocation( shader->shader_p, "FrameCount");
+		shader->u_OutputSize = glGetUniformLocation( shader->shader_p, "OutputSize");
+		shader->u_TextureSize = glGetUniformLocation( shader->shader_p, "TextureSize");
+		shader->u_InputSize = glGetUniformLocation( shader->shader_p, "InputSize");
+		shader->u_gamma = glGetUniformLocation( shader->shader_p, "gamma");
+		shader->u_grid_strength = glGetUniformLocation( shader->shader_p, "GRID_STRENGTH");
+		shader->texLocation = glGetUniformLocation(shader->shader_p, "Texture");
+		shader->texelSizeLocation = glGetUniformLocation(shader->shader_p, "texelSize");
+
         if (shader->shader_p == 0) {
             LOG_error("Shader linking failed for %s\n", filename);
         }
@@ -1762,10 +1778,8 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 
 	if (shader_program != last_program)
     	glUseProgram(shader_program);
-	if (static_VAO == 0 || shader_program != last_program) {
-		if (static_VAO) glDeleteVertexArrays(1, &static_VAO);
-		if (static_VBO) glDeleteBuffers(1, &static_VBO);
 
+	if (static_VAO == 0) {
 		glGenVertexArrays(1, &static_VAO);
 		glGenBuffers(1, &static_VBO);
 		glBindVertexArray(static_VAO);
@@ -1780,6 +1794,10 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 		};
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	}
+	
+
+	if (shader_program != last_program) {
 		GLint posAttrib = glGetAttribLocation(shader_program, "VertexCoord");
 		if (posAttrib >= 0) {
 			
@@ -1793,22 +1811,15 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 			glEnableVertexAttribArray(texAttrib);
 		}
 
-	
-		GLint u_FrameDirection = glGetUniformLocation(shader_program, "FrameDirection");
-		GLint u_FrameCount = glGetUniformLocation(shader_program, "FrameCount");
-		GLint u_OutputSize = glGetUniformLocation(shader_program, "OutputSize");
-		GLint u_TextureSize = glGetUniformLocation(shader_program, "TextureSize");
-		GLint u_InputSize = glGetUniformLocation(shader_program, "InputSize");
-		GLint u_gamma = glGetUniformLocation(shader_program, "gamma");
-		GLint u_grid_strength = glGetUniformLocation(shader_program, "GRID_STRENGTH");
 
-		if (u_FrameDirection >= 0) glUniform1i(u_FrameDirection, 1);
-		if (u_FrameCount >= 0) glUniform1i(u_FrameCount, frame_count);
-		if (u_OutputSize >= 0) glUniform2f(u_OutputSize, dst_width, dst_height);
-		if (u_TextureSize >= 0) glUniform2f(u_TextureSize, shader->texw, shader->texh); 
-		if (u_InputSize >= 0) glUniform2f(u_InputSize, shader->srcw, shader->srch); 
-		if (u_gamma >= 0) glUniform1f(u_gamma, 2.2f);
-		if (u_grid_strength >= 0) glUniform1f(u_grid_strength, 0.05f); 
+
+		if (shader->u_FrameDirection >= 0) glUniform1i(shader->u_FrameDirection, 1);
+		if (shader->u_FrameCount >= 0) glUniform1i(shader->u_FrameCount, frame_count);
+		if (shader->u_OutputSize >= 0) glUniform2f(shader->u_OutputSize, dst_width, dst_height);
+		if (shader->u_TextureSize >= 0) glUniform2f(shader->u_TextureSize, shader->texw, shader->texh); 
+		if (shader->u_InputSize >= 0) glUniform2f(shader->u_InputSize, shader->srcw, shader->srch); 
+		if (shader->u_gamma >= 0) glUniform1f(shader->u_gamma, 2.2f);
+		if (shader->u_grid_strength >= 0) glUniform1f(shader->u_grid_strength, 0.05f); 
 
 		GLint u_MVP = glGetUniformLocation(shader_program, "MVPMatrix");
 		if (u_MVP >= 0) {
@@ -1873,14 +1884,12 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 	}
 	glViewport(x, y, dst_width, dst_height);
 
-	GLint texLocation = glGetUniformLocation(shader_program, "Texture");
-	if (texLocation >= 0) {
-		glUniform1i(texLocation, 0);  
-	}
+	
+	if (shader->texLocation >= 0) glUniform1i(shader->texLocation, 0);  
+	
 
-	GLint texelSizeLocation = glGetUniformLocation(shader_program, "texelSize");
-	if (texelSizeLocation >= 0 && (shader->updated || texelSize[0] != last_texelSize[0] || texelSize[1] != last_texelSize[1])) {
-		glUniform2fv(texelSizeLocation, 1, texelSize);
+	if (shader->texelSizeLocation >= 0 && (shader->updated || texelSize[0] != last_texelSize[0] || texelSize[1] != last_texelSize[1])) {
+		glUniform2fv(shader->texelSizeLocation, 1, texelSize);
 		last_texelSize[0] = texelSize[0];
 		last_texelSize[1] = texelSize[1];
 	}
@@ -1888,8 +1897,82 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 	last_program = shader_program;
 }
 
+typedef struct {
+    SDL_Surface* loaded_effect;
+    SDL_Surface* loaded_overlay;
+    int effect_ready;
+    int overlay_ready;
+} FramePreparation;
+
+static FramePreparation frame_prep = {0};
+
+int prepareFrameThread(void *data) {
+    while (1) {
+		updateEffect();
+
+        if (effectUpdated) {
+			LOG_info("effect updated %s\n",effect_path);
+			if(effect_path) {
+				SDL_Surface* tmp = IMG_Load(effect_path);
+				if (tmp) {
+					frame_prep.loaded_effect = SDL_ConvertSurfaceFormat(tmp, SDL_PIXELFORMAT_RGBA32, 0);
+					SDL_FreeSurface(tmp);
+				} else {
+					frame_prep.loaded_effect = 0;
+				}
+			} else {
+				frame_prep.loaded_effect = 0;
+			}
+			effectUpdated = 0;
+			frame_prep.effect_ready = 1; 
+        }
+		if(effect.type == EFFECT_NONE && frame_prep.loaded_effect !=0) {
+			frame_prep.loaded_effect = 0;
+			frame_prep.effect_ready = 1;
+	
+		}
+
+        if (overlayUpdated) {
+
+			LOG_info("overlay updated\n");
+			if(overlay_path) {
+				SDL_Surface* tmp = IMG_Load(overlay_path);
+				if (tmp) {
+					frame_prep.loaded_overlay = SDL_ConvertSurfaceFormat(tmp, SDL_PIXELFORMAT_RGBA32, 0);
+					SDL_FreeSurface(tmp);
+				} else {
+					frame_prep.loaded_overlay = 0;
+				}
+			} else {
+				frame_prep.loaded_overlay = 0;
+			}
+			frame_prep.overlay_ready = 1;
+			overlayUpdated=0;
+        }
+
+        SDL_Delay(120); 
+    }
+    return 0;
+}
+
+static SDL_Thread *prepare_thread = NULL;
+
 void PLAT_GL_Swap() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (prepare_thread == NULL) {
+        prepare_thread = SDL_CreateThread(prepareFrameThread, "PrepareFrameThread", NULL);
+
+        if (prepare_thread == NULL) {
+            printf("Error creating background thread: %s\n", SDL_GetError());
+            return; 
+        }
+    }
+
+    static int lastframecount = 0;
+    if (reloadShaderTextures) lastframecount = frame_count;
+    if (frame_count < lastframecount + 3)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     SDL_Rect dst_rect = {0, 0, device_width, device_height};
     setRectToAspectRatio(&dst_rect);
 
@@ -1900,207 +1983,196 @@ void PLAT_GL_Swap() {
 
     SDL_GL_MakeCurrent(vid.window, vid.gl_context);
 
-
     static GLuint effect_tex = 0;
-	static int effect_w, effect_h;
-	
-	
-	updateEffect();
-    if (effect_path && effectUpdated) {
-		SDL_Surface* tmp = IMG_Load(effect_path);
-		if (tmp) {
-			int crop_x = 0;
-			int crop_y = 0;
-			int crop_width = device_width;
-			int crop_height = device_height;
-
-			if (crop_x + crop_width > tmp->w) crop_width = tmp->w - crop_x;
-			if (crop_y + crop_height > tmp->h) crop_height = tmp->h - crop_y;
-
-			SDL_Surface* cropped = SDL_CreateRGBSurfaceWithFormat(0, crop_width, crop_height, tmp->format->BitsPerPixel, tmp->format->format);
-			if (!cropped) {
-				LOG_error("Failed to create cropped surface: %s\n", SDL_GetError());
-			} else {
-				SDL_Rect crop_rect = {crop_x, crop_y, crop_width, crop_height};
-				SDL_BlitSurface(tmp, &crop_rect, cropped, NULL);
-
-				glGenTextures(1, &effect_tex);
-				glBindTexture(GL_TEXTURE_2D, effect_tex);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-				
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cropped->w, cropped->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, cropped->pixels);
-
-				LOG_info("opengl texture id is %i\n", effect_tex);
-
-				effect_w = cropped->w;
-				effect_h = cropped->h;
-
-				SDL_FreeSurface(tmp);
-				SDL_FreeSurface(cropped);
-			}
-		}
-		effectUpdated = 0;
-	}
-    if(effect.type == EFFECT_NONE && effect_tex) {
-		glDeleteTextures(1,&effect_tex);
-		effect_tex = 0;
-	}
-	
-	static GLuint overlay_tex = 0;
+    static int effect_w = 0, effect_h = 0;
+    static GLuint overlay_tex = 0;
+    static int overlay_w = 0, overlay_h = 0;
     static int overlayload = 0;
-	if(overlayUpdated) {
-		glDeleteTextures(1,&overlay_tex);
-		overlay_tex=0;
-		overlayload=0;
-		overlayUpdated = 0;
-		
-	}
-	static int overlay_w = 0;
-	static int overlay_h = 0;
-    if (!overlay_tex && !overlayload && overlay_path) {
-        SDL_Surface* tmp = IMG_Load(overlay_path);
-        if (tmp) {
-            SDL_Surface* rgba = SDL_ConvertSurfaceFormat(tmp, SDL_PIXELFORMAT_RGBA32, 0);
-            glGenTextures(1, &overlay_tex);
-            glBindTexture(GL_TEXTURE_2D, overlay_tex);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rgba->w, rgba->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba->pixels);
-			overlay_w = rgba->w;
-			overlay_h = rgba->h;
-            SDL_FreeSurface(tmp);
-            SDL_FreeSurface(rgba);
-            LOG_info("overlay loaded");
-        } 
-		overlayload = 1;
+
+
+	 if (frame_prep.effect_ready) {
+		if(frame_prep.loaded_effect) {
+			if(!effect_tex) glGenTextures(1, &effect_tex);
+			glBindTexture(GL_TEXTURE_2D, effect_tex);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame_prep.loaded_effect->w, frame_prep.loaded_effect->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, frame_prep.loaded_effect->pixels);
+			effect_w = frame_prep.loaded_effect->w;
+			effect_h = frame_prep.loaded_effect->h;
+		} else {
+			if (effect_tex) {
+				glDeleteTextures(1, &effect_tex);
+			}
+			effect_tex = 0;
+		}
+        frame_prep.effect_ready = 0; 
     }
 
+    if (frame_prep.overlay_ready) {
+		if(frame_prep.loaded_overlay) {
+			if(!overlay_tex) glGenTextures(1, &overlay_tex);
+			glBindTexture(GL_TEXTURE_2D, overlay_tex);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame_prep.loaded_overlay->w, frame_prep.loaded_overlay->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, frame_prep.loaded_overlay->pixels);
+			overlay_w = frame_prep.loaded_overlay->w;
+			overlay_h = frame_prep.loaded_overlay->h;
+		
+		} else {
+			if (overlay_tex) {
+				glDeleteTextures(1, &overlay_tex);
+			}
+			overlay_tex = 0;
+		}
+        frame_prep.overlay_ready = 0; 
+    }
+	
     static GLuint src_texture = 0;
-
-
     static int src_w_last = 0, src_h_last = 0;
-	static int last_w = 0;
-	static int last_h = 0;
+    static int last_w = 0, last_h = 0;
 
     if (!src_texture || reloadShaderTextures) {
-		if(src_texture) {
-			glDeleteTextures(1,&src_texture);
-			LOG_info("deleted sourced texture\n");
-			src_texture = 0;
-		}
-		glGenTextures(1, &src_texture);
-		glBindTexture(GL_TEXTURE_2D, src_texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, nrofshaders>0?shaders[0]->filter:finalScaleFilter);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, nrofshaders>0?shaders[0]->filter:finalScaleFilter);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		
-	}
+        if (src_texture) {
+            glDeleteTextures(1, &src_texture);
+            LOG_info("Deleted source texture\n");
+            src_texture = 0;
+        }
+        glGenTextures(1, &src_texture);
+        glBindTexture(GL_TEXTURE_2D, src_texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, nrofshaders > 0 ? shaders[0]->filter : finalScaleFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, nrofshaders > 0 ? shaders[0]->filter : finalScaleFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
 
-	glBindTexture(GL_TEXTURE_2D, src_texture);
-    if (vid.blit->src_w != src_w_last || vid.blit->src_h != src_h_last  || reloadShaderTextures) {
+    glBindTexture(GL_TEXTURE_2D, src_texture);
+    if (vid.blit->src_w != src_w_last || vid.blit->src_h != src_h_last || reloadShaderTextures) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vid.blit->src_w, vid.blit->src_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, vid.blit->src);
         src_w_last = vid.blit->src_w;
         src_h_last = vid.blit->src_h;
     } else {
-    	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, vid.blit->src_w, vid.blit->src_h, GL_RGBA, GL_UNSIGNED_BYTE, vid.blit->src);
-	}
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, vid.blit->src_w, vid.blit->src_h, GL_RGBA, GL_UNSIGNED_BYTE, vid.blit->src);
+    }
 
-	if(nrofshaders<1) {
-		static GLuint initial_texture = 0;
-		runShaderPass(src_texture, g_shader_default, NULL, dst_rect.x, dst_rect.y,
-			dst_rect.w,dst_rect.h, &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=vid.blit->src_w,.texh=vid.blit->src_h
-					}, 0, GL_NONE);
-	}
+    if (nrofshaders < 1) {
+        runShaderPass(src_texture, g_shader_default, NULL, dst_rect.x, dst_rect.y,
+            dst_rect.w, dst_rect.h,
+            &(Shader){.srcw = vid.blit->src_w, .srch = vid.blit->src_h, .texw = vid.blit->src_w, .texh = vid.blit->src_h},
+            0, GL_NONE);
+    }
 
-	last_w = vid.blit->src_w;
-	last_h = vid.blit->src_h;
-	
-	for (int i = 0; i < nrofshaders; i++) {
-	
-		int src_w = last_w;
-		int src_h = last_h;
-		int dst_w = src_w * shaders[i]->scale;
-		int dst_h = src_h * shaders[i]->scale;
-	
-		if (shaders[i]->scale == 9) {
-			dst_w = dst_rect.w;
-			dst_h = dst_rect.h;
-		}
-		if(reloadShaderTextures) {
-			// if textures need reloading calculate dimensions again first
-			for(int j = i; j<nrofshaders;j++) {
-				int real_input_w = (i == 0) ? vid.blit->src_w : last_w;
-				int real_input_h = (i == 0) ? vid.blit->src_h : last_h;
+    last_w = vid.blit->src_w;
+    last_h = vid.blit->src_h;
 
-				shaders[i]->srcw = shaders[i]->srctype == 0 ? vid.blit->src_w : shaders[i]->srctype == 2 ? dst_rect.w : real_input_w;
-				shaders[i]->srch = shaders[i]->srctype == 0 ? vid.blit->src_h : shaders[i]->srctype == 2 ? dst_rect.h : real_input_h;
-				shaders[i]->texw = shaders[i]->scaletype == 0 ? vid.blit->src_w : shaders[i]->scaletype == 2 ? dst_rect.w : real_input_w;
-				shaders[i]->texh = shaders[i]->scaletype == 0 ? vid.blit->src_h : shaders[i]->scaletype == 2 ? dst_rect.h : real_input_h;
-			}
-		}
-		
-		// some info on the debug screen flipping between shaderpass information every 5 seconds (at 60fps) frames
-		static int shaderinfocount = 0;
-		static int shaderinfoscreen = 0;		  
-		if(shaderinfocount > 600 && shaderinfoscreen == i) {
-			currentshaderpass = i+1;
-			currentshadertexw = shaders[i]->texw;
-			currentshadertexh = shaders[i]->texh;
-			currentshadersrcw = shaders[i]->srcw;
-			currentshadersrch = shaders[i]->srch;
-			currentshaderdstw = dst_w;
-			currentshaderdsth = dst_h;
-			shaderinfocount = 0;
-			shaderinfoscreen++;
-			if(shaderinfoscreen>=nrofshaders) shaderinfoscreen = 0;
-			
-		}
-		shaderinfocount++;
+    for (int i = 0; i < nrofshaders; i++) {
+        int src_w = last_w;
+        int src_h = last_h;
+        int dst_w = src_w * shaders[i]->scale;
+        int dst_h = src_h * shaders[i]->scale;
 
-		if (shaders[i]->shader_p) {
-			runShaderPass( (i == 0) ? src_texture : shaders[i - 1]->texture, shaders[i]->shader_p, &shaders[i]->texture, 0, 0,
-							dst_w, dst_h,
-							shaders[i], 0,i==nrofshaders-1? finalScaleFilter: shaders[i+1]->filter);
-		} else {
-			runShaderPass( (i == 0) ? src_texture : shaders[i - 1]->texture, g_shader_default, &shaders[i]->texture, 0, 0,
-							dst_w, dst_h,
-							shaders[i], 0,i==nrofshaders-1? finalScaleFilter: shaders[i+1]->filter);
-		}
-	
-		last_w = dst_w;
-		last_h = dst_h;
-		
-	}
+        if (shaders[i]->scale == 9) {
+            dst_w = dst_rect.w;
+            dst_h = dst_rect.h;
+        }
 
-	// draw the final screen
-	if(nrofshaders > 0) {
-		runShaderPass( shaders[nrofshaders - 1]->texture, g_shader_default, NULL,
-					dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
-					&(Shader){.srcw=last_w, .srch=last_h,.texw=last_w,.texh=last_h}, 0,GL_NONE);
-	}
-	// draw screen effect lines/grid
+        if (reloadShaderTextures) {
+            for (int j = i; j < nrofshaders; j++) {
+                int real_input_w = (i == 0) ? vid.blit->src_w : last_w;
+                int real_input_h = (i == 0) ? vid.blit->src_h : last_h;
+
+                shaders[i]->srcw = shaders[i]->srctype == 0 ? vid.blit->src_w : shaders[i]->srctype == 2 ? dst_rect.w : real_input_w;
+                shaders[i]->srch = shaders[i]->srctype == 0 ? vid.blit->src_h : shaders[i]->srctype == 2 ? dst_rect.h : real_input_h;
+                shaders[i]->texw = shaders[i]->scaletype == 0 ? vid.blit->src_w : shaders[i]->scaletype == 2 ? dst_rect.w : real_input_w;
+                shaders[i]->texh = shaders[i]->scaletype == 0 ? vid.blit->src_h : shaders[i]->scaletype == 2 ? dst_rect.h : real_input_h;
+            }
+        }
+
+        static int shaderinfocount = 0;
+        static int shaderinfoscreen = 0;
+        if (shaderinfocount > 600 && shaderinfoscreen == i) {
+            currentshaderpass = i + 1;
+            currentshadertexw = shaders[i]->texw;
+            currentshadertexh = shaders[i]->texh;
+            currentshadersrcw = shaders[i]->srcw;
+            currentshadersrch = shaders[i]->srch;
+            currentshaderdstw = dst_w;
+            currentshaderdsth = dst_h;
+            shaderinfocount = 0;
+            shaderinfoscreen++;
+            if (shaderinfoscreen >= nrofshaders)
+                shaderinfoscreen = 0;
+        }
+        shaderinfocount++;
+
+        if (shaders[i]->shader_p) {
+            runShaderPass(
+                (i == 0) ? src_texture : shaders[i - 1]->texture,
+                shaders[i]->shader_p,
+                &shaders[i]->texture,
+                0, 0, dst_w, dst_h,
+                shaders[i],
+                0,
+                (i == nrofshaders - 1) ? finalScaleFilter : shaders[i + 1]->filter
+            );
+        } else {
+            runShaderPass(
+                (i == 0) ? src_texture : shaders[i - 1]->texture,
+                g_shader_default,
+                &shaders[i]->texture,
+                0, 0, dst_w, dst_h,
+                shaders[i],
+                0,
+                (i == nrofshaders - 1) ? finalScaleFilter : shaders[i + 1]->filter
+            );
+        }
+
+        last_w = dst_w;
+        last_h = dst_h;
+    }
+
+    if (nrofshaders > 0) {
+        runShaderPass(
+            shaders[nrofshaders - 1]->texture,
+            g_shader_default,
+            NULL,
+            dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
+            &(Shader){.srcw = last_w, .srch = last_h, .texw = last_w, .texh = last_h},
+            0, GL_NONE
+        );
+    }
+
     if (effect_tex) {
-        runShaderPass(effect_tex, g_shader_overlay, NULL,
-                      0, 0, device_width, device_height,
-					  &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=effect_w,.texh=effect_h}, 1,GL_NONE);
+        runShaderPass(
+            effect_tex,
+            g_shader_overlay,
+            NULL,
+            0, 0, effect_w, effect_h,
+            &(Shader){.srcw = effect_w, .srch = effect_h, .texw = effect_w, .texh = effect_h},
+            1, GL_NONE
+        );
     }
-	// draw overlay
+
     if (overlay_tex) {
-        runShaderPass(overlay_tex, g_shader_overlay, NULL,
-                      0, 0, device_width, device_height,
-					  &(Shader){.srcw=vid.blit->src_w, .srch=vid.blit->src_h,.texw=overlay_w,.texh=overlay_h}, 1,GL_NONE);
+        runShaderPass(
+            overlay_tex,
+            g_shader_overlay,
+            NULL,
+            0, 0, device_width, device_height,
+            &(Shader){.srcw = vid.blit->src_w, .srch = vid.blit->src_h, .texw = overlay_w, .texh = overlay_h},
+            1, GL_NONE
+        );
     }
+
     SDL_GL_SwapWindow(vid.window);
     frame_count++;
-	reloadShaderTextures=0;
-
+    reloadShaderTextures = 0;
 }
+
+
 
 // tryin to some arm neon optimization for first time for flipping image upside down, they sit in platform cause not all have neon extensions
 void PLAT_pixelFlipper(uint8_t* pixels, int width, int height) {
