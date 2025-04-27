@@ -666,9 +666,15 @@ void PLAT_clearVideo(SDL_Surface* screen) {
 	SDL_FillRect(screen, NULL, SDL_transparentBlack);
 }
 void PLAT_clearAll(void) {
+	// ok honestely mixing SDL and OpenGL is really bad, but hey it works just got to sometimes clear gpu stuff and pull context back to SDL 
+	// so yeah clear all layers and pull a flip() to make it switch back to SDL before clearing
 	PLAT_clearLayers(0);
+	PLAT_flip(vid.screen,0);
+
+	// then do normal SDL clearing stuff
 	PLAT_clearVideo(vid.screen); 
 	SDL_RenderClear(vid.renderer);
+
 }
 
 void PLAT_setVsync(int vsync) {

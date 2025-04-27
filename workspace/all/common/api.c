@@ -2805,8 +2805,9 @@ void PWR_powerOff(void) {
 		// LOG_info("PWR_powerOff %s (%ix%i)\n", gfx.screen, gfx.screen->w, gfx.screen->h);
 		
 		// TODO: for some reason screen's dimensions end up being 0x0 in GFX_blitMessage...
-		PLAT_clearVideo(gfx.screen);
+		
 		PLAT_clearLayers(0);
+		PLAT_clearAll();
 		GFX_blitMessage(font.large, msg, gfx.screen,&(SDL_Rect){0,0,gfx.screen->w,gfx.screen->h}); //, NULL);
 		GFX_flip(gfx.screen);
 
