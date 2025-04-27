@@ -1372,7 +1372,7 @@ static struct Config {
 				// 	.key	= "minarch_screen_sharpness",
 				.key	= "minarch_scale_filter",
 				.name	= "Screen Sharpness",
-				.desc	= "LINEAR looks better but uses more CPU/GPU",
+				.desc	= "LINEAR smooths lines, but works better when final image is at higher resolution, so either core that outputs higher resolution or upscaling with shaders",
 				.default_value = 1,
 				.value = 1,
 				// .count = 3,
@@ -3955,14 +3955,14 @@ static void screen_flip(SDL_Surface* screen) {
 // couple of animation functions for pixel data keeping them all cause wanna use them later
 void applyFadeIn(uint32_t **data, size_t pitch, unsigned width, unsigned height, int *frame_counter, int max_frames) {
     size_t pixels_per_row = pitch / sizeof(uint32_t);
-    static uint32_t temp_buffer[1920 * 1080]; 
+    static uint32_t temp_buffer[1920 * 1080];
 
     if (*frame_counter >= max_frames) {
-        return; 
+        return;
     }
 
     float progress = (float)(*frame_counter) / (float)max_frames;
-    float eased = progress * progress * (3 - 2 * progress); 
+    float eased = progress * progress * (3 - 2 * progress);
 
     float fade_alpha = eased;
 
@@ -3972,17 +3972,17 @@ void applyFadeIn(uint32_t **data, size_t pitch, unsigned width, unsigned height,
 
             uint32_t color = (*data)[idx];
 
-            uint8_t r = (color >> 24) & 0xFF;
-            uint8_t g = (color >> 16) & 0xFF;
-            uint8_t b = (color >> 8) & 0xFF;
-            uint8_t a = color & 0xFF;
+            uint8_t a = (color >> 24) & 0xFF;
+            uint8_t b = (color >> 16) & 0xFF;
+            uint8_t g = (color >> 8) & 0xFF;
+            uint8_t r = (color >> 0) & 0xFF;
 
             r = (uint8_t)(r * fade_alpha);
             g = (uint8_t)(g * fade_alpha);
             b = (uint8_t)(b * fade_alpha);
             a = (uint8_t)(a * fade_alpha);
 
-            temp_buffer[idx] = (r << 24) | (g << 16) | (b << 8) | a;
+            temp_buffer[idx] = (a << 24) | (b << 16) | (g << 8) | r;
         }
     }
 
@@ -3990,73 +3990,71 @@ void applyFadeIn(uint32_t **data, size_t pitch, unsigned width, unsigned height,
     *data = temp_buffer;
 }
 
-
 void applyZoomFadeIn(uint32_t **data, size_t pitch, unsigned width, unsigned height, int *frame_counter, int max_frames) {
     size_t pixels_per_row = pitch / sizeof(uint32_t);
     static uint32_t temp_buffer[1920 * 1080];
 
-    if (*frame_counter >= max_frames) {
-        return; 
-    }
+    if (*frame_counter >= max_frames)
+        return;
 
     float progress = (float)(*frame_counter) / (float)max_frames;
-    float eased = progress * progress * (3 - 2 * progress); 
+    float eased = progress * progress * (3.0f - 2.0f * progress);
 
     float start_zoom = 6.0f;
     float end_zoom = 1.0f;
     float zoom = start_zoom - eased * (start_zoom - end_zoom);
 
-    float fade_alpha = eased; 
+    float fade_alpha = eased;
 
     int center_x = width / 2;
     int center_y = height / 2;
 
-    for (int y = 0; y < (int)height; ++y) {
-        for (int x = 0; x < (int)width; ++x) {
+    for (unsigned y = 0; y < height; ++y) {
+        for (unsigned x = 0; x < width; ++x) {
             float src_x = center_x + (x - center_x) / zoom;
             float src_y = center_y + (y - center_y) / zoom;
 
             int ix = (int)src_x;
             int iy = (int)src_y;
 
-            size_t dst_i = y * pixels_per_row + x;
-
+            size_t dst_idx = y * pixels_per_row + x;
             uint32_t color = 0xFF000000; 
 
             if (ix >= 0 && ix < (int)width && iy >= 0 && iy < (int)height) {
-                size_t src_i = iy * pixels_per_row + ix;
-                color = (*data)[src_i]; 
+                size_t src_idx = iy * pixels_per_row + ix;
+                color = (*data)[src_idx];
             }
 
-            uint8_t r = (color >> 24) & 0xFF;
-            uint8_t g = (color >> 16) & 0xFF;
-            uint8_t b = (color >> 8) & 0xFF;
-            uint8_t a = color & 0xFF;
+            uint8_t a = (color >> 24) & 0xFF;
+            uint8_t b = (color >> 16) & 0xFF;
+            uint8_t g = (color >> 8) & 0xFF;
+            uint8_t r = (color >> 0) & 0xFF;
 
             r = (uint8_t)(r * fade_alpha);
             g = (uint8_t)(g * fade_alpha);
             b = (uint8_t)(b * fade_alpha);
             a = (uint8_t)(a * fade_alpha);
 
-            temp_buffer[dst_i] = (r << 24) | (g << 16) | (b << 8) | a;
+            temp_buffer[dst_idx] = (a << 24) | (b << 16) | (g << 8) | r;
         }
     }
 
     (*frame_counter)++;
-
     *data = temp_buffer;
 }
 
+
 // Looney Tunes opening effect :D
 void applyCircleReveal(uint32_t **data, size_t pitch, unsigned width, unsigned height, int *frame_counter, int max_frames) {
-    static uint32_t temp_buffer[1920 * 1080]; // Max resolution (adjust if needed)
+    static uint32_t temp_buffer[1920 * 1080];
 
-    if (*frame_counter >= max_frames) return;
+    if (*frame_counter >= max_frames)
+        return;
 
     uint32_t *src = *data;
     size_t pixels_per_row = pitch / sizeof(uint32_t);
-    float progress = (float)(*frame_counter) / (float)max_frames;
 
+    float progress = (float)(*frame_counter) / (float)max_frames;
     float eased = progress * progress * (3.0f - 2.0f * progress);
 
     float max_radius = sqrtf((float)(width * width + height * height)) * 0.5f;
@@ -4067,17 +4065,18 @@ void applyCircleReveal(uint32_t **data, size_t pitch, unsigned width, unsigned h
 
     for (unsigned y = 0; y < height; ++y) {
         for (unsigned x = 0; x < width; ++x) {
-            size_t i = y * pixels_per_row + x;
+            size_t idx = y * pixels_per_row + x;
+
             float dx = (float)x - (float)cx;
             float dy = (float)y - (float)cy;
             float dist = sqrtf(dx * dx + dy * dy);
 
             if (dist <= radius) {
-                temp_buffer[i] = src[i];
+                temp_buffer[idx] = src[idx];
             } else {
-                uint32_t color = src[i];
-                uint8_t a = color & 0xFF;
-                temp_buffer[i] = (0 << 24) | (0 << 16) | (0 << 8) | a;
+                uint32_t color = src[idx];
+                uint8_t a = (color >> 24) & 0xFF; 
+                temp_buffer[idx] = (a << 24);  
             }
         }
     }
