@@ -304,6 +304,9 @@ void InitSettings(void) {
 	// This will implicitly update all other settings based on FN switch state
 	SetMute(settings->mute);
 }
+int InitializedSettings(void) {
+	return (settings != NULL);
+}
 void QuitSettings(void) {
 	munmap(settings, shm_size);
 	if (is_host) shm_unlink(SHM_KEY);

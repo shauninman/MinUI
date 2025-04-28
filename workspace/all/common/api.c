@@ -2660,7 +2660,7 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 	static uint32_t power_pressed_at = 0; // timestamp when power button was just pressed
 	static uint32_t mod_unpressed_at = 0; // timestamp of last time settings modifier key was NOT down
 	static uint32_t was_muted = -1;
-	if (was_muted == -1)
+	if (was_muted == -1 && InitializedSettings())
 		was_muted = GetMute();
 
 	static int was_charging = -1;
@@ -2757,15 +2757,17 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 			show_setting = 2;
 		}
 	}
-	
-	int muted = GetMute();
-	if (muted!=was_muted) {
-		was_muted = muted;
-		show_setting = 2;
-		setting_shown_at = now;
-		if(CFG_getMuteLEDs()) {
-			lights = muted ? &lightsMuted : &lightsDefault;
-			LEDS_updateLeds();
+
+	if (InitializedSettings()) {
+		int muted = GetMute();
+		if (muted!=was_muted) {
+			was_muted = muted;
+			show_setting = 2;
+			setting_shown_at = now;
+			if(CFG_getMuteLEDs()) {
+				lights = muted ? &lightsMuted : &lightsDefault;
+				LEDS_updateLeds();
+			}
 		}
 	}
 	
