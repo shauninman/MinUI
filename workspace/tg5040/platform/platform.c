@@ -44,7 +44,6 @@ typedef struct Shader {
 	int texw;
 	int texh;
 	int filter;
-
 	GLuint shader_p;
 	int scale;
 	int srctype;
@@ -57,8 +56,6 @@ typedef struct Shader {
 	GLint u_OutputSize;
 	GLint u_TextureSize;
 	GLint u_InputSize;
-	GLint u_gamma;
-	GLint u_grid_strength;
 	GLint texLocation;
 	GLint texelSizeLocation;
 } Shader;
@@ -106,7 +103,6 @@ static struct VID_Context {
 	SDL_GLContext gl_context;
 	
 	GFX_Renderer* blit; // yeesh
-	
 	int width;
 	int height;
 	int pitch;
@@ -546,8 +542,6 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 		shader->u_OutputSize = glGetUniformLocation( shader->shader_p, "OutputSize");
 		shader->u_TextureSize = glGetUniformLocation( shader->shader_p, "TextureSize");
 		shader->u_InputSize = glGetUniformLocation( shader->shader_p, "InputSize");
-		shader->u_gamma = glGetUniformLocation( shader->shader_p, "gamma");
-		shader->u_grid_strength = glGetUniformLocation( shader->shader_p, "GRID_STRENGTH");
 		shader->texLocation = glGetUniformLocation(shader->shader_p, "Texture");
 		shader->texelSizeLocation = glGetUniformLocation(shader->shader_p, "texelSize");
 
@@ -901,19 +895,6 @@ void PLAT_setOverlay(const char* filename, const char* tag) {
     snprintf(overlay_path, path_len, "%s/%s/%s", OVERLAYS_FOLDER, tag, filename);
     printf("Overlay path set to: %s\n", overlay_path);
 
-}
-
-static void updateOverlay(void) {
-	
-	if(!vid.overlay) {
-		if(overlay_path) {
-			SDL_Surface* tmp = IMG_Load(overlay_path);
-			if (tmp) {
-				vid.overlay = SDL_CreateTextureFromSurface(vid.renderer, tmp);
-				SDL_FreeSurface(tmp);
-			}
-		}
-	}
 }
 
 void applyRoundedCorners(SDL_Surface* surface, SDL_Rect* rect, int radius) {
@@ -1498,8 +1479,6 @@ void PLAT_animateSurfaceOpacityAndScale(
 	SDL_DestroyTexture(tempTexture);
 }
 
-
-
 SDL_Surface* PLAT_captureRendererToSurface() {
 	if (!vid.renderer) return NULL;
 
@@ -1696,16 +1675,6 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
-void rotate_and_render(SDL_Renderer* renderer, SDL_Texture* texture, SDL_Rect* src_rect, SDL_Rect* dst_rect) {
-	int degrees = should_rotate < 3 ? 270:90;
-	if(should_rotate == 2 || should_rotate==4) {
-		SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, (double)degrees, NULL, SDL_FLIP_VERTICAL);
-	} else  {
-		SDL_RenderCopyEx(renderer, texture, src_rect, dst_rect, (double)degrees, NULL, SDL_FLIP_NONE);
-	}
-    
-}
-
 void PLAT_clearShaders() {
 	// this funciton was empty so am abusing it for now for this, later need to make a seperate function for it
 	// set blit to 0 maybe should be seperate function later
@@ -1823,8 +1792,6 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 		if (shader->u_OutputSize >= 0) glUniform2f(shader->u_OutputSize, dst_width, dst_height);
 		if (shader->u_TextureSize >= 0) glUniform2f(shader->u_TextureSize, shader->texw, shader->texh); 
 		if (shader->u_InputSize >= 0) glUniform2f(shader->u_InputSize, shader->srcw, shader->srch); 
-		if (shader->u_gamma >= 0) glUniform1f(shader->u_gamma, 2.2f);
-		if (shader->u_grid_strength >= 0) glUniform1f(shader->u_grid_strength, 0.05f); 
 
 		GLint u_MVP = glGetUniformLocation(shader_program, "MVPMatrix");
 		if (u_MVP >= 0) {
@@ -1982,11 +1949,10 @@ void PLAT_GL_Swap() {
     setRectToAspectRatio(&dst_rect);
 
     if (!vid.blit->src) {
-        printf("Error: Texture data (vid.blit->src) is NULL\n");
         return;
     }
 
-    SDL_GL_MakeCurrent(vid.window, vid.gl_context);
+	SDL_GL_MakeCurrent(vid.window, vid.gl_context);
 
     static GLuint effect_tex = 0;
     static int effect_w = 0, effect_h = 0;

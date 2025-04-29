@@ -5821,7 +5821,9 @@ int save_screenshot_thread(void* data) {
         }
     }
 	LOG_info("saved screenshot\n");
+	SDL_FreeSurface(converted);
     free(args->path);
+    free(args->pixels);
     free(args);
     return 0;
 }
