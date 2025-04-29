@@ -2114,7 +2114,7 @@ void PLAT_GL_Swap() {
             effect_tex,
             g_shader_overlay,
             NULL,
-            0, 0, effect_w, effect_h,
+			dst_rect.x, dst_rect.y, effect_w, effect_h,
             &(Shader){.srcw = effect_w, .srch = effect_h, .texw = effect_w, .texh = effect_h},
             1, GL_NONE
         );
