@@ -1625,47 +1625,43 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 }
 
 void setRectToAspectRatio(SDL_Rect* dst_rect) {
-    int src_w = vid.blit->src_w;
-    int src_h = vid.blit->src_h;
-    float aspect = vid.blit->aspect;
-    float scale;
+    int x = vid.blit->src_x;
+    int y = vid.blit->src_y;
+    int w = vid.blit->src_w;
+    int h = vid.blit->src_h;
 
-    if (aspect == 0.0f) {
-        // No aspect ratio handling; just scale uniformly
-        int w = src_w * vid.blit->scale;
-        int h = src_h * vid.blit->scale;
+    if (vid.blit->aspect == 0) {
+        w = vid.blit->src_w * vid.blit->scale;
+        h = vid.blit->src_h * vid.blit->scale;
         dst_rect->x = (device_width - w) / 2 + screenx;
-        dst_rect->y = (device_height - h) / 2 - screeny;
+        dst_rect->y = (device_height - h) / 2 + screeny;
         dst_rect->w = w;
         dst_rect->h = h;
-    } else if (aspect > 0.0f) {
-        // Target aspect ratio handling
-        float target_w = device_width;
-        float target_h = target_w / aspect;
-
-        if (target_h > device_height) {
-            target_h = device_height;
-            target_w = target_h * aspect;
+    } else if (vid.blit->aspect > 0) {
+        if (should_rotate) {
+            h = device_width;
+            w = h * vid.blit->aspect;
+            if (w > device_height) {
+                w = device_height;
+                h = w / vid.blit->aspect;
+            }
+        } else {
+            h = device_height;
+            w = h * vid.blit->aspect;
+            if (w > device_width) {
+                w = device_width;
+                h = w / vid.blit->aspect;
+            }
         }
-
-        // Now, scale uniformly based on the original resolution
-        scale = target_w / (float)src_w;
-        if (scale > device_height / (float)src_h) {
-            scale = device_height / (float)src_h;
-        }
-
-        int w = (int)(src_w * scale);
-        int h = (int)(src_h * scale);
         dst_rect->x = (device_width - w) / 2 + screenx;
         dst_rect->y = (device_height - h) / 2 + screeny;
         dst_rect->w = w;
         dst_rect->h = h;
     } else {
-        // Aspect < 0: stretch full screen
         dst_rect->x = screenx;
         dst_rect->y = screeny;
-        dst_rect->w = device_width;
-        dst_rect->h = device_height;
+        dst_rect->w = should_rotate ? device_height : device_width;
+        dst_rect->h = should_rotate ? device_width : device_height;
     }
 }
 
@@ -1810,7 +1806,6 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 		if (*target_texture==0 || shader->updated || reloadShaderTextures) { 
 			
 			if(target_texture) {
-				LOG_info("deleted old shader texture\n");
 				glDeleteTextures(1,target_texture);
 			}
 			glGenTextures(1, target_texture);
@@ -1820,7 +1815,6 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dst_width, dst_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			LOG_info("created shader texture\n");
 			shader->updated = 0;
 		}
 		if (fbo == 0) {
@@ -2009,7 +2003,6 @@ void PLAT_GL_Swap() {
     if (!src_texture || reloadShaderTextures) {
         if (src_texture) {
             glDeleteTextures(1, &src_texture);
-            LOG_info("Deleted source texture\n");
             src_texture = 0;
         }
         glGenTextures(1, &src_texture);
