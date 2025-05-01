@@ -1934,10 +1934,7 @@ void PLAT_GL_Swap() {
         }
     }
 
-    static int lastframecount = 0;
-    if (reloadShaderTextures) lastframecount = frame_count;
-    if (frame_count < lastframecount + 3)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
     SDL_Rect dst_rect = {0, 0, device_width, device_height};
     setRectToAspectRatio(&dst_rect);
@@ -1947,6 +1944,7 @@ void PLAT_GL_Swap() {
     }
 
 	SDL_GL_MakeCurrent(vid.window, vid.gl_context);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     static GLuint effect_tex = 0;
     static int effect_w = 0, effect_h = 0;
