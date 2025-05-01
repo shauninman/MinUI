@@ -1805,10 +1805,11 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 	if (target_texture) {
 		if (*target_texture==0 || shader->updated || reloadShaderTextures) { 
 			
-			if(target_texture) {
-				glDeleteTextures(1,target_texture);
-			}
-			glGenTextures(1, target_texture);
+			// if(target_texture) {
+			// 	glDeleteTextures(1,target_texture);
+			// }
+			if(*target_texture==0)
+				glGenTextures(1, target_texture);
 			glBindTexture(GL_TEXTURE_2D, *target_texture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
@@ -1999,11 +2000,14 @@ void PLAT_GL_Swap() {
     static int last_w = 0, last_h = 0;
 
     if (!src_texture || reloadShaderTextures) {
-        if (src_texture) {
-            glDeleteTextures(1, &src_texture);
-            src_texture = 0;
-        }
-        glGenTextures(1, &src_texture);
+        // if (src_texture) {
+        //     glDeleteTextures(1, &src_texture);
+        //     src_texture = 0;
+        // }
+		if (src_texture == 0) {
+			glGenTextures(1, &src_texture);
+		}
+		
         glBindTexture(GL_TEXTURE_2D, src_texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, nrofshaders > 0 ? shaders[0]->filter : finalScaleFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, nrofshaders > 0 ? shaders[0]->filter : finalScaleFilter);
