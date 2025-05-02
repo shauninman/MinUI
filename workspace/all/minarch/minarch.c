@@ -3934,9 +3934,9 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 		dst_w = DEVICE_WIDTH;
 		dst_h = DEVICE_HEIGHT;
 	}
-	
+	// dont need this anymore with OpenGL
 	// if (screen->w!=dst_w || screen->h!=dst_w || screen->pitch!=dst_p) {
-		screen = GFX_resize(dst_w,dst_h,dst_p);
+		// screen = GFX_resize(dst_w,dst_h,dst_p);
 	// }
 }
 static int firstframe = 1;
@@ -4121,9 +4121,8 @@ static void video_refresh_callback_main(const void *data, unsigned width, unsign
 	// if source has changed size (or forced by dst_p==0)
 	// eg. true src + cropped src + fixed dst + cropped dst
 	if (renderer.dst_p==0 || width!=renderer.true_w || height!=renderer.true_h) {
-		LOG_info("resized\n\n\n");
 		selectScaler(width, height, pitch);
-		GFX_clearAll();
+		// GFX_clearAll();
 		GFX_resetShaders();
 	}
 	
