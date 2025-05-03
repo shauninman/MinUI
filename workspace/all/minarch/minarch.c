@@ -41,6 +41,7 @@ static pthread_cond_t	core_rq; // not sure this is required
 enum {
 	SCALE_NATIVE,
 	SCALE_ASPECT,
+	SCALE_ASPECT_SCREEN,
 	SCALE_FULLSCREEN,
 	SCALE_CROPPED,
 	SCALE_COUNT,
@@ -847,6 +848,7 @@ static char* onoff_labels[] = {
 static char* scaling_labels[] = {
 	"Native",
 	"Aspect",
+	"Aspect Screen",
 	"Fullscreen",
 	"Cropped",
 	NULL
@@ -1271,14 +1273,14 @@ enum {
 
 static inline char* getScreenScalingDesc(void) {
 	if (GFX_supportsOverscan()) {
-		return "Native uses integer scaling. Aspect uses core\nreported aspect ratio. Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.";
+		return "Native uses integer scaling. Aspect uses core nreported aspect ratio.\nAspect screen uses screen aspect ratio\n Fullscreen has non-square\npixels. Cropped is integer scaled then cropped.";
 	}
 	else {
-		return "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nFullscreen has non-square pixels.";
+		return "Native uses integer scaling.\nAspect uses core reported aspect ratio.\nAspect screen uses screen aspect ratio\nFullscreen has non-square pixels.";
 	}
 }
 static inline int getScreenScalingCount(void) {
-	return GFX_supportsOverscan() ? 4 : 3;
+	return GFX_supportsOverscan() ? 5 : 4;
 }
 	
 
@@ -2143,7 +2145,7 @@ static void Config_load(void) {
 	scaling_option->desc = getScreenScalingDesc();
 	scaling_option->count = getScreenScalingCount();
 	if (!GFX_supportsOverscan()) {
-		scaling_labels[3] = NULL;
+		scaling_labels[4] = NULL;
 	}
 	
 	char* system_path = SYSTEM_PATH "/system.cfg";
@@ -3826,7 +3828,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			dst_y = (DEVICE_HEIGHT - dst_h) / 2;
 			scale = (scale_f==1.0 && dst_w==src_w && dst_h==src_h) ? 1 : -1;
 		}
-	}
+	} 
 	else {
 		int scale_x = CEIL_DIV(DEVICE_WIDTH, src_w);
 		int scale_y = CEIL_DIV(DEVICE_HEIGHT,src_h);
@@ -3848,6 +3850,33 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 			dst_w = scaled_w;
 			dst_h = scaled_h;
 			dst_p = dst_w * FIXED_BPP;
+		}
+		else if (scaling==SCALE_ASPECT_SCREEN) {
+	
+			int scale_x = DEVICE_WIDTH / src_w;
+			int scale_y = DEVICE_HEIGHT / src_h;
+			
+			// Use the smaller scale to ensure it fits on screen
+			scale = MIN(scale_x, scale_y);
+			aspect = (double)src_w / src_h;
+			
+			// Optionally, clamp to a max scale (e.g., 4x) if needed
+			// if (scale > 4) scale = 4;
+			
+			int scaled_w = src_w * scale;
+			int scaled_h = src_h * scale;
+			
+			// Center the image on screen
+			dst_w = scaled_w;
+			dst_h = scaled_h;
+			dst_x = (DEVICE_WIDTH - dst_w) / 2;
+			dst_y = (DEVICE_HEIGHT - dst_h) / 2;
+			
+			dst_p = dst_w * FIXED_BPP;
+			
+			sprintf(scaler_name, "raw%i", scale);
+			LOG_info("ignore core aspect %ix%i\n\n",dst_w,dst_h);
+			
 		}
 		else {
 			double src_aspect_ratio = ((double)src_w) / src_h;
@@ -3918,7 +3947,7 @@ static void selectScaler(int src_w, int src_h, int src_p) {
 	renderer.dst_h = dst_h;
 	renderer.dst_p = dst_p;
 	renderer.scale = scale;
-	renderer.aspect = (scaling==SCALE_NATIVE||scaling==SCALE_CROPPED)?0:(scaling==SCALE_FULLSCREEN?-1:core.aspect_ratio);
+	renderer.aspect = (scaling==SCALE_ASPECT_SCREEN) ? aspect: (scaling==SCALE_NATIVE||scaling==SCALE_CROPPED)?0:(scaling==SCALE_FULLSCREEN?-1:core.aspect_ratio);
 	renderer.blit = GFX_getScaler(&renderer);
 		
 	// LOG_info("coreAR:%0.3f fixedAR:%0.3f srcAR: %0.3f\nname:%s\nfit:%i scale:%i\nsrc_x:%i src_y:%i src_w:%i src_h:%i src_p:%i\ndst_x:%i dst_y:%i dst_w:%i dst_h:%i dst_p:%i\naspect_w:%i aspect_h:%i\n",
