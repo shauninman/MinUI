@@ -737,7 +737,7 @@ static void formatStatePath(char* work_name, char* filename, const char* suffix)
 static void State_getPath(char* filename) {
 	char work_name[MAX_PATH];
 
-	if (CFG_getSaveFormat() == STATE_FORMAT_SRM) {
+	if (CFG_getStateFormat() == STATE_FORMAT_SRM) {
 		strcpy(work_name, game.name);
 		char* tmp = strrchr(work_name, '.');
 		if (tmp != NULL && strlen(tmp) > 2 && strlen(tmp) <= 5) {
@@ -752,6 +752,8 @@ static void State_getPath(char* filename) {
 	else {
 		sprintf(filename, "%s/%s.st%i", core.states_dir, game.name, state_slot);
 	}
+
+	LOG_info("State_getPath %s\n", filename);
 }
 
 static void State_read(void) { // from picoarch
