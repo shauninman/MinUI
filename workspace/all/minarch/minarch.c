@@ -3189,7 +3189,8 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		// puts("RETRO_ENVIRONMENT_SET_CORE_OPTIONS");
 		if (data) {
 			OptionList_reset();
-			OptionList_init((const struct retro_core_option_definition *)data); 
+			OptionList_init((const struct retro_core_option_definition *)data);
+			Config_readOptions();
 		}
 		break;
 	}
@@ -3199,6 +3200,7 @@ static bool environment_callback(unsigned cmd, void *data) { // copied from pico
 		if (options && options->us) {
 			OptionList_reset();
 			OptionList_init(options->us);
+			Config_readOptions();
 		}
 		break;
 	}
