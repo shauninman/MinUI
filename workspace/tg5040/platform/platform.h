@@ -107,7 +107,7 @@ extern int is_brick;
 
 ///////////////////////////////
 
-#define BTN_RESUME			BTN_X
+#define BTN_NO_RESUME		BTN_X
 #define BTN_SLEEP 			BTN_POWER
 #define BTN_WAKE 			BTN_POWER
 #define BTN_MOD_VOLUME 		BTN_NONE
