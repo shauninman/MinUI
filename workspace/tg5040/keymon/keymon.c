@@ -117,20 +117,20 @@ int main (int argc, char *argv[]) {
 				if (ignore) continue;
 				val = ev.value;
 				if (ev.type==EV_SW) {
-					printf("switch: %i\n", ev.code);
+					//printf("switch: %i\n", ev.code);
 					if (ev.code==CODE_JACK) {
-					printf("jack: %i\n", val);
-					SetJack(val);
-				}
+						//printf("jack: %i\n", val);
+						SetJack(val);
+					}
 					else if (ev.code==CODE_MUTE) {
-						printf("mute: %i\n", val);
+						//printf("mute: %i\n", val);
 						SetMute(val);
 						if (val) {
 							// tmp solution
 							system("echo 1500000 > /sys/class/motor/voltage");
 							system("echo 1 > /sys/class/gpio/gpio227/value");
 							usleep(100000);
-							system("echo 0 > /sys/class/gpio/gpio243/value");
+							system("echo 0 > /sys/class/gpio/gpio227/value");
 							usleep(100000);
 							system("echo 1 > /sys/class/gpio/gpio227/value");
 							usleep(100000);
@@ -139,7 +139,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
-				printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
+				//printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
 				switch (ev.code) {
 					case CODE_MENU2:
 						menu_pressed = val;
@@ -172,19 +172,16 @@ int main (int argc, char *argv[]) {
 		
 		if (up_just_pressed || (up_pressed && now>=up_repeat_at)) {
 			if (menu_pressed) {
-				printf("brightness up\n"); fflush(stdout);
 				val = GetBrightness();
 				if (val<BRIGHTNESS_MAX) SetBrightness(++val);
 			}
 			else if (menu2_pressed) {
-				printf("color temp up %i\n",val); fflush(stdout);
 				val = GetColortemp();
 				if (val<COLORTEMP_MAX) {
 					SetColortemp(++val);
 				}
 			}
 			else {
-				printf("volume up\n"); fflush(stdout);
 				val = GetVolume();
 				if (val<VOLUME_MAX) SetVolume(++val);
 			}
@@ -195,19 +192,16 @@ int main (int argc, char *argv[]) {
 		
 		if (down_just_pressed || (down_pressed && now>=down_repeat_at)) {
 			if (menu_pressed) {
-				printf("color temp down %i\n",val); fflush(stdout);
 				val = GetBrightness();
 				if (val>BRIGHTNESS_MIN) SetBrightness(--val);
 			}
 			else if (menu2_pressed) {
-				printf("color temp donw\n"); fflush(stdout);
 				val = GetColortemp();
 				if (val>COLORTEMP_MIN) {
 					SetColortemp(--val);
 				}
 			}
 			else {
-				printf("volume down\n"); fflush(stdout);
 				val = GetVolume();
 				if (val>VOLUME_MIN) SetVolume(--val);
 			}
