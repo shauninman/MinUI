@@ -25,6 +25,12 @@ enum
 	SAVE_FORMAT_GEN
 };
 
+enum
+{
+	STATE_FORMAT_SAV,
+	STATE_FORMAT_SRM
+};
+
 typedef struct
 {
 	// Theme
@@ -72,6 +78,7 @@ typedef struct
 
 	// Emulator
 	int saveFormat;
+	int stateFormat;
 
 	// Haptic
 	bool haptics;
@@ -103,6 +110,7 @@ typedef struct
 #define CFG_DEFAULT_HAPTICS false
 #define CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND true
 #define CFG_DEFAULT_SAVEFORMAT SAVE_FORMAT_SAV
+#define CFG_DEFAULT_STATEFORMAT STATE_FORMAT_SAV
 #define CFG_DEFAULT_MUTELEDS false
 #define CFG_DEFAULT_GAMEARTWIDTH 0.45
 #define CFG_DEFAULT_WIFI false
@@ -164,9 +172,14 @@ bool CFG_getHaptics(void);
 void CFG_setHaptics(bool enable);
 // Save format to use for libretro cores
 // 0 - .sav
-// 1 - .srm
+// 1 - .srm (compressed rzip)
 int CFG_getSaveFormat(void);
 void CFG_setSaveFormat(int);
+// Save state format to use for libretro cores
+// 0 - .st0
+// 1 - .state.0 (compressed rzip)
+int CFG_getStateFormat(void);
+void CFG_setStateFormat(int);
 // Enable/disable mute also shutting off LEDs.
 bool CFG_getMuteLEDs(void);
 void CFG_setMuteLEDs(bool);

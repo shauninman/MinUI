@@ -52,6 +52,7 @@ void CFG_defaults(NextUISettings *cfg)
         .haptics = CFG_DEFAULT_HAPTICS,
         .romsUseFolderBackground = CFG_DEFAULT_ROMSUSEFOLDERBACKGROUND,
         .saveFormat = CFG_DEFAULT_SAVEFORMAT,
+        .stateFormat = CFG_DEFAULT_STATEFORMAT,
 
         .wifi = CFG_DEFAULT_WIFI,
 };
@@ -186,6 +187,11 @@ void CFG_init(FontLoad_callback_t cb, ColorSet_callback_t ccb)
             if (sscanf(line, "saveFormat=%i", &temp_value) == 1)
             {
                 CFG_setSaveFormat(temp_value);
+                continue;
+            }
+            if (sscanf(line, "stateFormat=%i", &temp_value) == 1)
+            {
+                CFG_setStateFormat(temp_value);
                 continue;
             }
             if (sscanf(line, "muteLeds=%i", &temp_value) == 1)
@@ -440,6 +446,16 @@ void CFG_setSaveFormat(int f)
     settings.saveFormat = f;
 }
 
+int CFG_getStateFormat(void)
+{
+    return settings.stateFormat;
+}
+
+void CFG_setStateFormat(int f)
+{
+    settings.stateFormat = f;
+}
+
 bool CFG_getMuteLEDs(void)
 {
     return settings.muteLeds;
@@ -556,6 +572,10 @@ void CFG_get(const char *key, char *value)
     {
         sprintf(value, "%i", CFG_getSaveFormat());
     }
+    else if (strcmp(key, "stateFormat") == 0)
+    {
+        sprintf(value, "%i", CFG_getStateFormat());
+    }
     else if (strcmp(key, "muteLeds") == 0)
     {
         sprintf(value, "%i", CFG_getMuteLEDs());
@@ -619,6 +639,7 @@ void CFG_sync(void)
     fprintf(file, "haptics=%i\n", settings.haptics);
     fprintf(file, "romfolderbg=%i\n", settings.romsUseFolderBackground);
     fprintf(file, "saveFormat=%i\n", settings.saveFormat);
+    fprintf(file, "stateFormat=%i\n", settings.stateFormat);
     fprintf(file, "muteLeds=%i\n", settings.muteLeds);
     fprintf(file, "artWidth=%i\n", (int)(settings.gameArtWidth * 100));
     fprintf(file, "wifi=%i\n", settings.wifi);
@@ -651,6 +672,7 @@ void CFG_print(void)
     printf("\t\"haptics\": %i,\n", settings.haptics);
     printf("\t\"romfolderbg\": %i,\n", settings.romsUseFolderBackground);
     printf("\t\"saveFormat\": %i,\n", settings.saveFormat);
+    printf("\t\"stateFormat\": %i,\n", settings.stateFormat);
     printf("\t\"muteLeds\": %i,\n", settings.muteLeds);
     printf("\t\"artWidth\": %i,\n", (int)(settings.gameArtWidth * 100));
     printf("\t\"wifi\": %i,\n", settings.wifi);

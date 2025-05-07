@@ -13,7 +13,11 @@
 #include <zip.h> 
 #include <pthread.h>
 
+// libretro-common
 #include "libretro.h"
+#include "streams/rzip_stream.h"
+#include "streams/file_stream.h"
+
 #include "defines.h"
 #include "api.h"
 #include "utils.h"
@@ -590,7 +594,7 @@ static void Cheat_getPath(char* filename) {
 static void formatSavePath(char* work_name, char* filename, const char* suffix) {
 	char* tmp = strrchr(work_name, '.');
 	if (tmp != NULL && strlen(tmp) > 2 && strlen(tmp) <= 5) {
-			tmp[0] = '\0';
+		tmp[0] = '\0';
 	}
 	sprintf(filename, "%s/%s%s", core.saves_dir, work_name, suffix);
 }
@@ -599,15 +603,15 @@ static void SRAM_getPath(char* filename) {
 	char work_name[MAX_PATH];
 
 	if (CFG_getSaveFormat() == SAVE_FORMAT_SRM) {
-			strcpy(work_name, game.name);
-			formatSavePath(work_name, filename, ".srm");
+		strcpy(work_name, game.name);
+		formatSavePath(work_name, filename, ".srm");
 	}
 	else if (CFG_getSaveFormat() == SAVE_FORMAT_GEN) {
-			strcpy(work_name, game.name);
-			formatSavePath(work_name, filename, ".sav");
+		strcpy(work_name, game.name);
+		formatSavePath(work_name, filename, ".sav");
 	}
 	else {
-			sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
+		sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
 	}
 
 	LOG_info("SRAM_getPath %s\n", filename);
@@ -620,18 +624,32 @@ static void SRAM_read(void) {
 	char filename[MAX_PATH];
 	SRAM_getPath(filename);
 	printf("sav path (read): %s\n", filename);
-	
-	FILE *sram_file = fopen(filename, "r");
-	if (!sram_file) return;
 
 	void* sram = core.get_memory_data(RETRO_MEMORY_SAVE_RAM);
 
-	if (!sram || !fread(sram, 1, sram_size, sram_file)) {
-		LOG_error("Error reading SRAM data\n");
-	}
+	// TODO: rzipstream_open can also handle uncompressed, else branch is probably unnecessary
+	// srm, potentially compressed
+	if (CFG_getSaveFormat() == SAVE_FORMAT_SRM) {
+		rzipstream_t* sram_file = rzipstream_open(filename, RETRO_VFS_FILE_ACCESS_READ);
+		if(!sram_file) return;
 
-	fclose(sram_file);
+		if (!sram || rzipstream_read(sram_file, sram, sram_size) < 0)
+			LOG_error("rzipstream: Error reading SRAM data\n");
+		
+		rzipstream_close(sram_file);
+	}
+	// uncompressed
+	else {
+		RFILE* sram_file = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, 0);
+		if(!sram_file) return;
+
+		if (!sram || filestream_read(sram_file, sram, sram_size) < 0)
+			LOG_error("filestream: Error reading SRAM data\n");
+		
+		filestream_close(sram_file);
+	}
 }
+
 static void SRAM_write(void) {
 	size_t sram_size = core.get_memory_size(RETRO_MEMORY_SAVE_RAM);
 	if (!sram_size) return;
@@ -639,20 +657,18 @@ static void SRAM_write(void) {
 	char filename[MAX_PATH];
 	SRAM_getPath(filename);
 	printf("sav path (write): %s\n", filename);
-		
-	FILE *sram_file = fopen(filename, "w");
-	if (!sram_file) {
-		LOG_error("Error opening SRAM file: %s\n", strerror(errno));
-		return;
-	}
-
+	
 	void *sram = core.get_memory_data(RETRO_MEMORY_SAVE_RAM);
 
-	if (!sram || sram_size != fwrite(sram, 1, sram_size, sram_file)) {
-		LOG_error("Error writing SRAM data to file\n");
+	// srm, compressed
+	if (CFG_getSaveFormat() == SAVE_FORMAT_SRM) {
+		if(!rzipstream_write_file(filename, sram, sram_size))
+			LOG_error("rzipstream: Error writing SRAM data to file\n");
 	}
-
-	fclose(sram_file);
+	else {
+		if(!filestream_write_file(filename, sram, sram_size))
+			LOG_error("filestream: Error writing SRAM data to file\n");
+	}
 
 	sync();
 }
@@ -709,9 +725,35 @@ static void RTC_write(void) {
 ///////////////////////////////////////
 
 static int state_slot = 0;
-static void State_getPath(char* filename) {
-	sprintf(filename, "%s/%s.st%i", core.states_dir, game.name, state_slot);
+
+static void formatStatePath(char* work_name, char* filename, const char* suffix) {
+	char* tmp = strrchr(work_name, '.');
+	if (tmp != NULL && strlen(tmp) > 2 && strlen(tmp) <= 5) {
+		tmp[0] = '\0';
+	}
+	sprintf(filename, "%s/%s%s", core.saves_dir, work_name, suffix);
 }
+
+static void State_getPath(char* filename) {
+	char work_name[MAX_PATH];
+
+	if (CFG_getSaveFormat() == STATE_FORMAT_SRM) {
+		strcpy(work_name, game.name);
+		char* tmp = strrchr(work_name, '.');
+		if (tmp != NULL && strlen(tmp) > 2 && strlen(tmp) <= 5) {
+			tmp[0] = '\0';
+		}
+
+		if(state_slot == AUTO_RESUME_SLOT)
+			sprintf(filename, "%s/%s.state.auto", core.states_dir, work_name);
+		else 
+			sprintf(filename, "%s/%s.state.%i", core.states_dir, work_name, state_slot);
+	}
+	else {
+		sprintf(filename, "%s/%s.st%i", core.states_dir, game.name, state_slot);
+	}
+}
+
 static void State_read(void) { // from picoarch
 	size_t state_size = core.serialize_size();
 	if (!state_size) return;
@@ -727,33 +769,63 @@ static void State_read(void) { // from picoarch
 
 	char filename[MAX_PATH];
 	State_getPath(filename);
-	
-	FILE *state_file = fopen(filename, "r");
-	if (!state_file) {
-		if (state_slot!=8) { // st8 is a default state in MiniUI and may not exist, that's okay
-			LOG_error("Error opening state file: %s (%s)\n", filename, strerror(errno));
-		}
-		goto error;
-	}
-	
-	// some cores report the wrong serialize size initially for some games, eg. mgba: Wario Land 4
-	// so we allow a size mismatch as long as the actual size fits in the buffer we've allocated
-	if (state_size < fread(state, 1, state_size, state_file)) {
-		LOG_error("Error reading state data from file: %s (%s)\n", filename, strerror(errno));
-		goto error;
-	}
 
-	if (!core.unserialize(state, state_size)) {
-		LOG_error("Error restoring save state: %s (%s)\n", filename, strerror(errno));
-		goto error;
+	RFILE *state_rfile = NULL;
+	rzipstream_t *state_rzfile = NULL;
+
+	// TODO: rzipstream_open can also handle uncompressed, else branch is probably unnecessary
+	// srm, potentially compressed
+	if (CFG_getStateFormat() == STATE_FORMAT_SRM) {
+		state_rzfile = rzipstream_open(filename, RETRO_VFS_FILE_ACCESS_READ);
+		if(!state_rzfile) {
+			if (state_slot!=8) { // st8 is a default state in MiniUI and may not exist, that's okay
+				LOG_error("Error opening state file: %s (%s)\n", filename, strerror(errno));
+			}
+			goto error;
+		}
+
+		// some cores report the wrong serialize size initially for some games, eg. mgba: Wario Land 4
+		// so we allow a size mismatch as long as the actual size fits in the buffer we've allocated
+		if (state_size < rzipstream_read(state_rzfile, state, state_size)) {
+			LOG_error("Error reading state data from file: %s (%s)\n", filename, strerror(errno));
+			goto error;
+		}
+
+		if (!core.unserialize(state, state_size)) {
+			LOG_error("Error restoring save state: %s (%s)\n", filename, strerror(errno));
+			goto error;
+		}
+	}
+	else {
+		state_rfile = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, 0);
+		if (!state_rfile) {
+			if (state_slot!=8) { // st8 is a default state in MiniUI and may not exist, that's okay
+				LOG_error("Error opening state file: %s (%s)\n", filename, strerror(errno));
+			}
+			goto error;
+		}
+		
+		// some cores report the wrong serialize size initially for some games, eg. mgba: Wario Land 4
+		// so we allow a size mismatch as long as the actual size fits in the buffer we've allocated
+		if (state_size < filestream_read(state_rfile, state, state_size)) {
+			LOG_error("Error reading state data from file: %s (%s)\n", filename, strerror(errno));
+			goto error;
+		}
+	
+		if (!core.unserialize(state, state_size)) {
+			LOG_error("Error restoring save state: %s (%s)\n", filename, strerror(errno));
+			goto error;
+		}
 	}
 
 error:
 	if (state) free(state);
-	if (state_file) fclose(state_file);
+	if (state_rfile) filestream_close(state_rfile);
+	if (state_rzfile) rzipstream_close(state_rzfile);
 	
 	fast_forward = was_ff;
 }
+
 static void State_write(void) { // from picoarch
 	size_t state_size = core.serialize_size();
 	if (!state_size) return;
@@ -767,33 +839,35 @@ static void State_write(void) { // from picoarch
 		goto error;
 	}
 
+	if (!core.serialize(state, state_size)) {
+		LOG_error("Error serializing save state\n");
+		goto error;
+	}
+
 	char filename[MAX_PATH];
 	State_getPath(filename);
-	
-	FILE *state_file = fopen(filename, "w");
-	if (!state_file) {
-		LOG_error("Error opening state file: %s (%s)\n", filename, strerror(errno));
-		goto error;
-	}
 
-	if (!core.serialize(state, state_size)) {
-		LOG_error("Error creating save state: %s (%s)\n", filename, strerror(errno));
-		goto error;
+	if (CFG_getStateFormat() == STATE_FORMAT_SRM) {
+		if(!rzipstream_write_file(filename, state, state_size)) {
+			LOG_error("rzipstream: Error writing state data to file: %s\n", filename);
+			goto error;
+		}
 	}
-
-	if (state_size != fwrite(state, 1, state_size, state_file)) {
-		LOG_error("Error writing state data to file: %s (%s)\n", filename, strerror(errno));
-		goto error;
+	else {
+		if(!filestream_write_file(filename, state, state_size)) {
+			LOG_error("filestream: Error writing state data to file: %s\n", filename);
+			goto error;
+		}
 	}
 
 error:
 	if (state) free(state);
-	if (state_file) fclose(state_file);
 
 	sync();
 	
 	fast_forward = was_ff;
 }
+
 static void State_autosave(void) {
 	int last_state_slot = state_slot;
 	state_slot = AUTO_RESUME_SLOT;

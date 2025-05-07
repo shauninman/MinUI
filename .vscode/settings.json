@@ -109,6 +109,7 @@
     "system_error": "cpp",
     "stop_token": "cpp",
     "cfenv": "cpp",
-    "wmg_debug.h": "c"
+    "wmg_debug.h": "c",
+    "libretro.h": "c"
   },
 }
