@@ -30,6 +30,10 @@ get_doom_version() {
 prep_doom_folder() {
     DOOM_VERSION="$1"
 
+    if [ -z "$DOOM_VERSION" ]; then
+        return
+    fi
+
     if [ ! -d "$BIOS_PATH/PRBOOM/$DOOM_VERSION" ]; then
         return
     fi
