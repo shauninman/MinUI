@@ -26,4 +26,13 @@ clean:
 	cd toolchains/$(PLATFORM)-toolchain && make clean
 
 build: $(INIT_IF_NECESSARY)
-	docker run -it --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) $(PLATFORM)-toolchain /bin/bash -c '. ~/.bashrc && cd /root/workspace && make'
+	docker run --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) -e COMPILE_CORES=$(COMPILE_CORES) $(PLATFORM)-toolchain /bin/bash -c '. ~/.bashrc && cd /root/workspace && make'
+
+build-cores: $(INIT_IF_NECESSARY)
+	docker run --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) -e COMPILE_CORES=$(COMPILE_CORES) $(PLATFORM)-toolchain /bin/bash -c '. ~/.bashrc && cd /root/workspace && make cores'
+
+build-core: $(INIT_IF_NECESSARY)
+ifndef CORE
+	$(error CORE is not set)
+endif
+	docker run --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) -e COMPILE_CORES=$(COMPILE_CORES) -e CORE=$(CORE) $(PLATFORM)-toolchain /bin/bash -c '. ~/.bashrc && cd /root/workspace && make core'

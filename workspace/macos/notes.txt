@@ -1,7 +1,7 @@
 This is not a full version of NextUI for macOS. It's a dummy platform to allow using more modern tools to compile and find issues in NextUI's source code without the roundtrip to a device.
 
-BUILD NextUI
------------
+BUILD NEXTUI
+------------
 cd workspace/all/nextui
 mkdir -p build/macos
 

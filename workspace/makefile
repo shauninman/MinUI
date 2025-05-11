@@ -40,8 +40,19 @@ all:
 # while to build and only really need building if someone bothered to 
 # pull the repo's manually and there are actually updates to any core 
 # worth including in new NextUI releases.
-	# cd ./$(PLATFORM)/cores && make
+ifdef COMPILE_CORES
+	$(MAKE) cores
+endif
 	cd ./$(PLATFORM) && make
+
+cores:
+	cd ./$(PLATFORM)/cores && make
+
+core:
+ifndef CORE
+	$(error CORE is not set)
+endif
+	cd ./$(PLATFORM)/cores && make $(CORE)
 
 clean:
 	cd ./$(PLATFORM)/wifimanager && make clean

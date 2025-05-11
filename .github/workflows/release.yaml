@@ -1,0 +1,195 @@
+---
+name: CI
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "release type"
+        default: "patch"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  attestations: write
+  contents: write
+  id-token: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04-arm
+    outputs:
+      next-tag: ${{ steps.next-tag.outputs.version }}
+      release-name: ${{ steps.release-name.outputs.RELEASE_NAME }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Generate Release Name
+        id: release-name
+        run: |
+          echo "RELEASE_NAME=$(make name)" >> "$GITHUB_OUTPUT"
+
+      - name: Get Latest Tag
+        id: latest-tag
+        run: |
+          echo GIT_LATEST_TAG="$(git describe --tags "$(git rev-list --tags --max-count=1)")" >>"$GITHUB_OUTPUT"
+
+      - name: Compute Next Tag
+        id: next-tag
+        uses: docker://ghcr.io/dokku/semver-generator:latest
+        with:
+          bump: ${{ github.event.inputs.release_type }}
+          input: ${{ steps.latest-tag.outputs.GIT_LATEST_TAG }}
+
+  core-matrix:
+    runs-on: ubuntu-24.04-arm
+    env:
+      PLATFORM: ${{ matrix.toolchain }}
+    outputs:
+      cores: ${{ steps.cores.outputs.cores }}
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain:
+          - tg5040
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Generate cores matrix
+        id: cores
+        run: |
+          CORES="$(make cores-json)"
+          echo "cores=$CORES" >> $GITHUB_OUTPUT
+
+  build-core:
+    needs: core-matrix
+    runs-on: ubuntu-24.04-arm
+    env:
+      PLATFORM: ${{ matrix.toolchain }}
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain:
+          - tg5040
+        core: ${{ fromJson(needs.core-matrix.outputs.cores) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup
+        run: make setup
+
+      - name: Build ${{ matrix.core }} core
+        run: make build-core CORE=${{ matrix.core }}
+
+      - name: Upload core
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: core-${{ matrix.toolchain }}-${{ matrix.core }}.zip
+          path: workspace/${{ env.PLATFORM }}/cores/output/
+
+  build:
+    needs:
+      - build-core
+      - prepare
+    runs-on: ubuntu-24.04-arm
+    env:
+      PLATFORM: ${{ matrix.toolchain }}
+      RELEASE_NAME: ${{ needs.prepare.outputs.release-name }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.next-tag }}
+    strategy:
+      fail-fast: true
+      matrix:
+        toolchain:
+          - tg5040
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zipmerge
+
+      - name: Setup
+        run: make setup
+
+      - name: Download Cores
+        uses: actions/download-artifact@v4.3.0
+        with:
+          path: workspace/${{ env.PLATFORM }}/cores/output/
+          pattern: core-${{ matrix.toolchain }}-*
+          merge-multiple: true
+
+      - name: Build
+        run: make ${{ matrix.toolchain }}
+
+      - name: Special
+        run: make special
+
+      # note: when multiple platforms are built
+      # the package step will need to be revamped to
+      # merge the release files from each platform into
+      # a single release
+      - name: Package
+        run: make package
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-${{ matrix.toolchain }}.zip
+          path: releases/
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2.3.0
+        with:
+          subject-path: |
+            releases/${{ env.RELEASE_NAME }}-all.zip
+            releases/${{ env.RELEASE_NAME }}-base.zip
+            releases/${{ env.RELEASE_NAME }}-extras.zip
+
+  release:
+    needs:
+      - build
+      - prepare
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4.3.0
+        with:
+          path: releases/
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Create and Push Tag
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git tag "$GIT_NEXT_TAG"
+          git push origin "$GIT_NEXT_TAG"
+        env:
+          GIT_NEXT_TAG: ${{ needs.prepare.outputs.next-tag }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: releases/*
+          generate_release_notes: true
+          make_latest: "true"
+          tag_name: ${{ needs.prepare.outputs.next-tag }}

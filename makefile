@@ -26,8 +26,8 @@ else
   RELEASE_BETA := -$(BUILD_BRANCH)
 endif
 RELEASE_BASE=NextUI-$(RELEASE_TIME)$(RELEASE_BETA)
-RELEASE_DOT:=$(shell find -E ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
-RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
+RELEASE_DOT:=$(shell find ./releases/. -regex ".*/${RELEASE_BASE}-[0-9]+-base\.zip" | wc -l | sed 's/ //g')
+RELEASE_NAME ?= $(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
 
@@ -45,8 +45,21 @@ name:
 
 build:
 	# ----------------------------------------------------
-	make build -f makefile.toolchain PLATFORM=$(PLATFORM)
+	make build -f makefile.toolchain PLATFORM=$(PLATFORM) COMPILE_CORES=$(COMPILE_CORES)
 	# ----------------------------------------------------
+
+build-cores:
+	make build-cores -f makefile.toolchain PLATFORM=$(PLATFORM) COMPILE_CORES=true
+	# ----------------------------------------------------
+
+cores-json:
+	@cat workspace/tg5040/cores/makefile | grep ^CORES | cut -d' ' -f2 | jq  --raw-input .  | jq --slurp -cM .
+
+build-core:
+ifndef CORE
+	$(error CORE is not set)
+endif
+	make build-core -f makefile.toolchain PLATFORM=$(PLATFORM) COMPILE_CORES=true CORE=$(CORE)
 
 system:
 	make -f ./workspace/$(PLATFORM)/platform/makefile.copy PLATFORM=$(PLATFORM)
@@ -131,7 +144,7 @@ clean:
 setup: name
 	# ----------------------------------------------------
 	# make sure we're running in an input device
-	tty -s 
+	tty -s || echo "No tty detected"
 	
 	# ready fresh build
 	rm -rf ./build
@@ -168,6 +181,9 @@ special:
 #endif
 
 tidy:
+	rm -f releases/$(RELEASE_NAME)-base.zip 
+	rm -f releases/$(RELEASE_NAME)-extras.zip
+	rm -f releases/$(RELEASE_NAME)-all.zip
 	# ----------------------------------------------------
 	# copy update from merged platform to old pre-merge platform bin so old cards update properly
 #ifneq (,$(findstring rg35xxplus, $(PLATFORMS)))
@@ -199,7 +215,7 @@ package: tidy
 	# cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo miyoo354 trimui rg35xx rg35xxplus gkdpixel miyoo355 magicx em_ui.sh MinUI.zip README.txt
 	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves Shaders trimui em_ui.sh MinUI.zip README.txt
 	cd ./build/EXTRAS && zip -r ../../releases/$(RELEASE_NAME)-extras.zip Bios Emus Roms Saves Shaders Tools README.txt
-	echo "$(RELEASE_NAME)" > ./build/latest.txt
+	echo "$(RELEASE_VERSION)" > ./build/latest.txt
 
 	# compound zip (brew install libzip needed) 
 	cd ./releases && zipmerge $(RELEASE_NAME)-all.zip $(RELEASE_NAME)-base.zip  && zipmerge $(RELEASE_NAME)-all.zip $(RELEASE_NAME)-extras.zip

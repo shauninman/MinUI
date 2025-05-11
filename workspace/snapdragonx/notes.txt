@@ -1,8 +1,8 @@
-This is not a full version of MinUI for macOS. It's a dummy platform to allow using more modern tools to compile and find issues in MinUI's source code without the roundtrip to a device.
+This is not a full version of NextUI for macOS. It's a dummy platform to allow using more modern tools to compile and find issues in NextUI's source code without the roundtrip to a device.
 
-BUILD MINUI
------------
-cd workspace/all/minui
+BUILD NEXTUI
+------------
+cd workspace/all/nextui
 mkdir -p build/macos
 
-gcc minui.c -o build/macos/minui -I. -I../common/ -I../../macos/platform/ -I/opt/homebrew/include -L/opt/homebrew/lib ../common/scaler.c ../common/utils.c ../common/api.c ../../macos/platform/platform.c -fomit-frame-pointer -DPLATFORM=\"macos\" -DUSE_SDL2 -Ofast -std=gnu99 -ldl -flto -lSDL2 -lSDL2_image -lSDL2_ttf -lpthread -lm -lz -fsanitize=address -fno-common -Wno-tautological-constant-out-of-range-compare -Wno-asm-operand-widths && build/macos/minui
+gcc nextui.c -o build/macos/nextui -I. -I../common/ -I../../macos/platform/ -I/opt/homebrew/include -L/opt/homebrew/lib ../common/scaler.c ../common/utils.c ../common/api.c ../../macos/platform/platform.c -fomit-frame-pointer -DPLATFORM=\"macos\" -DUSE_SDL2 -Ofast -std=gnu99 -ldl -flto -lSDL2 -lSDL2_image -lSDL2_ttf -lpthread -lm -lz -fsanitize=address -fno-common -Wno-tautological-constant-out-of-range-compare -Wno-asm-operand-widths && build/macos/nextui
