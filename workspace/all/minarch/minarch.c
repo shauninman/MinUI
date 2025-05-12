@@ -4369,7 +4369,6 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 }
 ///////////////////////////////
 
-// NOTE: sound must be disabled for fast forward to work...
 static void audio_sample_callback(int16_t left, int16_t right) {
 	if (!fast_forward || ff_audio) {
 		if (use_core_fps) {
