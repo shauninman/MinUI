@@ -337,9 +337,6 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 	
 }
-void PLAT_setNearestNeighbor(int enabled) {
-	// always enabled?
-}
 void PLAT_setSharpness(int sharpness) {
 	// buh
 }

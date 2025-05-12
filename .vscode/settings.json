@@ -111,5 +111,6 @@
     "cfenv": "cpp",
     "wmg_debug.h": "c",
     "libretro.h": "c"
+    "dirent.h": "c"
   },
 }

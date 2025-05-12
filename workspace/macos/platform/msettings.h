@@ -13,6 +13,7 @@
 
 void InitSettings(void);
 void QuitSettings(void);
+int InitializedSettings(void);
 
 int GetBrightness(void);
 int GetColortemp(void);

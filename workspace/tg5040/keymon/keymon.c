@@ -123,7 +123,10 @@ int main (int argc, char *argv[]) {
 						SetJack(val);
 					}
 					else if (ev.code==CODE_MUTE) {
-						//printf("mute: %i\n", val);
+						// swallow mute val -1 on shutdown
+						if(val < 0)
+							continue;
+						// printf("mute: %i\n", val);
 						SetMute(val);
 						if (val) {
 							// tmp solution

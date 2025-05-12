@@ -216,7 +216,6 @@ enum {
 SDL_Surface* GFX_init(int mode);
 #define GFX_resize PLAT_resizeVideo				// (int w, int h, int pitch);
 #define GFX_setScaleClip PLAT_setVideoScaleClip // (int x, int y, int width, int height)
-#define GFX_setNearestNeighbor PLAT_setNearestNeighbor // (int enabled)
 #define GFX_setSharpness PLAT_setSharpness // (int sharpness)
 #define GFX_setEffectColor PLAT_setEffectColor // (int color)
 #define GFX_setEffect PLAT_setEffect // (int effect)
@@ -230,15 +229,12 @@ SDL_Surface* GFX_init(int mode);
 #define GFX_animateSurfaceOpacity PLAT_animateSurfaceOpacity //(SDL_Surface *inputSurface,int x, int y)
 #define GFX_animateSurfaceOpacityAndScale PLAT_animateSurfaceOpacityAndScale //(SDL_Surface *inputSurface,int x, int y)
 #define GFX_animateAndFadeSurface PLAT_animateAndFadeSurface //(SDL_Surface *inputSurface,int x, int y)
-#define GFX_revealSurface PLAT_revealSurface //(SDL_Surface *inputSurface,int x, int y)
 #define GFX_animateAndRevealSurfaces PLAT_animateAndRevealSurfaces
 #define GFX_resetScrollText PLAT_resetScrollText
 #define GFX_scrollTextTexture PLAT_scrollTextTexture
 #define GFX_flipHidden PLAT_flipHidden //(void)
-#define GFX_GPU_Flip PLAT_GPU_Flip//(void)
 #define GFX_GL_Swap PLAT_GL_Swap //(void)
 #define GFX_GL_screenCapture PLAT_GL_screenCapture //(void)
-#define GFX_pixelscaler PLAT_pixelscaler //(void)
 
 #define GFX_present PLAT_present //(SDL_Surface *inputSurface,int x, int y)
 void GFX_setMode(int mode);
@@ -471,7 +467,6 @@ void PLAT_clearAll(void);
 void PLAT_setVsync(int vsync);
 SDL_Surface* PLAT_resizeVideo(int w, int h, int pitch);
 void PLAT_setVideoScaleClip(int x, int y, int width, int height);
-void PLAT_setNearestNeighbor(int enabled);
 void PLAT_setSharpness(int sharpness);
 void PLAT_setEffectColor(int color);
 void PLAT_setEffect(int effect);
@@ -521,16 +516,6 @@ void PLAT_animateSurfaceOpacityAndScale(
 	int target_w, int target_h,
 	int start_opacity, int target_opacity,
 	int duration_ms,
-	int layer
-);
-
-void PLAT_revealSurface(
-	SDL_Surface *inputSurface,
-	int x, int y,
-	int w, int h,
-	int duration_ms,
-	const char* direction,
-	int opacity,
 	int layer
 );
 

@@ -74,8 +74,14 @@ if [ -f "$UPDATE_PATH" ]; then
 fi
 
 LAUNCH_PATH="$SYSTEM_PATH/$PLATFORM/paks/MinUI.pak/launch.sh"
-while [ -f "$LAUNCH_PATH" ] ; do
+if [ -f "$LAUNCH_PATH" ] ; then
 	"$LAUNCH_PATH"
-done
+fi
+killall trimui_inputd
 
 poweroff # under no circumstances should stock be allowed to touch this card
+while true
+do
+	echo "Waiting for poweroff."
+	sleep 1
+done
