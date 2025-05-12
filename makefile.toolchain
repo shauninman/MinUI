@@ -20,8 +20,8 @@ $(INIT_IF_NECESSARY): $(GIT_IF_NECESSARY)
 
 $(GIT_IF_NECESSARY):
 	mkdir -p toolchains
-	docker pull ghcr.io/loveretro/$(PLATFORM)-toolchain:latest
 	git clone https://github.com/LoveRetro/$(PLATFORM)-toolchain/ toolchains/$(PLATFORM)-toolchain
+	docker pull ghcr.io/loveretro/$(PLATFORM)-toolchain:latest && touch toolchains/$(PLATFORM)-toolchain/.build
 
 clean:
 	cd toolchains/$(PLATFORM)-toolchain && make clean
