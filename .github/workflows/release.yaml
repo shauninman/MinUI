@@ -1,5 +1,5 @@
 ---
-name: CI
+name: Release NextUI
 
 # yamllint disable-line rule:truthy
 on:
