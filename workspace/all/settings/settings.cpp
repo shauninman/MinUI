@@ -198,11 +198,11 @@ int main(int argc, char *argv[])
             { return GetContrast(); }, [](const std::any &value)
             { SetContrast(std::any_cast<int>(value)); },
             []() { SetContrast(SETTINGS_DEFAULT_CONTRAST);}},
-            new MenuItem{ListItemType::Generic, "Saturation", "Saturation enhancement (-4 to 5)", -4, 5, "",[]() -> std::any
+            new MenuItem{ListItemType::Generic, "Saturation", "Saturation enhancement (-5 to 5)", -5, 5, "",[]() -> std::any
             { return GetSaturation(); }, [](const std::any &value)
             { SetSaturation(std::any_cast<int>(value)); },
             []() { SetSaturation(SETTINGS_DEFAULT_SATURATION);}},
-            new MenuItem{ListItemType::Generic, "Exposure", "Exposure enhancement (-5 to 5)", -5, 5, "",[]() -> std::any
+            new MenuItem{ListItemType::Generic, "Exposure", "Exposure enhancement (-4 to 5)", -4, 5, "",[]() -> std::any
             { return GetExposure(); }, [](const std::any &value)
             { SetExposure(std::any_cast<int>(value)); },
             []() { SetExposure(SETTINGS_DEFAULT_EXPOSURE);}},
