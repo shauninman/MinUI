@@ -894,7 +894,7 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 		shader->texelSizeLocation = glGetUniformLocation(shader->shader_p, "texelSize");
 		for (int i = 0; i < shader->num_pragmas; ++i) {
 			shader->pragmas[i].uniformLocation = glGetUniformLocation(shader->shader_p, shader->pragmas[i].name);
-			shader->pragmas[i].value = shader->pragmas[i].min;
+			shader->pragmas[i].value = shader->pragmas[i].def;
 			printf("Param: %s = %f (min: %f, max: %f, step: %f)\n",
 				shader->pragmas[i].name,
 				shader->pragmas[i].def,
