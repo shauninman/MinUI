@@ -294,14 +294,14 @@ int main(int argc, char *argv[])
             []() -> std::any  { return GetMutedContrast(); }, [](const std::any &value)
             { SetMutedContrast(std::any_cast<int>(value)); },
             []() { SetMutedContrast(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
-            new MenuItem{ListItemType::Generic, "Saturation when toggled", "Saturation enhancement (-4 to 5)", 
-            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -4,-3,-2,-1,0,1,2,3,4,5}, 
+            new MenuItem{ListItemType::Generic, "Saturation when toggled", "Saturation enhancement (-5 to 5)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -5,-4,-3,-2,-1,0,1,2,3,4,5}, 
             {"Unchanged","-4","-3","-2","-1","0","1","2","3","4","5"}, 
             []() -> std::any{ return GetMutedSaturation(); }, [](const std::any &value)
             { SetMutedSaturation(std::any_cast<int>(value)); },
             []() { SetMutedSaturation(SETTINGS_DEFAULT_MUTE_NO_CHANGE);}},
-            new MenuItem{ListItemType::Generic, "Exposure when toggled", "Exposure enhancement (-5 to 5)", 
-            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -5,-4,-3,-2,-1,0,1,2,3,4,5}, 
+            new MenuItem{ListItemType::Generic, "Exposure when toggled", "Exposure enhancement (-4 to 5)", 
+            {(int)SETTINGS_DEFAULT_MUTE_NO_CHANGE, -4,-3,-2,-1,0,1,2,3,4,5}, 
             {"Unchanged","-5","-4","-3","-2","-1","0","1","2","3","4","5"}, 
             []() -> std::any  { return GetMutedExposure(); }, [](const std::any &value)
             { SetMutedExposure(std::any_cast<int>(value)); },
