@@ -873,8 +873,8 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
         snprintf(filepath, sizeof(filepath), SHADERS_FOLDER "/glsl/%s",filename);
         const char *shaderSource  = load_shader_source(filepath);
         loadShaderPragmas(shader,shaderSource);
-        GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER "/glsl");
-
+         GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER "/glsl");
+    GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, filename,SHADERS_FOLDER "/glsl");
         
         
         // Link the shader program

@@ -2494,12 +2494,11 @@ void loadShaderSettings() {
 	for (int i=0; i < config.shaders.options[SH_NROFSHADERS].value; i++) {
 		ShaderParam *params = PLAT_getShaderPragmas(i);
 		for (int j = 0; j < 32; j++) {
-			if(params[j].def) {
+			if(params[j].def || params[j].min || params[j].max) {
 				config.shaderpragmas.options[menucount].key = params[j].name;
 				config.shaderpragmas.options[menucount].name = params[j].name;
 				config.shaderpragmas.options[menucount].desc = params[j].name;
 				config.shaderpragmas.options[menucount].default_value = params[j].def;
-				config.shaderpragmas.options[menucount].value = params[j].value;
 				
 				int steps = (int)((params[j].max - params[j].min) / params[j].step) + 1;
 				config.shaderpragmas.options[menucount].values = malloc(sizeof(char *) * (steps + 1));
@@ -2510,6 +2509,8 @@ void loadShaderSettings() {
 					snprintf(str, 16, "%.2f", val);
 					config.shaderpragmas.options[menucount].values[s] = str;
 					config.shaderpragmas.options[menucount].labels[s] = str;
+					if(params[j].value == val)
+						config.shaderpragmas.options[menucount].value = s;
 				}
 				config.shaderpragmas.options[menucount].count = steps;
 				config.shaderpragmas.options[menucount].values[steps] = NULL;
