@@ -211,7 +211,7 @@ char* load_shader_source(const char* filename) {
 
 GLuint load_shader_from_file(GLenum type, const char* filename, const char* path) {
 	char filepath[256];
-	snprintf(filepath, sizeof(filepath), "%s/%s", path,filename);
+	snprintf(filepath, sizeof(filepath), "%s/glsl/%s", path,filename);
     char* source = load_shader_source(filepath);
     if (!source) return 0;
 
@@ -735,14 +735,11 @@ SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 	// buh
 }
-
 void PLAT_setSharpness(int sharpness) {
 	if(sharpness==1) {
-		LOG_info("finalScaleFilter set to GL_LINEAR\n");
 		finalScaleFilter=GL_LINEAR;
-	}
+	} 
 	else {
-		LOG_info("finalScaleFilter set to GL_NEAREST\n");
 		finalScaleFilter = GL_NEAREST;
 	}
 	reloadShaderTextures = 1;
