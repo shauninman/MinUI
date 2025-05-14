@@ -1858,7 +1858,7 @@ static void Config_syncFrontend(char* key, int value) {
 	option->value = value;
 }
 
-char** list_files_in_folder(const char* folderPath, int* fileCount) {
+char** list_files_in_folder(const char* folderPath, int* fileCount, const char* extensionFilter) {
     DIR* dir = opendir(folderPath);
     if (!dir) {
         perror("opendir");
@@ -1875,10 +1875,16 @@ char** list_files_in_folder(const char* folderPath, int* fileCount) {
         snprintf(fullPath, sizeof(fullPath), "%s/%s", folderPath, entry->d_name);
 
         if (stat(fullPath, &fileStat) == 0 && S_ISREG(fileStat.st_mode)) {
-            char** temp = realloc(fileList, sizeof(char*) * (*fileCount + 2)); // +1 for new file, +1 for NULL
+            if (extensionFilter) {
+                const char* ext = strrchr(entry->d_name, '.');
+                if (!ext || strcmp(ext, extensionFilter) != 0) {
+                    continue;
+                }
+            }
+
+            char** temp = realloc(fileList, sizeof(char*) * (*fileCount + 2)); 
             if (!temp) {
                 perror("realloc");
-                // free previously allocated strings
                 for (int i = 0; i < *fileCount; ++i) {
                     free(fileList[i]);
                 }
@@ -1888,14 +1894,14 @@ char** list_files_in_folder(const char* folderPath, int* fileCount) {
             }
             fileList = temp;
             fileList[*fileCount] = strdup(entry->d_name);
-            fileList[*fileCount + 1] = NULL; // maintain NULL-termination
+            fileList[*fileCount + 1] = NULL;
             (*fileCount)++;
         }
     }
 
     closedir(dir);
 
-    // Inline alphabetical sort
+    // Alphabetical sort
     for (int i = 0; i < *fileCount - 1; ++i) {
         for (int j = i + 1; j < *fileCount; ++j) {
             if (strcmp(fileList[i], fileList[j]) > 0) {
@@ -1990,9 +1996,9 @@ static void Config_init(void) {
 	
 	// populate shader options
 	int filecount;
-	char** filelist = list_files_in_folder(SHADERS_FOLDER "/glsl", &filecount);
+	char** filelist = list_files_in_folder(SHADERS_FOLDER "/glsl", &filecount,NULL);
 	int preset_filecount;
-	char** preset_filelist = list_files_in_folder(SHADERS_FOLDER, &preset_filecount);
+	char** preset_filelist = list_files_in_folder(SHADERS_FOLDER, &preset_filecount,".cfg");
 	
 	config.shaders.options[SH_SHADER1].values = filelist;
 	config.shaders.options[SH_SHADER2].values = filelist;
@@ -2011,7 +2017,7 @@ static void Config_init(void) {
 	
 	char overlaypath[255];
 	snprintf(overlaypath, sizeof(overlaypath), "%s/%s", OVERLAYS_FOLDER, core.tag);
-	char** overlaylist = list_files_in_folder(overlaypath, &filecount);
+	char** overlaylist = list_files_in_folder(overlaypath, &filecount,NULL);
 
 	if (overlaylist) {
 		int newcount = filecount + 1;
@@ -5321,7 +5327,7 @@ static int OptionShaders_openMenu(MenuList* list, int i) {
 
 	
 		int filecount;
-		char** filelist = list_files_in_folder(SHADERS_FOLDER "/glsl", &filecount);
+		char** filelist = list_files_in_folder(SHADERS_FOLDER "/glsl", &filecount,NULL);
 
 		// Check if folder read failed or no files found
 		if (!filelist || filecount == 0) {
