@@ -45,8 +45,12 @@ typedef struct Shader {
 	GLint u_OutputSize;
 	GLint u_TextureSize;
 	GLint u_InputSize;
+	GLint OrigInputSize;
 	GLint texLocation;
 	GLint texelSizeLocation;
+	ShaderParam *pragmas;  // Dynamic array of parsed pragma parameters
+	int num_pragmas;       // Count of valid pragma parameters
+
 } Shader;
 
 GLuint g_shader_default = 0;
@@ -398,6 +402,46 @@ static uint32_t SDL_transparentBlack = 0;
 static char* overlay_path = NULL;
 
 
+
+#define MAX_SHADERLINE_LENGTH 512
+int extractPragmaParameters(const char *shaderSource, ShaderParam *params, int maxParams) {
+    const char *pragmaPrefix = "#pragma parameter";
+    char line[MAX_SHADERLINE_LENGTH];
+    int paramCount = 0;
+
+    const char *currentPos = shaderSource;
+
+    while (*currentPos && paramCount < maxParams) {
+        int i = 0;
+
+        // Read a line
+        while (*currentPos && *currentPos != '\n' && i < MAX_SHADERLINE_LENGTH - 1) {
+            line[i++] = *currentPos++;
+        }
+        line[i] = '\0';
+        if (*currentPos == '\n') currentPos++;
+
+        // Check if it's a #pragma parameter line
+        if (strncmp(line, pragmaPrefix, strlen(pragmaPrefix)) == 0) {
+            const char *start = line + strlen(pragmaPrefix);
+            while (*start == ' ') start++;
+
+            ShaderParam *p = &params[paramCount];
+
+            // Try to parse
+            if (sscanf(start, "%127s \"%127[^\"]\" %f %f %f %f",
+                       p->name, p->label, &p->def, &p->min, &p->max, &p->step) == 6) {
+                paramCount++;
+            } else {
+                fprintf(stderr, "Failed to parse line:\n%s\n", line);
+            }
+        }
+    }
+
+    return paramCount; // number of parameters found
+}
+
+
 GLuint link_program(GLuint vertex_shader, GLuint fragment_shader, const char* cache_key) {
     char cache_path[512];
     snprintf(cache_path, sizeof(cache_path), "/mnt/SDCARD/.shadercache/%s.bin", cache_key);
@@ -514,7 +558,8 @@ GLuint load_shader_from_file(GLenum type, const char* filename, const char* path
             "#else\n"
             "precision mediump float;\n"
             "#endif\n"
-            "#endif\n";
+            "#endif\n"
+			"#define PARAMETER_UNIFORM\n";
     } else {
         fprintf(stderr, "Unsupported shader type\n");
         free(source);
@@ -798,6 +843,21 @@ char* PLAT_findFileInDir(const char *directory, const char *filename) {
     return NULL;
 }
 
+
+#define MAX_SHADER_PRAGMAS 32
+void loadShaderPragmas(Shader *shader, const char *shaderSource) {
+	shader->pragmas = calloc(MAX_SHADER_PRAGMAS, sizeof(ShaderParam));
+	if (!shader->pragmas) {
+		fprintf(stderr, "Out of memory allocating pragmas for %s\n", shader->filename);
+		return;
+	}
+	shader->num_pragmas = extractPragmaParameters(shaderSource, shader->pragmas, MAX_SHADER_PRAGMAS);
+}
+
+ShaderParam* PLAT_getShaderPragmas(int i) {
+    return shaders[i]->pragmas;
+}
+
 void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype, int *srctype) {
 
     if (i < 0 || i >= nrofshaders) {
@@ -808,8 +868,14 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
     if (filename != NULL) {
         SDL_GL_MakeCurrent(vid.window, vid.gl_context);
         LOG_info("loading shader \n");
-         GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER "/glsl");
-        GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, filename,SHADERS_FOLDER "/glsl");
+
+        char filepath[512];
+        snprintf(filepath, sizeof(filepath), SHADERS_FOLDER "/glsl/%s",filename);
+        const char *shaderSource  = load_shader_source(filepath);
+        loadShaderPragmas(shader,shaderSource);
+        GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER "/glsl");
+
+        
         
         // Link the shader program
 		if (shader->shader_p != 0) {
@@ -823,8 +889,19 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
 		shader->u_OutputSize = glGetUniformLocation( shader->shader_p, "OutputSize");
 		shader->u_TextureSize = glGetUniformLocation( shader->shader_p, "TextureSize");
 		shader->u_InputSize = glGetUniformLocation( shader->shader_p, "InputSize");
+		shader->OrigInputSize = glGetUniformLocation( shader->shader_p, "OrigInputSize");
 		shader->texLocation = glGetUniformLocation(shader->shader_p, "Texture");
 		shader->texelSizeLocation = glGetUniformLocation(shader->shader_p, "texelSize");
+		for (int i = 0; i < shader->num_pragmas; ++i) {
+			shader->pragmas[i].uniformLocation = glGetUniformLocation(shader->shader_p, shader->pragmas[i].name);
+			shader->pragmas[i].value = shader->pragmas[i].min;
+			printf("Param: %s = %f (min: %f, max: %f, step: %f)\n",
+				shader->pragmas[i].name,
+				shader->pragmas[i].def,
+				shader->pragmas[i].min,
+				shader->pragmas[i].max,
+				shader->pragmas[i].step);
+		}
 
         if (shader->shader_p == 0) {
             LOG_info("Shader linking failed for %s\n", filename);
@@ -1927,7 +2004,11 @@ void runShaderPass(GLuint src_texture, GLuint shader_program, GLuint* target_tex
 		if (shader->u_FrameCount >= 0) glUniform1i(shader->u_FrameCount, frame_count);
 		if (shader->u_OutputSize >= 0) glUniform2f(shader->u_OutputSize, dst_width, dst_height);
 		if (shader->u_TextureSize >= 0) glUniform2f(shader->u_TextureSize, shader->texw, shader->texh); 
+		if (shader->OrigInputSize >= 0) glUniform2f(shader->OrigInputSize, shader->srcw, shader->srch); 
 		if (shader->u_InputSize >= 0) glUniform2f(shader->u_InputSize, shader->srcw, shader->srch); 
+		for (int i = 0; i < shader->num_pragmas; ++i) {
+			glUniform1f(shader->pragmas[i].uniformLocation, shader->pragmas[i].value);
+		}
 
 		GLint u_MVP = glGetUniformLocation(shader_program, "MVPMatrix");
 		if (u_MVP >= 0) {

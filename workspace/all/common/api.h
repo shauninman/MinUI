@@ -212,6 +212,19 @@ enum {
 	MODE_MAIN,
 	MODE_MENU,
 };
+#include "opengl.h"
+#define MAX_PARAM_NAME 128
+#define MAX_PARAM_LABEL 128
+typedef struct {
+    char name[MAX_PARAM_NAME];
+    char label[MAX_PARAM_LABEL];
+    float def;
+    float min;
+    float max;
+    float step;
+	float value;
+	GLint uniformLocation;
+} ShaderParam;
 
 SDL_Surface* GFX_init(int mode);
 #define GFX_resize PLAT_resizeVideo				// (int w, int h, int pitch);
@@ -568,6 +581,7 @@ void PLAT_setShader2(const char* filename);
 void PLAT_setShader3(const char* filename);
 void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int *scaletype, int *inputtype);
 void PLAT_initShaders();
+ShaderParam* PLAT_getShaderPragmas(int i);
 int PLAT_supportsOverscan(void);
 
 SDL_Surface* PLAT_initOverlay(void);
