@@ -401,6 +401,7 @@ static char* overlay_path = NULL;
 GLuint link_program(GLuint vertex_shader, GLuint fragment_shader, const char* cache_key) {
     char cache_path[512];
     snprintf(cache_path, sizeof(cache_path), "/mnt/SDCARD/.shadercache/%s.bin", cache_key);
+	
 
     GLuint program = glCreateProgram();
     GLint success;
@@ -496,7 +497,7 @@ char* load_shader_source(const char* filename) {
 
 GLuint load_shader_from_file(GLenum type, const char* filename, const char* path) {
 	char filepath[256];
-	snprintf(filepath, sizeof(filepath), "%s/glsl/%s", path,filename);
+	snprintf(filepath, sizeof(filepath), "%s/%s", path,filename);
     char* source = load_shader_source(filepath);
     if (!source) return 0;
 
@@ -807,8 +808,8 @@ void PLAT_updateShader(int i, const char *filename, int *scale, int *filter, int
     if (filename != NULL) {
         SDL_GL_MakeCurrent(vid.window, vid.gl_context);
         LOG_info("loading shader \n");
-        GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER);
-        GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, filename,SHADERS_FOLDER);
+         GLuint vertex_shader1 = load_shader_from_file(GL_VERTEX_SHADER, filename,SHADERS_FOLDER "/glsl");
+        GLuint fragment_shader1 = load_shader_from_file(GL_FRAGMENT_SHADER, filename,SHADERS_FOLDER "/glsl");
         
         // Link the shader program
 		if (shader->shader_p != 0) {
