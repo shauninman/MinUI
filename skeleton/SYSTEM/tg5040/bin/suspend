@@ -1,80 +1,66 @@
 #!/bin/sh
-set -euo pipefail
+set -eu
 exec 0<&-
 
-wpa_running=
-hciattach_running=
-bluetoothd_running=
+wpa_running=0
+hciattach_running=0
+bluetoothd_running=0
 
-asound_state_dir=/tmp/asound-suspend
+# shellcheck disable=SC2317
+resume() {
+    >&2 echo "Resuming from suspend..."
 
-before() {
-	>&2 echo "Preparing for suspend..."
+    >&2 echo "Unblocking wireless..."
+    echo 1 >/sys/class/rfkill/rfkill0/state || true
 
-	>&2 echo "Saving mixer state... The cake is a lie"
-	mkdir -p "$asound_state_dir"
-	# alsactl --file "/tmp/asound-suspend/asound.state.pre" store || true
+    if [ "$wpa_running" -eq 1 ]; then
+        >&2 echo "Starting wpa_supplicant..."
+        wpa_supplicant -B -iwlan0 -Dnl80211 -c/etc/wifi/wpa_supplicant.conf -I/etc/wifi/wpa_supplicant_overlay.conf -O/etc/wifi/sockets || true
+        udhcpc -i wlan0 &
+    fi
 
-	if pgrep wpa_supplicant; then
-		wpa_running=1
-		>&2 echo "Stopping wpa_supplicant..."
-		killall -9 wpa_supplicant || true
-	fi
-	ifconfig wlan0 down || true
-
-	if pgrep hciattach; then
-		hciattach_running=1
-		>&2 echo "Stopping hciattach..."
-		/etc/init.d/hciattach stop || true
-	fi
-	if pgrep bluetoothd; then
-		bluetoothd_running=1
-		>&2 echo "Stopping bluetoothd..."
-		/etc/bluetooth/bluetoothd stop || true
-		killall -15 bluealsa || true
-	fi
-
-	>&2 echo "Blocking wireless..."
-	echo 0 >/sys/class/rfkill/rfkill0/state || true
+    if [ "$hciattach_running" -eq 1 ]; then
+        >&2 echo "Starting hciattach..."
+        /etc/init.d/hciattach start || true
+    fi
+    if [ "$bluetoothd_running" -eq 1 ]; then
+        >&2 echo "Starting bluetoothd..."
+        /etc/bluetooth/bluetoothd start || true
+        /usr/bin/bluetoothctl power on || true
+    fi
 }
 
-after() {
-	>&2 echo "Resumed from suspend."
+main() {
+    trap "resume" EXIT INT TERM HUP QUIT
 
-	>&2 echo "Restoring mixer state... Jumping through portals"
-	# alsactl --file "$asound_state_dir/asound.state.post" store || true
-	# alsactl --file "$asound_state_dir/asound.state.pre" restore || true
+    >&2 echo "Preparing for suspend..."
 
-	>&2 echo "Unblocking wireless..."
-	echo 1 >/sys/class/rfkill/rfkill0/state || true
+    if pgrep wpa_supplicant; then
+        wpa_running=1
+        >&2 echo "Stopping wpa_supplicant..."
+        killall -9 wpa_supplicant
+    fi
+    ifconfig wlan0 down
 
-	if [ -n "$wpa_running" ]; then
-		>&2 echo "Starting wpa_supplicant..."
-		wpa_supplicant -B -iwlan0 -Dnl80211 -c/etc/wifi/wpa_supplicant.conf -I/etc/wifi/wpa_supplicant_overlay.conf -O/etc/wifi/sockets || true
-		(( udhcpc -i wlan0 &)&)
-	fi
+    if pgrep hciattach; then
+        hciattach_running=1
+        >&2 echo "Stopping hciattach..."
+        /etc/init.d/hciattach stop
+    fi
+    if pgrep bluetoothd; then
+        bluetoothd_running=1
+        >&2 echo "Stopping bluetoothd..."
+        /etc/bluetooth/bluetoothd stop
+        killall -15 bluealsa
+    fi
 
-	if [ -n "$hciattach_running" ]; then
-		>&2 echo "Starting hciattach..."
-		/etc/init.d/hciattach start || true
-	fi
-	if [ -n "$bluetoothd_running" ]; then
-		>&2 echo "Starting bluetoothd..."
-		/etc/bluetooth/bluetoothd start || true
-		/usr/bin/bluetoothctl power on || true
-	fi
+    >&2 echo "Blocking wireless..."
+    echo 0 >/sys/class/rfkill/rfkill0/state
+
+    >&2 echo "Suspending..."
+    echo mem >/sys/power/state
+
+    exit 0
 }
 
-before
-
->&2 echo "Suspending..."
-echo mem >/sys/power/state
-
-# Resume services in background to reduce UI latency
-
-# The no-sound bug might actually be happening here
-# While testing my initial solution (disabling alsactl store/restore) I still expirienced the no-sound bug, but yeah still don't see why they run as there's no difference with our without?
-# But thinking about this, running the after function in the background theoretically actually could cause problems as it allows nextarch to run while all this resuming stuff is still happening, maybe it causes a condition where nextarch is already running before the sound driver is even ready?
-# Testing with unbackgrounded after() I didnt expirience the no sound bug yet (but needs more testing preferrably my more users). I also see 0 difference in resume times tbh, maybe this was code what helped resume time on other devices so they left it like this.
-# (( after &)&)
-after
+main
