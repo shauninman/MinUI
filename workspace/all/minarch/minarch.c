@@ -5456,6 +5456,7 @@ static int OptionShaders_optionChanged(MenuList* list, int i) {
 			item->value = config.shaders.options[i].value;
 
 		}
+		if(i==1) initShaders();
 		return MENU_CALLBACK_NOP;
 }
 

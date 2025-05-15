@@ -264,6 +264,7 @@ GLuint load_shader_from_file(GLenum type, const char* filename, const char* path
     } else if (type == GL_FRAGMENT_SHADER) {
         define = "#define FRAGMENT\n";
         default_precision =
+			"#define GL_ES\n"
             "#ifdef GL_ES\n"
             "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
             "precision highp float;\n"
