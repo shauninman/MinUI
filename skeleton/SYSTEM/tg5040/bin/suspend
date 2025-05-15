@@ -11,9 +11,9 @@ asound_state_dir=/tmp/asound-suspend
 before() {
 	>&2 echo "Preparing for suspend..."
 
-	>&2 echo "Saving mixer state..."
+	>&2 echo "Saving mixer state... The cake is a lie"
 	mkdir -p "$asound_state_dir"
-	alsactl --file "$asound_state_dir/asound.state.pre" store || true
+	# alsactl --file "/tmp/asound-suspend/asound.state.pre" store || true
 
 	if pgrep wpa_supplicant; then
 		wpa_running=1
@@ -41,9 +41,9 @@ before() {
 after() {
 	>&2 echo "Resumed from suspend."
 
-	>&2 echo "Restoring mixer state..."
-	alsactl --file "$asound_state_dir/asound.state.post" store || true
-	alsactl --file "$asound_state_dir/asound.state.pre" restore || true
+	>&2 echo "Restoring mixer state... Jumping through portals"
+	# alsactl --file "$asound_state_dir/asound.state.post" store || true
+	# alsactl --file "$asound_state_dir/asound.state.pre" restore || true
 
 	>&2 echo "Unblocking wireless..."
 	echo 1 >/sys/class/rfkill/rfkill0/state || true
@@ -71,4 +71,10 @@ before
 echo mem >/sys/power/state
 
 # Resume services in background to reduce UI latency
-(( after &)&)
+
+# The no-sound bug might actually be happening here
+# While testing my initial solution (disabling alsactl store/restore) I still expirienced the no-sound bug, but yeah still don't see why they run as there's no difference with our without?
+# But thinking about this, running the after function in the background theoretically actually could cause problems as it allows nextarch to run while all this resuming stuff is still happening, maybe it causes a condition where nextarch is already running before the sound driver is even ready?
+# Testing with unbackgrounded after() I didnt expirience the no sound bug yet (but needs more testing preferrably my more users). I also see 0 difference in resume times tbh, maybe this was code what helped resume time on other devices so they left it like this.
+# (( after &)&)
+after
