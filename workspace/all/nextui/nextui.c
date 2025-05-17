@@ -1955,18 +1955,14 @@ int main (int argc, char *argv[]) {
 				
 				animationdirection=0;
 				SDL_Surface *tmpsur = GFX_captureRendererToSurface();
-				// GFX_clearLayers(0);
-				// GFX_clear(screen);
-				// update cpu surface
-				// GFX_flipHidden();
 				GFX_clearLayers(0);
+				GFX_clear(screen);
+				GFX_flipHidden();
+				if(bgbmp) SDL_FreeSurface(bgbmp);
 				if(lastScreen==SCREEN_GAMESWITCHER) {
-					GFX_clear(screen);
-					GFX_flipHidden();
 					GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w,screen->h,screen->w*4,screen->h*4,255,0,CFG_getMenuTransitions() ? 150:20,1);
 				} else {
-					SDL_FillRect(tmpsur,NULL,SDL_MapRGBA(screen->format,0,0,0,255));
-					GFX_animateSurfaceOpacity(tmpsur,0,0,screen->w,screen->h,0,255,CFG_getMenuTransitions() ? 150:20,1);
+					GFX_animateSurfaceOpacity(tmpsur,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 150:20,1);
 					GFX_clear(screen);
 				}
 				SDL_FreeSurface(tmpsur);
@@ -2286,7 +2282,7 @@ int main (int argc, char *argv[]) {
 			}
 
 			if(animationdirection > 0) {
-				// GFX_clearLayers(1);
+				GFX_clearLayers(1);
 				GFX_clearLayers(2);
 				GFX_flipHidden();
 				SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
@@ -2298,41 +2294,43 @@ int main (int argc, char *argv[]) {
 				SDL_FreeSurface(tmpNewScreen);
 				animationdirection=0;
 			} 
-			SDL_LockMutex(folderBgMutex);
-			GFX_clearLayers(1);
-			if(folderbgchanged && folderbgbmp) {
-				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-				folderbgchanged = 0;
-			} else if(bgbmp) {
-				GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-			} 
-			SDL_UnlockMutex(folderBgMutex);
-			SDL_LockMutex(thumbMutex);
-			if(thumbbmp && lastScreen == SCREEN_GAMELIST && thumbchanged) {
-				GFX_clearLayers(2);
-				int img_w = thumbbmp->w;
-				int img_h = thumbbmp->h;
-				double aspect_ratio = (double)img_h / img_w;
-				int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
-				int max_h = (int)(screen->h * 0.6);  
-				int new_w = max_w;
-				int new_h = (int)(new_w * aspect_ratio); 
-				
-				if (new_h > max_h) {
-					new_h = max_h;
-					new_w = (int)(new_h / aspect_ratio);
-				}
-				GFX_ApplyRoundedCorners_RGBA8888(
-					thumbbmp,
-					&(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
-					SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
-				);
-				int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
-				int target_y = (int)(screen->h * 0.50);
-				int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
-				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
-			} 
-			SDL_UnlockMutex(thumbMutex);
+			if(lastScreen == SCREEN_GAMELIST) {
+				SDL_LockMutex(folderBgMutex);
+				GFX_clearLayers(1);
+				if(folderbgchanged && folderbgbmp) {
+					GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+					folderbgchanged = 0;
+				} else if(bgbmp) {
+					GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+				} 
+				SDL_UnlockMutex(folderBgMutex);
+				SDL_LockMutex(thumbMutex);
+				if(thumbbmp && thumbchanged) {
+					GFX_clearLayers(2);
+					int img_w = thumbbmp->w;
+					int img_h = thumbbmp->h;
+					double aspect_ratio = (double)img_h / img_w;
+					int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
+					int max_h = (int)(screen->h * 0.6);  
+					int new_w = max_w;
+					int new_h = (int)(new_w * aspect_ratio); 
+					
+					if (new_h > max_h) {
+						new_h = max_h;
+						new_w = (int)(new_h / aspect_ratio);
+					}
+					GFX_ApplyRoundedCorners_RGBA8888(
+						thumbbmp,
+						&(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
+						SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
+					);
+					int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
+					int target_y = (int)(screen->h * 0.50);
+					int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
+					GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
+				} 
+				SDL_UnlockMutex(thumbMutex);
+			}
 			GFX_flip(screen);
 			dirty = 0;
 			readytoscroll = 0;
@@ -2414,7 +2412,7 @@ int main (int argc, char *argv[]) {
 				);
 
 				
-			} else {
+			} else if (!show_switcher  && !show_version) {
 				PLAT_GPU_Flip();
 			} 
 			dirty = 0;
