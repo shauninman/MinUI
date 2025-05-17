@@ -1482,10 +1482,12 @@ void initImageLoaderPool() {
     }
 }
 
+static int folderbgchanged=0;
+static int thumbchanged=0;
+
 void startLoadFolderBackground(const char* rompath, int type, BackgroundLoadedCallback callback, void* userData) {
     LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
     if (!task) return;
-LOG_info("background start\n");
     if (type == ENTRY_DIR)
         snprintf(task->imagePath, sizeof(task->imagePath), "%s/.media/bg.png", rompath);
     else if (type == ENTRY_ROM)
@@ -1501,11 +1503,11 @@ LOG_info("background start\n");
 }
 
 void onBackgroundLoaded(SDL_Surface* surface) {
-	LOG_info("background loaded\n");
     if (!surface) return;
     SDL_LockMutex(folderBgMutex);
     if (folderbgbmp) SDL_FreeSurface(folderbgbmp);
     folderbgbmp = surface;
+	folderbgchanged = 1;
     SDL_UnlockMutex(folderBgMutex);
 }
 
@@ -1540,13 +1542,7 @@ void onThumbLoaded(SDL_Surface* surface) {
         new_h = max_h;
         new_w = (int)(new_h / aspect_ratio);
     }
-
-	GFX_ApplyRoundedCorners_RGBA8888(
-		thumbbmp,
-		&(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
-		SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
-	);
-
+	thumbchanged = 1;
     SDL_UnlockMutex(thumbMutex);
 }
 
@@ -1641,7 +1637,7 @@ int main (int argc, char *argv[]) {
 	SDL_FillRect(blackBG,NULL,SDL_MapRGBA(screen->format,0,0,0,255));
 
 	static int readytoscroll = 0;
-	static int folderbgchanged=0;
+
 	pthread_t cpucheckthread;
     pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
 	LOG_info("Start time time %ims\n",SDL_GetTicks());
@@ -2142,14 +2138,15 @@ int main (int argc, char *argv[]) {
 				static int lastType = -1;
 				if(((entry->type == ENTRY_DIR || entry->type == ENTRY_ROM) && CFG_getRomsUseFolderBackground())) {
 					char *newBg = entry->type == ENTRY_DIR ? entry->path:rompath;
+					SDL_LockMutex(folderBgMutex);
 					if((strcmp(newBg, folderBgPath) != 0 || lastType != entry->type) && sizeof(folderBgPath) != 1) {
 						lastType = entry->type;
 						if(folderbgbmp) SDL_FreeSurface(folderbgbmp);
 						folderbgbmp = NULL;
 						strncpy(folderBgPath, newBg, sizeof(folderBgPath) - 1);
 						startLoadFolderBackground(folderBgPath, entry->type, onBackgroundLoaded, NULL);
-						folderbgchanged=1;
 					}
+					SDL_UnlockMutex(folderBgMutex);
 				} 
 				// load game thumbnails
 				if (total > 0) {
@@ -2158,6 +2155,7 @@ int main (int argc, char *argv[]) {
 						snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
 					had_thumb = 0;
 					if (exists(thumbpath)) {
+						LOG_info("Load thumb\n");
 						startLoadThumb(thumbpath, onThumbLoaded, NULL);
 						int max_w = (int)(screen->w - (screen->w * CFG_getGameArtWidth())); 
 						int max_h = (int)(screen->h * 0.6);  
@@ -2166,8 +2164,11 @@ int main (int argc, char *argv[]) {
 						had_thumb = 1;
 						ox = (int)(max_w) - SCALE1(BUTTON_MARGIN*5);
 					} else {
+						SDL_LockMutex(thumbMutex);
 						if(thumbbmp) SDL_FreeSurface(thumbbmp);
 						thumbbmp = NULL;
+						GFX_clearLayers(2);
+						SDL_UnlockMutex(thumbMutex);
 					}
 				}
 
@@ -2307,7 +2308,7 @@ int main (int argc, char *argv[]) {
 				SDL_FreeSurface(tmpNewScreen);
 				animationdirection=0;
 			} 
-			
+			SDL_LockMutex(folderBgMutex);
 			if(folderbgchanged) {
 				GFX_clearLayers(1);
 				if(folderbgbmp && CFG_getRomsUseFolderBackground()) {
@@ -2316,7 +2317,10 @@ int main (int argc, char *argv[]) {
 				}
 				
 			} 
-			if(thumbbmp && lastScreen == SCREEN_GAMELIST) {
+			SDL_UnlockMutex(folderBgMutex);
+			SDL_LockMutex(thumbMutex);
+			if(thumbbmp && lastScreen == SCREEN_GAMELIST && thumbchanged) {
+				LOG_info("draw thumb\n");
 				int img_w = thumbbmp->w;
 				int img_h = thumbbmp->h;
 				double aspect_ratio = (double)img_h / img_w;
@@ -2331,15 +2335,17 @@ int main (int argc, char *argv[]) {
 					new_h = max_h;
 					new_w = (int)(new_h / aspect_ratio);
 				}
-				
+				GFX_ApplyRoundedCorners_RGBA8888(
+					thumbbmp,
+					&(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
+					SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
+				);
 				int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
 				int target_y = (int)(screen->h * 0.50);
 				int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
-				GFX_clearLayers(2);
 				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
-			} else if(lastScreen == SCREEN_GAMELIST) {
-				GFX_clearLayers(2);
-			}
+			} 
+			SDL_UnlockMutex(thumbMutex);
 			GFX_flip(screen);
 			dirty = 0;
 			readytoscroll = 0;
@@ -2349,12 +2355,48 @@ int main (int argc, char *argv[]) {
 			Uint32 now = SDL_GetTicks();
 			Uint32 frame_start = now;
 			static char cached_display_name[256] = "";
+			SDL_LockMutex(folderBgMutex);
 			if(folderbgbmp && CFG_getRomsUseFolderBackground() && folderbgchanged) {
 				// GFX_clearLayers(1);
 				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+				PLAT_GPU_Flip();
 				folderbgchanged=0;
 			} 
+			SDL_UnlockMutex(folderBgMutex);
 
+			SDL_LockMutex(thumbMutex);
+			if(thumbbmp && thumbchanged) {
+				
+				int img_w = thumbbmp->w;
+				int img_h = thumbbmp->h;
+				double aspect_ratio = (double)img_h / img_w;
+				
+				int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
+				int max_h = (int)(screen->h * 0.6);  
+				
+				int new_w = max_w;
+				int new_h = (int)(new_w * aspect_ratio); 
+				
+				if (new_h > max_h) {
+					new_h = max_h;
+					new_w = (int)(new_h / aspect_ratio);
+				}
+				GFX_ApplyRoundedCorners_RGBA8888(
+					thumbbmp,
+					&(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
+					SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
+				);
+				int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
+				int target_y = (int)(screen->h * 0.50);
+				int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
+				GFX_clearLayers(2);
+				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
+				PLAT_GPU_Flip();
+				thumbchanged = 0;
+				LOG_info("second draw \n");
+			} 
+			SDL_UnlockMutex(thumbMutex);
+			
 			if (!show_switcher && !show_version && is_scrolling) {
 				
 				int ow = GFX_blitHardwareGroup(screen, show_setting);
@@ -2375,32 +2417,8 @@ int main (int argc, char *argv[]) {
 				int max_width = MIN(available_width, text_width);
 
 				
-			
-				if(thumbbmp) {
-					int img_w = thumbbmp->w;
-					int img_h = thumbbmp->h;
-					double aspect_ratio = (double)img_h / img_w;
-					
-					int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
-					int max_h = (int)(screen->h * 0.6);  
-					
-					int new_w = max_w;
-					int new_h = (int)(new_w * aspect_ratio); 
-					
-					if (new_h > max_h) {
-						new_h = max_h;
-						new_w = (int)(new_h / aspect_ratio);
-					}
-					
-					int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
-					int target_y = (int)(screen->h * 0.50);
-					int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
-					GFX_clearLayers(2);
-					GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
-				} else {
-					GFX_clearLayers(2);
-				}
 				
+			
 				GFX_clearLayers(4);
 				GFX_scrollTextTexture(
 					font.large,
