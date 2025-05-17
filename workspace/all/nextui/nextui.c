@@ -1413,7 +1413,7 @@ static SDL_Surface* thumbbmp = NULL;
 static SDL_Surface* screen = NULL; // Must be assigned externally
 
 // i think 2 is fine could probably even be 1
-#define THREAD_POOL_SIZE 2
+#define THREAD_POOL_SIZE 1
 
 static int had_thumb = 0;
 static int ox;
@@ -1442,7 +1442,6 @@ int imageLoadWorker(void* unused) {
         while (!taskQueueHead) {
             SDL_CondWait(queueCond, queueMutex);
         }
-
         TaskNode* node = taskQueueHead;
         taskQueueHead = node->next;
         if (!taskQueueHead) taskQueueTail = NULL;
@@ -1455,13 +1454,14 @@ int imageLoadWorker(void* unused) {
         if (access(task->imagePath, F_OK) == 0) {
             SDL_LockMutex(imgLoadMutex);
             SDL_Surface* image = IMG_Load(task->imagePath);
-            SDL_UnlockMutex(imgLoadMutex);
+           
 
             if (image) {
                 SDL_Surface* imageRGBA = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_RGBA8888, 0);
                 SDL_FreeSurface(image);
                 result = imageRGBA;
             }
+			 SDL_UnlockMutex(imgLoadMutex);
         }
 
         if (task->callback) task->callback(result);
@@ -1482,8 +1482,8 @@ void initImageLoaderPool() {
     }
 }
 
-static int folderbgchanged=0;
-static int thumbchanged=0;
+int folderbgchanged=0;
+int thumbchanged=0;
 
 void startLoadFolderBackground(const char* imagePath, int type, BackgroundLoadedCallback callback, void* userData) {
     LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
@@ -1497,10 +1497,16 @@ void startLoadFolderBackground(const char* imagePath, int type, BackgroundLoaded
 
 void onBackgroundLoaded(SDL_Surface* surface) {
     if (!surface) return;
+
+    SDL_Surface* safeCopy = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
+    SDL_FreeSurface(surface);  // Free the original from the thread
+
+    if (!safeCopy) return;
+
     SDL_LockMutex(folderBgMutex);
     if (folderbgbmp) SDL_FreeSurface(folderbgbmp);
-    folderbgbmp = surface;
-	folderbgchanged = 1;
+    folderbgbmp = safeCopy;
+    folderbgchanged = 1;
     SDL_UnlockMutex(folderBgMutex);
 }
 
@@ -1513,29 +1519,18 @@ void startLoadThumb(const char* thumbpath, BackgroundLoadedCallback callback, vo
     task->userData = userData;
     enqueueTask(task);
 }
-
 void onThumbLoaded(SDL_Surface* surface) {
     if (!surface) return;
 
+    // Convert to a known pixel format (e.g., RGBA8888) to ensure compatibility
+    SDL_Surface* safeCopy = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
+    SDL_FreeSurface(surface);  // Free the thread-allocated surface
+    if (!safeCopy) return;
+
     SDL_LockMutex(thumbMutex);
     if (thumbbmp) SDL_FreeSurface(thumbbmp);
-    thumbbmp = surface;
-
-    int img_w = thumbbmp->w;
-    int img_h = thumbbmp->h;
-    double aspect_ratio = (double)img_h / img_w;
-
-    int max_w = (int)(screen->w * 0.5); // CFG_getGameArtWidth()
-    int max_h = (int)(screen->h * 0.6);
-
-    int new_w = max_w;
-    int new_h = (int)(new_w * aspect_ratio);
-
-    if (new_h > max_h) {
-        new_h = max_h;
-        new_w = (int)(new_h / aspect_ratio);
-    }
-	thumbchanged = 1;
+    thumbbmp = safeCopy;
+    thumbchanged = 1;
     SDL_UnlockMutex(thumbMutex);
 }
 
@@ -1660,7 +1655,6 @@ int main (int argc, char *argv[]) {
 		}
 		else if(show_switcher) {
 			if (PAD_justPressed(BTN_B) || PAD_justReleased(BTN_SELECT)) {
-				strncpy(folderBgPath, "", sizeof(folderBgPath) - 1);
 				show_switcher = 0;
 				switcher_selected = 0;
 				dirty = 1;
@@ -2134,20 +2128,16 @@ int main (int argc, char *argv[]) {
 					SDL_LockMutex(folderBgMutex);
 					if((strcmp(newBg, folderBgPath) != 0 || lastType != entry->type) && sizeof(folderBgPath) != 1) {
 						lastType = entry->type;
-						if(folderbgbmp) SDL_FreeSurface(folderbgbmp);
-						folderbgbmp = NULL;
+
 						char tmppath[512];
 						strncpy(folderBgPath, newBg, sizeof(folderBgPath) - 1);
 						if (entry->type == ENTRY_DIR)
 							snprintf(tmppath, sizeof(tmppath), "%s/.media/bg.png", folderBgPath);
 						else if (entry->type == ENTRY_ROM)
 							snprintf(tmppath, sizeof(tmppath), "%s/.media/bglist.png", folderBgPath);
+
 						if(exists(tmppath))
 							startLoadFolderBackground(tmppath, entry->type, onBackgroundLoaded, NULL);
-						else if(bgbmp) 
-							GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-						else
-							GFX_clearLayers(1);
 					}
 					SDL_UnlockMutex(folderBgMutex);
 				} 
@@ -2157,6 +2147,8 @@ int main (int argc, char *argv[]) {
 					if(CFG_getShowGameArt())
 						snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
 					had_thumb = 0;
+					SDL_LockMutex(thumbMutex);
+				
 					if (exists(thumbpath)) {
 						startLoadThumb(thumbpath, onThumbLoaded, NULL);
 						int max_w = (int)(screen->w - (screen->w * CFG_getGameArtWidth())); 
@@ -2166,12 +2158,9 @@ int main (int argc, char *argv[]) {
 						had_thumb = 1;
 						ox = (int)(max_w) - SCALE1(BUTTON_MARGIN*5);
 					} else {
-						SDL_LockMutex(thumbMutex);
-						if(thumbbmp) SDL_FreeSurface(thumbbmp);
-						thumbbmp = NULL;
 						GFX_clearLayers(2);
-						SDL_UnlockMutex(thumbMutex);
 					}
+					SDL_UnlockMutex(thumbMutex);
 				}
 
 				// buttons
@@ -2295,12 +2284,7 @@ int main (int argc, char *argv[]) {
 				
 				lastScreen = SCREEN_GAMELIST;
 			}
-			SDL_LockMutex(folderBgMutex);
-			if(bgbmp) {
-				GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-			}
-			SDL_UnlockMutex(folderBgMutex);
-			
+
 			if(animationdirection > 0) {
 				// GFX_clearLayers(1);
 				GFX_clearLayers(2);
@@ -2315,24 +2299,22 @@ int main (int argc, char *argv[]) {
 				animationdirection=0;
 			} 
 			SDL_LockMutex(folderBgMutex);
-			if(folderbgchanged) {
-				GFX_clearLayers(1);
-				if(folderbgbmp && CFG_getRomsUseFolderBackground()) {
-					GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-					folderbgchanged=0;
-				}
-				
+			GFX_clearLayers(1);
+			if(folderbgchanged && folderbgbmp) {
+				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+				folderbgchanged = 0;
+			} else if(bgbmp) {
+				GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
 			} 
 			SDL_UnlockMutex(folderBgMutex);
 			SDL_LockMutex(thumbMutex);
 			if(thumbbmp && lastScreen == SCREEN_GAMELIST && thumbchanged) {
+				GFX_clearLayers(2);
 				int img_w = thumbbmp->w;
 				int img_h = thumbbmp->h;
 				double aspect_ratio = (double)img_h / img_w;
-				
 				int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
 				int max_h = (int)(screen->h * 0.6);  
-				
 				int new_w = max_w;
 				int new_h = (int)(new_w * aspect_ratio); 
 				
@@ -2355,24 +2337,20 @@ int main (int argc, char *argv[]) {
 			dirty = 0;
 			readytoscroll = 0;
 		} else {
-
-		
-
 			// honestly this whole thing is here only for the scrolling text, I set it now to run this at 30fps which is enough for scrolling text, should move this to seperate animation function eventually
 			Uint32 now = SDL_GetTicks();
 			Uint32 frame_start = now;
 			static char cached_display_name[256] = "";
 			SDL_LockMutex(folderBgMutex);
-			if(folderbgbmp && CFG_getRomsUseFolderBackground() && folderbgchanged) {
+			if(folderbgchanged && folderbgbmp) {
 				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-				PLAT_GPU_Flip();
-				folderbgchanged=0;
+				folderbgchanged = 0;
 			} 
+			
 			SDL_UnlockMutex(folderBgMutex);
-
 			SDL_LockMutex(thumbMutex);
 			if(thumbbmp && thumbchanged) {
-				
+				GFX_clearLayers(2);
 				int img_w = thumbbmp->w;
 				int img_h = thumbbmp->h;
 				double aspect_ratio = (double)img_h / img_w;
@@ -2397,7 +2375,6 @@ int main (int argc, char *argv[]) {
 				int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
 				GFX_clearLayers(2);
 				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
-				PLAT_GPU_Flip();
 				thumbchanged = 0;
 			} 
 			SDL_UnlockMutex(thumbMutex);
@@ -2437,6 +2414,8 @@ int main (int argc, char *argv[]) {
 				);
 
 				
+			} else {
+				PLAT_GPU_Flip();
 			} 
 			dirty = 0;
 			const int fps = 30; // 30fps is more then enough for scrolling text
