@@ -1463,7 +1463,6 @@ void startLoadFolderBackground(const char* rompath, int type, BackgroundLoadedCa
     SDL_UnlockMutex(BackgroundThreadMutex);
 }
 
-
 void onBackgroundLoaded(SDL_Surface* surface)
 {
     if (!surface) {
@@ -1639,8 +1638,8 @@ int main (int argc, char *argv[]) {
 	SDL_Surface * blackBG =SDL_CreateRGBSurfaceWithFormat(0,screen->w,screen->h,32,SDL_PIXELFORMAT_RGBA8888);
 	SDL_FillRect(blackBG,NULL,SDL_MapRGBA(screen->format,0,0,0,255));
 
-	int readytoscroll = 0;
-
+	static int readytoscroll = 0;
+	static int folderbgchanged=0;
 	pthread_t cpucheckthread;
     pthread_create(&cpucheckthread, NULL, PLAT_cpu_monitor, NULL);
 	LOG_info("Start time time %ims\n",SDL_GetTicks());
@@ -1971,20 +1970,24 @@ int main (int argc, char *argv[]) {
 				
 				animationdirection=0;
 				SDL_Surface *tmpsur = GFX_captureRendererToSurface();
-				GFX_clearLayers(0);
-				GFX_clear(screen);
+				// GFX_clearLayers(0);
+				// GFX_clear(screen);
 				// update cpu surface
-				GFX_flipHidden();
-				if(lastScreen==SCREEN_GAMESWITCHER)
-					GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w,screen->h,screen->w*4,screen->h*4,255,0,CFG_getMenuTransitions() ? 150:20,1);
-				else {
-					GFX_animateSurfaceOpacity(tmpsur,0,0,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 150:20,1);
-				}
+				// GFX_flipHidden();
 				GFX_clearLayers(0);
+				if(lastScreen==SCREEN_GAMESWITCHER) {
+					GFX_clear(screen);
+					GFX_flipHidden();
+					GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w,screen->h,screen->w*4,screen->h*4,255,0,CFG_getMenuTransitions() ? 150:20,1);
+				} else {
+					SDL_FillRect(tmpsur,NULL,SDL_MapRGBA(screen->format,0,0,0,255));
+					GFX_animateSurfaceOpacity(tmpsur,0,0,screen->w,screen->h,0,255,CFG_getMenuTransitions() ? 150:20,1);
+					GFX_clear(screen);
+				}
 				SDL_FreeSurface(tmpsur);
 			}
 			else if(show_switcher) {
-				GFX_clearLayers(0);
+				GFX_clearLayers(2);
 
 				// For all recents with resumable state (i.e. has savegame), show game switcher carousel
 
@@ -2106,19 +2109,13 @@ int main (int argc, char *argv[]) {
 						if(lastScreen == SCREEN_GAME) {
 							GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w*4,screen->h*4,screen->w,screen->h,255,0,CFG_getMenuTransitions() ? 150:20,1);
 						} else if(lastScreen == SCREEN_GAMELIST) { 
-							GFX_flipHidden();
-							GFX_drawOnLayer(blackBG,0,0,screen->w, screen->h,1.0f,0,0);
-							GFX_drawOnLayer(tmpOldScreen,0,0,screen->w, screen->h,1.0f,0,0);
 							GFX_animateSurface(tmpsur,0,0-screen->h,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 100:20,255,255,0);
 						} else if(lastScreen == SCREEN_GAMESWITCHER) {
 							GFX_flipHidden();
-							GFX_drawOnLayer(blackBG,0,0,screen->w, screen->h,1.0f,0,0);
 							if(gsanimdir==1) 
 								GFX_animateSurface(tmpsur,0+screen->w,0,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 80:20,0,255,0);
 							else if(gsanimdir==2)
 								GFX_animateSurface(tmpsur,0-screen->w,0,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 80:20,0,255,0);
-						
-							GFX_drawOnLayer(tmpsur,0,0,screen->w, screen->h,1.0f,0,0);
 						}
 						SDL_FreeSurface(tmpsur);
 						GFX_blitMessage(font.large, "No Preview", screen, &preview_rect);
@@ -2149,7 +2146,7 @@ int main (int argc, char *argv[]) {
 						folderbgbmp = NULL;
 						strncpy(folderBgPath, newBg, sizeof(folderBgPath) - 1);
 						startLoadFolderBackground(folderBgPath, entry->type, onBackgroundLoaded, NULL);
-						
+						folderbgchanged=1;
 					}
 				} 
 				// load game thumbnails
@@ -2239,6 +2236,7 @@ int main (int argc, char *argv[]) {
 					if(lastScreen==SCREEN_GAMESWITCHER) {
 						if(switchetsur) {
 							// update cpu surface here first
+							GFX_clearLayers(0);
 							GFX_flipHidden();
 							GFX_animateSurface(switchetsur,0,0,0,0-screen->h,screen->w,screen->h,CFG_getMenuTransitions() ? 100:20,255,255,1);
 							animationdirection=0;
@@ -2295,6 +2293,8 @@ int main (int argc, char *argv[]) {
 			
 			
 			if(animationdirection > 0) {
+				GFX_clearLayers(1);
+				GFX_clearLayers(2);
 				GFX_flipHidden();
 				SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
 				SDL_SetSurfaceBlendMode(tmpNewScreen,SDL_BLENDMODE_BLEND);
@@ -2305,9 +2305,14 @@ int main (int argc, char *argv[]) {
 				SDL_FreeSurface(tmpNewScreen);
 				animationdirection=0;
 			} 
-			GFX_clearLayers(1);
-			if(folderbgbmp && CFG_getRomsUseFolderBackground()) {
-				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+			
+			if(folderbgchanged) {
+				GFX_clearLayers(1);
+				if(folderbgbmp && CFG_getRomsUseFolderBackground()) {
+					GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+					folderbgchanged=0;
+				}
+				
 			} 
 			if(thumbbmp && lastScreen == SCREEN_GAMELIST) {
 				int img_w = thumbbmp->w;
@@ -2328,6 +2333,7 @@ int main (int argc, char *argv[]) {
 				int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
 				int target_y = (int)(screen->h * 0.50);
 				int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
+				GFX_clearLayers(2);
 				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
 			} else if(lastScreen == SCREEN_GAMELIST) {
 				GFX_clearLayers(2);
@@ -2341,6 +2347,12 @@ int main (int argc, char *argv[]) {
 			Uint32 now = SDL_GetTicks();
 			Uint32 frame_start = now;
 			static char cached_display_name[256] = "";
+			if(folderbgbmp && CFG_getRomsUseFolderBackground() && folderbgchanged) {
+				// GFX_clearLayers(1);
+				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+				folderbgchanged=0;
+			} 
+
 			if (!show_switcher && !show_version && is_scrolling) {
 				
 				int ow = GFX_blitHardwareGroup(screen, show_setting);
@@ -2360,11 +2372,8 @@ int main (int argc, char *argv[]) {
 				int text_width = GFX_getTextWidth(font.large, entry_text, cached_display_name, available_width, SCALE1(BUTTON_PADDING * 2));
 				int max_width = MIN(available_width, text_width);
 
-				GFX_clearLayers(4);
-				GFX_clearLayers(1);
-				if(folderbgbmp && CFG_getRomsUseFolderBackground()) {
-					GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-				} 
+				
+			
 				if(thumbbmp) {
 					int img_w = thumbbmp->w;
 					int img_h = thumbbmp->h;
@@ -2384,10 +2393,13 @@ int main (int argc, char *argv[]) {
 					int target_x = screen->w-(new_w + SCALE1(BUTTON_MARGIN*3));
 					int target_y = (int)(screen->h * 0.50);
 					int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
+					GFX_clearLayers(2);
 					GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
 				} else {
 					GFX_clearLayers(2);
 				}
+				
+				GFX_clearLayers(4);
 				GFX_scrollTextTexture(
 					font.large,
 					entry_text,
