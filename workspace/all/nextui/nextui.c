@@ -2144,6 +2144,8 @@ int main (int argc, char *argv[]) {
 							snprintf(tmppath, sizeof(tmppath), "%s/.media/bglist.png", folderBgPath);
 						if(exists(tmppath))
 							startLoadFolderBackground(tmppath, entry->type, onBackgroundLoaded, NULL);
+						else if(bgbmp) 
+							GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
 						else
 							GFX_clearLayers(1);
 					}
@@ -2293,10 +2295,14 @@ int main (int argc, char *argv[]) {
 				
 				lastScreen = SCREEN_GAMELIST;
 			}
-			
+			SDL_LockMutex(folderBgMutex);
+			if(bgbmp) {
+				GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+			}
+			SDL_UnlockMutex(folderBgMutex);
 			
 			if(animationdirection > 0) {
-				GFX_clearLayers(1);
+				// GFX_clearLayers(1);
 				GFX_clearLayers(2);
 				GFX_flipHidden();
 				SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
@@ -2350,13 +2356,14 @@ int main (int argc, char *argv[]) {
 			readytoscroll = 0;
 		} else {
 
+		
+
 			// honestly this whole thing is here only for the scrolling text, I set it now to run this at 30fps which is enough for scrolling text, should move this to seperate animation function eventually
 			Uint32 now = SDL_GetTicks();
 			Uint32 frame_start = now;
 			static char cached_display_name[256] = "";
 			SDL_LockMutex(folderBgMutex);
 			if(folderbgbmp && CFG_getRomsUseFolderBackground() && folderbgchanged) {
-				// GFX_clearLayers(1);
 				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
 				PLAT_GPU_Flip();
 				folderbgchanged=0;
