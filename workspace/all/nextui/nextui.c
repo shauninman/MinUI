@@ -1485,18 +1485,11 @@ void initImageLoaderPool() {
 static int folderbgchanged=0;
 static int thumbchanged=0;
 
-void startLoadFolderBackground(const char* rompath, int type, BackgroundLoadedCallback callback, void* userData) {
+void startLoadFolderBackground(const char* imagePath, int type, BackgroundLoadedCallback callback, void* userData) {
     LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
     if (!task) return;
-    if (type == ENTRY_DIR)
-        snprintf(task->imagePath, sizeof(task->imagePath), "%s/.media/bg.png", rompath);
-    else if (type == ENTRY_ROM)
-        snprintf(task->imagePath, sizeof(task->imagePath), "%s/.media/bglist.png", rompath);
-    else {
-        free(task);
-        return;
-    }
 
+ snprintf(task->imagePath, sizeof(task->imagePath), "%s", imagePath);
     task->callback = callback;
     task->userData = userData;
     enqueueTask(task);
@@ -2143,8 +2136,16 @@ int main (int argc, char *argv[]) {
 						lastType = entry->type;
 						if(folderbgbmp) SDL_FreeSurface(folderbgbmp);
 						folderbgbmp = NULL;
+						char tmppath[512];
 						strncpy(folderBgPath, newBg, sizeof(folderBgPath) - 1);
-						startLoadFolderBackground(folderBgPath, entry->type, onBackgroundLoaded, NULL);
+						if (entry->type == ENTRY_DIR)
+							snprintf(tmppath, sizeof(tmppath), "%s/.media/bg.png", folderBgPath);
+						else if (entry->type == ENTRY_ROM)
+							snprintf(tmppath, sizeof(tmppath), "%s/.media/bglist.png", folderBgPath);
+						if(exists(tmppath))
+							startLoadFolderBackground(tmppath, entry->type, onBackgroundLoaded, NULL);
+						else
+							GFX_clearLayers(1);
 					}
 					SDL_UnlockMutex(folderBgMutex);
 				} 
