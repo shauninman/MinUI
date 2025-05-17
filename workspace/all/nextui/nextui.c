@@ -1385,166 +1385,171 @@ SDL_Surface* loadFolderBackground(char* rompath, int type)
 	}
 }
 
-// Threaded image loading stuff
 typedef void (*BackgroundLoadedCallback)(SDL_Surface* surface);
+
 typedef struct {
-	char imagePath[MAX_PATH];
+    char imagePath[MAX_PATH];
     BackgroundLoadedCallback callback;
     void* userData;
 } LoadBackgroundTask;
 
-SDL_mutex* imgLoadMutex = NULL;
-SDL_mutex* folderBgMutex = NULL;
-SDL_mutex* thumbMutex = NULL;
-SDL_Thread* BackgroundThread = NULL;
-SDL_mutex* BackgroundThreadMutex = NULL;
-SDL_Thread* thumbThread = NULL;
-SDL_mutex* thumbThreadMutex = NULL;
+// --- Thread pool structures ---
+typedef struct TaskNode {
+    LoadBackgroundTask* task;
+    struct TaskNode* next;
+} TaskNode;
 
-SDL_Surface *folderbgbmp = NULL;
-SDL_Surface* screen = NULL;
-SDL_Surface* thumbbmp = NULL;
+static TaskNode* taskQueueHead = NULL;
+static TaskNode* taskQueueTail = NULL;
+static SDL_mutex* queueMutex = NULL;
+static SDL_cond* queueCond = NULL;
 
-int imageLoadThread(void* data)
-{
-    LoadBackgroundTask* task = (LoadBackgroundTask*)data;
-    char imagePath[MAX_PATH];
-   
-    SDL_Surface* result = NULL;
-    if (access(task->imagePath, F_OK) == 0) {
-        SDL_LockMutex(imgLoadMutex);
-        SDL_Surface* image = IMG_Load(task->imagePath);
-        SDL_UnlockMutex(imgLoadMutex);
+static SDL_mutex* imgLoadMutex = NULL;
+static SDL_mutex* folderBgMutex = NULL;
+static SDL_mutex* thumbMutex = NULL;
 
-        if (image) {
-            SDL_Surface* imageRGBA = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_RGBA8888, 0);
-            SDL_FreeSurface(image);
+static SDL_Surface* folderbgbmp = NULL;
+static SDL_Surface* thumbbmp = NULL;
+static SDL_Surface* screen = NULL; // Must be assigned externally
 
-            if (imageRGBA) {
-				result = imageRGBA;
-			}
-        }
-    }
-    // callback for letting main loop know stuff ready
-    if (task->callback) {
-        task->callback(result);
-    }
-    free(task); 
-    return 0;
-}
-
-void startLoadFolderBackground(const char* rompath, int type, BackgroundLoadedCallback callback, void* userData)
-{
-    SDL_LockMutex(BackgroundThreadMutex);
-
-    if (BackgroundThread) {
-        SDL_WaitThread(BackgroundThread, NULL);
-        BackgroundThread = NULL;
-    }
-    LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
-    if (!task) {
-        SDL_UnlockMutex(BackgroundThreadMutex);
-        return;
-    }
-    char imagePath[MAX_PATH];
-    if (type == ENTRY_DIR)
-        snprintf(imagePath, sizeof(imagePath), "%s/.media/bg.png", rompath);
-    else if (type == ENTRY_ROM)
-        snprintf(imagePath, sizeof(imagePath), "%s/.media/bglist.png", rompath);
-    else {
-        free(task);  // don't leak the allocated task!
-        SDL_UnlockMutex(BackgroundThreadMutex);
-        return;
-    }
-    snprintf(task->imagePath, sizeof(task->imagePath), "%s", imagePath);
-    task->callback = callback;
-    task->userData = userData;
-	if(exists(task->imagePath)) BackgroundThread = SDL_CreateThread(imageLoadThread, "BGLoader", task);
-    SDL_UnlockMutex(BackgroundThreadMutex);
-}
-
-void onBackgroundLoaded(SDL_Surface* surface)
-{
-    if (!surface) {
-        LOG_info("Failed to load background.\n");
-        return;
-    }
-    SDL_LockMutex(folderBgMutex);
-
-    if (folderbgbmp) {
-        SDL_FreeSurface(folderbgbmp);
-    }
-
-    folderbgbmp = surface;
-    SDL_UnlockMutex(folderBgMutex);
-}
-
-void startLoadThumb(const char* thumbpath, BackgroundLoadedCallback callback, void* userData)
-{
-    SDL_LockMutex(thumbThreadMutex);
-
-    // Optional: Cancel or wait for the previous thread (advanced; SDL doesn't have thread cancel)
-    if (thumbThread) {
-        SDL_WaitThread(thumbThread, NULL);
-        thumbThread = NULL;
-    }
-
-    LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
-    if (!task) {
-        SDL_UnlockMutex(thumbThreadMutex);
-        return;
-    }
-
-    snprintf(task->imagePath, sizeof(task->imagePath), "%s", thumbpath);
-    task->callback = callback;
-    task->userData = userData;
-
-    thumbThread = SDL_CreateThread(imageLoadThread, "ThumbLoader", task);
-
-    SDL_UnlockMutex(thumbThreadMutex);
-}
+// i think 2 is fine could probably even be 1
+#define THREAD_POOL_SIZE 2
 
 static int had_thumb = 0;
 static int ox;
 static int oy;
-void onThumbLoaded(SDL_Surface* surface)
-{
-    if (!surface) {
-        LOG_info("Failed to load Thumb.\n");
+// queue a new image load task :D
+void enqueueTask(LoadBackgroundTask* task) {
+    TaskNode* node = (TaskNode*)malloc(sizeof(TaskNode));
+    node->task = task;
+    node->next = NULL;
+
+    SDL_LockMutex(queueMutex);
+    if (taskQueueTail) {
+        taskQueueTail->next = node;
+        taskQueueTail = node;
+    } else {
+        taskQueueHead = taskQueueTail = node;
+    }
+    SDL_CondSignal(queueCond);
+    SDL_UnlockMutex(queueMutex);
+}
+
+// Worker threa
+int imageLoadWorker(void* unused) {
+    while (true) {
+        SDL_LockMutex(queueMutex);
+        while (!taskQueueHead) {
+            SDL_CondWait(queueCond, queueMutex);
+        }
+
+        TaskNode* node = taskQueueHead;
+        taskQueueHead = node->next;
+        if (!taskQueueHead) taskQueueTail = NULL;
+        SDL_UnlockMutex(queueMutex);
+
+        LoadBackgroundTask* task = node->task;
+        free(node);
+
+        SDL_Surface* result = NULL;
+        if (access(task->imagePath, F_OK) == 0) {
+            SDL_LockMutex(imgLoadMutex);
+            SDL_Surface* image = IMG_Load(task->imagePath);
+            SDL_UnlockMutex(imgLoadMutex);
+
+            if (image) {
+                SDL_Surface* imageRGBA = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_RGBA8888, 0);
+                SDL_FreeSurface(image);
+                result = imageRGBA;
+            }
+        }
+
+        if (task->callback) task->callback(result);
+        free(task);
+    }
+    return 0;
+}
+
+void initImageLoaderPool() {
+    queueMutex = SDL_CreateMutex();
+    queueCond = SDL_CreateCond();
+    imgLoadMutex = SDL_CreateMutex();
+    folderBgMutex = SDL_CreateMutex();
+    thumbMutex = SDL_CreateMutex();
+
+    for (int i = 0; i < THREAD_POOL_SIZE; ++i) {
+        SDL_CreateThread(imageLoadWorker, "ImageLoadWorker", NULL);
+    }
+}
+
+void startLoadFolderBackground(const char* rompath, int type, BackgroundLoadedCallback callback, void* userData) {
+    LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
+    if (!task) return;
+LOG_info("background start\n");
+    if (type == ENTRY_DIR)
+        snprintf(task->imagePath, sizeof(task->imagePath), "%s/.media/bg.png", rompath);
+    else if (type == ENTRY_ROM)
+        snprintf(task->imagePath, sizeof(task->imagePath), "%s/.media/bglist.png", rompath);
+    else {
+        free(task);
         return;
     }
 
+    task->callback = callback;
+    task->userData = userData;
+    enqueueTask(task);
+}
+
+void onBackgroundLoaded(SDL_Surface* surface) {
+	LOG_info("background loaded\n");
+    if (!surface) return;
+    SDL_LockMutex(folderBgMutex);
+    if (folderbgbmp) SDL_FreeSurface(folderbgbmp);
+    folderbgbmp = surface;
+    SDL_UnlockMutex(folderBgMutex);
+}
+
+void startLoadThumb(const char* thumbpath, BackgroundLoadedCallback callback, void* userData) {
+    LoadBackgroundTask* task = malloc(sizeof(LoadBackgroundTask));
+    if (!task) return;
+
+    snprintf(task->imagePath, sizeof(task->imagePath), "%s", thumbpath);
+    task->callback = callback;
+    task->userData = userData;
+    enqueueTask(task);
+}
+
+void onThumbLoaded(SDL_Surface* surface) {
+    if (!surface) return;
+
     SDL_LockMutex(thumbMutex);
-
-    if (thumbbmp) {
-        SDL_FreeSurface(thumbbmp);
-    }
-
+    if (thumbbmp) SDL_FreeSurface(thumbbmp);
     thumbbmp = surface;
 
     int img_w = thumbbmp->w;
     int img_h = thumbbmp->h;
     double aspect_ratio = (double)img_h / img_w;
 
-    int max_w = (int)(screen->w * CFG_getGameArtWidth()); 
-    int max_h = (int)(screen->h * 0.6);  
+    int max_w = (int)(screen->w * 0.5); // CFG_getGameArtWidth()
+    int max_h = (int)(screen->h * 0.6);
 
     int new_w = max_w;
-    int new_h = (int)(new_w * aspect_ratio); 
+    int new_h = (int)(new_w * aspect_ratio);
 
     if (new_h > max_h) {
         new_h = max_h;
         new_w = (int)(new_h / aspect_ratio);
     }
 
-    GFX_ApplyRoundedCorners_RGBA8888(
-        thumbbmp,
-        &(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
-        SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
-    );
-    had_thumb = 1;
+	GFX_ApplyRoundedCorners_RGBA8888(
+		thumbbmp,
+		&(SDL_Rect){0, 0, thumbbmp->w, thumbbmp->h},
+		SCALE1((float)CFG_getThumbnailRadius() * ((float)img_w / (float)new_w))
+	);
+
     SDL_UnlockMutex(thumbMutex);
 }
+
 ///////////////////////////////////////
 
 enum {
@@ -1580,12 +1585,9 @@ int main (int argc, char *argv[]) {
 	
 	SDL_Surface* version = NULL;
 	SDL_Surface *preview = NULL;
-	// load mutexes for background image loading
-	imgLoadMutex = SDL_CreateMutex();
-	folderBgMutex = SDL_CreateMutex();
-	thumbMutex = SDL_CreateMutex();
-	BackgroundThreadMutex = SDL_CreateMutex();
-	thumbThreadMutex = SDL_CreateMutex();
+
+	// start my threaded image loader :D
+	initImageLoaderPool();
 	Menu_init();
 	// LOG_info("- menu init: %lu\n", SDL_GetTicks() - main_begin);
 
