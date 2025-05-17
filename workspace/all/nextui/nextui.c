@@ -2155,7 +2155,6 @@ int main (int argc, char *argv[]) {
 						snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
 					had_thumb = 0;
 					if (exists(thumbpath)) {
-						LOG_info("Load thumb\n");
 						startLoadThumb(thumbpath, onThumbLoaded, NULL);
 						int max_w = (int)(screen->w - (screen->w * CFG_getGameArtWidth())); 
 						int max_h = (int)(screen->h * 0.6);  
@@ -2320,7 +2319,6 @@ int main (int argc, char *argv[]) {
 			SDL_UnlockMutex(folderBgMutex);
 			SDL_LockMutex(thumbMutex);
 			if(thumbbmp && lastScreen == SCREEN_GAMELIST && thumbchanged) {
-				LOG_info("draw thumb\n");
 				int img_w = thumbbmp->w;
 				int img_h = thumbbmp->h;
 				double aspect_ratio = (double)img_h / img_w;
@@ -2393,7 +2391,6 @@ int main (int argc, char *argv[]) {
 				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
 				PLAT_GPU_Flip();
 				thumbchanged = 0;
-				LOG_info("second draw \n");
 			} 
 			SDL_UnlockMutex(thumbMutex);
 			
