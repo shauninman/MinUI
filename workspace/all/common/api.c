@@ -2872,21 +2872,16 @@ static void PWR_waitForWake(void) {
 		if(sleepDelay > 0) {
 			SDL_Delay(200);
 			if (SDL_GetTicks()-sleep_ticks>=sleepDelay) { // increased to two minutes
-				if (pwr.is_charging) {
-					sleep_ticks += 60000; // check again in a minute
-					continue;
-				}
+				// if (pwr.is_charging) {
+				// 	sleep_ticks += 60000; // check again in a minute
+				// 	continue;
+				// }
 				if (PLAT_supportsDeepSleep()) {
 					int ret = PWR_deepSleep();
 					if (ret == 0) {
 						return;
-					} else if (deep_sleep_attempts < 3) {
-						LOG_warn("failed to enter deep sleep - retrying in 5 seconds\n");
-						sleep_ticks += 5000;
-						deep_sleep_attempts++;
-						continue;
 					} else {
-						LOG_warn("failed to enter deep sleep - powering off\n");
+						LOG_info("failed to enter deep sleep - powering off\n");
 					}
 				}
 				if (pwr.can_poweroff) {

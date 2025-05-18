@@ -2,13 +2,13 @@
 # set -eu
 exec 0<&-
 
-wpa_running=0
-hciattach_running=0
-bluetoothd_running=0
+# wpa_running=0
+# hciattach_running=0
+# bluetoothd_running=0
 
 # shellcheck disable=SC2317
 resume() {
-    >&2 echo "Resuming from suspend..."
+   
 
     # >&2 echo "Unblocking wireless..."
     # echo 1 >/sys/class/rfkill/rfkill0/state || true
@@ -28,11 +28,11 @@ resume() {
     #     /etc/bluetooth/bluetoothd start || true
     #     /usr/bin/bluetoothctl power on || true
     # fi
+    >&2 echo "Resumed from suspend..."
+    exit 0
 }
 
 main() {
-    trap "resume" EXIT INT TERM HUP QUIT
-
     >&2 echo "Preparing for suspend..."
 
     # if pgrep wpa_supplicant; then
@@ -58,9 +58,25 @@ main() {
     # echo 0 >/sys/class/rfkill/rfkill0/state
 
     >&2 echo "Suspending..."
-    echo mem >/sys/power/state || true
+    max_attempts=20
+    attempt=1
 
-    exit 0
+    while ! echo mem > /sys/power/state 2>/dev/null; do
+        >&2 echo "Suspend attempt $attempt failed. Checking for active wakeup sources..."
+        awk '{ if ($2 > 0 && NR > 1) print $1 " is active (" $2 " times)"; }' /sys/kernel/debug/wakeup_sources
+
+        if [ "$attempt" -ge "$max_attempts" ]; then
+            >&2 echo "Maximum suspend attempts reached ($max_attempts). Giving up."
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        >&2 echo "Retrying in 1 seconds..."
+        sleep 1
+    done
+
+    >&2 echo "Resuming..."
+    resume
 }
 
 main
