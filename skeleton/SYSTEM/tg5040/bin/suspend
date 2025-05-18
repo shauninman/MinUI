@@ -58,7 +58,7 @@ main() {
     # echo 0 >/sys/class/rfkill/rfkill0/state
 
     >&2 echo "Suspending..."
-    echo mem >/sys/power/state
+    echo mem >/sys/power/state || true
 
     exit 0
 }
