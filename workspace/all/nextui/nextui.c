@@ -1413,7 +1413,7 @@ static SDL_Surface* thumbbmp = NULL;
 static SDL_Surface* screen = NULL; // Must be assigned externally
 
 // i think 2 is fine could probably even be 1
-#define THREAD_POOL_SIZE 1
+#define THREAD_POOL_SIZE 2
 
 static int had_thumb = 0;
 static int ox;
@@ -2289,15 +2289,16 @@ int main (int argc, char *argv[]) {
 				lastScreen = SCREEN_GAMELIST;
 			}
 
-			if(animationdirection > 0) {
-				// GFX_clearLayers(1);
+			if(animationdirection > 0 && CFG_getMenuTransitions()) {
+				GFX_clearLayers(1);
+				folderbgchanged = 1;
 				GFX_clearLayers(2);
 				GFX_flipHidden();
 				SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
 				SDL_SetSurfaceBlendMode(tmpNewScreen,SDL_BLENDMODE_BLEND);
 				GFX_clearLayers(3);
-				if(animationdirection==1) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0-FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 200:20,tmpNewScreen,1,0,FIXED_WIDTH,FIXED_HEIGHT,0,255,3);
-				if(animationdirection==2) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0+FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,CFG_getMenuTransitions() ? 200:20,tmpNewScreen,1,0,FIXED_WIDTH,FIXED_HEIGHT,0,255,3);
+				if(animationdirection==1) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0-FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,200,tmpNewScreen,1,0,FIXED_WIDTH,FIXED_HEIGHT,0,255,3);
+				if(animationdirection==2) GFX_animateAndFadeSurface(tmpOldScreen,0,0,0+FIXED_WIDTH,0,FIXED_WIDTH,FIXED_HEIGHT,200,tmpNewScreen,1,0,FIXED_WIDTH,FIXED_HEIGHT,0,255,3);
 				GFX_clearLayers(3);
 				SDL_FreeSurface(tmpNewScreen);
 				animationdirection=0;
