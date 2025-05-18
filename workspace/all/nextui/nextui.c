@@ -2159,7 +2159,11 @@ int main (int argc, char *argv[]) {
 						int new_w = max_w;
 						int new_h = max_h; 
 						had_thumb = 1;
-						ox = (int)(max_w) - SCALE1(BUTTON_MARGIN*5);
+						if(exists(thumbpath))
+							ox = (int)(max_w) - SCALE1(BUTTON_MARGIN*5);
+						else
+							ox = screen->w;
+							
 					
 						SDL_UnlockMutex(thumbMutex);
 					}

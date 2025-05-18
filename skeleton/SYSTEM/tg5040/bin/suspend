@@ -1,5 +1,5 @@
 #!/bin/sh
-# set -eu
+set -euo pipefail
 exec 0<&-
 
 # wpa_running=0
