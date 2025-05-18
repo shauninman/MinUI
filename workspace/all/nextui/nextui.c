@@ -1496,17 +1496,22 @@ void startLoadFolderBackground(const char* imagePath, int type, BackgroundLoaded
 }
 
 void onBackgroundLoaded(SDL_Surface* surface) {
-    if (!surface) return;
+	SDL_LockMutex(folderBgMutex);
+	folderbgchanged = 1;
+    if (!surface) {
+		folderbgbmp = NULL;
+		SDL_UnlockMutex(folderBgMutex);
+		return;
+	}
 
     SDL_Surface* safeCopy = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
     SDL_FreeSurface(surface);  // Free the original from the thread
 
     if (!safeCopy) return;
 
-    SDL_LockMutex(folderBgMutex);
     if (folderbgbmp) SDL_FreeSurface(folderbgbmp);
     folderbgbmp = safeCopy;
-    folderbgchanged = 1;
+    
     SDL_UnlockMutex(folderBgMutex);
 }
 
@@ -1520,17 +1525,23 @@ void startLoadThumb(const char* thumbpath, BackgroundLoadedCallback callback, vo
     enqueueTask(task);
 }
 void onThumbLoaded(SDL_Surface* surface) {
-    if (!surface) return;
+	SDL_LockMutex(thumbMutex);
+	thumbchanged = 1;
+    if (!surface) {
+		thumbbmp = NULL;
+		SDL_UnlockMutex(thumbMutex);
+		return;
+	}
 
     // Convert to a known pixel format (e.g., RGBA8888) to ensure compatibility
     SDL_Surface* safeCopy = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
     SDL_FreeSurface(surface);  // Free the thread-allocated surface
     if (!safeCopy) return;
 
-    SDL_LockMutex(thumbMutex);
-    if (thumbbmp) SDL_FreeSurface(thumbbmp);
+   
+   	if (thumbbmp) SDL_FreeSurface(thumbbmp);
     thumbbmp = safeCopy;
-    thumbchanged = 1;
+    
     SDL_UnlockMutex(thumbMutex);
 }
 
@@ -1611,15 +1622,6 @@ int main (int argc, char *argv[]) {
 
 	char folderBgPath[1024];
 	folderbgbmp = NULL;
-	SDL_Surface* bgbmp = IMG_Load(SDCARD_PATH "/bg.png");
-	SDL_Surface* convertedbg = SDL_ConvertSurfaceFormat(bgbmp, SDL_PIXELFORMAT_RGBA8888, 0);
-	if (convertedbg) {
-		SDL_FreeSurface(bgbmp); 
-		SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, screen->w, screen->h, 32, SDL_PIXELFORMAT_RGBA8888);
-		GFX_blitScaleToFill(convertedbg, scaled);
-		bgbmp = scaled;
-		GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-	}
 
 	SDL_Surface * blackBG =SDL_CreateRGBSurfaceWithFormat(0,screen->w,screen->h,32,SDL_PIXELFORMAT_RGBA8888);
 	SDL_FillRect(blackBG,NULL,SDL_MapRGBA(screen->format,0,0,0,255));
@@ -1958,7 +1960,6 @@ int main (int argc, char *argv[]) {
 				GFX_clearLayers(0);
 				GFX_clear(screen);
 				GFX_flipHidden();
-				if(bgbmp) SDL_FreeSurface(bgbmp);
 				if(lastScreen==SCREEN_GAMESWITCHER) {
 					GFX_animateSurfaceOpacityAndScale(tmpsur,screen->w/2,screen->h/2,screen->w,screen->h,screen->w*4,screen->h*4,255,0,CFG_getMenuTransitions() ? 150:20,1);
 				} else {
@@ -2065,7 +2066,7 @@ int main (int argc, char *argv[]) {
 								GFX_flipHidden();
 								SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
 								GFX_clearLayers(0);
-		
+								folderbgchanged=1;
 								GFX_drawOnLayer(tmpOldScreen,0,0,screen->w, screen->h,1.0f,0,0);
 								GFX_animateSurface(tmpNewScreen,0,0-screen->h,0,0,screen->w,screen->h,CFG_getMenuTransitions() ? 100:20,255,255,1);
 								SDL_FreeSurface(tmpNewScreen);
@@ -2119,9 +2120,9 @@ int main (int argc, char *argv[]) {
 			}
 			else {
 				static int lastType = -1;
+				SDL_LockMutex(folderBgMutex);
 				if(((entry->type == ENTRY_DIR || entry->type == ENTRY_ROM) && CFG_getRomsUseFolderBackground())) {
 					char *newBg = entry->type == ENTRY_DIR ? entry->path:rompath;
-					SDL_LockMutex(folderBgMutex);
 					if((strcmp(newBg, folderBgPath) != 0 || lastType != entry->type) && sizeof(folderBgPath) != 1) {
 						lastType = entry->type;
 
@@ -2131,21 +2132,27 @@ int main (int argc, char *argv[]) {
 							snprintf(tmppath, sizeof(tmppath), "%s/.media/bg.png", folderBgPath);
 						else if (entry->type == ENTRY_ROM)
 							snprintf(tmppath, sizeof(tmppath), "%s/.media/bglist.png", folderBgPath);
-
-						if(exists(tmppath))
-							startLoadFolderBackground(tmppath, entry->type, onBackgroundLoaded, NULL);
+						if(!exists(tmppath)) {
+							snprintf(tmppath, sizeof(tmppath), SDCARD_PATH "/bg.png", folderBgPath);
+						}
+						startLoadFolderBackground(tmppath, entry->type, onBackgroundLoaded, NULL);
 					}
-					SDL_UnlockMutex(folderBgMutex);
+					
 				} 
+				else if(strcmp(SDCARD_PATH "/bg.png", folderBgPath) != 0) {
+					strncpy(folderBgPath, SDCARD_PATH "/bg.png", sizeof(folderBgPath) - 1);
+					startLoadFolderBackground(SDCARD_PATH "/bg.png", entry->type, onBackgroundLoaded, NULL);
+				}
+
+				SDL_UnlockMutex(folderBgMutex);
 				// load game thumbnails
 				if (total > 0) {
 					char thumbpath[1024];
-					if(CFG_getShowGameArt())
+					if(CFG_getShowGameArt()) {
 						snprintf(thumbpath, sizeof(thumbpath), "%s/.media/%s.png", rompath, res_copy);
-					had_thumb = 0;
-					SDL_LockMutex(thumbMutex);
-				
-					if (exists(thumbpath)) {
+						had_thumb = 0;
+						SDL_LockMutex(thumbMutex);
+					
 						startLoadThumb(thumbpath, onThumbLoaded, NULL);
 						int max_w = (int)(screen->w - (screen->w * CFG_getGameArtWidth())); 
 						int max_h = (int)(screen->h * 0.6);  
@@ -2153,10 +2160,9 @@ int main (int argc, char *argv[]) {
 						int new_h = max_h; 
 						had_thumb = 1;
 						ox = (int)(max_w) - SCALE1(BUTTON_MARGIN*5);
-					} else {
-						GFX_clearLayers(2);
+					
+						SDL_UnlockMutex(thumbMutex);
 					}
-					SDL_UnlockMutex(thumbMutex);
 				}
 
 				// buttons
@@ -2227,6 +2233,8 @@ int main (int argc, char *argv[]) {
 						if(switchetsur) {
 							// update cpu surface here first
 							GFX_clearLayers(0);
+							folderbgchanged=1;
+							
 							GFX_flipHidden();
 							GFX_animateSurface(switchetsur,0,0,0,0-screen->h,screen->w,screen->h,CFG_getMenuTransitions() ? 100:20,255,255,1);
 							animationdirection=0;
@@ -2282,7 +2290,7 @@ int main (int argc, char *argv[]) {
 			}
 
 			if(animationdirection > 0) {
-				GFX_clearLayers(1);
+				// GFX_clearLayers(1);
 				GFX_clearLayers(2);
 				GFX_flipHidden();
 				SDL_Surface *tmpNewScreen = GFX_captureRendererToSurface();
@@ -2295,15 +2303,14 @@ int main (int argc, char *argv[]) {
 				animationdirection=0;
 			} 
 			if(lastScreen == SCREEN_GAMELIST) {
-				SDL_LockMutex(folderBgMutex);
+							SDL_LockMutex(folderBgMutex);
+			if(folderbgchanged && folderbgbmp) {
+				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
+				folderbgchanged = 0;
+			} else if(folderbgchanged) {
 				GFX_clearLayers(1);
-				if(folderbgchanged && folderbgbmp) {
-					GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-					folderbgchanged = 0;
-				} else if(bgbmp) {
-					GFX_drawOnLayer(bgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
-				} 
-				SDL_UnlockMutex(folderBgMutex);
+			}
+			SDL_UnlockMutex(folderBgMutex);
 				SDL_LockMutex(thumbMutex);
 				if(thumbbmp && thumbchanged) {
 					GFX_clearLayers(2);
@@ -2328,7 +2335,9 @@ int main (int argc, char *argv[]) {
 					int target_y = (int)(screen->h * 0.50);
 					int center_y = target_y - (new_h / 2); // FIX: use new_h instead of thumbbmp->h
 					GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
-				} 
+				} else if(thumbchanged) {
+					GFX_clearLayers(2);
+				}
 				SDL_UnlockMutex(thumbMutex);
 			}
 			GFX_flip(screen);
@@ -2343,8 +2352,10 @@ int main (int argc, char *argv[]) {
 			if(folderbgchanged && folderbgbmp) {
 				GFX_drawOnLayer(folderbgbmp,0, 0, screen->w, screen->h,1.0f,0,1);
 				folderbgchanged = 0;
+			}
+			else if(folderbgchanged) {
+				GFX_clearLayers(1);
 			} 
-			
 			SDL_UnlockMutex(folderBgMutex);
 			SDL_LockMutex(thumbMutex);
 			if(thumbbmp && thumbchanged) {
@@ -2374,7 +2385,9 @@ int main (int argc, char *argv[]) {
 				GFX_clearLayers(2);
 				GFX_drawOnLayer(thumbbmp,target_x,center_y,new_w,new_h,1.0f,0,2);
 				thumbchanged = 0;
-			} 
+			}  else if(thumbchanged) {
+					GFX_clearLayers(2);
+				}
 			SDL_UnlockMutex(thumbMutex);
 			
 			if (!show_switcher && !show_version && is_scrolling) {
@@ -2441,7 +2454,6 @@ int main (int argc, char *argv[]) {
 
 		
 	}
-	if(bgbmp) SDL_FreeSurface(bgbmp);
 	if(blackBG)	SDL_FreeSurface(blackBG);
 	if (version) SDL_FreeSurface(version);
 	if (preview) SDL_FreeSurface(preview);
