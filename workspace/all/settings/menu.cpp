@@ -565,7 +565,7 @@ void MenuList::drawList(SDL_Surface *surface, const SDL_Rect &dst)
 
 void MenuList::drawListItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected)
 {
-    SDL_Color text_color = COLOR_WHITE;
+    SDL_Color text_color = uintToColour(THEME_COLOR4_255);
     SDL_Surface *text;
 
     // int ox = (dst.w - w) / 2; // if we're centering these (but I don't think we should after seeing it)
@@ -623,6 +623,7 @@ namespace
 void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const MenuItem &item, bool selected)
 {
     SDL_Color text_color = uintToColour(THEME_COLOR4_255);
+    SDL_Color text_color_value = uintToColour(THEME_COLOR4_255);
     SDL_Surface *text;
 
     // hack - this should be correlated to max_width
@@ -636,7 +637,7 @@ void MenuList::drawFixedItem(SDL_Surface *surface, const SDL_Rect &dst, const Me
 
     if (item.getValue().has_value())
     {
-        text = TTF_RenderUTF8_Blended(font.tiny, item.getLabel().c_str(), COLOR_WHITE); // always white
+        text = TTF_RenderUTF8_Blended(font.tiny, item.getLabel().c_str(), text_color_value);
 
         if (item.getType() == ListItemType::Color)
         {
