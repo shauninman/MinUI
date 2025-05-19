@@ -1662,6 +1662,8 @@ int main (int argc, char *argv[]) {
 				dirty = 1;
 			}
 			else if (recents->count > 0 && PAD_justReleased(BTN_A)) {
+				// this will drop us back into game switcher after leaving the game
+				putFile(GAME_SWITCHER_PERSIST_PATH, "unused");
 				// TODO: This is crappy af - putting this here since it works, but
 				// super inefficient. Why are Recents not decorated with type, and need
 				// to be remade into Entries via getRecents()? - need to understand the 
