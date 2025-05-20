@@ -26,6 +26,7 @@ before() {
         echo "Disabling wakeup in $f"
         echo disabled > "$f"
     done
+    sleep 2
 
     # Old suspend script stuff which seemed to help in suspending correctly, but aren't the real solution for the problem and cause other problems like wifi and audio sometimes not resuming correctly.
     # Real problem is explained at the top of this script which I'm trying to attempt to solve
