@@ -22,11 +22,66 @@ before() {
     # This def helps a lot keeping /sys/power/state unlocked a lot more. It doesn't mean it will never be locked as other things can lock it too. But hopefully the retry mechanism inside platform.c is enough to now always properly suspend
     # and disabling audio and wifi/bluetooth hardware is not needed anymore and we can have reliable wifi+audio on resume again. 
 
+    max_retries=10
+    retry_interval=1
+
     for f in $(find /sys/devices/platform/soc/7081400.s_twi/i2c-6/6-0034/ -name wakeup); do
-        echo "Disabling wakeup in $f"
-        echo disabled > "$f"
+            echo "Disabling wakeup in $f"
+            echo disabled > "$f"
     done
-    sleep 2
+
+
+    check_wakeup_sources() {
+        awk '$1=="axp2202-usb" || $1=="axp2202-battery" { sum += $2 } END { if (sum == "") sum = 0; print sum }' /sys/kernel/debug/wakeup_sources
+    }
+
+    echo "Checking wakeup sources..."
+
+    i=1
+    while [ "$i" -le "$max_retries" ]; do
+        count=$(check_wakeup_sources)
+
+        # Ensure count is a number
+        if echo "$count" | grep -qE '^[0-9]+$'; then
+            if [ "$count" -eq 0 ]; then
+            echo "All axp2202 wakeup sources inactive (active_count = 0). Safe to continue."
+            break
+            else
+            echo "Attempt $i/$max_retries: active_count = $count, retrying in $retry_interval second(s)..."
+            fi
+        else
+            echo "Attempt $i/$max_retries: Failed to read active_count (got '$count'), retrying..."
+        fi
+
+        sleep "$retry_interval"
+        i=$((i + 1))
+    done
+    if [ "$i" -gt "$max_retries" ]; then
+        echo "Timed out: wakeup sources still active or unreadable after $max_retries attempts."
+        exit 1
+    fi
+    i=1
+    success=0
+
+    while [ "$i" -le "$max_retries" ]; do
+    if [ -w /sys/power/state ] && grep -qw mem /sys/power/state; then
+        echo "Check $i: OK ... 'mem' supported and writable."
+        success=1
+        break
+    else
+        echo "Check $i: 'mem' not supported or /sys/power/state not writable."
+    fi
+
+    sleep "$retry_interval"
+    i=$((i + 1))
+    done
+
+    if [ "$success" -eq 1 ]; then
+        echo "Test passed: echo mem > /sys/power/state would succeed."
+    else
+        echo "Test failed: unable to echo to /sys/power/state after $max_retries tries."
+        exit 1
+    fi
 
     # Old suspend script stuff which seemed to help in suspending correctly, but aren't the real solution for the problem and cause other problems like wifi and audio sometimes not resuming correctly.
     # Real problem is explained at the top of this script which I'm trying to attempt to solve
@@ -66,7 +121,8 @@ after() {
         echo enabled > "$f"
     done
 
-    # /mnt/SDCARD/Emus/tg5040/PORTS.pak/bin/i2cset -yfr 6 0x34 0x25 0x20
+    # Same old suspend script stuff
+    
 	# >&2 echo "Restoring mixer state..."
 	# alsactl --file "$asound_state_dir/asound.state.post" store || true
 	# alsactl --file "$asound_state_dir/asound.state.pre" restore || true
