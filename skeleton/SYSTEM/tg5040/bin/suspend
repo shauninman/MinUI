@@ -10,11 +10,25 @@ asound_state_dir=/tmp/asound-suspend
 
 before() {
 	>&2 echo "Preparing for suspend..."
-    # /mnt/SDCARD/Emus/tg5040/PORTS.pak/bin/i2cset -yfr 6 0x34 0x25 0x21
+
+    # The problem with the brick not being able to suspend seems to be something that has been tried to solved a few times before evidence by multiple code in the original MinUI firmware trying to tackle this problem in multiple ways
+    # The problem is that sometimes it doesnt let you write to echo mem >/sys/power/state because its locked by something. 
+    # The first solution tried to this is just implement a retry mechanism in platform.c that will try up to 3 times and if still failing do a complete shutdown
+    # The second solution tried to this is to disable all hardware like wifi, audio etc before suspending trying to increase changes the state file is unlocked
+    # A combination of both solutions seems to be enough to be able to suspend succesfully within the 3 retries. But disabling and enabling hardware causes other problems like wifi and audio not working correctly when resuming.
+    # The real problem why state file is locked a lot of times is actually caused by that axp2202-battery seems to generate a lot of wakeup calls and it doesn't clear them the active wakeup count always keeps increasing. Causing the state file to be locked a lot increasing the chance for writing to state mem to fail by a lot
+
+    # Below is my solution to this. I am actually able to make the axp2202 stop generating wakeup locks by sending disabled to each wakeup endpoint in the below sysf folder.
+    # This def helps a lot keeping /sys/power/state unlocked a lot more. It doesn't mean it will never be locked as other things can lock it too. But hopefully the retry mechanism inside platform.c is enough to now always properly suspend
+    # and disabling audio and wifi/bluetooth hardware is not needed anymore and we can have reliable wifi+audio on resume again. 
+
     for f in $(find /sys/devices/platform/soc/7081400.s_twi/i2c-6/6-0034/ -name wakeup); do
         echo "Disabling wakeup in $f"
         echo disabled > "$f"
     done
+
+    # Old suspend script stuff which seemed to help in suspending correctly, but aren't the real solution for the problem and cause other problems like wifi and audio sometimes not resuming correctly.
+    # Real problem is explained at the top of this script which I'm trying to attempt to solve
 
 	# >&2 echo "Saving mixer state..."
 	# mkdir -p "$asound_state_dir"
@@ -47,9 +61,10 @@ after() {
 	>&2 echo "Resumed from suspend."
 
     for f in $(find /sys/devices/platform/soc/7081400.s_twi/i2c-6/6-0034/ -name wakeup); do
-        echo "Disabling wakeup in $f"
+        echo "Enabling wakeup in $f"
         echo enabled > "$f"
     done
+
     # /mnt/SDCARD/Emus/tg5040/PORTS.pak/bin/i2cset -yfr 6 0x34 0x25 0x20
 	# >&2 echo "Restoring mixer state..."
 	# alsactl --file "$asound_state_dir/asound.state.post" store || true
