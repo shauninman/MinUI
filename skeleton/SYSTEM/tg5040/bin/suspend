@@ -1,16 +1,86 @@
 #!/bin/sh
 set -euo pipefail
+exec 0<&-
 
-resume() {
-   echo "Resumed from suspend..."
+wpa_running=
+hciattach_running=
+bluetoothd_running=
+
+asound_state_dir=/tmp/asound-suspend
+
+before() {
+	>&2 echo "Preparing for suspend..."
+    # /mnt/SDCARD/Emus/tg5040/PORTS.pak/bin/i2cset -yfr 6 0x34 0x25 0x21
+    for f in $(find /sys/devices/platform/soc/7081400.s_twi/i2c-6/6-0034/ -name wakeup); do
+        echo "Disabling wakeup in $f"
+        echo disabled > "$f"
+    done
+
+	# >&2 echo "Saving mixer state..."
+	# mkdir -p "$asound_state_dir"
+	# alsactl --file "$asound_state_dir/asound.state.pre" store || true
+
+	# if pgrep wpa_supplicant; then
+	# 	wpa_running=1
+	# 	>&2 echo "Stopping wpa_supplicant..."
+	# 	killall -9 wpa_supplicant || true
+	# fi
+	# ifconfig wlan0 down || true
+
+	# if pgrep hciattach; then
+	# 	hciattach_running=1
+	# 	>&2 echo "Stopping hciattach..."
+	# 	/etc/init.d/hciattach stop || true
+	# fi
+	# if pgrep bluetoothd; then
+	# 	bluetoothd_running=1
+	# 	>&2 echo "Stopping bluetoothd..."
+	# 	/etc/bluetooth/bluetoothd stop || true
+	# 	killall -15 bluealsa || true
+	# fi
+
+	# >&2 echo "Blocking wireless..."
+	# echo 0 >/sys/class/rfkill/rfkill0/state || true
 }
 
-main() {
-    echo "Preparing for suspend..."
-    sync
-    echo mem > /sys/power/state
-    echo "Resuming..."
-    resume
+after() {
+	>&2 echo "Resumed from suspend."
+
+    for f in $(find /sys/devices/platform/soc/7081400.s_twi/i2c-6/6-0034/ -name wakeup); do
+        echo "Disabling wakeup in $f"
+        echo enabled > "$f"
+    done
+    # /mnt/SDCARD/Emus/tg5040/PORTS.pak/bin/i2cset -yfr 6 0x34 0x25 0x20
+	# >&2 echo "Restoring mixer state..."
+	# alsactl --file "$asound_state_dir/asound.state.post" store || true
+	# alsactl --file "$asound_state_dir/asound.state.pre" restore || true
+
+	# >&2 echo "Unblocking wireless..."
+	# echo 1 >/sys/class/rfkill/rfkill0/state || true
+    # ifconfig wlan0 up || true
+	# if [ -n "$wpa_running" ]; then
+	# 	>&2 echo "Starting wpa_supplicant..."
+	# 	wpa_supplicant -B -iwlan0 -Dnl80211 -c/etc/wifi/wpa_supplicant.conf -I/etc/wifi/wpa_supplicant_overlay.conf -O/etc/wifi/sockets || true
+	# 	(( udhcpc -i wlan0 &)&)
+	# fi
+    
+
+	# if [ -n "$hciattach_running" ]; then
+	# 	>&2 echo "Starting hciattach..."
+	# 	/etc/init.d/hciattach start || true
+	# fi
+	# if [ -n "$bluetoothd_running" ]; then
+	# 	>&2 echo "Starting bluetoothd..."
+	# 	/etc/bluetooth/bluetoothd start || true
+	# 	/usr/bin/bluetoothctl power on || true
+	# fi
 }
 
-main
+before
+
+>&2 echo "Suspending..."
+sync
+echo mem >/sys/power/state
+
+# Resume services in background to reduce UI latency
+after
