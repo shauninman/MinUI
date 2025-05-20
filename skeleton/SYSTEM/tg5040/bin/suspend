@@ -22,7 +22,7 @@ before() {
     # This def helps a lot keeping /sys/power/state unlocked a lot more. It doesn't mean it will never be locked as other things can lock it too. But hopefully the retry mechanism inside platform.c is enough to now always properly suspend
     # and disabling audio and wifi/bluetooth hardware is not needed anymore and we can have reliable wifi+audio on resume again. 
 
-    max_retries=10
+    max_retries=5
     retry_interval=1
 
     for f in $(find /sys/devices/platform/soc/7081400.s_twi/i2c-6/6-0034/ -name wakeup); do
@@ -60,28 +60,26 @@ before() {
         echo "Timed out: wakeup sources still active or unreadable after $max_retries attempts."
         exit 1
     fi
+    
     i=1
-    success=0
-
     while [ "$i" -le "$max_retries" ]; do
-    if [ -w /sys/power/state ] && grep -qw mem /sys/power/state; then
-        echo "Check $i: OK ... 'mem' supported and writable."
-        success=1
-        break
-    else
-        echo "Check $i: 'mem' not supported or /sys/power/state not writable."
-    fi
+        if [ -w /sys/power/state ] && grep -qw mem /sys/power/state; then
+            echo "Attempt $i: Suspending..."
+            if echo mem > /sys/power/state 2>/dev/null; then
+                echo "Suspend success"
+                break
+            else
+                echo "Attempt $i: Suspend failed (device busy or other error), retrying in $retry_interval second(s)..."
+            fi
+        else
+            echo "Check $i: 'mem' not supported or /sys/power/state not writable."
+            exit 1
+        fi
 
-    sleep "$retry_interval"
-    i=$((i + 1))
+        sleep "$retry_interval"
+        i=$((i + 1))
     done
 
-    if [ "$success" -eq 1 ]; then
-        echo "Test passed: echo mem > /sys/power/state would succeed."
-    else
-        echo "Test failed: unable to echo to /sys/power/state after $max_retries tries."
-        exit 1
-    fi
 
     # Old suspend script stuff which seemed to help in suspending correctly, but aren't the real solution for the problem and cause other problems like wifi and audio sometimes not resuming correctly.
     # Real problem is explained at the top of this script which I'm trying to attempt to solve
@@ -122,7 +120,7 @@ after() {
     done
 
     # Same old suspend script stuff
-    
+
 	# >&2 echo "Restoring mixer state..."
 	# alsactl --file "$asound_state_dir/asound.state.post" store || true
 	# alsactl --file "$asound_state_dir/asound.state.pre" restore || true
@@ -149,10 +147,6 @@ after() {
 }
 
 before
-
->&2 echo "Suspending..."
-sync
-echo mem >/sys/power/state
 
 # Resume services in background to reduce UI latency
 after
