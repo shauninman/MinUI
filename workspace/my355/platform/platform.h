@@ -93,8 +93,8 @@
 
 #define AXIS_LX	0
 #define AXIS_LY	1
-#define AXIS_RX	4
-#define AXIS_RY	3
+#define AXIS_RX	3
+#define AXIS_RY	4
 
 ///////////////////////////////
 
