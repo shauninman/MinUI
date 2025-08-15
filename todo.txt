@@ -2,23 +2,19 @@ Changes
 
 BASE
 
-- tg3040: removed (merged into tg5040)
-- tg5040: improved audio quality (thanks maxbize)
-- miyoomini: added rtc support, see README.txt (thanks sinedied)
-- all: renamed "Thread Core" to "Prioritize Audio" (describe utility not implementation)
+- added PAK.pak for /Roms/Native (PAK)/
 
 EXTRAS
 
-- tg3040: removed (merged into tg5040)
-- tg5040: added Files.pak
-- rg35xxplus: added Swap Menu.pak (for 34xx, swaps MENU and SELECT buttons)
+- 
 
 ---
 
-minarch
-	can I ignore shortcut combo key input when shortcut is triggered?
-		eg. PAD_cancel(BTN_NAME)
-		the trick is ignoring the release
+all
+	pulled SND_* from [REDACTED]
+		no issues with sound quality but
+		PS games crash on load...
+			but before SND is even initialized :\
 
 h700/a133
 	the power/shutdown issues are becoming a nuisance
@@ -28,6 +24,8 @@ h700/a133
 			swap keys
 		it must have something to do with some control loop not being broken properly
 			caused by systemd restarting the ui loop?
+			compare stock images released after October 2024
+				my CubeXX is running an October stock image without issue
 			check dmenu.bin or dmenu_ln
 				no loop, just calls MinUI.pak/launch.sh directly
 				check higher, what's changed?
@@ -53,11 +51,16 @@ it's time to retire some supported devices
 		
 	finish updating README (don't forget BASE readme!)
 	
+minarch
+	can I ignore shortcut combo key input when shortcut is triggered?
+		eg. PAD_cancel(BTN_NAME)
+		the trick is ignoring the release
+
 tg_040
 	can I build my own version of SDL2 to speed up launch times?
 		yes but no, built, no change in launch time :\
 		currently just getting the rendering context going takes ~500ms versus ~200ms on other devices
-		is it a ram speed issue?
+		is it a ram speed issue? or just a slow gpu? bad drivers?
 	try to reproduce hung shutdowns and fix
 		doesn't have or use a custom bin/shutdown
 

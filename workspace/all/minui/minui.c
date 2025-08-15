@@ -1066,9 +1066,9 @@ static int autoResume(void) {
 static void openPak(char* path) {
 	// NOTE: escapeSingleQuotes() modifies the passed string 
 	// so we need to save the path before we call that
-	// if (prefixMatch(ROMS_PATH, path)) {
-	// 	addRecent(path);
-	// }
+	if (prefixMatch(ROMS_PATH, path)) {
+		addRecent(path, NULL);
+	}
 	saveLast(path);
 	
 	char cmd[256];
