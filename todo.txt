@@ -2,7 +2,8 @@ Changes
 
 BASE
 
-- added PAK.pak for /Roms/Native (PAK)/
+- tg5040: potential fix for hung shutdowns
+- all: added PAK.pak for /Roms/Native (PAK)/
 
 EXTRAS
 
@@ -381,6 +382,7 @@ next
 			random note: doesn't know about /dev/input/js0?
 		standarize /bin/shutdown
 			while (1) pause(); prevents shutdown on some platforms
+				but ensures it on others
 			just system("rm /tmp/minui_exec") and exit(0) ?
 		.res
 			use standard naming (replace ext with png instead of append png)

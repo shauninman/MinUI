@@ -529,8 +529,8 @@ void PLAT_powerOff(void) {
 	system("killall -9 udhcpc");
 	system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	system("poweroff");
-	exit(0);
-	// while (1) pause(); // lolwat
+	// exit(0);
+	while (1) pause(); // lolwat
 }
 
 ///////////////////////////////

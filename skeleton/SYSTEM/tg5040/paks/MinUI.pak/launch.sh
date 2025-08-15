@@ -123,4 +123,4 @@ while [ -f $EXEC_PATH ]; do
 	fi
 done
 
-poweroff # just in case
+poweroff && sleep 10 # just in case
