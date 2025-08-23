@@ -78,8 +78,8 @@ Extras:
 | GKD Pixel | MinUI-20240120b-1 | Deprecated |
 | M17 | MinUI-20231126b-2 | Deprecated |
 | MagicX XU Mini M | MinUI-20240831-0 | Deprecated | 
-| MagicX Mini Zero 28 | MinUI-20250111-0 | Maintained |
-| Miyoo A30 | MinUI-20240705-0 | Maintained |
+| MagicX Mini Zero 28 | MinUI-20250111-0 | Deprecated |
+| Miyoo A30 | MinUI-20240705-0 | Deprecated |
 | Miyoo Flip | MinUI-20250111-0 | Deprecated |
 | Miyoo Mini | MinUI-20230922b-2 | Deprecated |
 | Miyoo Mini Plus | MinUI-20230922b-2 | Deprecated |
