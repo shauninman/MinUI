@@ -74,7 +74,7 @@ Extras:
 | Anbernic RG35xxSP | MinUI-20240525-0 | Deprecated |
 | Anbernic RG40xxH | MinUI-20240717-1 | Deprecated |
 | Anbernic RG40xxV | MinUI-20240831-0 | Deprecated | 
-| Anbernic RG CubeXX | MinUI-202401028-0 | Maintained | 
+| Anbernic RG CubeXX | MinUI-202401028-0 | Deprecated | 
 | GKD Pixel | MinUI-20240120b-1 | Deprecated |
 | M17 | MinUI-20231126b-2 | Deprecated |
 | MagicX XU Mini M | MinUI-20240831-0 | Deprecated | 
