@@ -11,7 +11,20 @@ EXTRAS
 
 ---
 
+tg5040
+	- stock MainUI just does poweroff then sleep 60
+	- could this be responsible? 
+		else if (event.type==SDL_QUIT) PWR_powerOff();
+		I _think_ I still encountered a hang after commenting this out
+		but it was only used for macOS so I'm leaving it off
+	- ChatGPT suggested changing /etc/init.d/runtrimui 
+		(not /usr/trimui/bin/runtrimui.sh)
+		to a procd service to avoid a busybox race condition
+		I have observed the issue even with this setup
+
 all
+	deprecate everything
+	start fresh with even less
 	pulled SND_* from [REDACTED]
 		no issues with sound quality but
 		PS games crash on load...

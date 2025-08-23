@@ -1325,7 +1325,7 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 				btn = BTN_NONE;
 			}
 		}
-		else if (event.type==SDL_QUIT) PWR_powerOff();
+		// else if (event.type==SDL_QUIT) PWR_powerOff(); // added for macOS debug
 		
 		if (btn==BTN_NONE) continue;
 		

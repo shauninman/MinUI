@@ -1,0 +1,13 @@
+#!/bin/sh
+
+date > $LOGS_PATH/shutdown.txt
+
+printf s >/proc/sysrq-trigger 2>/dev/null
+printf u >/proc/sysrq-trigger 2>/dev/null
+printf o >/proc/sysrq-trigger 2>/dev/null
+
+# should never reach here
+exec /sbin/poweroff -f
+
+# should really never reach here
+sleep 60
