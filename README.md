@@ -86,7 +86,7 @@ Extras:
 | Powkiddy RGB30 | MinUI-20231014b-1 | Deprecated |
 | Trimui Brick | MinUI-20241028-0 | Deprecated |
 | Trimui Smart | MinUI-20230922b-2 | Deprecated |
-| Trimui Smart Pro | MinUI-20231111b-2 | Maintained |
+| Trimui Smart Pro | MinUI-20231111b-2 | Deprecated |
 
 > [!NOTE]
 > **Active** actively working on compatibility and improvements specific to this device  
