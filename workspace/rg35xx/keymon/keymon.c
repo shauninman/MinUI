@@ -165,4 +165,7 @@ int main (int argc, char *argv[]) {
 		
 		usleep(16666); // 60fps
 	}
+
+	pthread_cancel(ports_pt);
+	pthread_join(ports_pt, NULL);
 }

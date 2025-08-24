@@ -168,4 +168,7 @@ int main (int argc, char *argv[]) {
 		
 		usleep(16666); // 60fps
 	}
+
+	pthread_cancel(hdmi_pt);
+	pthread_join(hdmi_pt, NULL);
 }
