@@ -4,6 +4,7 @@ $(PLATFORM):
 	# installer
 	cp ./workspace/$@/install/boot.sh ./build/BOOT/common/$@.sh
 	cp ./workspace/$@/install/update.sh ./build/SYSTEM/$@/bin/install.sh
+	cp ./build/BOOT/trimui/app/runtrimui.sh ./build/SYSTEM/$@/dat/
 	mkdir -p ./build/BOOT/common/$@/
 	cp ./workspace/$@/install/*.png ./build/BOOT/common/$@/
 	cp -r ./workspace/$@/install/brick ./build/BOOT/common/$@/

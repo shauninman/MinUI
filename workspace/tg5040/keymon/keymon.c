@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <linux/input.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include <msettings.h>
 
@@ -42,6 +43,9 @@
 static int inputs[INPUT_COUNT] = {};
 static struct input_event ev;
 
+static volatile int quit = 0;
+static void on_term(int sig) { quit = 1; }
+
 static int getInt(char* path) {
 	int i = 0;
 	FILE *file = fopen(path, "r");
@@ -59,7 +63,7 @@ static void* watchMute(void *arg) {
 	is_muted = was_muted = getInt(MUTE_STATE_PATH);
 	SetMute(is_muted);
 	
-	while(1) {
+	while(!quit) {
 		usleep(200000); // 5 times per second
 		
 		is_muted = getInt(MUTE_STATE_PATH);
@@ -69,10 +73,14 @@ static void* watchMute(void *arg) {
 		}
 	}
 	
-	return 0;
+	return NULL;
 }
 
 int main (int argc, char *argv[]) {
+	struct sigaction sa = {0};
+	sa.sa_handler = on_term;
+	sigaction(SIGTERM, &sa, NULL);
+	
 	InitSettings();
 	pthread_create(&mute_pt, NULL, &watchMute, NULL);
 	
@@ -103,7 +111,7 @@ int main (int argc, char *argv[]) {
 	then = tod.tv_sec * 1000 + tod.tv_usec / 1000; // essential SDL_GetTicks()
 	ignore = 0;
 	
-	while (1) {
+	while (!quit) {
 		gettimeofday(&tod, NULL);
 		now = tod.tv_sec * 1000 + tod.tv_usec / 1000;
 		if (now-then>1000) ignore = 1; // ignore input that arrived during sleep
@@ -192,4 +200,11 @@ int main (int argc, char *argv[]) {
 		
 		usleep(16666); // 60fps
 	}
+	
+	for (int i=0; i<INPUT_COUNT; i++) {
+		close(inputs[i]);
+	}
+	
+	pthread_cancel(mute_pt);
+	pthread_join(mute_pt, NULL);
 }

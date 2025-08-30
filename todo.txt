@@ -2,8 +2,7 @@ Changes
 
 BASE
 
-- tg5040: potential fix for hung shutdowns
-- all: added PAK.pak for /Roms/Native (PAK)/
+- tg5040: fix and recovery from faux poweroff/limbo state
 
 EXTRAS
 
@@ -21,6 +20,13 @@ tg5040
 		(not /usr/trimui/bin/runtrimui.sh)
 		to a procd service to avoid a busybox race condition
 		I have observed the issue even with this setup
+	- sysrq suo
+		I think I've encountered a hang even with this
+		after almost two weeks
+		or I jumped the gun on a reset?
+	- tried disabling ehci1/ohci1
+		might have just encountered it :sob:
+		definitely still happening (from autosleep this time :weary:)
 
 all
 	deprecate everything

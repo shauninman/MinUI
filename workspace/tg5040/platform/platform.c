@@ -514,6 +514,7 @@ void PLAT_enableBacklight(int enable) {
 }
 
 void PLAT_powerOff(void) {
+	// break the MinUI.pak/launch.sh while loop
 	unlink("/tmp/minui_exec");
 	sleep(2);
 
@@ -524,9 +525,7 @@ void PLAT_powerOff(void) {
 	PWR_quit();
 	GFX_quit();
 	
-	// stock does this (except with native poweroff)
-	system("shutdown");
-	sleep(60);
+	exit(0); // poweroff handled by PLATFORM/bin/shutdown
 }
 
 ///////////////////////////////

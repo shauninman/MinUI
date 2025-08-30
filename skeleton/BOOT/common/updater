@@ -33,9 +33,4 @@ if [ -z "$PLATFORM" ] && [ -f /usr/trimui/bin/runtrimui.sh ]; then
 	PLATFORM="tg5040"
 fi
 
-/mnt/SDCARD/.tmp_update/$PLATFORM.sh # &> /mnt/SDCARD/boot.txt
-
-# force shutdown so nothing can modify the SD card
-echo s > /proc/sysrq-trigger
-echo u > /proc/sysrq-trigger
-echo o > /proc/sysrq-trigger
+exec "/mnt/SDCARD/.tmp_update/$PLATFORM.sh" # &> /mnt/SDCARD/boot.txt

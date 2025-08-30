@@ -39,11 +39,6 @@ fi
 
 #######################################
 
-#PD11 pull high for VCC-5v
-echo 107 > /sys/class/gpio/export
-echo -n out > /sys/class/gpio/gpio107/direction
-echo -n 1 > /sys/class/gpio/gpio107/value
-
 #rumble motor PH3
 echo 227 > /sys/class/gpio/export
 echo -n out > /sys/class/gpio/gpio227/direction
@@ -76,8 +71,23 @@ if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
 	echo 0 > /sys/class/led_anim/max_scale_f1f2
 fi
 
+# set default usb mode
+usb_device.sh
+
+# match stock audio
+tinymix set 9 1
+tinymix set 1 0
+
+# run stock keymon (in background) for a moment
+( keymon & PID=$!; sleep 1; kill -s TERM $PID ) &
+
 # start stock gpio input daemon
+mkdir -p /tmp/trimui_inputd
 trimui_inputd &
+
+# start stock hardware daemon
+# no effect but also no harm (so far)
+hardwareservice &
 
 echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
@@ -85,11 +95,11 @@ CPU_SPEED_PERF=2000000
 echo $CPU_SPEED_PERF > $CPU_PATH
 
 # disable internet stuff
+killall MtpDaemon
+killall wpa_supplicant
+killall udhcpc
 rfkill block bluetooth
 rfkill block wifi
-killall udhcpc
-killall MtpDaemon
-/etc/init.d/wpa_supplicant stop # not sure this is working
 
 keymon.elf & # &> $SDCARD_PATH/keymon.txt &
 
@@ -109,7 +119,7 @@ NEXT_PATH="/tmp/next"
 touch "$EXEC_PATH"  && sync
 while [ -f $EXEC_PATH ]; do
 	minui.elf &> $LOGS_PATH/minui.txt
-	echo $CPU_SPEED_PERF > $CPU_PATH
+	[ -f $EXEC_PATH ] && echo $CPU_SPEED_PERF > $CPU_PATH
 	echo `date +'%F %T'` > "$DATETIME_PATH"
 	sync
 	
@@ -117,10 +127,10 @@ while [ -f $EXEC_PATH ]; do
 		CMD=`cat $NEXT_PATH`
 		eval $CMD
 		rm -f $NEXT_PATH
-		echo $CPU_SPEED_PERF > $CPU_PATH
+		[ -f $EXEC_PATH ] && echo $CPU_SPEED_PERF > $CPU_PATH
 		echo `date +'%F %T'` > "$DATETIME_PATH"
 		sync
 	fi
 done
 
-poweroff && sleep 10 # just in case
+exec shutdown

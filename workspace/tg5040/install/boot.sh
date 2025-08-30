@@ -39,12 +39,9 @@ if [ -f "$UPDATE_PATH" ]; then
 	if [ -f $SYSTEM_PATH/$PLATFORM/bin/install.sh ]; then
 		$SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/log.txt
 	fi
-	
 fi
 
 LAUNCH_PATH="$SYSTEM_PATH/$PLATFORM/paks/MinUI.pak/launch.sh"
-while [ -f "$LAUNCH_PATH" ] ; do
-	"$LAUNCH_PATH"
-done
-
-poweroff # under no circumstances should stock be allowed to touch this card
+if [ -f "$LAUNCH_PATH" ] ; then
+	exec "$LAUNCH_PATH"
+fi

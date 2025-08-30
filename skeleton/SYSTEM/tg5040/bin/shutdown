@@ -1,13 +1,61 @@
 #!/bin/sh
 
-date > $LOGS_PATH/shutdown.txt
+# copy to /tmp before running
+case "$0" in
+  /tmp/*) 
+    # already running from /tmp, just continue
+    ;;
+  *)
+    TMP_COPY="/tmp/$(basename "$0")"
+    cp "$0" "$TMP_COPY"
+    chmod +x "$TMP_COPY"
+    exec "$TMP_COPY" "$@"
+    ;;
+esac
 
-printf s >/proc/sysrq-trigger 2>/dev/null
-printf u >/proc/sysrq-trigger 2>/dev/null
-printf o >/proc/sysrq-trigger 2>/dev/null
+# quit keymon.elf
+echo 1 > /sys/kernel/rcu_expedited
+PID=$(pidof keymon.elf)
+kill -CONT $PID # might be sleeping
+kill -TERM $PID
+wait $PID
 
-# should never reach here
-exec /sbin/poweroff -f
+# turn off led
+echo 0 > /sys/class/led_anim/enable
+killall -s TERM hardwareservice
+killall -s TERM trimui_inputd
 
-# should really never reach here
+# turn off adbd
+/etc/init.d/adbd stop
+
+sync && umount -l /mnt/SDCARD
+
+#######################
+#
+# LOG=/mnt/UDISK/shutdown.txt
+# export COLUMNS=1024
+# echo "===== $(date) =====" > $LOG
+#
+# echo "--- running processes ---" >> $LOG
+# ps >> $LOG
+#
+# echo "--- process tree ---" >> $LOG
+# pstree -p >> $LOG
+#
+# echo "--- mounts ---" >> $LOG
+# cat /proc/mounts >> $LOG
+#
+# echo "--- keymon ($PID) ---" >> $LOG
+# cat /proc/$PID/stack >> $LOG
+# ls -l /proc/$PID/fd >> $LOG
+# cat /proc/$PID/wchan >> $LOG
+#
+#######################
+
+# hardware-based reset if software-based poweroff fails
+ubus call system watchdog '{"timeout":8,"frequency":2,"magicclose":false}'
+sync && ubus call system watchdog '{"stop":true}'
+
+# actual poweroff
+/sbin/poweroff
 sleep 60
