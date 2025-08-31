@@ -22,40 +22,52 @@ wait $PID
 
 # turn off led
 echo 0 > /sys/class/led_anim/enable
+echo 0 > /sys/class/led_anim/effect_enable
 killall -s TERM hardwareservice
 killall -s TERM trimui_inputd
 
 # turn off adbd
 /etc/init.d/adbd stop
+umount /dev/usb-ffs/adb
+
+# turn off other chatty services pre-poweroff
+killall ntpd
+killall logread
+
+# quiet udev
+udevadm settle -t 3
+udevadm control --stop-exec-queue
+killall udevd
 
 sync && umount -l /mnt/SDCARD
 
 #######################
-#
-# LOG=/mnt/UDISK/shutdown.txt
-# export COLUMNS=1024
-# echo "===== $(date) =====" > $LOG
-#
-# echo "--- running processes ---" >> $LOG
-# ps >> $LOG
-#
-# echo "--- process tree ---" >> $LOG
-# pstree -p >> $LOG
-#
-# echo "--- mounts ---" >> $LOG
-# cat /proc/mounts >> $LOG
-#
-# echo "--- keymon ($PID) ---" >> $LOG
-# cat /proc/$PID/stack >> $LOG
-# ls -l /proc/$PID/fd >> $LOG
-# cat /proc/$PID/wchan >> $LOG
-#
+
+LOG=/mnt/UDISK/shutdown.txt
+export COLUMNS=1024
+echo "===== $(date) =====" > $LOG
+
+#echo "--- running processes ---" >> $LOG
+ps >> $LOG
+
+echo "--- process tree ---" >> $LOG
+pstree -p >> $LOG
+
+echo "--- mounts ---" >> $LOG
+cat /proc/mounts >> $LOG
+
+echo "--- keymon ($PID) ---" >> $LOG
+cat /proc/$PID/stack >> $LOG
+ls -l /proc/$PID/fd >> $LOG
+cat /proc/$PID/wchan >> $LOG
+
 #######################
+
+umount /mnt/UDISK
 
 # hardware-based reset if software-based poweroff fails
 ubus call system watchdog '{"timeout":8,"frequency":2,"magicclose":false}'
 sync && ubus call system watchdog '{"stop":true}'
 
 # actual poweroff
-/sbin/poweroff
-sleep 60
+exec /sbin/poweroff

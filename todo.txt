@@ -2,31 +2,13 @@ Changes
 
 BASE
 
-- tg5040: fix and recovery from faux poweroff/limbo state
+- tg5040: fix for and recovery from faux poweroff/limbo state
 
 EXTRAS
 
 - 
 
 ---
-
-tg5040
-	- stock MainUI just does poweroff then sleep 60
-	- could this be responsible? 
-		else if (event.type==SDL_QUIT) PWR_powerOff();
-		I _think_ I still encountered a hang after commenting this out
-		but it was only used for macOS so I'm leaving it off
-	- ChatGPT suggested changing /etc/init.d/runtrimui 
-		(not /usr/trimui/bin/runtrimui.sh)
-		to a procd service to avoid a busybox race condition
-		I have observed the issue even with this setup
-	- sysrq suo
-		I think I've encountered a hang even with this
-		after almost two weeks
-		or I jumped the gun on a reset?
-	- tried disabling ehci1/ohci1
-		might have just encountered it :sob:
-		definitely still happening (from autosleep this time :weary:)
 
 all
 	deprecate everything
@@ -94,7 +76,7 @@ my355
 		test + bootlogo
 		
 	minui can't install if
-		MinUI is aleady installed on the card and the tmp_update hook has already been installed previously
+		MinUI is already installed on the card and the tmp_update hook has already been installed previously
 		solution
 			delete .tmp_update and reinstall
 			
@@ -146,7 +128,7 @@ next
 		trimuismart		sdl		show.elf image.png
 		miyoomini		fb0		show.elf image.png
 		trimui			sdl		show.elf image await_input
-		tg5040/tg3040	sdl2	show.elf image.png delay (uses window surface as screen)
+		tg5040			sdl2	show.elf image.png delay (uses window surface as screen)
 		rgb30			sdl2	show.elf image.png delay (uses window surface as screen)
 		rg35xxplus		sdl2	show.elf image.png delay
 		
