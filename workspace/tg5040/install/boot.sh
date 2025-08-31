@@ -31,10 +31,13 @@ if [ -f "$UPDATE_PATH" ]; then
 	else
 		./show.elf ./$DEVICE/installing.png
 	fi
-
+	
+	mount -o remount,rw,async "$SDCARD_PATH"
 	./unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH" # &> /mnt/SDCARD/unzip.txt
 	rm -f "$UPDATE_PATH"
-
+	sync
+	mount -o remount,rw,sync "$SDCARD_PATH"
+	
 	# the updated system finishes the install/update
 	if [ -f $SYSTEM_PATH/$PLATFORM/bin/install.sh ]; then
 		$SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/log.txt
