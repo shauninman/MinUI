@@ -2,13 +2,27 @@ Changes
 
 BASE
 
-- tg5040: fix for and recovery from faux poweroff/limbo state
+- rg35xxplus: added initial support for RG34xxSP
+- tg5040: potential fix for and automatic reset from faux poweroff/limbo state
 
 EXTRAS
 
 - 
 
 ---
+
+tg5040 lifetime
+	/etc/rc.d/S99runtrimui -> /etc/init.d/runtrimui
+		/usr/trimui/bin/runtrimui.sh
+			exec /mnt/SDCARD/.tmp_update/updater
+				exec /mnt/SDCARD/.tmp_update/tg5040.sh
+					exec /mnt/SDCARD/.system/tg5040/paks/MinUI.pak/launch.sh
+						/mnt/SDCARD/.system/tg5040/bin/minui.elf
+								exec /mnt/SDCARD/.system/tg5040/bin/shutdown
+						-- OR --
+						/mnt/SDCARD/.system/tg5040/paks/Emus/<EMU>.pak/launch.sh
+							/mnt/SDCARD/.system/tg5040/bin/minarch.elf
+								exec /mnt/SDCARD/.system/tg5040/bin/shutdown
 
 all
 	deprecate everything
