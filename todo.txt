@@ -12,6 +12,7 @@ EXTRAS
 ---
 
 tg5040 lifetime
+	what if limbo is caused by powering off the screen before shutdown?
 	/etc/rc.d/S99runtrimui -> /etc/init.d/runtrimui
 		/usr/trimui/bin/runtrimui.sh
 			exec /mnt/SDCARD/.tmp_update/updater
