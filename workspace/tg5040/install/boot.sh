@@ -27,10 +27,11 @@ if [ -f "$UPDATE_PATH" ]; then
 	
 	cd $(dirname "$0")/$PLATFORM
 	if [ -d "$SYSTEM_PATH" ]; then
-		./show.elf ./$DEVICE/updating.png
+		ACTION=updating
 	else
-		./show.elf ./$DEVICE/installing.png
+		ACTION=installing
 	fi
+	./show.elf ./$DEVICE/$ACTION.png
 	
 	mount -o remount,rw,async "$SDCARD_PATH"
 	./unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH" # &> /mnt/SDCARD/unzip.txt
@@ -41,6 +42,10 @@ if [ -f "$UPDATE_PATH" ]; then
 	# the updated system finishes the install/update
 	if [ -f $SYSTEM_PATH/$PLATFORM/bin/install.sh ]; then
 		$SYSTEM_PATH/$PLATFORM/bin/install.sh # &> $SDCARD_PATH/log.txt
+	fi
+	
+	if [ "$ACTION" = "installing" ]; then
+		reboot
 	fi
 fi
 

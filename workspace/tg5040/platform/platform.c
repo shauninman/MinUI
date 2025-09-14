@@ -530,7 +530,7 @@ void PLAT_powerOff(void) {
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
-	PLAT_enableLED(0);
+	PLAT_enableLED(0); // leave display alone
 	SND_quit();
 	VIB_quit();
 	PWR_quit();
