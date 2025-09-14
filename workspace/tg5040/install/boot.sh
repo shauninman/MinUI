@@ -12,17 +12,20 @@ CPU_SPEED_PERF=2000000
 echo $CPU_SPEED_PERF > $CPU_PATH
 
 # install/update
-if [ -f "$UPDATE_PATH" ]; then 
-	echo ok
+if [ -f "$UPDATE_PATH" ]; then
 	export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
 	export PATH=/usr/trimui/bin:$PATH
 
-	# leds_off
-	echo 0 > /sys/class/led_anim/max_scale
-	
 	TRIMUI_MODEL=`strings /usr/trimui/bin/MainUI | grep ^Trimui`
 	if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
 		DEVICE="brick"
+	fi
+
+	# leds_off
+	echo 0 > /sys/class/led_anim/max_scale
+	if [ "$DEVICE" = "brick" ]; then
+		echo 0 > /sys/class/led_anim/max_scale_lr
+		echo 0 > /sys/class/led_anim/max_scale_f1f2
 	fi
 	
 	cd $(dirname "$0")/$PLATFORM
