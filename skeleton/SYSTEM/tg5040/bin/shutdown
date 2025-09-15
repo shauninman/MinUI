@@ -47,7 +47,7 @@ LOG=/mnt/UDISK/shutdown.txt
 export COLUMNS=1024
 echo "===== $(date) =====" > $LOG
 
-#echo "--- running processes ---" >> $LOG
+echo "--- running processes ---" >> $LOG
 ps >> $LOG
 
 echo "--- process tree ---" >> $LOG
