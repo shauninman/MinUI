@@ -6,6 +6,10 @@ SDCARD_PATH="/mnt/SDCARD"
 UPDATE_PATH="$SDCARD_PATH/MinUI.zip"
 SYSTEM_PATH="$SDCARD_PATH/.system"
 
+# for Brick
+mount -o remount,rw,async "$SDCARD_PATH"
+mount -o remount,rw,async "/mnt/UDISK"
+
 echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
 CPU_SPEED_PERF=2000000
@@ -36,11 +40,9 @@ if [ -f "$UPDATE_PATH" ]; then
 	fi
 	./show.elf ./$DEVICE/$ACTION.png
 	
-	mount -o remount,rw,async "$SDCARD_PATH"
 	./unzip -o "$UPDATE_PATH" -d "$SDCARD_PATH" # &> /mnt/SDCARD/unzip.txt
 	rm -f "$UPDATE_PATH"
 	sync
-	mount -o remount,rw,sync "$SDCARD_PATH"
 	
 	# the updated system finishes the install/update
 	if [ -f $SYSTEM_PATH/$PLATFORM/bin/install.sh ]; then
