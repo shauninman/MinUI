@@ -68,7 +68,7 @@ Extras:
 | -- | -- | -- |
 | Anbernic RG28xx | MinUI-20240429b-2 | Deprecated |
 | Anbernic RG34xx | MinUI-20241227-0 | Deprecated |
-| Anbernic RG34xxSP | MinUI-20250913-0 | Deprecated |
+| Anbernic RG34xxSP | MinUI-20250920-0 | Deprecated |
 | Anbernic RG35xx | MinUI-20230922b-2 | Deprecated |
 | Anbernic RG35xx Plus | MinUI-20240106b-0 | Deprecated |
 | Anbernic RG35xxH | MinUI-20240120b-1 | Deprecated |
