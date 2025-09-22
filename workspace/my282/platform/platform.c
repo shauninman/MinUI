@@ -666,9 +666,9 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	else           *charge =  10;
 
 	// wifi status, just hooking into the regular PWR polling
-	// char status[16];
-	// getFile("/sys/class/net/wlan0/operstate", status,16);
-	// online = prefixMatch("up", status);
+	char status[16];
+	getFile("/sys/class/net/wlan0/operstate", status,16);
+	online = prefixMatch("up", status);
 }
 
 #define LED_PATH "/sys/class/leds/led1/brightness"
