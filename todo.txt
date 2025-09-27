@@ -2,7 +2,8 @@ Changes
 
 BASE
 
-- 
+- rg35xxplus: fixed garbled installing/updating graphic (RG34xxSP)
+- rg35xxplus: fixed HDMI out resolution (RG34xxSP)
 
 EXTRAS
 

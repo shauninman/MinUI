@@ -65,11 +65,14 @@ if [ -f $UPDATE_PATH ]; then
 		;;
 	esac
 	
-	if [ "$RGXX_MODEL" = "RGcubexx" ]; then
-		SUFFIX="-s"
-	elif [ "$RGXX_MODEL" = "RG34xx" ]; then
-		SUFFIX="-w"
-	fi
+	case "$RGXX_MODEL" in
+		RGcubexx)
+			SUFFIX="-s"
+			;;
+		RG34xx*)
+			SUFFIX="-w"
+			;;
+	esac
 	
 	if [ ! -d $SYSTEM_PATH ]; then
 		ACTION=installing
