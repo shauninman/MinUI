@@ -28,12 +28,9 @@ reclock
 
 killall -9 tee
 rm -f "$SDCARD_PATH/update.log"
-while :; do
-	killall -9 wpa_supplicant
-	killall -9 MtpDaemon
-	ifconfig wlan0 down
-	sleep 2
-done &
+killall -9 MtpDaemon
+killall -9 wpa_supplicant
+ifconfig wlan0 down
 
 #######################################
 
