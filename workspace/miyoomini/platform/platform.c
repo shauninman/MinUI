@@ -151,6 +151,22 @@ static inline void GFX_BlitSurfaceExec(SDL_Surface *src, SDL_Rect *srcrect, SDL_
 
 ///////////////////////////////
 
+#define LID_PATH "/sys/devices/soc0/soc/soc:hall-mh248/hallvalue"
+void PLAT_initLid(void) {
+	lid.has_lid = exists(LID_PATH);
+}
+int PLAT_lidChanged(int* state) {
+	if (lid.has_lid) {
+		int lid_open = getInt(LID_PATH);
+		if (lid_open!=lid.is_open) {
+			lid.is_open = lid_open;
+			if (state) *state = lid_open;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void PLAT_initInput(void) {
 	// buh
 }
@@ -446,6 +462,7 @@ int axp_read(unsigned char address) {
 
 ///////////////////////////////
 
+static int online = 0;
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	*is_charging = is_plus ? (axp_read(0x00) & 0x4) > 0 : getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
 	
@@ -462,6 +479,10 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// TODO: tmp
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
+	
+	char status[16];
+	getFile("/sys/class/net/wlan0/operstate", status,16);
+	online = prefixMatch("up", status);
 }
 
 void PLAT_enableBacklight(int enable) {
@@ -493,14 +514,6 @@ void PLAT_powerOff(void) {
 }
 
 ///////////////////////////////
-
-// #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
-// void PLAT_setCPUSpeed(int speed) {
-// 	// TODO: this isn't quite right
-// 	if (speed==CPU_SPEED_MENU) putFile(GOVERNOR_PATH, "powersave");
-// 	else if (speed==CPU_SPEED_POWERSAVE) putFile(GOVERNOR_PATH, "ondemand");
-// 	else putFile(GOVERNOR_PATH, "performance");
-// }
 
 // copy/paste of 35XX version now that we have our own overclock.elf
 void PLAT_setCPUSpeed(int speed) {
@@ -541,9 +554,12 @@ int PLAT_pickSampleRate(int requested, int max) {
 }
 
 char* PLAT_getModel(void) {
-	return is_plus ? "Miyoo Mini Plus" : "Miyoo Mini";
+	char* model = getenv("MY_MODEL");
+	if (exactMatch(model,"MY285")) return "Miyoo Mini Flip";
+	else if (is_plus) return "Miyoo Mini Plus";
+	else return "Miyoo Mini";
 }
 
 int PLAT_isOnline(void) {
-	return 0;
+	return online;
 }

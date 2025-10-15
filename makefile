@@ -121,6 +121,7 @@ special:
 	cp -R ./build/BOOT/.tmp_update ./build/BASE/magicx/
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo354
 	cp -R ./build/BASE/miyoo ./build/BASE/miyoo355
+	cp -R ./build/BASE/miyoo ./build/BASE/miyoo285
 ifneq (,$(findstring my355, $(PLATFORMS)))
 	cp -R ./workspace/my355/init ./build/BASE/miyoo355/app/my355
 	cp -r ./workspace/my355/other/squashfs/output/* ./build/BASE/miyoo355/app/my355/payload/
@@ -158,7 +159,7 @@ package: tidy
 	mv ./build/PAYLOAD/MinUI.zip ./build/BASE
 	
 	# TODO: can I just add everything in BASE to zip?
-	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo miyoo354 trimui rg35xx rg35xxplus gkdpixel miyoo355 magicx em_ui.sh MinUI.zip README.txt
+	cd ./build/BASE && zip -r ../../releases/$(RELEASE_NAME)-base.zip Bios Roms Saves miyoo miyoo354 trimui rg35xx rg35xxplus gkdpixel miyoo355 magicx miyoo285 em_ui.sh MinUI.zip README.txt
 	cd ./build/EXTRAS && zip -r ../../releases/$(RELEASE_NAME)-extras.zip Bios Emus Roms Saves Tools README.txt
 	echo "$(RELEASE_NAME)" > ./build/latest.txt
 	

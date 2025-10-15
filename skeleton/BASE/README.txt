@@ -64,17 +64,15 @@ MIYOO FLIP
 
 Copy the "miyoo355" folder and "MinUI.zip" (without unzipping) to the root of the SD card. Put the SD card into the right slot (beneath the power button).
 
+MIYOO MINI FLIP
+
+Copy the "miyoo285" folder and "MinUI.zip" (without unzipping) to the root of the SD card.
+
 M17
 
 Copy the "em_ui.sh" file and "MinUI.zip" (without unzipping) to the root of the SD card.
 
-RG35XX
-
-MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
-
-Copy "/rg35xx/dmenu.bin" (just the file) to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
-
-RG35XX PLUS / RG35XX H / RG35XX 2024 / RG28XX / RG35XXSP / RG40XXH / RGCUBEXX / RG34XX
+RG35XX PLUS / RG35XX H / RG35XX 2024 / RG28XX / RG35XXSP / RG40XXH / RGCUBEXX / RG34XX / RG34XXSP
 
 MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it. (Note that the PLUS/H/2024/SP stock TF1 is not compatible with the 28XX/40XXH and vice versa.)
 
@@ -89,6 +87,12 @@ Backup your stock SD card (not just the "ROMS" partition but the entire thing). 
 Copy the "gkdpixel" folder and "MinUI.zip" (without unzipping) to the root of the "ROMS" partition of the SD card. (On the GKD Mini should be TF1.)
 
 Boot stock, navigate to the "APP" folder and launch "file manager". Then use the d-pad and A button to navigate to "/media/roms/gkdpixel". Highlight the "install.sh" file and press A to open a menu and select "Execute" to install MinUI.
+
+RG35XX (original)
+
+MinUI is meant to be installed over a fresh copy of the stock Anbernic firmware. You can use the stock TF1 card, reports of its poor quality are greatly exaggerated and, as long as you are using the recommended two card setup, no userdata is stored on it.
+
+Copy "/rg35xx/dmenu.bin" (just the file) to the root of the MISC partition of the TF1 card. Copy "MinUI.zip" (without unzipping) to the root of the TF2 card.
 
 ----------------------------------------
 Updating

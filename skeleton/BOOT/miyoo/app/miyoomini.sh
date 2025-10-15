@@ -5,15 +5,10 @@ if [ -f "/customer/app/axp_test" ]; then
 	IS_PLUS=true
 fi
 
-if $IS_PLUS; then
-	MIYOO_DIR="miyoo354"
-else
-	MIYOO_DIR="miyoo"
-fi
-
-
 SDCARD_PATH=/mnt/SDCARD
-cd "$SDCARD_PATH/$MIYOO_DIR/app"
+MIYOO_PATH=$(cd "$(dirname "$0")"/.. && pwd)
+
+cd "$MIYOO_PATH/app"
 
 export LD_LIBRARY_PATH=/lib:/config/lib:/customer/lib
 
@@ -34,7 +29,7 @@ fi
 
 # .tmp_update/updater does the actual installation (and later, updating)
 cp -rf .tmp_update $SDCARD_PATH/
-rm -rf "$SDCARD_PATH/$MIYOO_DIR"
+rm -rf "$MIYOO_PATH"
 sync
 $SDCARD_PATH/.tmp_update/updater
 

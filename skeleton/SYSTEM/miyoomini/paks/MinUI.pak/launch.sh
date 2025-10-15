@@ -25,6 +25,8 @@ fi
 
 #######################################
 
+export MY_MODEL=`strings -n 5 /customer/app/MainUI | grep MY` # 0.13s
+
 if [ -f /customer/app/axp_test ]; then
 	IS_PLUS=true
 else
