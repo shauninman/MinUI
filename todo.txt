@@ -8,14 +8,10 @@ BASE
 
 EXTRAS
 
+- miyoomini: added Removing Loading.pak (for Mini Flip, untested on others)
 - miyoomini: added ADBD.pak (for Plus and Mini Flip)
 
 ---
-
-update readme for latest rg35xxplus devices
-	miniflip
-
-my285:	
 
 all
 	deprecate everything
@@ -25,6 +21,8 @@ all
 		PS games crash on load...
 			but before SND is even initialized :\
 
+my285:
+	
 h700/a133
 	the power/shutdown issues are becoming a nuisance
 		ry said it fake powered down during auto-poweroff?
