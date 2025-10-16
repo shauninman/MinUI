@@ -1,3 +1,5 @@
+#!/bin/sh
+
 overclock.elf $CPU_SPEED_GAME # slow down, my282 didn't like overclock during this operation
 
 DIR="$(dirname "$0")"
