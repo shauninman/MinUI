@@ -134,6 +134,13 @@ int main(void) {
 	int fb0_fd = open("/dev/fb0", O_RDWR);
 	struct fb_var_screeninfo vinfo;
 	ioctl(fb0_fd, FBIOGET_VSCREENINFO, &vinfo);
+	// force to 640x480
+	vinfo.xres = vinfo.xres_virtual = 640;
+	vinfo.yres = 480;
+	vinfo.yres_virtual = 1440;
+	vinfo.activate = FB_ACTIVATE_NOW;
+	ioctl(fb0_fd, FBIOPUT_VSCREENINFO, &vinfo);
+	ioctl(fb0_fd, FBIOGET_VSCREENINFO, &vinfo);
 	int map_size = vinfo.xres * vinfo.yres * (vinfo.bits_per_pixel / 8); // 640x480x4
 	char* fb0_map = (char*)mmap(0, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb0_fd, 0);
 	

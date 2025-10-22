@@ -3,13 +3,16 @@ Changes
 BASE
 
 - miyoomini: initial support for Miyoo Mini Flip
+- miyoomini: fixed garbled installing/updating/charging graphics (Mini Flip & v4 Mini)
+- miyoomini: updated custom SDL to support 560p screens (Mini Flip & v4 Mini)
 - rg35xxplus: fixed garbled installing/updating graphic (RG34xxSP)
 - rg35xxplus: fixed HDMI out resolution (RG34xxSP)
 
 EXTRAS
 
+- miyoomini: added Toggle 560p.pak for (Mini Flip & v4 Mini on updated ofw)
 - miyoomini: added Removing Loading.pak (for Mini Flip, untested on others)
-- miyoomini: added ADBD.pak (for Plus and Mini Flip)
+- miyoomini: added ADBD.pak (for Plus & Mini Flip)
 
 ---
 
@@ -22,6 +25,7 @@ all
 			but before SND is even initialized :\
 
 my285:
+	
 	
 h700/a133
 	the power/shutdown issues are becoming a nuisance

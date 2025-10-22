@@ -22,7 +22,9 @@ void LOG_note(int level, const char* fmt, ...);
 ///////////////////////////////
 
 #define PAGE_COUNT	2
+#ifndef PAGE_SCALE
 #define PAGE_SCALE	3
+#endif
 #define PAGE_WIDTH	(FIXED_WIDTH * PAGE_SCALE)
 #define PAGE_HEIGHT	(FIXED_HEIGHT * PAGE_SCALE)
 #define PAGE_PITCH	(PAGE_WIDTH * FIXED_BPP)

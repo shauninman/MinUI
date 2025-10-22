@@ -102,13 +102,20 @@ extern int is_plus;
 
 ///////////////////////////////
 
+extern int is_560p;
 #define FIXED_SCALE 	2
-#define FIXED_WIDTH		640
-#define FIXED_HEIGHT	480
+#define FIXED_WIDTH		(is_560p?752:640)
+#define FIXED_HEIGHT	(is_560p?560:480)
 #define FIXED_BPP		2
 #define FIXED_DEPTH		(FIXED_BPP * 8)
 #define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
 #define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
+
+///////////////////////////////
+
+#define MAIN_ROW_COUNT (is_560p?8:6)
+#define PADDING (is_560p?5:10)
+#define PAGE_SCALE (is_560p?2:3) // need to reduce memory usage for larger screen
 
 ///////////////////////////////
 

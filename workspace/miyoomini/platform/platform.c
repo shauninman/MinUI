@@ -27,6 +27,7 @@
 #include <mi_sys.h>
 #include <mi_gfx.h>
 
+int is_560p = 0;
 int is_plus = 0;
 
 #define	pixelsPa	unused1
@@ -195,8 +196,18 @@ static struct VID_Context {
 	int cleared;
 } vid;
 
+#define MODES_PATH "/sys/class/graphics/fb0/modes"
+static int hasMode(const char *path, const char *mode) {
+    FILE *f = fopen(path, "r"); if (!f) return 0;
+    char s[128];
+    while (fgets(s, sizeof s, f)) if (strstr(s, mode)) return fclose(f), 1;
+    fclose(f); return 0;
+}
+
 SDL_Surface* PLAT_initVideo(void) {
 	is_plus = exists("/customer/app/axp_test");
+	is_560p = hasMode(MODES_PATH, "752x560p") && exists(USERDATA_PATH "/enable-560p");
+	LOG_info("is 560p: %i\n", is_560p);
 	
 	putenv("SDL_HIDE_BATTERY=1"); // using MiniUI's custom SDL
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
