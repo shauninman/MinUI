@@ -83,8 +83,8 @@ Extras:
 | Miyoo A30 | MinUI-20240705-0 | Deprecated |
 | Miyoo Flip | MinUI-20250111-0 | Deprecated |
 | Miyoo Mini | MinUI-20230922b-2 | Deprecated |
-| Miyoo Mini Plus | MinUI-20230922b-2 | Deprecated |
 | Miyoo Mini Flip | MinUI-20251023-0 | Deprecated |
+| Miyoo Mini Plus | MinUI-20230922b-2 | Deprecated |
 | Powkiddy RGB30 | MinUI-20231014b-1 | Deprecated |
 | Trimui Brick | MinUI-20241028-0 | Deprecated |
 | Trimui Smart | MinUI-20230922b-2 | Deprecated |
