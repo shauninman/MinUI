@@ -3,10 +3,11 @@ Changes
 BASE
 
 - miyoomini: initial support for Miyoo Mini Flip
-- miyoomini: fixed garbled installing/updating/charging graphics (Mini Flip & v4 Mini)
 - miyoomini: updated custom SDL to support 560p screens (Mini Flip & v4 Mini)
+- miyoomini: fixed garbled installing/updating/charging graphics (Mini Flip & v4 Mini)
 - rg35xxplus: fixed garbled installing/updating graphic (RG34xxSP)
 - rg35xxplus: fixed HDMI out resolution (RG34xxSP)
+- all: added say.elf
 
 EXTRAS
 
