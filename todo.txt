@@ -14,6 +14,7 @@ EXTRAS
 - miyoomini: added Toggle 560p.pak for (Mini Flip & v4 Mini on updated ofw)
 - miyoomini: added Removing Loading.pak (for Mini Flip, untested on others)
 - miyoomini: added ADBD.pak (for Plus & Mini Flip)
+- miyoomini: added IP.pak (for use with ADBD.pak)
 
 ---
 
