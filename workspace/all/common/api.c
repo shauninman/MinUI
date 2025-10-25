@@ -1531,30 +1531,43 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep, PW
 		checked_charge_at = now;
 	}
 	
+	// Track power button release timing to prevent race condition
+	static uint32_t power_hold_duration = 0;
+
 	if (PAD_justReleased(BTN_POWEROFF) || (power_pressed_at && now-power_pressed_at>=1000)) {
 		if (before_sleep) before_sleep();
 		PWR_powerOff();
 	}
-	
+
 	if (PAD_justPressed(BTN_POWER)) {
 		power_pressed_at = now;
 	}
-	
+
+	// Track how long power button was held when released
+	if (PAD_justReleased(BTN_POWER) && power_pressed_at) {
+		power_hold_duration = now - power_pressed_at;
+	}
+
 	#define SLEEP_DELAY 30000 // 30 seconds
 	if (now-last_input_at>=SLEEP_DELAY && PWR_preventAutosleep()) last_input_at = now;
-	
+
+	// Only allow manual sleep on quick tap (< 500ms), not after long press attempts
+	#define QUICK_TAP_THRESHOLD 500
+	int manual_sleep = pwr.can_sleep && PAD_justReleased(BTN_SLEEP) && power_hold_duration < QUICK_TAP_THRESHOLD;
+
 	if (
 		pwr.requested_sleep || // hardware requested sleep
 		now-last_input_at>=SLEEP_DELAY || // autosleep
-		(pwr.can_sleep && PAD_justReleased(BTN_SLEEP)) // manual sleep
+		manual_sleep // manual sleep (only on quick tap)
 	) {
 		pwr.requested_sleep = 0;
 		if (before_sleep) before_sleep();
 		PWR_fauxSleep();
 		if (after_sleep) after_sleep();
-		
+
 		last_input_at = now = SDL_GetTicks();
 		power_pressed_at = 0;
+		power_hold_duration = 0;
 		dirty = 1;
 	}
 	

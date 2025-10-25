@@ -917,8 +917,15 @@ void PLAT_enableBacklight(int enable) {
 }
 
 void PLAT_powerOff(void) {
-	system("rm -f /tmp/minui_exec && sync");
-	sleep(2);
+	// First sync to ensure all pending writes are committed
+	sync();
+
+	// Remove the exec marker file and sync again
+	system("rm -f /tmp/minui_exec");
+	sync();
+
+	// Give filesystem time to complete all writes (especially important for slow SD cards)
+	sleep(3);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
 	PLAT_enableBacklight(0);
@@ -928,10 +935,13 @@ void PLAT_powerOff(void) {
 	PWR_quit();
 	GFX_quit();
 
+	// Final sync before exit
+	sync();
+
 	// system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	// system("shutdown");
 	// while (1) pause(); // lolwat
-	
+
 	// touch("/tmp/poweroff");
 	// sync();
 	// system("touch /tmp/poweroff && sync");
