@@ -9,6 +9,9 @@ int exactMatch(char* str1, char* str2);
 int containsString(char* haystack, char* needle);
 int hide(char* file_name);
 
+void truncateString(char *string, size_t max_len);
+void wrapString(char *string, size_t max_len, size_t max_lines);
+
 void getDisplayName(const char* in_name, char* out_name);
 void getEmuName(const char* in_name, char* out_name);
 void getEmuPath(char* emu_name, char* pak_path);

@@ -32,6 +32,32 @@ int containsString(char* haystack, char* needle) {
 int hide(char* file_name) {
 	return file_name[0]=='.' || suffixMatch(".disabled", file_name) || exactMatch("map.txt", file_name);
 }
+void truncateString(char *string, size_t max_len) {
+	size_t len = strlen(string) + 1;
+	if (len <= max_len) return;
+
+	strncpy(&string[max_len - 4], "...\0", 4);
+}
+void wrapString(char *string, size_t max_len, size_t max_lines) {
+	char *line = string;
+
+	for (size_t i = 1; i < max_lines; i++) {
+		char *p = line;
+		char *prev;
+		do {
+			prev = p;
+			p = strchr(prev+1, ' ');
+		} while (p && p - line < (int)max_len);
+
+		if (!p && strlen(line) < max_len) break;
+
+		if (prev && prev != line) {
+			line = prev + 1;
+			*prev = '\n';
+		}
+	}
+	truncateString(line, max_len);
+}
 
 void getDisplayName(const char* in_name, char* out_name) {
 	char* tmp;
