@@ -1,3 +1,26 @@
+/**
+ * api.c - Platform abstraction layer implementation for MinUI
+ *
+ * Provides cross-platform API functions for graphics (GFX_*), sound (SND_*),
+ * input (PAD_*), power management (PWR_*), and vibration (VIB_*). This file
+ * implements the common layer that works on all devices, while platform-specific
+ * implementations are provided through PLAT_* functions defined in each platform's
+ * directory.
+ *
+ * Key components:
+ * - Graphics: SDL-based rendering, asset management, text rendering, UI helpers
+ * - Sound: Audio mixing, resampling, ring buffer management
+ * - Input: Button state tracking, repeat handling, analog stick support
+ * - Power: Battery monitoring, sleep/wake, brightness/volume control
+ * - Vibration: Rumble motor control with deferred state changes
+ *
+ * Memory Management:
+ * - SDL surfaces are reference counted (use SDL_FreeSurface when done)
+ * - Audio buffer is dynamically allocated and resized as needed
+ * - Asset textures loaded once at init, freed at quit
+ * - Font resources managed through TTF_CloseFont
+ */
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +42,21 @@
 #include "utils.h"
 
 ///////////////////////////////
+// Logging
+///////////////////////////////
 
+/**
+ * Logs a message at the specified level to stdout/stderr.
+ *
+ * Supports DEBUG, INFO, WARN, and ERROR levels. Debug messages
+ * are only logged when DEBUG is defined at compile time.
+ *
+ * @param level Log level (LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR)
+ * @param fmt Printf-style format string
+ * @param ... Variable arguments for format string
+ *
+ * @note Always flushes stdout to ensure messages appear immediately
+ */
 void LOG_note(int level, const char* fmt, ...) {
 	char buf[1024] = {0};
 	va_list args;
@@ -48,7 +85,11 @@ void LOG_note(int level, const char* fmt, ...) {
 }
 
 ///////////////////////////////
+// Graphics - Core initialization and state
+///////////////////////////////
 
+// Pre-mapped RGB color values for the current display format
+// These are initialized in GFX_init() based on the screen's pixel format
 uint32_t RGB_WHITE;
 uint32_t RGB_BLACK;
 uint32_t RGB_LIGHT_GRAY;
@@ -88,8 +129,30 @@ static struct PWR_Context {
 
 ///////////////////////////////
 
+// Unused variable for discarding return values
 static int _;
 
+/**
+ * Initializes the graphics subsystem.
+ *
+ * Sets up SDL video, loads UI assets, initializes fonts, and prepares
+ * the color palette. This must be called before any other GFX_ functions.
+ *
+ * Asset loading:
+ * - Loads platform-specific asset PNG (e.g., assets@2x.png for 2x scale)
+ * - Defines rectangles for each asset sprite in the texture atlas
+ * - Maps asset IDs to RGB color values for fills
+ *
+ * Font initialization:
+ * - Opens 4 font sizes (large, medium, small, tiny)
+ * - Applies bold style to all fonts
+ * - Font sizes are scaled based on FIXED_SCALE
+ *
+ * @param mode Display mode (MODE_MAIN for launcher, MODE_MENU for in-game)
+ * @return Pointer to main SDL screen surface
+ *
+ * @note Also calls PLAT_initLid() to set up lid detection hardware
+ */
 SDL_Surface* GFX_init(int mode) {
 	// TODO: this doesn't really belong here...
 	// tried adding to PWR_init() but that was no good (not sure why)
@@ -165,6 +228,15 @@ SDL_Surface* GFX_init(int mode) {
 
 	return gfx.screen;
 }
+
+/**
+ * Shuts down the graphics subsystem and frees all resources.
+ *
+ * Closes all fonts, frees the asset texture, clears video memory,
+ * and calls platform-specific cleanup.
+ *
+ * @note Should be called before program exit to prevent resource leaks
+ */
 void GFX_quit(void) {
 	TTF_CloseFont(font.large);
 	TTF_CloseFont(font.medium);
@@ -180,17 +252,49 @@ void GFX_quit(void) {
 	PLAT_quitVideo();
 }
 
+/**
+ * Sets the display mode for UI rendering.
+ *
+ * @param mode MODE_MAIN (launcher) or MODE_MENU (in-game menu)
+ *
+ * @note Affects UI styling - main mode uses darker backgrounds
+ */
 void GFX_setMode(int mode) {
 	gfx.mode = mode;
 }
+
+/**
+ * Gets the current vsync setting.
+ *
+ * @return VSYNC_OFF, VSYNC_LENIENT, or VSYNC_STRICT
+ */
 int GFX_getVsync(void) {
 	return gfx.vsync;
 }
+
+/**
+ * Sets the vsync behavior for frame synchronization.
+ *
+ * Vsync modes:
+ * - VSYNC_OFF: No frame limiting (uses SDL_Delay fallback)
+ * - VSYNC_LENIENT: Skip vsync if frame took too long (default)
+ * - VSYNC_STRICT: Always vsync, even if it causes slowdown
+ *
+ * @param vsync Vsync mode (VSYNC_OFF, VSYNC_LENIENT, VSYNC_STRICT)
+ */
 void GFX_setVsync(int vsync) {
 	PLAT_setVsync(vsync);
 	gfx.vsync = vsync;
 }
 
+/**
+ * Detects if HDMI connection state has changed.
+ *
+ * Tracks whether HDMI was connected/disconnected since last check.
+ * Used to trigger display reconfiguration when needed.
+ *
+ * @return 1 if HDMI state changed, 0 otherwise
+ */
 int GFX_hdmiChanged(void) {
 	static int had_hdmi = -1;
 	int has_hdmi = GetHDMI();
@@ -202,17 +306,49 @@ int GFX_hdmiChanged(void) {
 	return 1;
 }
 
-#define FRAME_BUDGET 17 // 60fps
+// Target frame time in milliseconds (60fps)
+#define FRAME_BUDGET 17
 static uint32_t frame_start = 0;
+
+/**
+ * Marks the beginning of a new frame for timing purposes.
+ *
+ * Records the current timestamp to calculate frame duration.
+ * Used in conjunction with GFX_sync() to maintain consistent frame rate.
+ *
+ * @note Call this at the start of your render loop
+ */
 void GFX_startFrame(void) {
 	frame_start = SDL_GetTicks();
 }
 
+/**
+ * Presents the rendered frame to the display.
+ *
+ * Decides whether to use vsync based on the current vsync mode
+ * and frame timing. With VSYNC_LENIENT, skips vsync if the frame
+ * took longer than FRAME_BUDGET to avoid slowdown.
+ *
+ * @param screen SDL surface to flip to the display
+ *
+ * @note Call GFX_startFrame() before rendering for proper timing
+ */
 void GFX_flip(SDL_Surface* screen) {
 	int should_vsync = (gfx.vsync != VSYNC_OFF && (gfx.vsync == VSYNC_STRICT || frame_start == 0 ||
 	                                               SDL_GetTicks() - frame_start < FRAME_BUDGET));
 	PLAT_flip(screen, should_vsync);
 }
+
+/**
+ * Synchronizes to maintain 60fps when not flipping this frame.
+ *
+ * Call this if you skip rendering a frame but still want to maintain
+ * consistent timing. Waits for the remainder of the frame budget using
+ * vsync or SDL_Delay depending on settings.
+ *
+ * This helps SuperFX games run smoother by maintaining frame timing
+ * even when frames are dropped.
+ */
 void GFX_sync(void) {
 	uint32_t frame_duration = SDL_GetTicks() - frame_start;
 	if (gfx.vsync != VSYNC_OFF) {
@@ -227,11 +363,45 @@ void GFX_sync(void) {
 	}
 }
 
+/**
+ * Checks if the platform supports overscan adjustment.
+ *
+ * Default implementation returns 0 (no overscan support).
+ * Platforms can override this weak symbol to enable overscan.
+ *
+ * @return 1 if overscan is supported, 0 otherwise
+ */
 FALLBACK_IMPLEMENTATION int PLAT_supportsOverscan(void) {
 	return 0;
 }
+
+/**
+ * Sets the color for screen effects (scanlines, grids).
+ *
+ * Default implementation does nothing. Platforms with effect
+ * support override this weak symbol.
+ *
+ * @param next_color Color index for the effect
+ */
 FALLBACK_IMPLEMENTATION void PLAT_setEffectColor(int next_color) {}
 
+///////////////////////////////
+// Graphics - Text rendering and formatting
+///////////////////////////////
+
+/**
+ * Truncates text to fit within a maximum width, adding ellipsis if needed.
+ *
+ * Progressively removes characters from the end and adds "..." until
+ * the text fits. Modifies out_name in place.
+ *
+ * @param font TTF font to measure text with
+ * @param in_name Input text string
+ * @param out_name Output buffer for truncated text
+ * @param max_width Maximum width in pixels
+ * @param padding Additional padding to account for in width
+ * @return Final width of the text in pixels (including padding)
+ */
 int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int max_width,
                      int padding) {
 	int text_width;
@@ -248,6 +418,22 @@ int GFX_truncateText(TTF_Font* font, const char* in_name, char* out_name, int ma
 
 	return text_width;
 }
+
+/**
+ * Wraps text to fit within a maximum width by inserting newlines.
+ *
+ * Breaks text at space characters to create wrapped lines. The last
+ * line is truncated with "..." if it still exceeds max_width.
+ * Modifies the input string in place by replacing spaces with newlines.
+ *
+ * @param font TTF font to measure text with
+ * @param str String to wrap (modified in place)
+ * @param max_width Maximum width per line in pixels
+ * @param max_lines Maximum number of lines (0 for unlimited)
+ * @return Width of the widest line in pixels
+ *
+ * @note Input string is modified - spaces become newlines at wrap points
+ */
 int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {
 	if (!str)
 		return 0;
@@ -310,9 +496,11 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {
 }
 
 ///////////////////////////////
+// Graphics - Anti-aliased scaling (from picoarch)
+///////////////////////////////
 
-// scale_blend (and supporting logic) from picoarch
-
+// Blend arguments structure for anti-aliased scaling
+// Stores the ratio and blend point calculations for both dimensions
 struct blend_args {
 	int w_ratio_in;
 	int w_ratio_out;
@@ -320,21 +508,49 @@ struct blend_args {
 	int h_ratio_in;
 	int h_ratio_out;
 	uint16_t h_bp[2];
-	uint16_t* blend_line;
+	uint16_t* blend_line; // Temporary buffer for blended scanlines
 } blend_args;
 
-// Color averaging macros using math_utils functions
+// Color averaging macros using math_utils functions from utils.c
+// Skip averaging if colors are identical for optimization
 #define AVERAGE16_NOCHK(c1, c2) (average16((c1), (c2)))
 #define AVERAGE32_NOCHK(c1, c2) (average32((c1), (c2)))
 
 #define AVERAGE16(c1, c2) ((c1) == (c2) ? (c1) : AVERAGE16_NOCHK((c1), (c2)))
+// 1:3 weighted average (closer to c2)
 #define AVERAGE16_1_3(c1, c2)                                                                      \
 	((c1) == (c2) ? (c1) : (AVERAGE16_NOCHK(AVERAGE16_NOCHK((c1), (c2)), (c2))))
 
 #define AVERAGE32(c1, c2) ((c1) == (c2) ? (c1) : AVERAGE32_NOCHK((c1), (c2)))
+// 1:3 weighted average for paired RGB565 pixels
 #define AVERAGE32_1_3(c1, c2)                                                                      \
 	((c1) == (c2) ? (c1) : (AVERAGE32_NOCHK(AVERAGE32_NOCHK((c1), (c2)), (c2))))
 
+/**
+ * Anti-aliased scaler implementation using bilinear interpolation.
+ *
+ * Scales RGB565 source image to destination with anti-aliasing for smoother
+ * results than nearest-neighbor. Uses quintic blending zones for smooth
+ * transitions between pixels.
+ *
+ * Algorithm divides each source pixel into 5 zones when scaling:
+ * - Zone 1 (outer): 100% source pixel A
+ * - Zone 2: 75% A, 25% B (1:3 blend)
+ * - Zone 3 (center): 50% A, 50% B (even blend)
+ * - Zone 4: 25% A, 75% B (1:3 blend)
+ * - Zone 5 (outer): 100% source pixel B
+ *
+ * @param src Source image data (RGB565 format)
+ * @param dst Destination image buffer
+ * @param w Source width in pixels
+ * @param h Source height in pixels
+ * @param pitch Source pitch in bytes
+ * @param dst_w Destination width in pixels
+ * @param dst_h Destination height in pixels
+ * @param dst_p Destination pitch in bytes
+ *
+ * @note Requires blend_args to be initialized via GFX_getAAScaler first
+ */
 static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h,
                     uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_p) {
 	int dy = 0;
@@ -430,6 +646,22 @@ static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint
 	}
 }
 
+/**
+ * Initializes the anti-aliased scaler for a given renderer configuration.
+ *
+ * Calculates blend ratios and breakpoints based on the GCD of source
+ * and destination dimensions. Allocates a temporary scanline buffer
+ * for blending operations.
+ *
+ * The blend_denominator controls blend zone widths:
+ * - 5.0 for downscaling (sharper)
+ * - 2.5 for upscaling (smoother)
+ *
+ * @param renderer Renderer configuration with source/dest dimensions
+ * @return Function pointer to scaleAA scaler implementation
+ *
+ * @note Allocates blend_line buffer - call GFX_freeAAScaler to free
+ */
 scaler_t GFX_getAAScaler(const GFX_Renderer* renderer) {
 	int gcd_w, div_w, gcd_h, div_h;
 	blend_args.blend_line = calloc(renderer->src_w, sizeof(uint16_t));
@@ -458,6 +690,13 @@ scaler_t GFX_getAAScaler(const GFX_Renderer* renderer) {
 
 	return scaleAA;
 }
+
+/**
+ * Frees resources allocated by the anti-aliased scaler.
+ *
+ * Deallocates the temporary scanline buffer used for blending.
+ * Safe to call even if scaler was never initialized.
+ */
 void GFX_freeAAScaler(void) {
 	if (blend_args.blend_line != NULL) {
 		free(blend_args.blend_line);
@@ -466,7 +705,20 @@ void GFX_freeAAScaler(void) {
 }
 
 ///////////////////////////////
+// Graphics - Asset and UI element rendering
+///////////////////////////////
 
+/**
+ * Blits a UI asset from the asset texture to a destination surface.
+ *
+ * Assets are pre-defined rectangular regions in the asset PNG file.
+ * The src_rect parameter allows blitting only part of an asset.
+ *
+ * @param asset Asset ID (e.g., ASSET_BUTTON, ASSET_BATTERY)
+ * @param src_rect Optional source rectangle within the asset (NULL for full asset)
+ * @param dst Destination surface
+ * @param dst_rect Destination rectangle (NULL to blit at 0,0)
+ */
 void GFX_blitAsset(int asset, const SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	const SDL_Rect* rect = &asset_rects[asset];
 	SDL_Rect adj_rect = {
@@ -483,6 +735,20 @@ void GFX_blitAsset(int asset, const SDL_Rect* src_rect, SDL_Surface* dst, SDL_Re
 	}
 	SDL_BlitSurface(gfx.assets, &adj_rect, dst, dst_rect);
 }
+
+/**
+ * Renders a rounded pill-shaped UI element.
+ *
+ * Pills are composed of rounded ends from the asset texture with a
+ * stretched middle section. Used for buttons, progress bars, and
+ * status indicators.
+ *
+ * @param asset Asset to use for pill caps (determines color/style)
+ * @param dst Destination surface
+ * @param dst_rect Desired pill dimensions and position
+ *
+ * @note If height is 0, uses asset's default height
+ */
 void GFX_blitPill(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	int x = dst_rect->x;
 	int y = dst_rect->y;
@@ -505,6 +771,17 @@ void GFX_blitPill(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	}
 	GFX_blitAsset(asset, &(SDL_Rect){r, 0, r, h}, dst, &(SDL_Rect){x, y});
 }
+
+/**
+ * Renders a rounded rectangle UI element with stretched corners.
+ *
+ * Similar to pills but for rectangular regions. Blits the four
+ * corners from the asset and fills edges and center with solid color.
+ *
+ * @param asset Asset to use for corner sprites and fill color
+ * @param dst Destination surface
+ * @param dst_rect Rectangle dimensions and position
+ */
 void GFX_blitRect(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	int x = dst_rect->x;
 	int y = dst_rect->y;
@@ -524,6 +801,22 @@ void GFX_blitRect(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	SDL_FillRect(dst, &(SDL_Rect){x + r, y + h - r, w - d, r}, c);
 	GFX_blitAsset(asset, &(SDL_Rect){r, r, r, r}, dst, &(SDL_Rect){x + w - r, y + h - r});
 }
+
+/**
+ * Renders the battery status indicator.
+ *
+ * Displays either:
+ * - Battery icon with charge level fill (when not charging)
+ * - Battery icon with charging bolt (when charging)
+ *
+ * Battery color changes to red when charge is <= 10%.
+ * The fill bar shows percentage visually.
+ *
+ * @param dst Destination surface
+ * @param dst_rect Position for battery indicator
+ *
+ * @note Uses global pwr.is_charging and pwr.charge values
+ */
 void GFX_blitBattery(SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	// LOG_info("dst: %p\n", dst);
 	int x = 0;
@@ -557,6 +850,21 @@ void GFX_blitBattery(SDL_Surface* dst, const SDL_Rect* dst_rect) {
 		              &(SDL_Rect){x + SCALE1(3) + clip.x, y + SCALE1(2)});
 	}
 }
+
+/**
+ * Calculates the total width needed for a button with hint text.
+ *
+ * Buttons consist of:
+ * - Icon/button label (circular or pill-shaped)
+ * - Spacing
+ * - Hint text
+ *
+ * @param hint Hint text to display next to button
+ * @param button Button label (e.g., "A", "B", "START")
+ * @return Total width in pixels needed for button and hint
+ *
+ * @note Special handling for BRIGHTNESS_BUTTON_LABEL ("+ -")
+ */
 int GFX_getButtonWidth(char* hint, char* button) {
 	int button_width = 0;
 	int width;
@@ -576,6 +884,20 @@ int GFX_getButtonWidth(char* hint, char* button) {
 	button_width += width + SCALE1(BUTTON_MARGIN);
 	return button_width;
 }
+
+/**
+ * Renders a button with its label and hint text.
+ *
+ * Single-character labels (A, B, X, Y) are rendered in circular buttons.
+ * Multi-character labels (START, SELECT) are rendered in pill-shaped buttons.
+ *
+ * @param hint Hint text displayed next to button (e.g., "CONFIRM")
+ * @param button Button label (e.g., "A", "START")
+ * @param dst Destination surface
+ * @param dst_rect Position to render button at
+ *
+ * @note Hint text appears to the right of the button icon
+ */
 void GFX_blitButton(char* hint, char* button, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	SDL_Surface* text;
 	int ox = 0;
@@ -620,6 +942,20 @@ void GFX_blitButton(char* hint, char* button, SDL_Surface* dst, SDL_Rect* dst_re
 	                            text->w, text->h});
 	SDL_FreeSurface(text);
 }
+
+/**
+ * Renders a multi-line text message centered in a rectangular area.
+ *
+ * Splits the message into lines and renders them vertically centered
+ * within the destination rectangle. Each line is horizontally centered.
+ *
+ * @param font TTF font to render with
+ * @param msg Message text (can contain newlines)
+ * @param dst Destination surface
+ * @param dst_rect Area to center message in (NULL for full surface)
+ *
+ * @note Maximum 16 lines supported, line height is fixed at 24 (scaled)
+ */
 void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	if (!dst_rect)
 		dst_rect = &(SDL_Rect){0, 0, dst->w, dst->h};
@@ -663,6 +999,19 @@ void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, const SDL_Rect
 	}
 }
 
+/**
+ * Renders the hardware status group (battery, wifi, brightness/volume).
+ *
+ * Displays in top-right corner of screen. Shows either:
+ * - Setting adjustment UI (brightness/volume slider with icon)
+ * - Status icons (battery, optional wifi)
+ *
+ * @param dst Destination surface
+ * @param show_setting 0=status, 1=brightness, 2=volume
+ * @return Width of the rendered group in pixels
+ *
+ * @note Does not display on HDMI output (except status icons)
+ */
 int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 	int ox;
 	int oy;
@@ -733,6 +1082,16 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 
 	return ow;
 }
+
+/**
+ * Renders hardware control button hints at bottom of screen.
+ *
+ * Shows appropriate button combinations for brightness/volume control
+ * based on the current platform's button mapping.
+ *
+ * @param dst Destination surface
+ * @param show_setting Which setting hint to show (1=brightness, 2=volume)
+ */
 void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
 	if (BTN_MOD_VOLUME == BTN_SELECT && BTN_MOD_BRIGHTNESS == BTN_START) {
 		if (show_setting == 1)
@@ -747,6 +1106,18 @@ void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting) {
 	}
 }
 
+/**
+ * Renders a group of buttons with hints in a single pill container.
+ *
+ * Displays up to 2 button-hint pairs in a styled pill background.
+ * On narrow screens, only shows the primary button to save space.
+ *
+ * @param pairs Array of [button, hint, button, hint, NULL] strings
+ * @param primary Which button index is primary (0 or 1)
+ * @param dst Destination surface
+ * @param align_right 1 to right-align, 0 to left-align
+ * @return Total width of the rendered button group in pixels
+ */
 int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_right) {
 	int ox;
 	int oy;
@@ -797,6 +1168,19 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 }
 
 #define MAX_TEXT_LINES 16
+
+/**
+ * Calculates the dimensions of multi-line text.
+ *
+ * Splits text by newlines and measures the widest line.
+ * Height is calculated as line count * leading.
+ *
+ * @param font TTF font to measure with
+ * @param str Text to measure (may contain newlines)
+ * @param leading Line height in pixels
+ * @param w Output: width of widest line
+ * @param h Output: total height (lines * leading)
+ */
 void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h) {
 	char* lines[MAX_TEXT_LINES];
 	int count = splitTextLines(str, lines, MAX_TEXT_LINES);
@@ -825,6 +1209,22 @@ void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h) {
 	}
 	*w = mw;
 }
+
+/**
+ * Renders multi-line text centered in a rectangular area.
+ *
+ * Splits text by newlines and renders each line horizontally centered.
+ * Lines are spaced vertically by the leading parameter.
+ *
+ * @param font TTF font to render with
+ * @param str Text to render (may contain newlines)
+ * @param leading Line spacing in pixels
+ * @param color Text color
+ * @param dst Destination surface
+ * @param dst_rect Area to center text in (NULL for full surface)
+ *
+ * @note Maximum 16 lines supported
+ */
 void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_Surface* dst,
                   SDL_Rect* dst_rect) {
 	if (dst_rect == NULL)
@@ -859,21 +1259,21 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 }
 
 ///////////////////////////////
-
-// based on picoarch's audio
-// implementation, rewritten
-// to (try to) understand it
-// better
+// Sound system - Ring buffer-based audio mixer
+// (Based on picoarch's audio implementation)
+///////////////////////////////
 
 #define MAX_SAMPLE_RATE 48000
-#define BATCH_SIZE 100
+#define BATCH_SIZE 100 // Max frames to batch per write
 #ifndef SAMPLES
-#define SAMPLES 512 // default
+#define SAMPLES 512 // SDL audio buffer size (default)
 #endif
 
-#define ms SDL_GetTicks
+#define ms SDL_GetTicks // Shorthand for timestamp
 
 typedef int (*SND_Resampler)(const SND_Frame frame);
+
+// Sound context manages the ring buffer and resampling
 static struct SND_Context {
 	int initialized;
 	double frame_rate;
@@ -889,8 +1289,22 @@ static struct SND_Context {
 	int frame_out; // buf_r
 	int frame_filled; // max_buf_w
 
-	SND_Resampler resample;
+	SND_Resampler resample; // Selected resampler function
 } snd = {0};
+
+/**
+ * SDL audio callback - consumes samples from the ring buffer.
+ *
+ * This is called by SDL on the audio thread when it needs more audio data.
+ * Reads samples from the ring buffer and writes them to the output stream.
+ * If buffer runs dry, repeats last sample or outputs silence.
+ *
+ * @param userdata Unused user data pointer
+ * @param stream Output audio buffer to fill
+ * @param len Length of output buffer in bytes
+ *
+ * @note Runs on SDL's audio thread, not the main thread
+ */
 static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // plat_sound_callback
 
 	// return (void)memset(stream,0,len); // TODO: tmp, silent
@@ -929,6 +1343,15 @@ static void SND_audioCallback(void* userdata, uint8_t* stream, int len) { // pla
 		len -= 1;
 	}
 }
+
+/**
+ * Resizes the audio ring buffer based on sample rate and frame rate.
+ *
+ * Calculates buffer size to hold buffer_seconds worth of audio.
+ * Locks audio thread during resize to prevent corruption.
+ *
+ * @note Called during init and when audio parameters change
+ */
 static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 	snd.frame_count = snd.buffer_seconds * snd.sample_rate_in / snd.frame_rate;
 	if (snd.frame_count == 0)
@@ -950,12 +1373,32 @@ static void SND_resizeBuffer(void) { // plat_sound_resize_buffer
 
 	SDL_UnlockAudio();
 }
+
+/**
+ * Passthrough resampler - no conversion needed.
+ *
+ * Used when input and output sample rates match.
+ * Simply copies frames directly to the ring buffer.
+ *
+ * @param frame Audio frame to write
+ * @return Number of frames consumed (always 1)
+ */
 static int SND_resampleNone(SND_Frame frame) { // audio_resample_passthrough
 	snd.buffer[snd.frame_in++] = frame;
 	if (snd.frame_in >= snd.frame_count)
 		snd.frame_in = 0;
 	return 1;
 }
+
+/**
+ * Nearest-neighbor resampler for sample rate conversion.
+ *
+ * Uses Bresenham-like algorithm to determine when to drop/duplicate
+ * samples. Accumulates difference between input and output rates.
+ *
+ * @param frame Audio frame to resample
+ * @return Number of frames consumed (0 or 1)
+ */
 static int SND_resampleNear(SND_Frame frame) { // audio_resample_nearest
 	static int diff = 0;
 	int consumed = 0;
@@ -974,6 +1417,12 @@ static int SND_resampleNear(SND_Frame frame) { // audio_resample_nearest
 
 	return consumed;
 }
+
+/**
+ * Selects the appropriate resampler based on sample rates.
+ *
+ * Chooses passthrough if rates match, otherwise uses nearest-neighbor.
+ */
 static void SND_selectResampler(void) { // plat_sound_select_resampler
 	if (snd.sample_rate_in == snd.sample_rate_out) {
 		snd.resample = SND_resampleNone;
@@ -981,6 +1430,20 @@ static void SND_selectResampler(void) { // plat_sound_select_resampler
 		snd.resample = SND_resampleNear;
 	}
 }
+
+/**
+ * Writes a batch of audio samples to the ring buffer.
+ *
+ * Pushes frames through the resampler into the ring buffer.
+ * Waits if buffer is full, batching writes for efficiency.
+ * This is the main entry point for emulators to submit audio.
+ *
+ * @param frames Array of audio frames to write
+ * @param frame_count Number of frames in array
+ * @return Number of frames consumed (may be resampled)
+ *
+ * @note May block briefly if ring buffer is full
+ */
 size_t SND_batchSamples(const SND_Frame* frames,
                         size_t frame_count) { // plat_sound_write / plat_sound_write_resample
 
@@ -1021,6 +1484,17 @@ size_t SND_batchSamples(const SND_Frame* frames,
 	return consumed;
 }
 
+/**
+ * Initializes the audio subsystem.
+ *
+ * Sets up SDL audio, allocates the ring buffer, configures resampling.
+ * Audio starts playing immediately after this call.
+ *
+ * @param sample_rate Input sample rate from emulator/game
+ * @param frame_rate Frame rate of the game (e.g., 60.0 for 60fps)
+ *
+ * @note Platform may adjust sample_rate via PLAT_pickSampleRate
+ */
 void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	LOG_info("SND_init\n");
 
@@ -1062,6 +1536,13 @@ void SND_init(double sample_rate, double frame_rate) { // plat_sound_init
 	         snd.sample_rate_out, SAMPLES);
 	snd.initialized = 1;
 }
+
+/**
+ * Shuts down the audio subsystem and frees resources.
+ *
+ * Pauses audio, closes SDL audio device, frees ring buffer.
+ * Safe to call even if audio was never initialized.
+ */
 void SND_quit(void) { // plat_sound_finish
 	if (!snd.initialized)
 		return;
@@ -1076,22 +1557,59 @@ void SND_quit(void) { // plat_sound_finish
 }
 
 ///////////////////////////////
+// Input - Lid detection (clamshell devices)
+///////////////////////////////
 
+// Global lid state for devices with flip-lid hardware
 LID_Context lid = {
     .has_lid = 0,
     .is_open = 1,
 };
 
+/**
+ * Initializes lid detection hardware.
+ *
+ * Default implementation does nothing. Platforms with lid hardware
+ * (e.g., GKD Pixel) override this to set up GPIO or sensors.
+ */
 FALLBACK_IMPLEMENTATION void PLAT_initLid(void) {}
+
+/**
+ * Checks if lid state has changed.
+ *
+ * Default implementation returns 0 (no lid). Platforms override
+ * this to detect lid open/close events.
+ *
+ * @param state Output: current lid state (1=open, 0=closed), may be NULL
+ * @return 1 if state changed since last call, 0 otherwise
+ */
 FALLBACK_IMPLEMENTATION int PLAT_lidChanged(int* state) {
 	return 0;
 }
 
 ///////////////////////////////
+// Input - Button and analog stick handling
+///////////////////////////////
 
+// Global input state, polled each frame
 PAD_Context pad;
 
+// Analog stick deadzone (threshold for registering input)
 #define AXIS_DEADZONE 0x4000
+
+/**
+ * Processes analog stick movement and updates button state.
+ *
+ * Converts analog axis value to digital button presses (up/down/left/right).
+ * Handles deadzone, button repeat, and opposite direction cancellation.
+ *
+ * @param neg_id Button ID for negative direction (left/up)
+ * @param pos_id Button ID for positive direction (right/down)
+ * @param value Analog axis value (-32768 to 32767)
+ * @param repeat_at Timestamp when button should start repeating
+ *
+ * @note Called internally by PLAT_pollInput for analog stick axes
+ */
 void PAD_setAnalog(int neg_id, int pos_id, int value, int repeat_at) {
 	// LOG_info("neg %i pos %i value %i\n", neg_id, pos_id, value);
 	int neg = 1 << neg_id;
@@ -1136,6 +1654,12 @@ void PAD_setAnalog(int neg_id, int pos_id, int value, int repeat_at) {
 	}
 }
 
+/**
+ * Resets all button states to unpressed.
+ *
+ * Clears all button press/release/repeat flags.
+ * Call this when changing contexts (e.g., entering/exiting sleep).
+ */
 void PAD_reset(void) {
 	// LOG_info("PAD_reset");
 	pad.just_pressed = BTN_NONE;
@@ -1143,6 +1667,27 @@ void PAD_reset(void) {
 	pad.just_released = BTN_NONE;
 	pad.just_repeated = BTN_NONE;
 }
+
+/**
+ * Polls input devices and updates global button state.
+ *
+ * Default implementation handles:
+ * - SDL keyboard events (mapped to buttons)
+ * - SDL joystick/gamepad button events
+ * - SDL joystick hat (d-pad) events
+ * - SDL analog stick axis events
+ * - Button repeat timing
+ * - Lid close detection (triggers BTN_SLEEP)
+ *
+ * Called once per frame. Updates pad.just_pressed, pad.is_pressed,
+ * pad.just_released, and pad.just_repeated bitmasks.
+ *
+ * Button repeat behavior:
+ * - Initial delay: PAD_REPEAT_DELAY (300ms)
+ * - Repeat interval: PAD_REPEAT_INTERVAL (100ms)
+ *
+ * @note Platforms can override this to handle custom input hardware
+ */
 FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 	// reset transient state
 	pad.just_pressed = BTN_NONE;
@@ -1442,6 +1987,17 @@ FALLBACK_IMPLEMENTATION void PLAT_pollInput(void) {
 	if (lid.has_lid && PLAT_lidChanged(NULL))
 		pad.just_released |= BTN_SLEEP;
 }
+
+/**
+ * Checks if device should wake from sleep.
+ *
+ * Polls for wake button (BTN_POWER or BTN_MENU depending on platform).
+ * Also checks lid state - if lid is closed, wake button is ignored.
+ *
+ * @return 1 if device should wake, 0 otherwise
+ *
+ * @note Consumes the wake button event to prevent double-triggering
+ */
 FALLBACK_IMPLEMENTATION int PLAT_shouldWake(void) {
 	int lid_open = 1; // assume open by default
 	if (lid.has_lid && PLAT_lidChanged(&lid_open) && lid_open)
@@ -1473,29 +2029,84 @@ FALLBACK_IMPLEMENTATION int PLAT_shouldWake(void) {
 	return 0;
 }
 
+/**
+ * Checks if any button was just pressed this frame.
+ *
+ * @return 1 if any button was just pressed, 0 otherwise
+ */
 int PAD_anyJustPressed(void) {
 	return pad.just_pressed != BTN_NONE;
 }
+
+/**
+ * Checks if any button is currently held down.
+ *
+ * @return 1 if any button is pressed, 0 otherwise
+ */
 int PAD_anyPressed(void) {
 	return pad.is_pressed != BTN_NONE;
 }
+
+/**
+ * Checks if any button was just released this frame.
+ *
+ * @return 1 if any button was just released, 0 otherwise
+ */
 int PAD_anyJustReleased(void) {
 	return pad.just_released != BTN_NONE;
 }
 
+/**
+ * Checks if a specific button was just pressed this frame.
+ *
+ * @param btn Button bitmask (e.g., BTN_A, BTN_START)
+ * @return 1 if button was just pressed, 0 otherwise
+ */
 int PAD_justPressed(int btn) {
 	return pad.just_pressed & btn;
 }
+
+/**
+ * Checks if a specific button is currently held down.
+ *
+ * @param btn Button bitmask (e.g., BTN_A, BTN_START)
+ * @return 1 if button is pressed, 0 otherwise
+ */
 int PAD_isPressed(int btn) {
 	return pad.is_pressed & btn;
 }
+
+/**
+ * Checks if a specific button was just released this frame.
+ *
+ * @param btn Button bitmask (e.g., BTN_A, BTN_START)
+ * @return 1 if button was just released, 0 otherwise
+ */
 int PAD_justReleased(int btn) {
 	return pad.just_released & btn;
 }
+
+/**
+ * Checks if a specific button is repeating (held for repeat interval).
+ *
+ * @param btn Button bitmask (e.g., BTN_DPAD_UP)
+ * @return 1 if button is repeating this frame, 0 otherwise
+ */
 int PAD_justRepeated(int btn) {
 	return pad.just_repeated & btn;
 }
 
+/**
+ * Detects a quick tap of the menu button.
+ *
+ * Returns true if menu button was pressed and released within MENU_DELAY (250ms)
+ * without any brightness adjustment (PLUS/MINUS) being triggered.
+ *
+ * @param now Current timestamp in milliseconds
+ * @return 1 if menu was tapped (not held), 0 otherwise
+ *
+ * @note Used to distinguish menu tap from menu+brightness adjustment
+ */
 int PAD_tappedMenu(uint32_t now) {
 #define MENU_DELAY 250 // also in PWR_update()
 	static uint32_t menu_start = 0;
@@ -1511,13 +2122,26 @@ int PAD_tappedMenu(uint32_t now) {
 }
 
 ///////////////////////////////
+// Vibration - Rumble motor control
+///////////////////////////////
 
+// Vibration context with deferred state changes to minimize motor wear
 static struct VIB_Context {
 	int initialized;
 	pthread_t pt;
 	int queued_strength;
-	int strength;
+	int strength; // Current applied strength
 } vib = {0};
+
+/**
+ * Vibration worker thread that applies deferred strength changes.
+ *
+ * Defers strength changes for 3 frames to prevent rapid on/off cycling
+ * which can damage rumble motors. Runs continuously at ~60Hz.
+ *
+ * @param arg Unused thread argument
+ * @return Never returns (infinite loop)
+ */
 static void* VIB_thread(void* arg) {
 #define DEFER_FRAMES 3
 	static int defer = 0;
@@ -1538,11 +2162,24 @@ static void* VIB_thread(void* arg) {
 	}
 	return 0;
 }
+
+/**
+ * Initializes the vibration subsystem.
+ *
+ * Starts the vibration worker thread. Call this before using vibration.
+ */
 void VIB_init(void) {
 	vib.queued_strength = vib.strength = 0;
 	pthread_create(&vib.pt, NULL, &VIB_thread, NULL);
 	vib.initialized = 1;
 }
+
+/**
+ * Shuts down the vibration subsystem.
+ *
+ * Stops vibration and terminates the worker thread.
+ * Safe to call even if not initialized.
+ */
 void VIB_quit(void) {
 	if (!vib.initialized)
 		return;
@@ -1551,17 +2188,40 @@ void VIB_quit(void) {
 	pthread_cancel(vib.pt);
 	pthread_join(vib.pt, NULL);
 }
+
+/**
+ * Queues a vibration strength change.
+ *
+ * Change is deferred by 3 frames to prevent rapid motor cycling.
+ * No-op if strength hasn't changed.
+ *
+ * @param strength Vibration strength (0=off, higher=stronger)
+ */
 void VIB_setStrength(int strength) {
 	if (vib.queued_strength == strength)
 		return;
 	vib.queued_strength = strength;
 }
+
+/**
+ * Gets the current applied vibration strength.
+ *
+ * @return Current strength (not queued strength)
+ */
 int VIB_getStrength(void) {
 	return vib.strength;
 }
 
 ///////////////////////////////
+// Power management - Battery, sleep, brightness, volume
+///////////////////////////////
 
+/**
+ * Initializes the low battery warning overlay.
+ *
+ * Creates an overlay surface showing a low battery icon.
+ * The overlay is toggled on/off based on battery charge level.
+ */
 static void PWR_initOverlay(void) {
 	// setup surface
 	pwr.overlay = PLAT_initOverlay();
@@ -1573,11 +2233,26 @@ static void PWR_initOverlay(void) {
 	GFX_blitBattery(pwr.overlay, NULL);
 }
 
+/**
+ * Updates battery charging state and charge level.
+ *
+ * Queries platform for current battery status and updates overlay
+ * visibility based on charge level and warning state.
+ */
 static void PWR_updateBatteryStatus(void) {
 	PLAT_getBatteryStatus(&pwr.is_charging, &pwr.charge);
 	PLAT_enableOverlay(pwr.should_warn && pwr.charge <= PWR_LOW_CHARGE);
 }
 
+/**
+ * Battery monitoring worker thread.
+ *
+ * Polls battery status every 5 seconds and updates the UI overlay.
+ * Runs continuously in the background.
+ *
+ * @param arg Unused thread argument
+ * @return Never returns (infinite loop)
+ */
 static void* PWR_monitorBattery(void* arg) {
 	while (1) {
 		// TODO: the frequency of checking could depend on whether
@@ -1588,6 +2263,12 @@ static void* PWR_monitorBattery(void* arg) {
 	return NULL;
 }
 
+/**
+ * Initializes the power management subsystem.
+ *
+ * Sets up battery monitoring, initializes overlay, starts background thread.
+ * Configures default power management flags (sleep/poweroff enabled).
+ */
 void PWR_init(void) {
 	pwr.can_sleep = 1;
 	pwr.can_poweroff = 1;
@@ -1605,6 +2286,13 @@ void PWR_init(void) {
 	pthread_create(&pwr.battery_pt, NULL, &PWR_monitorBattery, NULL);
 	pwr.initialized = 1;
 }
+
+/**
+ * Shuts down the power management subsystem.
+ *
+ * Terminates battery monitoring thread and frees overlay resources.
+ * Safe to call even if not initialized.
+ */
 void PWR_quit(void) {
 	if (!pwr.initialized)
 		return;
@@ -1615,15 +2303,49 @@ void PWR_quit(void) {
 	pthread_cancel(pwr.battery_pt);
 	pthread_join(pwr.battery_pt, NULL);
 }
+
+/**
+ * Enables or disables low battery warning overlay.
+ *
+ * @param enable 1 to show warning when battery low, 0 to hide
+ */
 void PWR_warn(int enable) {
 	pwr.should_warn = enable;
 	PLAT_enableOverlay(pwr.should_warn && pwr.charge <= PWR_LOW_CHARGE);
 }
 
+/**
+ * Checks if a button press should be ignored during settings adjustment.
+ *
+ * Returns true for PLUS/MINUS buttons when brightness/volume overlay is showing.
+ * Prevents these buttons from affecting the game/app while adjusting settings.
+ *
+ * @param btn Button that was pressed
+ * @param show_setting Current settings overlay state (1=brightness, 2=volume)
+ * @return 1 if button should be ignored, 0 otherwise
+ */
 int PWR_ignoreSettingInput(int btn, int show_setting) {
 	return show_setting && (btn == BTN_MOD_PLUS || btn == BTN_MOD_MINUS);
 }
 
+/**
+ * Main power management update function, called each frame.
+ *
+ * Handles:
+ * - Autosleep after 30 seconds of inactivity
+ * - Manual sleep button (lid close or sleep button)
+ * - Power button hold detection (1 second to power off)
+ * - Brightness/volume overlay display timing
+ * - Charging state change detection
+ * - Display refresh dirty flag management
+ *
+ * @param _dirty Pointer to dirty flag (set to 1 when display needs refresh)
+ * @param _show_setting Pointer to settings overlay state (0/1/2)
+ * @param before_sleep Callback invoked before entering sleep
+ * @param after_sleep Callback invoked after waking from sleep
+ *
+ * @note All pointer parameters may be NULL if not needed
+ */
 void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep,
                 PWR_callback_t after_sleep) {
 	int dirty = _dirty ? *_dirty : 0;
@@ -1731,17 +2453,41 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep,
 		*_show_setting = show_setting;
 }
 
-// TODO: this isn't whether it can sleep but more if it should sleep in response to the sleep button
+/**
+ * Disables manual sleep (sleep button/lid close).
+ *
+ * Prevents device from sleeping when sleep button is pressed.
+ * Autosleep and power off may still occur.
+ */
 void PWR_disableSleep(void) {
 	pwr.can_sleep = 0;
 }
+/**
+ * Re-enables manual sleep.
+ */
 void PWR_enableSleep(void) {
 	pwr.can_sleep = 1;
 }
 
+/**
+ * Disables power off functionality.
+ *
+ * Prevents device from powering off completely.
+ * Useful during critical operations.
+ */
 void PWR_disablePowerOff(void) {
 	pwr.can_poweroff = 0;
 }
+
+/**
+ * Powers off the device.
+ *
+ * Displays "powering off" message and calls platform power off.
+ * Checks for auto-resume quicksave and adjusts message accordingly.
+ * Only works if power off hasn't been disabled.
+ *
+ * @note This function does not return if power off succeeds
+ */
 void PWR_powerOff(void) {
 	if (pwr.can_poweroff) {
 		int w = FIXED_WIDTH;
@@ -1771,6 +2517,13 @@ void PWR_powerOff(void) {
 	}
 }
 
+/**
+ * Enters sleep mode (low power state).
+ *
+ * On HDMI: Clears screen
+ * On device screen: Mutes audio, disables backlight
+ * Pauses keymon daemon and syncs filesystem.
+ */
 static void PWR_enterSleep(void) {
 	SDL_PauseAudio(1);
 	if (GetHDMI()) {
@@ -1784,6 +2537,12 @@ static void PWR_enterSleep(void) {
 
 	sync();
 }
+
+/**
+ * Exits sleep mode and restores normal operation.
+ *
+ * Restores backlight, volume, resumes keymon, and unpauses audio.
+ */
 static void PWR_exitSleep(void) {
 	system("killall -CONT keymon.elf");
 	if (GetHDMI()) {
@@ -1797,6 +2556,12 @@ static void PWR_exitSleep(void) {
 	sync();
 }
 
+/**
+ * Waits in sleep mode until wake condition occurs.
+ *
+ * Polls wake button every 200ms. If sleeping for > 2 minutes and not
+ * charging, powers off automatically. Charging extends wait time.
+ */
 static void PWR_waitForWake(void) {
 	uint32_t sleep_ticks = SDL_GetTicks();
 	while (!PAD_wake()) {
@@ -1816,6 +2581,14 @@ static void PWR_waitForWake(void) {
 
 	return;
 }
+
+/**
+ * Performs a "fake sleep" by entering and exiting sleep mode.
+ *
+ * Clears screen, resets input, enters sleep, waits for wake,
+ * then exits sleep and resets input again. This is the main
+ * sleep function called by applications.
+ */
 void PWR_fauxSleep(void) {
 	GFX_clear(gfx.screen);
 	PAD_reset();
@@ -1825,27 +2598,74 @@ void PWR_fauxSleep(void) {
 	PAD_reset();
 }
 
+/**
+ * Disables automatic sleep after 30 seconds of inactivity.
+ */
 void PWR_disableAutosleep(void) {
 	pwr.can_autosleep = 0;
 }
+
+/**
+ * Re-enables automatic sleep.
+ */
 void PWR_enableAutosleep(void) {
 	pwr.can_autosleep = 1;
 }
+
+/**
+ * Checks if autosleep should be prevented.
+ *
+ * Autosleep is prevented when:
+ * - Device is charging
+ * - Autosleep has been disabled
+ * - HDMI is connected
+ *
+ * @return 1 if autosleep should be prevented, 0 otherwise
+ */
 int PWR_preventAutosleep(void) {
 	return pwr.is_charging || !pwr.can_autosleep || GetHDMI();
 }
 
-// updated by PWR_updateBatteryStatus()
+/**
+ * Checks if device is currently charging.
+ *
+ * @return 1 if charging, 0 otherwise
+ *
+ * @note Value updated every 5 seconds by battery monitoring thread
+ */
 int PWR_isCharging(void) {
 	return pwr.is_charging;
 }
+
+/**
+ * Gets current battery charge level.
+ *
+ * @return Charge percentage (10-100 in 10-20% increments)
+ *
+ * @note Value updated every 5 seconds by battery monitoring thread
+ */
 int PWR_getBattery(void) { // 10-100 in 10-20% fragments
 	return pwr.charge;
 }
 
 ///////////////////////////////
+// Platform utility functions
+///////////////////////////////
 
-// TODO: tmp? move to individual platforms or allow overriding like PAD_poll/PAD_wake?
+/**
+ * Sets the system date and time.
+ *
+ * Executes date command and syncs to hardware clock.
+ * This is a temporary implementation - platforms may override.
+ *
+ * @param y Year
+ * @param m Month (1-12)
+ * @param d Day (1-31)
+ * @param h Hour (0-23)
+ * @param i Minute (0-59)
+ * @param s Second (0-59)
+ * @return Always returns 0
+ */
 int PLAT_setDateTime(int y, int m, int d, int h, int i, int s) {
 	char cmd[512];
 	sprintf(cmd, "date -s '%d-%d-%d %d:%d:%d'; hwclock --utc -w", y, m, d, h, i, s);

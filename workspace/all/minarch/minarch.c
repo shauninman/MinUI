@@ -1,3 +1,42 @@
+/**
+ * minarch.c - MinUI Libretro Frontend
+ *
+ * MinArch is a lightweight, single-purpose libretro frontend that loads and runs
+ * retro game emulator cores. It provides essential features for retro gaming:
+ *
+ * Core Features:
+ * - Loads libretro cores (.so files) dynamically at runtime
+ * - Manages game loading (ROM files, including .zip extraction)
+ * - Save state system with auto-resume on slot 9
+ * - In-game menu for settings, save states, and disc changing
+ * - Video scaling with multiple modes (native, aspect, fullscreen, cropped)
+ * - Audio buffering and synchronization
+ * - Input mapping and controller configuration
+ * - SRAM/battery save management
+ * - RTC (real-time clock) data persistence
+ * - Multi-disc game support via .m3u playlists
+ *
+ * Architecture:
+ * - Single-threaded by default, with optional threaded video mode
+ * - Uses libretro callback system for core communication
+ * - Platform-agnostic through SDL and platform.h abstraction
+ * - Integrates with MinUI launcher via file-based IPC
+ *
+ * Save State System:
+ * - Slot 0-8: Manual save states accessible via menu
+ * - Slot 9: Auto-save slot - automatically saved on quit, loaded on start
+ * - States stored in /mnt/SDCARD/.userdata/<platform>/<core>/
+ *
+ * Video Pipeline:
+ * - Core renders to buffer via video_refresh_callback
+ * - Scaler applies aspect ratio correction and sharpness filters
+ * - Output blitted to SDL screen surface
+ * - Optional vsync for tear-free rendering
+ *
+ * @note This file is platform-independent - platform-specific behavior
+ *       is handled through api.h (GFX_*, SND_*, PAD_*, PWR_* functions)
+ */
+
 #include <msettings.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -20,95 +59,144 @@
 #include "utils.h"
 
 ///////////////////////////////////////
-
-static SDL_Surface* screen;
-static int quit = 0;
-static int show_menu = 0;
-static int simple_mode = 0;
-static int thread_video = 0;
-static int was_threaded = 0;
-static int should_run_core = 1; // used by threaded video
-
-static pthread_t core_pt;
-static pthread_mutex_t core_mx;
-static pthread_cond_t core_rq; // not sure this is required
-static SDL_Surface* backbuffer = NULL;
-static void* coreThread(void* arg);
-
-enum {
-	SCALE_NATIVE,
-	SCALE_ASPECT,
-	SCALE_FULLSCREEN,
-	SCALE_CROPPED,
-	SCALE_COUNT,
-};
-
-// default frontend options
-static int screen_scaling = SCALE_ASPECT;
-static int screen_sharpness = SHARPNESS_SOFT;
-static int screen_effect = EFFECT_NONE;
-static int prevent_tearing = 1; // lenient
-static int show_debug = 0;
-static int max_ff_speed = 3; // 4x
-static int fast_forward = 0;
-static int overclock = 1; // normal
-static int has_custom_controllers = 0;
-static int gamepad_type = 0; // index in gamepad_labels/gamepad_values
-static int downsample = 0; // set to 1 to convert from 8888 to 565
-
-// these are no longer constants as of the RG CubeXX (even though they look like it)
-static int DEVICE_WIDTH = 0; // FIXED_WIDTH;
-static int DEVICE_HEIGHT = 0; // FIXED_HEIGHT;
-static int DEVICE_PITCH = 0; // FIXED_PITCH;
-
-GFX_Renderer renderer;
-
+// Global State
 ///////////////////////////////////////
 
+// Video
+static SDL_Surface* screen; // Main screen surface (managed by platform API)
+
+// Application State
+static int quit = 0; // Set to 1 to exit main loop
+static int show_menu = 0; // Set to 1 to display in-game menu
+static int simple_mode = 0; // Simplified interface mode (fewer options)
+
+// Threading
+static int thread_video = 0; // Enable threaded video rendering
+static int was_threaded = 0; // Previous threading state (for fast-forward toggle)
+static int should_run_core = 1; // Signal to core thread: run or pause
+static pthread_t core_pt; // Core thread handle
+static pthread_mutex_t core_mx; // Mutex for core thread synchronization
+static pthread_cond_t core_rq; // Condition variable for frame signaling
+static SDL_Surface* backbuffer = NULL; // Double-buffer for threaded rendering
+
+// Forward declaration
+static void* coreThread(void* arg);
+
+///////////////////////////////////////
+// Video Scaling Modes
+///////////////////////////////////////
+
+enum {
+	SCALE_NATIVE, // No scaling, 1:1 pixel mapping (may be cropped)
+	SCALE_ASPECT, // Scale maintaining aspect ratio (letterboxed)
+	SCALE_FULLSCREEN, // Scale to fill entire screen (may distort)
+	SCALE_CROPPED, // Crop to fill screen maintaining aspect ratio
+	SCALE_COUNT, // Number of scaling modes
+};
+
+///////////////////////////////////////
+// Frontend Configuration
+///////////////////////////////////////
+
+// Video Settings
+static int screen_scaling = SCALE_ASPECT; // Default to aspect-ratio preserving
+static int screen_sharpness = SHARPNESS_SOFT; // Bilinear filtering by default
+static int screen_effect = EFFECT_NONE; // No scanlines or grid effects
+static int prevent_tearing = 1; // Enable vsync (lenient mode)
+static int downsample = 0; // Convert 8888 to 565 (for performance)
+
+// Performance Settings
+static int show_debug = 0; // Display FPS/CPU usage overlay
+static int max_ff_speed = 3; // Fast-forward speed (0=2x, 3=4x)
+static int fast_forward = 0; // Currently fast-forwarding
+static int overclock = 1; // CPU speed (0=underclock, 1=normal, 2=overclock)
+
+// Input Settings
+static int has_custom_controllers = 0; // Custom controller mappings defined
+static int gamepad_type = 0; // Index in gamepad_labels/gamepad_values
+
+// Device Dimensions
+// These are no longer constants as of the RG CubeXX (rotatable display)
+static int DEVICE_WIDTH = 0; // Screen width in pixels
+static int DEVICE_HEIGHT = 0; // Screen height in pixels
+static int DEVICE_PITCH = 0; // Screen pitch in bytes
+
+GFX_Renderer renderer; // Platform-specific renderer handle
+
+///////////////////////////////////////
+// Libretro Core Interface
+///////////////////////////////////////
+
+/**
+ * Core structure - Manages the loaded libretro core (.so) and its interface.
+ *
+ * This structure holds both the dynamically loaded library handle and
+ * function pointers to the libretro API, as well as metadata about the
+ * core and its current configuration.
+ *
+ * Libretro cores are emulator implementations that conform to the libretro API.
+ * They are loaded at runtime via dlopen() and provide a standardized interface
+ * for running games, saving state, handling input, etc.
+ */
 static struct Core {
-	int initialized;
-	int need_fullpath;
+	// State
+	int initialized; // Core has been initialized
+	int need_fullpath; // Core requires file path (not ROM data)
 
-	const char tag[8]; // eg. GBC
-	const char name[128]; // eg. gambatte
-	const char version[128]; // eg. Gambatte (v0.5.0-netlink 7e02df6)
-	const char extensions[128]; // eg. gb|gbc|dmg
+	// Metadata (populated from core)
+	const char tag[8]; // Platform tag, e.g., "GBC", "NES"
+	const char name[128]; // Core name, e.g., "gambatte", "fceumm"
+	const char version[128]; // Core version string
+	const char extensions[128]; // Supported file extensions, e.g., "gb|gbc|dmg"
 
-	const char config_dir[MAX_PATH]; // eg. /mnt/sdcard/.userdata/rg35xx/GB-gambatte
-	const char states_dir[MAX_PATH]; // eg. /mnt/sdcard/.userdata/arm-480/GB-gambatte
-	const char saves_dir[MAX_PATH]; // eg. /mnt/sdcard/Saves/GB
-	const char bios_dir[MAX_PATH]; // eg. /mnt/sdcard/Bios/GB
+	// Directory paths
+	const char config_dir[MAX_PATH]; // Core config: /mnt/sdcard/.userdata/<platform>/<tag>-<name>
+	const char states_dir[MAX_PATH]; // Save states: /mnt/sdcard/.userdata/<arch>/<tag>-<name>
+	const char saves_dir[MAX_PATH]; // SRAM saves: /mnt/sdcard/Saves/<tag>
+	const char bios_dir[MAX_PATH]; // BIOS files: /mnt/sdcard/Bios/<tag>
 
-	double fps;
-	double sample_rate;
-	double aspect_ratio;
+	// Audio/Video parameters (from core)
+	double fps; // Target frames per second
+	double sample_rate; // Audio sample rate in Hz
+	double aspect_ratio; // Display aspect ratio
 
-	void* handle;
+	// Dynamic library
+	void* handle; // dlopen() handle to loaded .so file
+
+	// Libretro API function pointers (loaded via dlsym)
 	void (*init)(void);
 	void (*deinit)(void);
-
 	void (*get_system_info)(struct retro_system_info* info);
 	void (*get_system_av_info)(struct retro_system_av_info* info);
 	void (*set_controller_port_device)(unsigned port, unsigned device);
-
 	void (*reset)(void);
-	void (*run)(void);
-	size_t (*serialize_size)(void);
-	bool (*serialize)(void* data, size_t size);
-	bool (*unserialize)(const void* data, size_t size);
+	void (*run)(void); // Run one frame of emulation
+
+	// Save state functions
+	size_t (*serialize_size)(void); // Get required buffer size for save state
+	bool (*serialize)(void* data, size_t size); // Save state to buffer
+	bool (*unserialize)(const void* data, size_t size); // Load state from buffer
+
+	// Game management
 	bool (*load_game)(const struct retro_game_info* game);
 	bool (*load_game_special)(unsigned game_type, const struct retro_game_info* info,
 	                          size_t num_info);
 	void (*unload_game)(void);
-	unsigned (*get_region)(void);
-	void* (*get_memory_data)(unsigned id);
-	size_t (*get_memory_size)(unsigned id);
 
-	// retro_audio_buffer_status_callback_t audio_buffer_status;
+	// Memory access
+	unsigned (*get_region)(void); // Get TV system (NTSC/PAL)
+	void* (*get_memory_data)(unsigned id); // Get pointer to SRAM/RTC memory
+	size_t (*get_memory_size)(unsigned id); // Get size of SRAM/RTC memory
 } core;
 
 ///////////////////////////////////////
-// based on picoarch/unzip.c
+// ZIP File Extraction
+///////////////////////////////////////
+// Based on picoarch/unzip.c
+//
+// Supports extracting files from ZIP archives when cores don't natively
+// support the .zip extension. Handles both uncompressed (store) and
+// deflate-compressed files.
 
 #define ZIP_HEADER_SIZE 30
 #define ZIP_CHUNK_SIZE 65536
@@ -116,9 +204,21 @@ static struct Core {
 #define ZIP_LE_READ32(buf)                                                                         \
 	((uint32_t)(((uint8_t*)(buf))[3] << 24 | ((uint8_t*)(buf))[2] << 16 |                          \
 	            ((uint8_t*)(buf))[1] << 8 | ((uint8_t*)(buf))[0]))
+
 typedef int (*Zip_extract_t)(FILE* zip, FILE* dst, size_t size);
 
-static int Zip_copy(FILE* zip, FILE* dst, size_t size) { // uncompressed?
+/**
+ * Extracts an uncompressed file from a ZIP archive.
+ *
+ * Used for ZIP files with compression method 0 (store).
+ * Reads in chunks for memory efficiency.
+ *
+ * @param zip Source ZIP file (positioned at data start)
+ * @param dst Destination file for extracted data
+ * @param size Number of bytes to extract
+ * @return 0 on success, -1 on error
+ */
+static int Zip_copy(FILE* zip, FILE* dst, size_t size) {
 	uint8_t buffer[ZIP_CHUNK_SIZE];
 	while (size) {
 		size_t sz = MIN(size, ZIP_CHUNK_SIZE);
@@ -130,7 +230,19 @@ static int Zip_copy(FILE* zip, FILE* dst, size_t size) { // uncompressed?
 	}
 	return 0;
 }
-static int Zip_inflate(FILE* zip, FILE* dst, size_t size) { // compressed
+
+/**
+ * Extracts and decompresses a deflate-compressed file from a ZIP archive.
+ *
+ * Used for ZIP files with compression method 8 (deflate).
+ * Uses zlib for decompression.
+ *
+ * @param zip Source ZIP file (positioned at compressed data start)
+ * @param dst Destination file for decompressed data
+ * @param size Number of compressed bytes to read
+ * @return Z_OK on success, Z_* error code on failure
+ */
+static int Zip_inflate(FILE* zip, FILE* dst, size_t size) {
 	z_stream stream = {0};
 	size_t have = 0;
 	uint8_t in[ZIP_CHUNK_SIZE];
@@ -188,16 +300,39 @@ static int Zip_inflate(FILE* zip, FILE* dst, size_t size) { // compressed
 }
 
 ///////////////////////////////////////
+// Game Management
+///////////////////////////////////////
 
+/**
+ * Game structure - Represents the currently loaded game/ROM file.
+ *
+ * Handles both direct ROM loading and ZIP extraction. Some cores require
+ * the ROM to be loaded into memory (data/size), others just need the path
+ * (need_fullpath cores like PCSX ReARMed for large disc images).
+ */
 static struct Game {
-	char path[MAX_PATH];
-	char name[MAX_PATH]; // TODO: rename to basename?
-	char m3u_path[MAX_PATH];
-	char tmp_path[MAX_PATH]; // location of unzipped file
-	void* data;
-	size_t size;
-	int is_open;
+	char path[MAX_PATH]; // Original ROM path provided by user
+	char name[MAX_PATH]; // Base filename (for save file naming)
+	char m3u_path[MAX_PATH]; // Path to .m3u playlist (multi-disc games)
+	char tmp_path[MAX_PATH]; // Temporary file path (extracted from ZIP)
+	void* data; // ROM data in memory (if !need_fullpath)
+	size_t size; // Size of ROM data in bytes
+	int is_open; // Successfully loaded
 } game;
+
+/**
+ * Opens and prepares a game for loading into the core.
+ *
+ * Handles multiple scenarios:
+ * 1. ZIP files: Extracts first matching ROM to /tmp if core doesn't support ZIP
+ * 2. Multi-disc: Detects and stores .m3u playlist path
+ * 3. Memory loading: Reads entire ROM into memory for cores that need it
+ *
+ * @param path Full path to ROM file or ZIP archive
+ *
+ * @note Sets game.is_open = 1 on success, 0 on failure
+ * @note For ZIP files, extracts to /tmp/minarch-XXXXXX/ (deleted on close)
+ */
 static void Game_open(char* path) {
 	LOG_info("Game_open\n");
 	memset(&game, 0, sizeof(game));
@@ -370,16 +505,41 @@ static void Game_open(char* path) {
 
 	game.is_open = 1;
 }
+
+/**
+ * Closes the current game and frees resources.
+ *
+ * Cleans up:
+ * - ROM data memory (if allocated)
+ * - Temporary extracted files
+ * - Rumble state
+ */
 static void Game_close(void) {
 	if (game.data)
 		free(game.data);
 	if (game.tmp_path[0])
 		remove(game.tmp_path);
 	game.is_open = 0;
-	VIB_setStrength(0); // just in case
+	VIB_setStrength(0); // Ensure rumble is disabled
 }
 
+///////////////////////////////////////
+// Multi-Disc Support
+///////////////////////////////////////
+
 static struct retro_disk_control_ext_callback disk_control_ext;
+
+/**
+ * Changes the active disc for multi-disc games.
+ *
+ * Used for games like PSX multi-disc titles. Closes current game,
+ * opens new disc image, and notifies core via disk_control_ext.
+ *
+ * @param path Full path to new disc image
+ *
+ * @note Writes path to CHANGE_DISC_PATH for MinUI launcher integration
+ * @note Skips if path is same as current or doesn't exist
+ */
 static void Game_changeDisc(char* path) {
 	if (exactMatch(game.path, path) || !exists(path))
 		return;
@@ -397,10 +557,23 @@ static void Game_changeDisc(char* path) {
 }
 
 ///////////////////////////////////////
+// SRAM (Battery Save) Management
+///////////////////////////////////////
+// Handles persistent save RAM for games with battery-backed saves
+// (e.g., Pokémon, Zelda, RPGs). Stored as .sav files in /mnt/SDCARD/Saves/<platform>/
 
 static void SRAM_getPath(char* filename) {
 	sprintf(filename, "%s/%s.sav", core.saves_dir, game.name);
 }
+
+/**
+ * Loads battery-backed save RAM from disk into core memory.
+ *
+ * Called after loading a game. Restores in-game progress for games
+ * with battery saves (e.g., save files in RPGs).
+ *
+ * @note Silently skips if core doesn't support SRAM or file doesn't exist
+ */
 static void SRAM_read(void) {
 	size_t sram_size = core.get_memory_size(RETRO_MEMORY_SAVE_RAM);
 	if (!sram_size)
@@ -422,6 +595,16 @@ static void SRAM_read(void) {
 
 	fclose(sram_file);
 }
+
+/**
+ * Writes battery-backed save RAM from core memory to disk.
+ *
+ * Called when unloading a game. Persists in-game save data so it
+ * can be restored on next launch. Calls sync() to ensure data is
+ * flushed to SD card.
+ *
+ * @note Silently skips if core doesn't support SRAM
+ */
 static void SRAM_write(void) {
 	size_t sram_size = core.get_memory_size(RETRO_MEMORY_SAVE_RAM);
 	if (!sram_size)
@@ -449,10 +632,20 @@ static void SRAM_write(void) {
 }
 
 ///////////////////////////////////////
+// RTC (Real-Time Clock) Management
+///////////////////////////////////////
+// Some games track real-world time (e.g., Pokémon day/night cycle).
+// This data is stored separately from SRAM as .rtc files.
 
 static void RTC_getPath(char* filename) {
 	sprintf(filename, "%s/%s.rtc", core.saves_dir, game.name);
 }
+
+/**
+ * Loads real-time clock data from disk into core memory.
+ *
+ * @note Silently skips if core doesn't support RTC or file doesn't exist
+ */
 static void RTC_read(void) {
 	size_t rtc_size = core.get_memory_size(RETRO_MEMORY_RTC);
 	if (!rtc_size)
@@ -474,6 +667,12 @@ static void RTC_read(void) {
 
 	fclose(rtc_file);
 }
+
+/**
+ * Writes real-time clock data from core memory to disk.
+ *
+ * @note Silently skips if core doesn't support RTC
+ */
 static void RTC_write(void) {
 	size_t rtc_size = core.get_memory_size(RETRO_MEMORY_RTC);
 	if (!rtc_size)
@@ -501,12 +700,33 @@ static void RTC_write(void) {
 }
 
 ///////////////////////////////////////
+// Save State System
+///////////////////////////////////////
+// MinArch provides 10 save state slots (0-9):
+// - Slots 0-8: Manual save states accessible via in-game menu
+// - Slot 9: Special "auto-resume" slot - automatically saved on quit,
+//           loaded on startup for seamless game resumption
+//
+// Save states are complete snapshots of emulator state (RAM, registers, etc.)
+// stored in /mnt/SDCARD/.userdata/<arch>/<platform>-<core>/
 
-static int state_slot = 0;
+static int state_slot = 0; // Currently selected slot (0-9)
+
 static void State_getPath(char* filename) {
 	sprintf(filename, "%s/%s.st%i", core.states_dir, game.name, state_slot);
 }
-static void State_read(void) { // from picoarch
+
+/**
+ * Loads a save state from disk into the core.
+ *
+ * Reads the state file for the current slot and restores emulator state.
+ * Temporarily disables fast-forward during load to avoid audio glitches.
+ *
+ * @note Based on picoarch implementation
+ * @note Silently fails if state file doesn't exist or core doesn't support states
+ * @note Uses gzopen for compressed state files
+ */
+static void State_read(void) {
 	size_t state_size = core.serialize_size();
 	if (!state_size)
 		return;
@@ -551,7 +771,17 @@ error:
 
 	fast_forward = was_ff;
 }
-static void State_write(void) { // from picoarch
+
+/**
+ * Saves current emulator state to disk.
+ *
+ * Captures complete emulator state (RAM, CPU registers, etc.) and writes
+ * to the current slot. Temporarily disables fast-forward during save.
+ *
+ * @note Based on picoarch implementation
+ * @note Silently fails if core doesn't support states or allocation fails
+ */
+static void State_write(void) {
 	size_t state_size = core.serialize_size();
 	if (!state_size)
 		return;
@@ -594,12 +824,32 @@ error:
 
 	fast_forward = was_ff;
 }
+
+/**
+ * Automatically saves current state to slot 9 (auto-resume slot).
+ *
+ * Called when user quits game. Preserves current state_slot selection
+ * by temporarily switching to slot 9, saving, then restoring original slot.
+ *
+ * @note AUTO_RESUME_SLOT is typically 9
+ */
 static void State_autosave(void) {
 	int last_state_slot = state_slot;
 	state_slot = AUTO_RESUME_SLOT;
 	State_write();
 	state_slot = last_state_slot;
 }
+
+/**
+ * Automatically loads state from auto-resume slot on startup.
+ *
+ * MinUI launcher can request a specific slot via RESUME_SLOT_PATH file.
+ * If that file exists, loads from specified slot instead of default.
+ * The file is deleted after reading to prevent repeated auto-loads.
+ *
+ * @note Preserves current state_slot selection
+ * @note Silently skips if RESUME_SLOT_PATH doesn't exist
+ */
 static void State_resume(void) {
 	if (!exists(RESUME_SLOT_PATH))
 		return;
@@ -1031,6 +1281,23 @@ static void Config_getPath(char* filename, int override) {
 		sprintf(filename, "%s/minarch%s.cfg", core.config_dir, device_tag);
 	LOG_info("Config_getPath %s\n", filename);
 }
+
+///////////////////////////////////////
+// Configuration System
+///////////////////////////////////////
+// Manages frontend and core settings persistence.
+// Configuration stored in /mnt/SDCARD/.userdata/<platform>/<core>/minarch.cfg
+
+/**
+ * Initializes configuration system from default core config.
+ *
+ * Parses default controller bindings from the core's initial configuration
+ * and stores them in the config structure. This provides fallback values
+ * before user customization.
+ *
+ * @note Only runs once (skipped if already initialized)
+ * @note Reads "bind" lines from config.default_cfg
+ */
 static void Config_init(void) {
 	if (!config.default_cfg || config.initialized)
 		return;
@@ -1671,7 +1938,9 @@ static void OptionList_setOptionValue(OptionList* list, const char* key, const c
 // 	else printf("unknown option %s \n", key); fflush(stdout);
 // }
 
-///////////////////////////////
+///////////////////////////////////////
+// Input Handling
+///////////////////////////////////////
 
 static void Menu_beforeSleep(void);
 static void Menu_afterSleep(void);
@@ -1679,6 +1948,19 @@ static void Menu_afterSleep(void);
 static void Menu_saveState(void);
 static void Menu_loadState(void);
 
+/**
+ * Enables or disables fast-forward mode.
+ *
+ * Fast-forward runs the emulator faster than real-time (up to max_ff_speed).
+ * Handles interaction with threaded video mode:
+ * - Entering FF with threaded video: disables threading temporarily
+ * - Exiting FF: restores threading if it was previously enabled
+ *
+ * @param enable 1 to enable fast-forward, 0 to disable
+ * @return The enable value (passthrough)
+ *
+ * @note Threading incompatible with FF due to frame pacing requirements
+ */
 static int setFastForward(int enable) {
 	if (!fast_forward && enable && thread_video) {
 		// LOG_info("entered fast forward with threaded core...\n");
@@ -1693,8 +1975,24 @@ static int setFastForward(int enable) {
 	return enable;
 }
 
-static uint32_t buttons = 0; // RETRO_DEVICE_ID_JOYPAD_* buttons
-static int ignore_menu = 0;
+static uint32_t buttons = 0; // Current button state (RETRO_DEVICE_ID_JOYPAD_* flags)
+static int ignore_menu = 0; // Suppress menu button (used for shortcuts)
+
+/**
+ * Polls input devices and handles frontend shortcuts.
+ *
+ * Called by the libretro core before checking input state. Handles:
+ * - Power/sleep management
+ * - Menu button detection
+ * - Fast-forward toggle (MENU + L2/R2)
+ * - Save/load state shortcuts
+ * - Screenshot capture
+ * - Game reset
+ *
+ * Also translates platform button presses to libretro button flags.
+ *
+ * @note This is a libretro callback, invoked by core on each frame
+ */
 static void input_poll_callback(void) {
 	PAD_poll();
 
@@ -2561,8 +2859,11 @@ static void blitBitmapText(char* text, int ox, int oy, uint16_t* data, int strid
 	memset(row - 1, 0, (w + 2) * 2);
 }
 
-///////////////////////////////
+///////////////////////////////////////
+// Video Processing
+///////////////////////////////////////
 
+// Performance counters for debug overlay
 static int cpu_ticks = 0;
 static int fps_ticks = 0;
 static int use_ticks = 0;
@@ -2572,26 +2873,51 @@ static double use_double = 0;
 static uint32_t sec_start = 0;
 
 #ifdef USES_SWSCALER
-static int fit = 1;
+static int fit = 1; // Use software scaler (fit to screen)
 #else
-static int fit = 0;
+static int fit = 0; // Use hardware scaler
 #endif
 
-// buffer to convert xrgb8888 to rgb565
+// Buffer for pixel format conversion (XRGB8888 -> RGB565)
 static void* buffer = NULL;
+
+/**
+ * Frees pixel format conversion buffer.
+ */
 static void buffer_dealloc(void) {
 	if (!buffer)
 		return;
 	free(buffer);
 	buffer = NULL;
 }
+
+/**
+ * Allocates pixel format conversion buffer.
+ *
+ * @param w Width in pixels
+ * @param h Height in pixels
+ * @param p Pitch in bytes (unused but kept for consistency)
+ */
 static void buffer_realloc(int w, int h, int p) {
 	buffer_dealloc();
 	buffer = malloc((w * FIXED_BPP) * h);
-	// LOG_info("buffer_realloc(%i,%i,%i)\n", w,h,p);
 }
+
+/**
+ * Converts XRGB8888 pixel data to RGB565 format.
+ *
+ * Some cores output 32-bit color (XRGB8888) but the device screen uses
+ * 16-bit color (RGB565). This function performs the conversion.
+ *
+ * @param data Source pixel data in XRGB8888 format
+ * @param width Frame width in pixels
+ * @param height Frame height in pixels
+ * @param pitch Bytes per scanline of source data
+ *
+ * @note Based on picoarch implementation
+ * @note Writes converted data to 'buffer' global
+ */
 static void buffer_downsample(const void* data, unsigned width, unsigned height, size_t pitch) {
-	// from picoarch! https://git.crowdedwood.com/picoarch/tree/video.c#n51
 	const uint32_t* input = data;
 	uint16_t* output = buffer;
 	size_t extra = pitch / sizeof(uint32_t) - width;
@@ -2610,6 +2936,26 @@ static void buffer_downsample(const void* data, unsigned width, unsigned height,
 	}
 }
 
+/**
+ * Selects and configures the appropriate video scaler.
+ *
+ * Determines how to scale the core's output resolution to the device screen.
+ * Handles multiple scaling modes (native, aspect, fullscreen, cropped) and
+ * calculates source/destination rectangles for optimal display.
+ *
+ * Scaling modes:
+ * - SCALE_NATIVE: 1:1 pixel mapping (may be cropped if game > screen)
+ * - SCALE_ASPECT: Maintain aspect ratio with letterboxing
+ * - SCALE_FULLSCREEN: Stretch to fill screen (may distort)
+ * - SCALE_CROPPED: Crop to fill screen while maintaining aspect
+ *
+ * @param src_w Source width from core
+ * @param src_h Source height from core
+ * @param src_p Source pitch (bytes per scanline)
+ *
+ * @note Updates global 'renderer' structure with calculated values
+ * @note Clears screen when scaler changes
+ */
 static void selectScaler(int src_w, int src_h, int src_p) {
 	LOG_info("selectScaler\n");
 
@@ -2928,6 +3274,22 @@ static void video_refresh_callback_main(const void* data, unsigned width, unsign
 		GFX_flip(screen);
 	last_flip_time = SDL_GetTicks();
 }
+
+/**
+ * Main video refresh callback from libretro core.
+ *
+ * Receives rendered frame from core and handles it based on threading mode:
+ * - Non-threaded: Calls video_refresh_callback_main directly
+ * - Threaded: Copies frame to backbuffer and signals main thread
+ *
+ * @param data Pointer to pixel data (RGB565 format)
+ * @param width Frame width in pixels
+ * @param height Frame height in pixels
+ * @param pitch Bytes per scanline (usually width * 2 for RGB565)
+ *
+ * @note This is a libretro callback, invoked by core after rendering a frame
+ * @note Threading mode copies frame to prevent race conditions
+ */
 static void video_refresh_callback(const void* data, unsigned width, unsigned height,
                                    size_t pitch) {
 	if (!data)
@@ -2956,13 +3318,39 @@ static void video_refresh_callback(const void* data, unsigned width, unsigned he
 	} else
 		video_refresh_callback_main(data, width, height, pitch);
 }
-///////////////////////////////
 
-// NOTE: sound must be disabled for fast forward to work...
+///////////////////////////////////////
+// Audio Callbacks
+///////////////////////////////////////
+
+/**
+ * Single audio sample callback from libretro core.
+ *
+ * Receives individual stereo samples. Most cores use the batch callback instead.
+ *
+ * @param left Left channel sample (-32768 to 32767)
+ * @param right Right channel sample (-32768 to 32767)
+ *
+ * @note Audio disabled during fast-forward for performance
+ */
 static void audio_sample_callback(int16_t left, int16_t right) {
 	if (!fast_forward)
 		SND_batchSamples(&(const SND_Frame){left, right}, 1);
 }
+
+/**
+ * Batch audio samples callback from libretro core.
+ *
+ * Receives multiple stereo samples at once for efficiency. This is the
+ * primary audio submission method used by most cores.
+ *
+ * @param data Pointer to interleaved stereo samples (L,R,L,R,...)
+ * @param frames Number of stereo frames (not individual samples)
+ * @return Number of frames consumed (always returns frames)
+ *
+ * @note Audio disabled during fast-forward for performance
+ * @note Data format: int16_t[frames * 2] interleaved stereo
+ */
 static size_t audio_sample_batch_callback(const int16_t* data, size_t frames) {
 	if (!fast_forward)
 		return SND_batchSamples((const SND_Frame*)data, frames);
@@ -2972,12 +3360,35 @@ static size_t audio_sample_batch_callback(const int16_t* data, size_t frames) {
 };
 
 ///////////////////////////////////////
+// Core Management
+///////////////////////////////////////
 
+/**
+ * Extracts core name from filename.
+ *
+ * Core files are named like "core_libretro.so" - this extracts "core".
+ *
+ * @param in_name Input filename (e.g., "fceumm_libretro.so")
+ * @param out_name Output buffer for core name (e.g., "fceumm")
+ */
 void Core_getName(char* in_name, char* out_name) {
 	strcpy(out_name, basename(in_name));
 	char* tmp = strrchr(out_name, '_');
 	tmp[0] = '\0';
 }
+
+/**
+ * Loads a libretro core from disk and resolves API functions.
+ *
+ * Opens the .so file using dlopen() and resolves all required libretro
+ * API function pointers using dlsym(). Also sets up directory paths for
+ * saves, states, config, and BIOS files based on platform and core name.
+ *
+ * @param core_path Full path to core .so file
+ * @param tag_name Platform tag (e.g., "GB", "NES")
+ *
+ * @note Exits on failure (core is required to continue)
+ */
 void Core_open(const char* core_path, const char* tag_name) {
 	LOG_info("Core_open\n");
 	core.handle = dlopen(core_path, RTLD_LAZY);
@@ -4340,6 +4751,32 @@ static char* getAlias(char* path, char* alias) {
 	}
 }
 
+///////////////////////////////////////
+// In-Game Menu
+///////////////////////////////////////
+
+/**
+ * Main menu loop - displays and handles in-game menu interaction.
+ *
+ * The in-game menu provides access to:
+ * - Save/load state management (10 slots)
+ * - Frontend options (scaling, sharpness, vsync, etc.)
+ * - Core emulator options (from libretro core)
+ * - Controller configuration
+ * - Disc changing (multi-disc games)
+ * - Reset and quit
+ *
+ * Flow:
+ * 1. Captures current frame as background
+ * 2. Saves SRAM/RTC (in case of crash)
+ * 3. Reduces CPU speed and enables sleep (power savings)
+ * 4. Displays menu over game screenshot
+ * 5. Handles navigation and option changes
+ * 6. Restores game state and resumes
+ *
+ * @note Blocks until user exits menu
+ * @note Changes are saved to config file on menu exit
+ */
 static void Menu_loop(void) {
 	menu.bitmap = SDL_CreateRGBSurfaceFrom(renderer.src, renderer.true_w, renderer.true_h,
 	                                       FIXED_DEPTH, renderer.src_p, RGBA_MASK_565);
@@ -4689,8 +5126,21 @@ static void Menu_loop(void) {
 	PWR_disableAutosleep();
 }
 
-// TODO: move to PWR_*?
-static unsigned getUsage(void) { // from picoarch
+///////////////////////////////////////
+// Performance Tracking
+///////////////////////////////////////
+
+/**
+ * Gets CPU usage percentage from /proc/self/stat.
+ *
+ * Reads process CPU ticks and converts to percentage. Used for debug overlay.
+ *
+ * @return CPU usage in percent (0-100+)
+ *
+ * @note Based on picoarch implementation
+ * @note Returns 0 on error
+ */
+static unsigned getUsage(void) {
 	long unsigned ticks = 0;
 	long ticksps = 0;
 	FILE* file = NULL;
@@ -4714,6 +5164,12 @@ finish:
 	return ticks;
 }
 
+/**
+ * Tracks frames per second and CPU usage for debug overlay.
+ *
+ * Updates FPS and CPU usage counters once per second. Values are
+ * displayed in debug overlay when show_debug is enabled.
+ */
 static void trackFPS(void) {
 	cpu_ticks += 1;
 	static int last_use_ticks = 0;
@@ -4735,6 +5191,16 @@ static void trackFPS(void) {
 	}
 }
 
+/**
+ * Limits fast-forward speed to configured maximum.
+ *
+ * When fast-forwarding, this function ensures we don't exceed max_ff_speed
+ * by inserting small delays between frames. Without this, FF would run as
+ * fast as possible, consuming 100% CPU and draining battery.
+ *
+ * @note Only active when fast_forward is enabled and max_ff_speed > 0
+ * @note Recalculates frame time when max_ff_speed changes
+ */
 static void limitFF(void) {
 	static uint64_t ff_frame_time = 0;
 	static uint64_t last_time = 0;
@@ -4763,9 +5229,25 @@ static void limitFF(void) {
 	last_time = now;
 }
 
+///////////////////////////////////////
+// Threading
+///////////////////////////////////////
+
+/**
+ * Core emulation thread (threaded video mode).
+ *
+ * Runs the core in a separate thread, allowing video rendering to happen
+ * independently. The core thread runs frames and signals the main thread
+ * when a new frame is ready.
+ *
+ * @param arg Unused thread argument
+ * @return NULL on thread exit
+ *
+ * @note Only used when thread_video is enabled
+ * @note Controlled by should_run_core flag (allows pause)
+ */
 static void* coreThread(void* arg) {
-	// force a vsync immediately before loop
-	// for better frame pacing?
+	// Force initial vsync for better frame pacing
 	GFX_clearAll();
 	GFX_flip(screen);
 
@@ -4784,6 +5266,42 @@ static void* coreThread(void* arg) {
 	pthread_exit(NULL);
 }
 
+///////////////////////////////////////
+// Main Entry Point
+///////////////////////////////////////
+
+/**
+ * MinArch main entry point.
+ *
+ * Initializes all subsystems, loads core and game, runs main loop, and cleans up.
+ *
+ * Initialization sequence:
+ * 1. Platform initialization (video, audio, input, power)
+ * 2. Load libretro core (.so file)
+ * 3. Load game ROM (with ZIP extraction if needed)
+ * 4. Restore configuration and save states
+ * 5. Initialize core with game
+ * 6. Resume from auto-save slot
+ * 7. Enter main loop
+ *
+ * Main loop:
+ * - Non-threaded: Runs core.run() directly, flips screen
+ * - Threaded: Waits for core thread signal, flips screen
+ * - Handles menu display
+ * - Handles threading mode changes
+ *
+ * Shutdown sequence:
+ * 1. Auto-save current state to slot 9
+ * 2. Write SRAM/RTC data
+ * 3. Unload game and core
+ * 4. Cleanup all subsystems
+ *
+ * @param argc Argument count (expects 3: program, core path, rom path)
+ * @param argv Arguments: [0]=program, [1]=core .so path, [2]=ROM path
+ * @return EXIT_SUCCESS on normal exit
+ *
+ * @note Exits early if game fails to load
+ */
 int main(int argc, char* argv[]) {
 	LOG_info("MinArch\n");
 
