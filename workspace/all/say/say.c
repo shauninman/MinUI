@@ -24,9 +24,14 @@
  *
  * @param argc Argument count (must be at least 2)
  * @param argv Argument vector - argv[1] contains the message text
- * @return EXIT_SUCCESS on normal exit
+ * @return EXIT_SUCCESS on normal exit, EXIT_FAILURE if no message provided
  */
 int main(int argc, const char* argv[]) {
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <message>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
 	char msg[1024];
 	sprintf(msg, "%s", argv[1]);
 

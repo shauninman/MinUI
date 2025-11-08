@@ -143,12 +143,14 @@ static int HDMI_enabled(void) {
  * @return Never returns (runs infinite loop)
  */
 static void* watchPorts(void *arg) {
-	int has_jack,had_jack;
-	has_jack = had_jack = JACK_enabled();
+	int has_jack, had_jack;
+	had_jack = JACK_enabled();
+	has_jack = had_jack;
 	SetJack(has_jack);
 
-	int has_hdmi,had_hdmi;
-	has_hdmi = had_hdmi = HDMI_enabled();
+	int has_hdmi, had_hdmi;
+	had_hdmi = HDMI_enabled();
+	has_hdmi = had_hdmi;
 	SetHDMI(has_hdmi);
 
 	while(1) {
