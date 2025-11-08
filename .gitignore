@@ -36,4 +36,11 @@ bl_disable
 workspace/hash.txt
 workspace/readmes
 
+# Test artifacts
+tests/unit_tests
+tests/*_test
+tests/**/*_test
+tests/*.dSYM
+tests/**/*.dSYM
+
 FAKESD

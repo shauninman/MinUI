@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 int prefixMatch(char* pre, char* str);

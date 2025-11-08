@@ -59,19 +59,25 @@ lint-full: check-cppcheck
 		workspace/
 
 # Test targets
-test: tests/utils_test
-	@echo "Running tests..."
-	@./tests/utils_test
+test: tests/unit_tests
+	@echo "Running unit tests..."
+	@./tests/unit_tests
 	@echo ""
 	@echo "✓ All tests passed"
 
-tests/utils_test: tests/utils/test_utils_simple.c tests/unity/unity.c
-	@echo "Building utils tests..."
-	@$(CC) -o $@ $^ -I tests -std=c99
-	@echo "✓ Tests compiled"
+# Build all unit tests
+tests/unit_tests: tests/unit/all/common/test_utils.c workspace/all/common/utils.c tests/support/unity/unity.c tests/support/platform.h
+	@echo "Building unit tests..."
+	@$(CC) -o $@ tests/unit/all/common/test_utils.c workspace/all/common/utils.c tests/support/unity/unity.c \
+		-I tests/support \
+		-I tests/support/unity \
+		-I workspace/all/common \
+		-std=c99 \
+		-Wall -Wextra -Wno-unused-parameter
+	@echo "✓ Unit tests compiled"
 
 clean-tests:
-	rm -f tests/utils_test tests/*.o
+	rm -f tests/unit_tests tests/*.o
 
 # Code formatting with clang-format
 CLANG_FORMAT = clang-format
