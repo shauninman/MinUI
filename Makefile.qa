@@ -64,7 +64,7 @@ TEST_INCLUDES = -I tests/support -I tests/support/unity -I workspace/all/common
 TEST_UNITY = tests/support/unity/unity.c
 
 # List of test executables
-TEST_EXECUTABLES = tests/unit_tests tests/file_utils_test tests/name_utils_test tests/date_utils_test
+TEST_EXECUTABLES = tests/utils_test tests/string_utils_test tests/file_utils_test tests/name_utils_test tests/date_utils_test tests/math_utils_test
 
 # Test targets
 test: $(TEST_EXECUTABLES)
@@ -75,9 +75,14 @@ test: $(TEST_EXECUTABLES)
 	done
 	@echo "✓ All tests passed"
 
-# Build utils tests (string matching, string manipulation, timing)
-tests/unit_tests: tests/unit/all/common/test_utils.c workspace/all/common/utils/utils.c $(TEST_UNITY)
+# Build utils tests (timing only)
+tests/utils_test: tests/unit/all/common/test_utils.c workspace/all/common/utils/utils.c $(TEST_UNITY)
 	@echo "Building utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build string_utils tests
+tests/string_utils_test: tests/unit/all/common/test_string_utils.c workspace/all/common/utils/string_utils.c $(TEST_UNITY)
+	@echo "Building string_utils tests..."
 	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
 
 # Build file_utils tests
@@ -86,13 +91,18 @@ tests/file_utils_test: tests/unit/all/common/test_file_utils.c workspace/all/com
 	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
 
 # Build name_utils tests
-tests/name_utils_test: tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) tests/support/platform.h
+tests/name_utils_test: tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/string_utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) tests/support/platform.h
 	@echo "Building name_utils tests..."
-	@$(CC) -o $@ tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) $(TEST_INCLUDES) $(TEST_CFLAGS)
+	@$(CC) -o $@ tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/string_utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) $(TEST_INCLUDES) $(TEST_CFLAGS)
 
 # Build date_utils tests
 tests/date_utils_test: tests/unit/all/common/test_date_utils.c workspace/all/common/utils/date_utils.c $(TEST_UNITY)
 	@echo "Building date_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build math_utils tests
+tests/math_utils_test: tests/unit/all/common/test_math_utils.c workspace/all/common/utils/math_utils.c $(TEST_UNITY)
+	@echo "Building math_utils tests..."
 	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
 
 clean-tests:

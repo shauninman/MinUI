@@ -25,11 +25,13 @@ tests/
 Tests mirror the source code structure under `workspace/`:
 
 ```
-workspace/all/common/utils/utils.c      →  tests/unit/all/common/test_utils.c
-workspace/all/common/utils/file_utils.c →  tests/unit/all/common/test_file_utils.c
-workspace/all/common/utils/name_utils.c →  tests/unit/all/common/test_name_utils.c
-workspace/all/common/utils/date_utils.c →  tests/unit/all/common/test_date_utils.c
-workspace/all/minui/minui.c             →  tests/unit/all/minui/test_minui.c
+workspace/all/common/utils/utils.c        →  tests/unit/all/common/test_utils.c
+workspace/all/common/utils/string_utils.c →  tests/unit/all/common/test_string_utils.c
+workspace/all/common/utils/file_utils.c   →  tests/unit/all/common/test_file_utils.c
+workspace/all/common/utils/name_utils.c   →  tests/unit/all/common/test_name_utils.c
+workspace/all/common/utils/date_utils.c   →  tests/unit/all/common/test_date_utils.c
+workspace/all/common/utils/math_utils.c   →  tests/unit/all/common/test_math_utils.c
+workspace/all/minui/minui.c               →  tests/unit/all/minui/test_minui.c
 ```
 
 This makes it easy to:
@@ -70,19 +72,23 @@ make -f Makefile.qa test
 ### Specific Test Suites
 ```bash
 # Run individual test executables
-./tests/unit_tests         # String/timing tests (32 tests)
+./tests/utils_test         # Timing tests (2 tests)
+./tests/string_utils_test  # String tests (35 tests)
 ./tests/file_utils_test    # File I/O tests (10 tests)
 ./tests/name_utils_test    # Name processing tests (10 tests)
-./tests/date_utils_test    # Date/time tests (25 tests)
+./tests/date_utils_test    # Date/time tests (30 tests)
+./tests/math_utils_test    # Math tests (13 tests)
 
 # Run with verbose output
-./tests/unit_tests -v
+./tests/string_utils_test -v
 
 # Run specific test
-./tests/unit_tests -n test_prefixMatch_exact
+./tests/utils_test -n test_getMicroseconds_non_zero
+./tests/string_utils_test -n test_prefixMatch_exact
 ./tests/file_utils_test -n test_exists_file_exists
 ./tests/name_utils_test -n test_getDisplayName_simple
 ./tests/date_utils_test -n test_isLeapYear_divisible_by_4
+./tests/math_utils_test -n test_gcd_common_divisor
 ```
 
 ### Clean and Rebuild
@@ -197,12 +203,19 @@ void test_getEmuName_with_parens(void) {
 
 ## Current Test Coverage
 
-### workspace/all/common/utils/utils.c - ✅ 32 tests
+### workspace/all/common/utils/utils.c - ✅ 2 tests
 **File:** `tests/unit/all/common/test_utils.c`
 
-- String matching functions (prefixMatch, suffixMatch, exactMatch, containsString, hide)
-- String manipulation (normalizeNewline, trimTrailingNewlines, trimSortingMeta)
 - Timing (getMicroseconds)
+
+**Coverage:** Timing functions tested for non-zero values and monotonicity.
+
+### workspace/all/common/utils/string_utils.c - ✅ 35 tests
+**File:** `tests/unit/all/common/test_string_utils.c`
+
+- String matching (prefixMatch, suffixMatch, exactMatch, containsString, hide)
+- String manipulation (normalizeNewline, trimTrailingNewlines, trimSortingMeta)
+- Text parsing (splitTextLines)
 
 **Coverage:** All functions tested with happy paths, edge cases, and error conditions.
 
@@ -224,7 +237,7 @@ void test_getEmuName_with_parens(void) {
 
 **Coverage:** All name processing functions tested with various input formats.
 
-### workspace/all/common/utils/date_utils.c - ✅ 25 tests
+### workspace/all/common/utils/date_utils.c - ✅ 30 tests
 **File:** `tests/unit/all/common/test_date_utils.c`
 
 - Leap year calculation (isLeapYear)
@@ -234,13 +247,25 @@ void test_getEmuName_with_parens(void) {
   - Year clamping (1970-2100)
   - Day validation (handles varying month lengths and leap years)
   - Time wrapping (hours, minutes, seconds)
+- 12-hour time conversion (convertTo12Hour)
 
 **Coverage:** Complete coverage of date/time validation logic.
 
 **Note:** Logic was extracted from `clock.c` into a proper utility library.
 
+### workspace/all/common/utils/math_utils.c - ✅ 13 tests
+**File:** `tests/unit/all/common/test_math_utils.c`
+
+- Greatest common divisor (gcd) - Euclidean algorithm
+- 16-bit color averaging (average16) - RGB565 pixel blending
+- 32-bit color averaging (average32) - RGBA8888 pixel blending with overflow handling
+
+**Coverage:** Pure math functions with edge cases and real-world scenarios.
+
+**Note:** Extracted from `api.c` for reusability and testability.
+
 ### Todo
-- [ ] workspace/all/common/api.c (requires SDL mocks)
+- [ ] workspace/all/common/api.c (remaining functions require SDL mocks)
 - [ ] workspace/all/minui/minui.c (integration tests)
 - [ ] workspace/all/minarch/minarch.c (integration tests)
 - [ ] Integration tests for full launch workflow

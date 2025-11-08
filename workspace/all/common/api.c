@@ -16,7 +16,9 @@
 
 #include "api.h"
 #include "defines.h"
-#include "utils.h"
+#include "utils/math_utils.h"
+#include "utils/string_utils.h"
+#include "utils/utils.h"
 
 ///////////////////////////////
 
@@ -325,57 +327,9 @@ struct blend_args {
 	uint16_t* blend_line;
 } blend_args;
 
-#if __ARM_ARCH >= 5
-static inline uint32_t average16(uint32_t c1, uint32_t c2) {
-	uint32_t ret, lowbits = 0x0821;
-	asm("eor %0, %2, %3\r\n"
-	    "and %0, %0, %1\r\n"
-	    "add %0, %3, %0\r\n"
-	    "add %0, %0, %2\r\n"
-	    "lsr %0, %0, #1\r\n"
-	    : "=&r"(ret)
-	    : "r"(lowbits), "r"(c1), "r"(c2)
-	    :);
-	return ret;
-}
-static inline uint32_t average32(uint32_t c1, uint32_t c2) {
-	uint32_t ret, lowbits = 0x08210821;
-
-	asm("eor %0, %3, %1\r\n"
-	    "and %0, %0, %2\r\n"
-	    "adds %0, %1, %0\r\n"
-	    "and %1, %1, #0\r\n"
-	    "movcs %1, #0x80000000\r\n"
-	    "adds %0, %0, %3\r\n"
-	    "rrx %0, %0\r\n"
-	    "orr %0, %0, %1\r\n"
-	    : "=&r"(ret), "+r"(c2)
-	    : "r"(lowbits), "r"(c1)
-	    : "cc");
-
-	return ret;
-}
-
+// Color averaging macros using math_utils functions
 #define AVERAGE16_NOCHK(c1, c2) (average16((c1), (c2)))
 #define AVERAGE32_NOCHK(c1, c2) (average32((c1), (c2)))
-
-#else
-
-static inline uint32_t average16(uint32_t c1, uint32_t c2) {
-	return (c1 + c2 + ((c1 ^ c2) & 0x0821)) >> 1;
-}
-static inline uint32_t average32(uint32_t c1, uint32_t c2) {
-	uint32_t sum = c1 + c2;
-	uint32_t ret = sum + ((c1 ^ c2) & 0x08210821);
-	uint32_t of = ((sum < c1) | (ret < sum)) << 31;
-
-	return (ret >> 1) | of;
-}
-
-#define AVERAGE16_NOCHK(c1, c2) (average16((c1), (c2)))
-#define AVERAGE32_NOCHK(c1, c2) (average32((c1), (c2)))
-
-#endif
 
 #define AVERAGE16(c1, c2) ((c1) == (c2) ? (c1) : AVERAGE16_NOCHK((c1), (c2)))
 #define AVERAGE16_1_3(c1, c2)                                                                      \
@@ -384,10 +338,6 @@ static inline uint32_t average32(uint32_t c1, uint32_t c2) {
 #define AVERAGE32(c1, c2) ((c1) == (c2) ? (c1) : AVERAGE32_NOCHK((c1), (c2)))
 #define AVERAGE32_1_3(c1, c2)                                                                      \
 	((c1) == (c2) ? (c1) : (AVERAGE32_NOCHK(AVERAGE32_NOCHK((c1), (c2)), (c2))))
-
-static inline int gcd(int a, int b) {
-	return b ? gcd(b, a % b) : a;
-}
 
 static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint32_t h,
                     uint32_t pitch, uint32_t dst_w, uint32_t dst_h, uint32_t dst_p) {
@@ -684,15 +634,9 @@ void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, SDL_Rect* dst_
 #define TEXT_BOX_MAX_ROWS 16
 #define LINE_HEIGHT 24
 	char* rows[TEXT_BOX_MAX_ROWS];
-	int row_count = 0;
-
-	char* tmp;
-	rows[row_count++] = msg;
-	while ((tmp = strchr(rows[row_count - 1], '\n')) != NULL) {
-		if (row_count + 1 >= TEXT_BOX_MAX_ROWS)
-			return; // TODO: bail
-		rows[row_count++] = tmp + 1;
-	}
+	int row_count = splitTextLines(msg, rows, TEXT_BOX_MAX_ROWS);
+	if (row_count == 0)
+		return;
 
 	int rendered_height = SCALE1(LINE_HEIGHT) * row_count;
 	int y = dst_rect->y;
@@ -860,15 +804,7 @@ int GFX_blitButtonGroup(char** pairs, int primary, SDL_Surface* dst, int align_r
 #define MAX_TEXT_LINES 16
 void GFX_sizeText(TTF_Font* font, char* str, int leading, int* w, int* h) {
 	char* lines[MAX_TEXT_LINES];
-	int count = 0;
-
-	char* tmp;
-	lines[count++] = str;
-	while ((tmp = strchr(lines[count - 1], '\n')) != NULL) {
-		if (count + 1 > MAX_TEXT_LINES)
-			break; // TODO: bail?
-		lines[count++] = tmp + 1;
-	}
+	int count = splitTextLines(str, lines, MAX_TEXT_LINES);
 	*h = count * leading;
 
 	int mw = 0;
@@ -900,15 +836,7 @@ void GFX_blitText(TTF_Font* font, char* str, int leading, SDL_Color color, SDL_S
 		dst_rect = &(SDL_Rect){0, 0, dst->w, dst->h};
 
 	char* lines[MAX_TEXT_LINES];
-	int count = 0;
-
-	char* tmp;
-	lines[count++] = str;
-	while ((tmp = strchr(lines[count - 1], '\n')) != NULL) {
-		if (count + 1 > MAX_TEXT_LINES)
-			break; // TODO: bail?
-		lines[count++] = tmp + 1;
-	}
+	int count = splitTextLines(str, lines, MAX_TEXT_LINES);
 	int x = dst_rect->x;
 	int y = dst_rect->y;
 

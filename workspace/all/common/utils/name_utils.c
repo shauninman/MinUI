@@ -2,7 +2,7 @@
 #include "name_utils.h"
 #include "../defines.h"
 #include "file_utils.h"
-#include "utils.h"
+#include "string_utils.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
