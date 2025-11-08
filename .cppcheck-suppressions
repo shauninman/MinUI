@@ -1,0 +1,18 @@
+# Suppressions for cppcheck - start gentle, tighten over time
+
+# Ignore these for now - too noisy initially
+missingIncludeSystem
+unmatchedSuppression
+unusedFunction
+normalCheckLevelMaxBranches
+
+# Platform-specific code that looks wrong but isn't
+ConfigurationNotChecked
+unknownMacro:*PLATFORM*
+
+# SDL and libretro headers we don't control
+missingInclude:*/SDL*
+missingInclude:*/libretro*
+
+# Third-party code we don't maintain (libretro-common)
+*:*/libretro-common/*

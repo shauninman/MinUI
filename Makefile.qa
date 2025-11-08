@@ -1,0 +1,71 @@
+# Quality Assurance Makefile
+# Run static analysis and tests
+
+.PHONY: help lint lint-full test clean-qa
+
+help:
+	@echo "MinUI Quality Assurance Tools"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  make lint          - Run cppcheck on workspace/all/ (serious issues only)"
+	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
+	@echo "  make test          - Run unit tests (when implemented)"
+	@echo "  make clean-qa      - Clean QA artifacts"
+	@echo ""
+	@echo "Installing cppcheck:"
+	@echo "  macOS:  brew install cppcheck"
+	@echo "  Linux:  sudo apt-get install cppcheck"
+
+# Focus on serious issues: warning (not style/performance yet)
+# Start gentle - just catch obvious bugs
+CPPCHECK_FLAGS = --enable=warning \
+                 --suppressions-list=.cppcheck-suppressions \
+                 --inline-suppr \
+                 --error-exitcode=0 \
+                 --quiet
+
+# Check if cppcheck is installed
+check-cppcheck:
+	@which cppcheck > /dev/null || (echo "Error: cppcheck not installed. Run 'brew install cppcheck' or 'apt-get install cppcheck'" && exit 1)
+
+# Lint common code (most important, least platform-specific)
+lint: check-cppcheck
+	@echo "Running cppcheck on workspace/all/ (common code)..."
+	@echo "Checking for: NULL dereferences, memory leaks, buffer overflows, uninitialized variables"
+	@echo ""
+	cppcheck $(CPPCHECK_FLAGS) \
+		-I workspace/all/common \
+		workspace/all/minui/ \
+		workspace/all/minarch/ \
+		workspace/all/common/ \
+		workspace/all/clock/ \
+		workspace/all/minput/ \
+		workspace/all/say/ \
+		workspace/all/syncsettings/
+	@echo ""
+	@echo "✓ Static analysis complete"
+
+# More thorough check (all workspace code)
+lint-full: check-cppcheck
+	@echo "Running cppcheck on entire workspace..."
+	cppcheck $(CPPCHECK_FLAGS) \
+		-I workspace/all/common \
+		workspace/
+
+# Test target (placeholder for now)
+test:
+	@echo "Test infrastructure not yet set up"
+	@echo "Run 'make setup-tests' to initialize"
+
+clean-qa:
+	@echo "Cleaning QA artifacts..."
+	rm -f cppcheck-report.txt
+
+# Generate a report file
+report: check-cppcheck
+	@echo "Generating static analysis report..."
+	cppcheck $(CPPCHECK_FLAGS) --template="{file}:{line}: {severity}: {message}" \
+		-I workspace/all/common \
+		workspace/all/ > cppcheck-report.txt 2>&1 || true
+	@echo "Report saved to cppcheck-report.txt"
+	@wc -l cppcheck-report.txt
