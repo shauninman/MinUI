@@ -18,9 +18,11 @@ All QA jobs run on standard `ubuntu-latest` runners in parallel.
 
 Validates compilation works (compile-only, no artifacts).
 
-**Platform tested:** rg35xxplus (Anbernic RG35XX Plus)
+**Platform tested:** miyoomini (Miyoo Mini)
 
-**Note:** This only tests compilation (`make PLATFORM=rg35xxplus build`), not full builds with system file copying. This catches compilation errors quickly without needing the full skeleton setup.
+**Note:** This only tests compilation (`make PLATFORM=miyoomini build`), not full builds with system file copying. This catches compilation errors quickly without needing the full skeleton setup.
+
+**Caching:** The toolchain directory is cached between runs. First run takes ~15-20 min (builds Docker image), subsequent runs take ~2-3 min (uses cache).
 
 ## Running Workflows Locally
 

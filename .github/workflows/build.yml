@@ -15,8 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache toolchain
+        uses: actions/cache@v4
+        with:
+          path: toolchains/miyoomini-toolchain
+          key: miyoomini-toolchain-${{ hashFiles('makefile.toolchain') }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build rg35xxplus (compile only)
-        run: make PLATFORM=rg35xxplus build
+      - name: Build miyoomini (compile only)
+        run: make PLATFORM=miyoomini build
