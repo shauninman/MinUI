@@ -1,5 +1,6 @@
 // Core timing utilities
 #include "utils.h"
+#include <stddef.h>
 #include <sys/time.h>
 
 uint64_t getMicroseconds(void) {

@@ -1,21 +1,29 @@
 # Quality Assurance Makefile
 # Run static analysis and tests
 
-.PHONY: help lint lint-full lint-shell test format format-check clean-qa
+.PHONY: help lint lint-full lint-shell test test-native format format-check clean-qa docker-build docker-test docker-shell
 
 help:
 	@echo "MinUI Quality Assurance Tools"
 	@echo ""
 	@echo "Available targets:"
+	@echo "  make test          - Run unit tests (Docker, recommended)"
 	@echo "  make lint          - Run cppcheck on workspace/all/ (serious issues only)"
 	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
 	@echo "  make lint-shell    - Run shellcheck on shell scripts"
-	@echo "  make test          - Run unit tests"
 	@echo "  make format        - Format code with clang-format (MODIFIES FILES)"
 	@echo "  make format-check  - Check if code is formatted (no changes)"
 	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
-	@echo "Installing tools:"
+	@echo "Docker targets (default):"
+	@echo "  make docker-test   - Run tests in Debian Buster ARM64 container"
+	@echo "  make docker-build  - Build test Docker image"
+	@echo "  make docker-shell  - Enter Docker container for debugging"
+	@echo ""
+	@echo "Native targets (requires local tools):"
+	@echo "  make test-native   - Run tests natively (not recommended on macOS)"
+	@echo ""
+	@echo "Installing native tools:"
 	@echo "  macOS:  brew install cppcheck llvm shellcheck"
 	@echo "  Linux:  sudo apt-get install cppcheck clang-format shellcheck"
 
@@ -66,9 +74,12 @@ TEST_UNITY = tests/support/unity/unity.c
 # List of test executables
 TEST_EXECUTABLES = tests/utils_test tests/string_utils_test tests/file_utils_test tests/name_utils_test tests/date_utils_test tests/math_utils_test
 
-# Test targets
-test: $(TEST_EXECUTABLES)
-	@echo "Running unit tests..."
+# Default test target: use Docker
+test: docker-test
+
+# Native test target (for Linux or if Docker unavailable)
+test-native: $(TEST_EXECUTABLES)
+	@echo "Running unit tests (native)..."
 	@for test in $(TEST_EXECUTABLES); do \
 		./$$test; \
 		echo ""; \
@@ -178,3 +189,25 @@ report: check-cppcheck
 		workspace/all/ > cppcheck-report.txt 2>&1 || true
 	@echo "Report saved to cppcheck-report.txt"
 	@wc -l cppcheck-report.txt
+
+# Docker-based testing targets
+DOCKER_IMAGE = minui-test
+DOCKER_RUN = docker run --rm -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE)
+
+docker-build:
+	@echo "Building test Docker image (Debian Buster ARM64)..."
+	docker build --platform linux/arm64 -t $(DOCKER_IMAGE) -f tests/Dockerfile .
+	@echo "✓ Docker image ready"
+
+docker-test: docker-build
+	@echo "Running tests in Docker container (Debian Buster ARM64)..."
+	@echo ""
+	$(DOCKER_RUN) make -f Makefile.qa clean-tests test-native
+
+docker-lint: docker-build
+	@echo "Running linting in Docker container..."
+	$(DOCKER_RUN) make -f Makefile.qa lint
+
+docker-shell: docker-build
+	@echo "Entering Docker container shell..."
+	docker run --rm -it -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE) /bin/bash

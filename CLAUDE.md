@@ -112,29 +112,21 @@ Active platforms (as of most recent): miyoomini, trimuismart, rg35xx, rg35xxplus
 ### Quality Assurance (Makefile.qa)
 
 ```bash
-# Run all tests
-make -f Makefile.qa test
+# Quick commands (recommended)
+make test                          # Run all tests (uses Docker)
+make lint                          # Run static analysis
+make format                        # Format code
 
-# Run specific test
-./tests/unit_tests -n test_prefixMatch_exact
-
-# Verbose test output
-./tests/unit_tests -v
-
-# Static analysis (cppcheck)
-make -f Makefile.qa lint           # Common code only
-make -f Makefile.qa lint-full      # All workspace code
-
-# Shell script linting
-make -f Makefile.qa lint-shell
-
-# Code formatting
-make -f Makefile.qa format-check   # Check only
-make -f Makefile.qa format         # Format in-place (modifies files)
-
-# Clean test artifacts
-make -f Makefile.qa clean-tests
+# Additional QA targets
+make -f Makefile.qa docker-shell   # Enter container for debugging
+make -f Makefile.qa test-native    # Run natively (not recommended on macOS)
+make -f Makefile.qa lint-full      # Lint entire workspace (verbose)
+make -f Makefile.qa lint-shell     # Lint shell scripts
+make -f Makefile.qa format-check   # Check formatting only
+make -f Makefile.qa clean-tests    # Clean test artifacts
 ```
+
+**Note:** Tests run in Docker by default, using a Debian Buster ARM64 container that matches the platform toolchains (GCC 8.3.0). This eliminates macOS-specific build issues and ensures consistency with the actual build environment.
 
 ### Test Organization
 

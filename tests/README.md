@@ -2,6 +2,29 @@
 
 This directory contains the test suite for MinUI, organized to mirror the source code structure.
 
+## Quick Start
+
+```bash
+make test   # Run all tests in Docker (recommended)
+```
+
+Tests run in a Debian Buster ARM64 container that matches the platform toolchains exactly. This ensures consistency across development environments and catches platform-specific issues.
+
+## Test Environment
+
+**Docker Container Specifications:**
+- Base: Debian Buster (10) ARM64
+- Compiler: GCC 8.3.0-6 (matches platform toolchains)
+- C Library: GLIBC 2.28
+- Architecture: aarch64 (falls back to C implementations for 32-bit ARM assembly)
+- Dockerfile: `tests/Dockerfile`
+
+**Why Docker?**
+- Eliminates macOS ARM architecture differences
+- Matches the exact GCC/libc versions used by platform toolchains
+- Consistent test results across all development machines
+- No need to install native build tools on macOS
+
 ## Directory Structure
 
 ```
@@ -16,6 +39,7 @@ tests/
 ├── support/                    # Test infrastructure
 │   ├── unity/                  # Unity test framework
 │   └── platform.h              # Platform stubs for testing
+├── Dockerfile                  # Test environment (Debian Buster ARM64)
 └── README.md                   # This file
 ```
 
@@ -64,13 +88,29 @@ This makes it easy to:
 
 ## Running Tests
 
-### Quick Test
+### Docker-Based Testing (Default)
+
+Tests run in a Debian Buster ARM64 container that matches the platform toolchains exactly (GCC 8.3.0, GLIBC 2.28). This eliminates macOS-specific build issues and ensures consistency with the actual build environment.
+
 ```bash
-make -f Makefile.qa test
+# Run all tests (uses Docker automatically)
+make test
+
+# Enter Docker container for debugging
+make -f Makefile.qa docker-shell
+
+# Rebuild Docker image
+make -f Makefile.qa docker-build
 ```
 
-### Specific Test Suites
+### Native Testing (Advanced)
+
+Run tests directly on your host system (not recommended on macOS due to architecture differences):
+
 ```bash
+# Run all tests natively
+make -f Makefile.qa test-native
+
 # Run individual test executables
 ./tests/utils_test         # Timing tests (2 tests)
 ./tests/string_utils_test  # String tests (35 tests)
@@ -94,7 +134,7 @@ make -f Makefile.qa test
 ### Clean and Rebuild
 ```bash
 make -f Makefile.qa clean-tests
-make -f Makefile.qa test
+make test
 ```
 
 ## Writing New Tests
@@ -279,33 +319,70 @@ Tests run automatically on:
 
 Configure CI to run:
 ```bash
-make -f Makefile.qa lint
-make -f Makefile.qa test
+make lint   # Static analysis
+make test   # All tests in Docker
 ```
+
+CI systems should have Docker available. The test environment will automatically:
+- Pull/build the Debian Buster ARM64 test image
+- Compile and run all tests
+- Report any failures
 
 ## Debugging Test Failures
 
-### Use lldb/gdb
+### Debug in Docker Container
 ```bash
-# Compile with debug symbols
-gcc -g -o tests/unit_tests_debug ...
+# Enter the test container
+make -f Makefile.qa docker-shell
 
-# Debug
-lldb tests/unit_tests_debug
+# Inside container, build and run tests
+make -f Makefile.qa clean-tests test-native
+
+# Build with debug symbols
+gcc -g -o tests/utils_test_debug tests/unit/all/common/test_utils.c \
+    workspace/all/common/utils/utils.c \
+    tests/support/unity/unity.c \
+    -I tests/support -I tests/support/unity -I workspace/all/common \
+    -std=c99
+
+# Run with gdb (lldb not available in Debian Buster)
+gdb tests/utils_test_debug
+(gdb) run
+(gdb) bt  # backtrace when crash occurs
+```
+
+### Debug Natively (macOS/Linux)
+```bash
+# Build with debug symbols
+gcc -g -o tests/utils_test_debug tests/unit/all/common/test_utils.c \
+    workspace/all/common/utils/utils.c \
+    tests/support/unity/unity.c \
+    -I tests/support -I tests/support/unity -I workspace/all/common \
+    -std=c99
+
+# macOS
+lldb tests/utils_test_debug
 (lldb) run
-(lldb) bt  # backtrace when crash occurs
+(lldb) bt
+
+# Linux
+gdb tests/utils_test_debug
+(gdb) run
+(gdb) bt
 ```
 
 ### Verbose Output
 ```bash
-# Unity verbose mode
-./tests/unit_tests -v
+# Run individual test with verbose mode
+./tests/utils_test -v
+./tests/string_utils_test -v
 ```
 
 ### Run Single Test
 ```bash
 # Filter by test name
-./tests/unit_tests -n test_prefixMatch_exact
+./tests/utils_test -n test_getMicroseconds_non_zero
+./tests/string_utils_test -n test_prefixMatch_exact
 ```
 
 ## References

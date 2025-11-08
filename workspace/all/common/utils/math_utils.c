@@ -8,8 +8,8 @@ int gcd(int a, int b) {
 
 // Color averaging for 16-bit RGB565 pixels
 // Handles the special case where colors have different low bits
-#if defined(__ARM_ARCH) && __ARM_ARCH >= 5 && !defined(__APPLE__)
-// ARM assembly optimized version
+#if defined(__ARM_ARCH) && __ARM_ARCH >= 5 && !defined(__aarch64__)
+// ARM assembly optimized version (32-bit ARM only)
 uint32_t average16(uint32_t c1, uint32_t c2) {
 	uint32_t ret, lowbits = 0x0821;
 	__asm__("eor %0, %2, %3\r\n"
@@ -31,8 +31,8 @@ uint32_t average16(uint32_t c1, uint32_t c2) {
 
 // Color averaging for 32-bit RGBA8888 pixels
 // Handles overflow correctly
-#if defined(__ARM_ARCH) && __ARM_ARCH >= 5 && !defined(__APPLE__)
-// ARM assembly optimized version
+#if defined(__ARM_ARCH) && __ARM_ARCH >= 5 && !defined(__aarch64__)
+// ARM assembly optimized version (32-bit ARM only)
 uint32_t average32(uint32_t c1, uint32_t c2) {
 	uint32_t ret, lowbits = 0x08210821;
 
