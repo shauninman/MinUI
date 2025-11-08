@@ -1,29 +1,32 @@
 # Quality Assurance Makefile
 # Run static analysis and tests
 
-.PHONY: help lint lint-full lint-shell test test-native format format-check clean-qa docker-build docker-test docker-shell
+.PHONY: help lint lint-code lint-full lint-shell test test-native format format-check clean-qa docker-build docker-test docker-shell
 
 help:
 	@echo "MinUI Quality Assurance Tools"
 	@echo ""
-	@echo "Available targets:"
+	@echo "Main targets (use these):"
 	@echo "  make test          - Run unit tests (Docker, recommended)"
-	@echo "  make lint          - Run cppcheck on workspace/all/ (serious issues only)"
-	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
-	@echo "  make lint-shell    - Run shellcheck on shell scripts"
+	@echo "  make lint          - Run ALL linting checks (cppcheck, format-check, shellcheck)"
 	@echo "  make format        - Format code with clang-format (MODIFIES FILES)"
-	@echo "  make format-check  - Check if code is formatted (no changes)"
-	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
-	@echo "Docker targets (default):"
-	@echo "  make docker-test   - Run tests in Debian Buster ARM64 container"
+	@echo "Individual lint targets:"
+	@echo "  make lint-code     - Run cppcheck on workspace/all/"
+	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
+	@echo "  make format-check  - Check if code is formatted (no changes)"
+	@echo "  make lint-shell    - Run shellcheck on shell scripts"
+	@echo ""
+	@echo "Docker targets:"
+	@echo "  make docker-test   - Run tests in Debian Buster container"
 	@echo "  make docker-build  - Build test Docker image"
 	@echo "  make docker-shell  - Enter Docker container for debugging"
 	@echo ""
-	@echo "Native targets (requires local tools):"
+	@echo "Other:"
 	@echo "  make test-native   - Run tests natively (not recommended on macOS)"
+	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
-	@echo "Installing native tools:"
+	@echo "Installing tools:"
 	@echo "  macOS:  brew install cppcheck llvm shellcheck"
 	@echo "  Linux:  sudo apt-get install cppcheck clang-format shellcheck"
 
@@ -43,8 +46,24 @@ check-cppcheck:
 check-shellcheck:
 	@which shellcheck > /dev/null || (echo "Error: shellcheck not installed. Run 'brew install shellcheck' or 'apt-get install shellcheck'" && exit 1)
 
+# Main lint target - runs all linting checks
+lint: check-cppcheck check-clang-format check-shellcheck
+	@echo "=================================" && \
+	echo "Running ALL linting checks..." && \
+	echo "=================================" && \
+	echo "" && \
+	$(MAKE) -f Makefile.qa lint-code && \
+	echo "" && \
+	$(MAKE) -f Makefile.qa format-check && \
+	echo "" && \
+	$(MAKE) -f Makefile.qa lint-shell && \
+	echo "" && \
+	echo "=================================" && \
+	echo "✓ All linting checks passed" && \
+	echo "================================="
+
 # Lint common code (most important, least platform-specific)
-lint: check-cppcheck
+lint-code: check-cppcheck
 	@echo "Running cppcheck on workspace/all/ (common code)..."
 	@echo "Checking for: NULL dereferences, memory leaks, buffer overflows, uninitialized variables"
 	@echo ""
@@ -166,15 +185,15 @@ report: check-cppcheck
 
 # Docker-based testing targets
 DOCKER_IMAGE = minui-test
-DOCKER_RUN = docker run --rm -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE)
+DOCKER_RUN = docker run --rm -v $(shell pwd):/minui -w /minui $(DOCKER_IMAGE)
 
 docker-build:
-	@echo "Building test Docker image (Debian Buster ARM64)..."
-	docker build --platform linux/arm64 -t $(DOCKER_IMAGE) -f tests/Dockerfile .
+	@echo "Building test Docker image (Debian Buster)..."
+	docker build -t $(DOCKER_IMAGE) -f tests/Dockerfile .
 	@echo "✓ Docker image ready"
 
 docker-test: docker-build
-	@echo "Running tests in Docker container (Debian Buster ARM64)..."
+	@echo "Running tests in Docker container (Debian Buster)..."
 	@echo ""
 	$(DOCKER_RUN) make -f Makefile.qa clean-tests test-native
 
@@ -184,4 +203,4 @@ docker-lint: docker-build
 
 docker-shell: docker-build
 	@echo "Entering Docker container shell..."
-	docker run --rm -it -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE) /bin/bash
+	docker run --rm -it -v $(shell pwd):/minui -w /minui $(DOCKER_IMAGE) /bin/bash
