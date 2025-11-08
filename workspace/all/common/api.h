@@ -1,6 +1,7 @@
 #ifndef __API_H__
 #define __API_H__
 #include "platform.h"
+#include "defines.h"
 #include "scaler.h"
 #include "sdl.h"
 
@@ -182,17 +183,17 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines);
 #define GFX_getScaler PLAT_getScaler // scaler_t:(GFX_Renderer* renderer)
 #define GFX_blitRenderer PLAT_blitRenderer // void:(GFX_Renderer* renderer)
 
-scaler_t GFX_getAAScaler(GFX_Renderer* renderer);
+scaler_t GFX_getAAScaler(const GFX_Renderer* renderer);
 void GFX_freeAAScaler(void);
 
 // NOTE: all dimensions should be pre-scaled
-void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
-void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
-void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect);
-void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_blitAsset(int asset, const SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_blitPill(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect);
+void GFX_blitRect(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect);
+void GFX_blitBattery(SDL_Surface* dst, const SDL_Rect* dst_rect);
 int GFX_getButtonWidth(char* hint, char* button);
 void GFX_blitButton(char* hint, char* button, SDL_Surface* dst, SDL_Rect* dst_rect);
-void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, SDL_Rect* dst_rect);
+void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, const SDL_Rect* dst_rect);
 
 int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting);
 void GFX_blitHardwareHints(SDL_Surface* dst, int show_setting);

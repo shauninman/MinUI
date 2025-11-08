@@ -16,9 +16,7 @@
 
 #include "api.h"
 #include "defines.h"
-#include "utils/math_utils.h"
-#include "utils/string_utils.h"
-#include "utils/utils.h"
+#include "utils.h"
 
 ///////////////////////////////
 
@@ -1085,7 +1083,7 @@ LID_Context lid = {
 };
 
 FALLBACK_IMPLEMENTATION void PLAT_initLid(void) {}
-FALLBACK_IMPLEMENTATION int PLAT_lidChanged(const int* state) {
+FALLBACK_IMPLEMENTATION int PLAT_lidChanged(int* state) {
 	return 0;
 }
 
