@@ -9,7 +9,8 @@ tests/
 ├── unit/                       # Unit tests (mirror workspace/ structure)
 │   └── all/
 │       └── common/
-│           └── test_utils.c    # Tests for workspace/all/common/utils.c
+│           ├── test_utils.c      # Tests for workspace/all/common/utils.c
+│           └── test_date_utils.c # Tests for workspace/all/common/date_utils.c
 ├── integration/                # Integration tests (end-to-end tests)
 ├── fixtures/                   # Test data, sample ROMs, configs
 ├── support/                    # Test infrastructure
@@ -24,8 +25,11 @@ tests/
 Tests mirror the source code structure under `workspace/`:
 
 ```
-workspace/all/common/utils.c  →  tests/unit/all/common/test_utils.c
-workspace/all/minui/minui.c   →  tests/unit/all/minui/test_minui.c
+workspace/all/common/utils/utils.c      →  tests/unit/all/common/test_utils.c
+workspace/all/common/utils/file_utils.c →  tests/unit/all/common/test_file_utils.c
+workspace/all/common/utils/name_utils.c →  tests/unit/all/common/test_name_utils.c
+workspace/all/common/utils/date_utils.c →  tests/unit/all/common/test_date_utils.c
+workspace/all/minui/minui.c             →  tests/unit/all/minui/test_minui.c
 ```
 
 This makes it easy to:
@@ -65,14 +69,20 @@ make -f Makefile.qa test
 
 ### Specific Test Suites
 ```bash
-# Run only unit tests
-make -f Makefile.qa test
+# Run individual test executables
+./tests/unit_tests         # String/timing tests (32 tests)
+./tests/file_utils_test    # File I/O tests (10 tests)
+./tests/name_utils_test    # Name processing tests (10 tests)
+./tests/date_utils_test    # Date/time tests (25 tests)
 
 # Run with verbose output
 ./tests/unit_tests -v
 
 # Run specific test
 ./tests/unit_tests -n test_prefixMatch_exact
+./tests/file_utils_test -n test_exists_file_exists
+./tests/name_utils_test -n test_getDisplayName_simple
+./tests/date_utils_test -n test_isLeapYear_divisible_by_4
 ```
 
 ### Clean and Rebuild
@@ -187,22 +197,52 @@ void test_getEmuName_with_parens(void) {
 
 ## Current Test Coverage
 
-### workspace/all/common/utils.c - ✅ 52 tests
+### workspace/all/common/utils/utils.c - ✅ 32 tests
 **File:** `tests/unit/all/common/test_utils.c`
 
 - String matching functions (prefixMatch, suffixMatch, exactMatch, containsString, hide)
-- Display name processing (getDisplayName)
-- Emulator name extraction (getEmuName)
 - String manipulation (normalizeNewline, trimTrailingNewlines, trimSortingMeta)
-- File I/O (exists, touch, putFile, getFile, allocFile, putInt, getInt)
 - Timing (getMicroseconds)
 
-**Coverage:** All public functions tested with happy paths, edge cases, and error conditions.
+**Coverage:** All functions tested with happy paths, edge cases, and error conditions.
+
+### workspace/all/common/utils/file_utils.c - ✅ 10 tests
+**File:** `tests/unit/all/common/test_file_utils.c`
+
+- File existence checking (exists)
+- File creation (touch)
+- File I/O (putFile, getFile, allocFile)
+- Integer file I/O (putInt, getInt)
+
+**Coverage:** All file I/O functions tested including edge cases and error conditions.
+
+### workspace/all/common/utils/name_utils.c - ✅ 10 tests
+**File:** `tests/unit/all/common/test_name_utils.c`
+
+- Display name processing (getDisplayName) - strips paths, extensions, region codes
+- Emulator name extraction (getEmuName) - extracts from ROM paths
+
+**Coverage:** All name processing functions tested with various input formats.
+
+### workspace/all/common/utils/date_utils.c - ✅ 25 tests
+**File:** `tests/unit/all/common/test_date_utils.c`
+
+- Leap year calculation (isLeapYear)
+- Days in month logic with leap year support (getDaysInMonth)
+- Date/time validation and normalization (validateDateTime)
+  - Month wrapping (1-12)
+  - Year clamping (1970-2100)
+  - Day validation (handles varying month lengths and leap years)
+  - Time wrapping (hours, minutes, seconds)
+
+**Coverage:** Complete coverage of date/time validation logic.
+
+**Note:** Logic was extracted from `clock.c` into a proper utility library.
 
 ### Todo
-- [ ] workspace/all/common/api.c
-- [ ] workspace/all/minui/minui.c
-- [ ] workspace/all/minarch/minarch.c
+- [ ] workspace/all/common/api.c (requires SDL mocks)
+- [ ] workspace/all/minui/minui.c (integration tests)
+- [ ] workspace/all/minarch/minarch.c (integration tests)
 - [ ] Integration tests for full launch workflow
 
 ## Continuous Integration

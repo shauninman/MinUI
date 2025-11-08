@@ -58,26 +58,45 @@ lint-full: check-cppcheck
 		-I workspace/all/common \
 		workspace/
 
+# Test configuration
+TEST_CFLAGS = -std=c99 -Wall -Wextra -Wno-unused-parameter
+TEST_INCLUDES = -I tests/support -I tests/support/unity -I workspace/all/common
+TEST_UNITY = tests/support/unity/unity.c
+
+# List of test executables
+TEST_EXECUTABLES = tests/unit_tests tests/file_utils_test tests/name_utils_test tests/date_utils_test
+
 # Test targets
-test: tests/unit_tests
+test: $(TEST_EXECUTABLES)
 	@echo "Running unit tests..."
-	@./tests/unit_tests
-	@echo ""
+	@for test in $(TEST_EXECUTABLES); do \
+		./$$test; \
+		echo ""; \
+	done
 	@echo "✓ All tests passed"
 
-# Build all unit tests
-tests/unit_tests: tests/unit/all/common/test_utils.c workspace/all/common/utils.c tests/support/unity/unity.c tests/support/platform.h
-	@echo "Building unit tests..."
-	@$(CC) -o $@ tests/unit/all/common/test_utils.c workspace/all/common/utils.c tests/support/unity/unity.c \
-		-I tests/support \
-		-I tests/support/unity \
-		-I workspace/all/common \
-		-std=c99 \
-		-Wall -Wextra -Wno-unused-parameter
-	@echo "✓ Unit tests compiled"
+# Build utils tests (string matching, string manipulation, timing)
+tests/unit_tests: tests/unit/all/common/test_utils.c workspace/all/common/utils/utils.c $(TEST_UNITY)
+	@echo "Building utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build file_utils tests
+tests/file_utils_test: tests/unit/all/common/test_file_utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY)
+	@echo "Building file_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build name_utils tests
+tests/name_utils_test: tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) tests/support/platform.h
+	@echo "Building name_utils tests..."
+	@$(CC) -o $@ tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build date_utils tests
+tests/date_utils_test: tests/unit/all/common/test_date_utils.c workspace/all/common/utils/date_utils.c $(TEST_UNITY)
+	@echo "Building date_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
 
 clean-tests:
-	rm -f tests/unit_tests tests/*.o
+	rm -f $(TEST_EXECUTABLES) tests/*.o tests/**/*.o
 
 # Code formatting with clang-format
 CLANG_FORMAT = clang-format
@@ -85,6 +104,8 @@ FORMAT_PATHS = workspace/all/minui/*.c \
                workspace/all/minarch/*.c \
                workspace/all/common/*.c \
                workspace/all/common/*.h \
+               workspace/all/common/utils/*.c \
+               workspace/all/common/utils/*.h \
                workspace/all/clock/*.c \
                workspace/all/minput/*.c \
                workspace/all/say/*.c \

@@ -1,13 +1,12 @@
-// Comprehensive test suite for workspace/all/common/utils.c
-// Tests all functions in utils.h
+// Test suite for workspace/all/common/utils/utils.c
+// Tests string matching, string manipulation, and timing functions
 
-#include "../../../../workspace/all/common/utils.h"
+#include "../../../../workspace/all/common/utils/utils.h"
 #include "../../../support/unity/unity.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <stdint.h>
 
 // Unity requires these
 void setUp(void) {}
@@ -111,74 +110,6 @@ void test_hide_normal_file(void) {
 }
 
 // ============================================================================
-// Display Name Tests
-// ============================================================================
-
-void test_getDisplayName_simple(void) {
-	char out[256];
-	getDisplayName("test.txt", out);
-	TEST_ASSERT_EQUAL_STRING("test", out);
-}
-
-void test_getDisplayName_with_path(void) {
-	char out[256];
-	getDisplayName("/path/to/file.txt", out);
-	TEST_ASSERT_EQUAL_STRING("file", out);
-}
-
-void test_getDisplayName_multiple_extensions(void) {
-	char out[256];
-	getDisplayName("game.p8.png", out);
-	TEST_ASSERT_EQUAL_STRING("game", out);
-}
-
-void test_getDisplayName_with_parens(void) {
-	char out[256];
-	getDisplayName("Game (USA).gb", out);
-	TEST_ASSERT_EQUAL_STRING("Game", out);
-}
-
-void test_getDisplayName_with_brackets(void) {
-	char out[256];
-	getDisplayName("Game [v1.0].gba", out);
-	TEST_ASSERT_EQUAL_STRING("Game", out);
-}
-
-void test_getDisplayName_with_trailing_space(void) {
-	char out[256];
-	getDisplayName("Game  ", out);
-	TEST_ASSERT_EQUAL_STRING("Game", out);
-}
-
-void test_getDisplayName_complex(void) {
-	char out[256];
-	getDisplayName("/path/to/Super Mario Bros (USA) (Rev 1).nes", out);
-	TEST_ASSERT_EQUAL_STRING("Super Mario Bros", out);
-}
-
-void test_getDisplayName_doom_extension(void) {
-	char out[256];
-	getDisplayName("game.doom", out);
-	TEST_ASSERT_EQUAL_STRING("game", out);
-}
-
-// ============================================================================
-// Emu Name Tests
-// ============================================================================
-
-void test_getEmuName_simple(void) {
-	char out[512];
-	getEmuName("game.gb", out);
-	TEST_ASSERT_EQUAL_STRING("game.gb", out);
-}
-
-void test_getEmuName_with_parens(void) {
-	char out[512];
-	getEmuName("test (GB).gb", out);
-	TEST_ASSERT_EQUAL_STRING("GB", out);
-}
-
-// ============================================================================
 // String Manipulation Tests
 // ============================================================================
 
@@ -242,120 +173,6 @@ void test_trimSortingMeta_with_space(void) {
 }
 
 // ============================================================================
-// File I/O Tests
-// ============================================================================
-
-void test_exists_file_exists(void) {
-	// Create a temporary file
-	const char* path = "/tmp/test_exists.txt";
-	FILE* f = fopen(path, "w");
-	fclose(f);
-
-	TEST_ASSERT_TRUE(exists((char*)path));
-
-	// Clean up
-	unlink(path);
-}
-
-void test_exists_file_not_exists(void) {
-	TEST_ASSERT_FALSE(exists("/tmp/nonexistent_file_12345.txt"));
-}
-
-void test_touch_creates_file(void) {
-	const char* path = "/tmp/test_touch.txt";
-
-	// Make sure it doesn't exist
-	unlink(path);
-
-	touch((char*)path);
-	TEST_ASSERT_TRUE(exists((char*)path));
-
-	// Clean up
-	unlink(path);
-}
-
-void test_putFile_and_allocFile(void) {
-	const char* path = "/tmp/test_putfile.txt";
-	const char* content = "Hello, World!";
-
-	putFile((char*)path, (char*)content);
-
-	char* read_content = allocFile((char*)path);
-	TEST_ASSERT_NOT_NULL(read_content);
-	TEST_ASSERT_EQUAL_STRING(content, read_content);
-
-	free(read_content);
-	unlink(path);
-}
-
-void test_getFile_reads_content(void) {
-	const char* path = "/tmp/test_getfile.txt";
-	const char* content = "Test Content";
-	char buffer[256];
-
-	// Write file
-	putFile((char*)path, (char*)content);
-
-	// Read file
-	memset(buffer, 0, sizeof(buffer));
-	getFile((char*)path, buffer, sizeof(buffer));
-
-	TEST_ASSERT_EQUAL_STRING(content, buffer);
-
-	unlink(path);
-}
-
-void test_getFile_buffer_size_limit(void) {
-	const char* path = "/tmp/test_getfile_size.txt";
-	const char* content = "1234567890";
-	char buffer[6];
-
-	putFile((char*)path, (char*)content);
-
-	memset(buffer, 0, sizeof(buffer));
-	getFile((char*)path, buffer, sizeof(buffer));
-
-	// Should read only 5 chars (buffer_size - 1)
-	TEST_ASSERT_EQUAL_STRING("12345", buffer);
-
-	unlink(path);
-}
-
-void test_putInt_and_getInt(void) {
-	const char* path = "/tmp/test_int.txt";
-	int value = 42;
-
-	putInt((char*)path, value);
-
-	int read_value = getInt((char*)path);
-	TEST_ASSERT_EQUAL_INT(value, read_value);
-
-	unlink(path);
-}
-
-void test_getInt_nonexistent_file(void) {
-	int value = getInt("/tmp/nonexistent_file_12345.txt");
-	TEST_ASSERT_EQUAL_INT(0, value);
-}
-
-void test_putInt_negative(void) {
-	const char* path = "/tmp/test_int_neg.txt";
-	int value = -123;
-
-	putInt((char*)path, value);
-
-	int read_value = getInt((char*)path);
-	TEST_ASSERT_EQUAL_INT(value, read_value);
-
-	unlink(path);
-}
-
-void test_allocFile_nonexistent(void) {
-	char* content = allocFile("/tmp/nonexistent_file_12345.txt");
-	TEST_ASSERT_NULL(content);
-}
-
-// ============================================================================
 // Timing Tests
 // ============================================================================
 
@@ -408,20 +225,6 @@ int main(void) {
 	RUN_TEST(test_hide_map_txt);
 	RUN_TEST(test_hide_normal_file);
 
-	// Display names
-	RUN_TEST(test_getDisplayName_simple);
-	RUN_TEST(test_getDisplayName_with_path);
-	RUN_TEST(test_getDisplayName_multiple_extensions);
-	RUN_TEST(test_getDisplayName_with_parens);
-	RUN_TEST(test_getDisplayName_with_brackets);
-	RUN_TEST(test_getDisplayName_with_trailing_space);
-	RUN_TEST(test_getDisplayName_complex);
-	RUN_TEST(test_getDisplayName_doom_extension);
-
-	// Emu names
-	RUN_TEST(test_getEmuName_simple);
-	RUN_TEST(test_getEmuName_with_parens);
-
 	// String manipulation
 	RUN_TEST(test_normalizeNewline_windows);
 	RUN_TEST(test_normalizeNewline_unix);
@@ -434,22 +237,6 @@ int main(void) {
 	RUN_TEST(test_trimSortingMeta_with_number);
 	RUN_TEST(test_trimSortingMeta_no_number);
 	RUN_TEST(test_trimSortingMeta_with_space);
-
-	// File I/O
-	RUN_TEST(test_exists_file_exists);
-	RUN_TEST(test_exists_file_not_exists);
-
-	RUN_TEST(test_touch_creates_file);
-
-	RUN_TEST(test_putFile_and_allocFile);
-	RUN_TEST(test_getFile_reads_content);
-	RUN_TEST(test_getFile_buffer_size_limit);
-
-	RUN_TEST(test_putInt_and_getInt);
-	RUN_TEST(test_getInt_nonexistent_file);
-	RUN_TEST(test_putInt_negative);
-
-	RUN_TEST(test_allocFile_nonexistent);
 
 	// Timing
 	RUN_TEST(test_getMicroseconds_non_zero);
