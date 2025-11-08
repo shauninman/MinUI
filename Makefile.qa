@@ -1,21 +1,29 @@
 # Quality Assurance Makefile
 # Run static analysis and tests
 
-.PHONY: help lint lint-full lint-shell test format format-check clean-qa
+.PHONY: help lint lint-full lint-shell test test-native format format-check clean-qa docker-build docker-test docker-shell
 
 help:
 	@echo "MinUI Quality Assurance Tools"
 	@echo ""
 	@echo "Available targets:"
+	@echo "  make test          - Run unit tests (Docker, recommended)"
 	@echo "  make lint          - Run cppcheck on workspace/all/ (serious issues only)"
 	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
 	@echo "  make lint-shell    - Run shellcheck on shell scripts"
-	@echo "  make test          - Run unit tests"
 	@echo "  make format        - Format code with clang-format (MODIFIES FILES)"
 	@echo "  make format-check  - Check if code is formatted (no changes)"
 	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
-	@echo "Installing tools:"
+	@echo "Docker targets (default):"
+	@echo "  make docker-test   - Run tests in Debian Buster ARM64 container"
+	@echo "  make docker-build  - Build test Docker image"
+	@echo "  make docker-shell  - Enter Docker container for debugging"
+	@echo ""
+	@echo "Native targets (requires local tools):"
+	@echo "  make test-native   - Run tests natively (not recommended on macOS)"
+	@echo ""
+	@echo "Installing native tools:"
 	@echo "  macOS:  brew install cppcheck llvm shellcheck"
 	@echo "  Linux:  sudo apt-get install cppcheck clang-format shellcheck"
 
@@ -58,20 +66,58 @@ lint-full: check-cppcheck
 		-I workspace/all/common \
 		workspace/
 
-# Test targets
-test: tests/utils_test
-	@echo "Running tests..."
-	@./tests/utils_test
-	@echo ""
+# Test configuration
+TEST_CFLAGS = -std=c99 -Wall -Wextra -Wno-unused-parameter
+TEST_INCLUDES = -I tests/support -I tests/support/unity -I workspace/all/common
+TEST_UNITY = tests/support/unity/unity.c
+
+# List of test executables
+TEST_EXECUTABLES = tests/utils_test tests/string_utils_test tests/file_utils_test tests/name_utils_test tests/date_utils_test tests/math_utils_test
+
+# Default test target: use Docker
+test: docker-test
+
+# Native test target (for Linux or if Docker unavailable)
+test-native: $(TEST_EXECUTABLES)
+	@echo "Running unit tests (native)..."
+	@for test in $(TEST_EXECUTABLES); do \
+		./$$test; \
+		echo ""; \
+	done
 	@echo "✓ All tests passed"
 
-tests/utils_test: tests/utils/test_utils_simple.c tests/unity/unity.c
+# Build utils tests (timing only)
+tests/utils_test: tests/unit/all/common/test_utils.c workspace/all/common/utils/utils.c $(TEST_UNITY)
 	@echo "Building utils tests..."
-	@$(CC) -o $@ $^ -I tests -std=c99
-	@echo "✓ Tests compiled"
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build string_utils tests
+tests/string_utils_test: tests/unit/all/common/test_string_utils.c workspace/all/common/utils/string_utils.c $(TEST_UNITY)
+	@echo "Building string_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build file_utils tests
+tests/file_utils_test: tests/unit/all/common/test_file_utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY)
+	@echo "Building file_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build name_utils tests
+tests/name_utils_test: tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/string_utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) tests/support/platform.h
+	@echo "Building name_utils tests..."
+	@$(CC) -o $@ tests/unit/all/common/test_name_utils.c workspace/all/common/utils/name_utils.c workspace/all/common/utils/string_utils.c workspace/all/common/utils/file_utils.c $(TEST_UNITY) $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build date_utils tests
+tests/date_utils_test: tests/unit/all/common/test_date_utils.c workspace/all/common/utils/date_utils.c $(TEST_UNITY)
+	@echo "Building date_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
+
+# Build math_utils tests
+tests/math_utils_test: tests/unit/all/common/test_math_utils.c workspace/all/common/utils/math_utils.c $(TEST_UNITY)
+	@echo "Building math_utils tests..."
+	@$(CC) -o $@ $^ $(TEST_INCLUDES) $(TEST_CFLAGS)
 
 clean-tests:
-	rm -f tests/utils_test tests/*.o
+	rm -f $(TEST_EXECUTABLES) tests/*.o tests/**/*.o
 
 # Code formatting with clang-format
 CLANG_FORMAT = clang-format
@@ -79,6 +125,8 @@ FORMAT_PATHS = workspace/all/minui/*.c \
                workspace/all/minarch/*.c \
                workspace/all/common/*.c \
                workspace/all/common/*.h \
+               workspace/all/common/utils/*.c \
+               workspace/all/common/utils/*.h \
                workspace/all/clock/*.c \
                workspace/all/minput/*.c \
                workspace/all/say/*.c \
@@ -141,3 +189,25 @@ report: check-cppcheck
 		workspace/all/ > cppcheck-report.txt 2>&1 || true
 	@echo "Report saved to cppcheck-report.txt"
 	@wc -l cppcheck-report.txt
+
+# Docker-based testing targets
+DOCKER_IMAGE = minui-test
+DOCKER_RUN = docker run --rm -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE)
+
+docker-build:
+	@echo "Building test Docker image (Debian Buster ARM64)..."
+	docker build --platform linux/arm64 -t $(DOCKER_IMAGE) -f tests/Dockerfile .
+	@echo "✓ Docker image ready"
+
+docker-test: docker-build
+	@echo "Running tests in Docker container (Debian Buster ARM64)..."
+	@echo ""
+	$(DOCKER_RUN) make -f Makefile.qa clean-tests test-native
+
+docker-lint: docker-build
+	@echo "Running linting in Docker container..."
+	$(DOCKER_RUN) make -f Makefile.qa lint
+
+docker-shell: docker-build
+	@echo "Entering Docker container shell..."
+	docker run --rm -it -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE) /bin/bash

@@ -25,17 +25,27 @@ RELEASE_NAME=$(RELEASE_BASE)-$(RELEASE_DOT)
 
 ###########################################################
 
-.PHONY: build
+.PHONY: build test lint format
 
 export MAKEFLAGS=--no-print-directory
 
 all: setup $(PLATFORMS) special package done
-	
+
 shell:
 	make -f makefile.toolchain PLATFORM=$(PLATFORM)
 
-name: 
+name:
 	@echo $(RELEASE_NAME)
+
+# QA convenience targets (forward to Makefile.qa)
+test:
+	@make -f Makefile.qa test
+
+lint:
+	@make -f Makefile.qa lint
+
+format:
+	@make -f Makefile.qa format
 
 build:
 	# ----------------------------------------------------
