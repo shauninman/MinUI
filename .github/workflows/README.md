@@ -22,7 +22,7 @@ Validates compilation works (compile-only, no artifacts).
 
 **Note:** This only tests compilation (`make PLATFORM=miyoomini build`), not full builds with system file copying. This catches compilation errors quickly without needing the full skeleton setup.
 
-**Caching:** The toolchain directory is cached between runs. First run takes ~15-20 min (builds Docker image), subsequent runs take ~2-3 min (uses cache).
+**Build time:** ~15-20 min (clones toolchain, builds Docker image, compiles).
 
 ## Running Workflows Locally
 
