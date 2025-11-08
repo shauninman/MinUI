@@ -1,3 +1,22 @@
+/**
+ * platform.c - Powkiddy RGB10 Max (M17) platform implementation
+ *
+ * Implements the hardware abstraction layer for the Powkiddy RGB10 Max (M17),
+ * a 5-inch horizontal handheld gaming device with SDL2-based video rendering.
+ *
+ * Hardware features:
+ * - Display: 1280x720 (720p) IPS screen
+ * - Input: D-pad, 4 face buttons, dual shoulder buttons, plus/minus buttons
+ * - Video: SDL2 Window/Renderer/Texture API with hardware acceleration
+ * - No analog sticks (commented out in input code)
+ *
+ * Platform specifics:
+ * - Fixed CPU speed (1200000 MHz, cannot be changed)
+ * - Uses evdev input (4 event devices)
+ * - Sharpness setting: supports both soft (linear) and crisp (nearest neighbor) scaling
+ * - Battery charging detection may be unreliable (see getBatteryStatus comment)
+ */
+
 // m17
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +37,8 @@
 
 #include "scaler.h"
 
+///////////////////////////////
+// Input handling
 ///////////////////////////////
 
 #define RAW_UP		103
@@ -44,6 +65,11 @@
 #define INPUT_COUNT 4
 static int inputs[INPUT_COUNT];
 
+/**
+ * Initializes input system by opening evdev devices.
+ *
+ * Opens 4 event devices for reading button/key events.
+ */
 void PLAT_initInput(void) {
 	char path[256];
 	for (int i=0; i<INPUT_COUNT; i++) {
@@ -51,13 +77,16 @@ void PLAT_initInput(void) {
 		inputs[i] = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	}
 }
+/**
+ * Closes input system and cleans up resources.
+ */
 void PLAT_quitInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
 		close(inputs[i]);
 	}
 }
 
-// from <linux/input.h> which has BTN_ constants that conflict with platform.h
+// Struct from <linux/input.h> which has BTN_ constants that conflict with platform.h
 struct input_event {
 	struct timeval time;
 	__u16 type;
@@ -67,6 +96,13 @@ struct input_event {
 #define EV_KEY			0x01
 #define EV_ABS			0x03
 
+/**
+ * Polls input devices and updates global pad state.
+ *
+ * Reads events from all input devices and translates hardware button codes
+ * to MinUI button constants. Handles button repeat timing based on PAD_REPEAT_DELAY
+ * and PAD_REPEAT_INTERVAL.
+ */
 void PLAT_pollInput(void) {
 	// reset transient state
 	pad.just_pressed = BTN_NONE;
@@ -148,6 +184,11 @@ void PLAT_pollInput(void) {
 	}
 }
 
+/**
+ * Checks if device should wake from sleep.
+ *
+ * @return 1 if menu button was released, 0 otherwise
+ */
 int PLAT_shouldWake(void) {
 	int input;
 	static struct input_event event;
@@ -160,6 +201,8 @@ int PLAT_shouldWake(void) {
 	return 0;
 }
 
+///////////////////////////////
+// Video subsystem (SDL2)
 ///////////////////////////////
 
 static struct VID_Context {
@@ -178,6 +221,14 @@ static struct VID_Context {
 	int sharpness;
 } vid;
 
+/**
+ * Initializes SDL2 video subsystem and creates rendering context.
+ *
+ * Creates a hardware-accelerated renderer with VSync enabled. Uses RGB565
+ * pixel format for texture streaming. Defaults to soft (linear) scaling.
+ *
+ * @return Pointer to SDL_Surface for software rendering operations
+ */
 SDL_Surface* PLAT_initVideo(void) {
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
@@ -249,6 +300,11 @@ SDL_Surface* PLAT_initVideo(void) {
 	return vid.screen;
 }
 
+/**
+ * Clears video output by filling with black and presenting.
+ *
+ * Performs 3 clear cycles to ensure all frame buffers are cleared.
+ */
 static void clearVideo(void) {
 	SDL_FillRect(vid.screen, NULL, 0);
 	for (int i=0; i<3; i++) {
@@ -257,6 +313,11 @@ static void clearVideo(void) {
 	}
 }
 
+/**
+ * Shuts down video subsystem and frees all resources.
+ *
+ * Clears display, destroys textures/renderer/window, and zeros framebuffer.
+ */
 void PLAT_quitVideo(void) {
 	clearVideo();
 
@@ -271,19 +332,47 @@ void PLAT_quitVideo(void) {
 	system("cat /dev/zero > /dev/fb0 2>/dev/null");
 }
 
+/**
+ * Clears a specific surface to black.
+ *
+ * @param screen Surface to clear
+ */
 void PLAT_clearVideo(SDL_Surface* screen) {
 	SDL_FillRect(screen, NULL, 0); // TODO: revisit
 }
+/**
+ * Clears all video buffers.
+ */
 void PLAT_clearAll(void) {
 	clearVideo();
 }
 
+/**
+ * Sets VSync mode (not implemented).
+ *
+ * @param vsync VSync enable flag (ignored)
+ */
 void PLAT_setVsync(int vsync) {
 	
 }
 
-static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4 o
+// Scaling multiplier for crisp mode (nearest-neighbor upscaling)
+static int hard_scale = 4;
 
+/**
+ * Resizes video buffers and textures for new dimensions.
+ *
+ * Determines appropriate hard_scale multiplier based on content size:
+ * - Native or larger: 1x (no upscaling)
+ * - >= 160p: 2x
+ * - Smaller: 4x
+ *
+ * Recreates textures with appropriate scaling quality based on sharpness setting.
+ *
+ * @param w New width
+ * @param h New height
+ * @param p New pitch
+ */
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
@@ -442,7 +531,17 @@ void PLAT_enableOverlay(int enable) {
 }
 
 ///////////////////////////////
+// Power management
+///////////////////////////////
 
+/**
+ * Reads battery status from sysfs.
+ *
+ * @param is_charging Pointer to store charging state (1=charging, 0=not)
+ * @param charge Pointer to store battery level (10, 20, 40, 60, 80, or 100)
+ *
+ * @note Charging detection may be unreliable - strncmp logic seems inverted
+ */
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
@@ -468,6 +567,13 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	else           *charge =  10;
 }
 
+/**
+ * Controls backlight power.
+ *
+ * @param enable 1 to turn on backlight, 0 to turn off
+ *
+ * @note Backlight control method is unclear - uses SetRawBrightness(8001) to disable
+ */
 void PLAT_enableBacklight(int enable) {
 	// haven't figured out how to turn it off (or change brightness)
 	if (!enable) {
@@ -479,6 +585,11 @@ void PLAT_enableBacklight(int enable) {
 	}
 }
 
+/**
+ * Powers off the device.
+ *
+ * Mutes audio, disables backlight, shuts down subsystems, and signals poweroff.
+ */
 void PLAT_powerOff(void) {
 	// system("leds_on");
 	sleep(2);
@@ -495,23 +606,54 @@ void PLAT_powerOff(void) {
 }
 
 ///////////////////////////////
+// Platform capabilities
+///////////////////////////////
 
+/**
+ * Sets CPU clock speed (not supported).
+ *
+ * @param speed Requested speed level (ignored)
+ *
+ * @note M17 has fixed 1200000 MHz clock speed
+ */
 void PLAT_setCPUSpeed(int speed) {
 	// M17 can go any speed you like as long as that speed is 1200000
 }
 
+/**
+ * Sets rumble/vibration strength (not supported).
+ *
+ * @param strength Rumble strength (ignored)
+ */
 void PLAT_setRumble(int strength) {
 	// buh
 }
 
+/**
+ * Selects audio sample rate.
+ *
+ * @param requested Requested sample rate
+ * @param max Maximum supported sample rate
+ * @return Selected sample rate (minimum of requested and max)
+ */
 int PLAT_pickSampleRate(int requested, int max) {
 	return MIN(requested, max);
 }
 
+/**
+ * Returns device model string.
+ *
+ * @return "M17"
+ */
 char* PLAT_getModel(void) {
 	return "M17";
 }
 
+/**
+ * Checks if device is connected to network.
+ *
+ * @return 0 (no network support)
+ */
 int PLAT_isOnline(void) {
 	return 0;
 }

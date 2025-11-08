@@ -1,4 +1,22 @@
-// rg35xxplus
+/**
+ * platform.c - Anbernic RG35XX Plus platform implementation
+ *
+ * Supports multiple device variants in the RG35XX+ family:
+ * - RG35XX Plus (standard model)
+ * - RG CubeXX (variant with overscan support)
+ * - RG34XX (variant with different features)
+ *
+ * Hardware features:
+ * - SDL2-based video with HDMI support
+ * - Multiple input sources: built-in controls + external gamepads
+ * - Lid detection (hall sensor)
+ * - Hardware rotation support
+ * - Display effects (scanlines, grid)
+ * - AXP2202 power management
+ *
+ * Device detection via RGXX_MODEL environment variable.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -19,10 +37,13 @@
 
 #include "scaler.h"
 
+// Device variant flags (set during init)
 int is_cubexx = 0;
 int is_rg34xx = 0;
 int on_hdmi = 0;
 
+///////////////////////////////
+// Input - Raw key codes
 ///////////////////////////////
 
 #define RAW_UP		103
@@ -55,8 +76,11 @@ int on_hdmi = 0;
 #define RAW_MENU1	RAW_L3
 #define RAW_MENU2	RAW_R3
 
-// TODO: thanks I hate it
-// RG P01
+///////////////////////////////
+// Input - External gamepad mappings
+///////////////////////////////
+
+// RG P01 (Anbernic official gamepad)
 #define RGP01_A			305
 #define RGP01_B			304
 #define RGP01_X			308
@@ -77,7 +101,7 @@ int on_hdmi = 0;
 #define RGP01_MENU1		RGP01_L3
 #define RGP01_MENU2		RGP01_R3
 
-// X-box (8BitDo SN30 Pro)
+// Xbox controller (tested with 8BitDo SN30 Pro)
 #define XBOX_A		305
 #define XBOX_B		304
 #define XBOX_X		308
@@ -110,10 +134,27 @@ static int inputs[INPUT_COUNT];
 #define kPadIndex 2
 static GamepadType pad_type = kGamepadTypeUnknown;
 
+///////////////////////////////
+// Input - Lid detection
+///////////////////////////////
+
 #define LID_PATH "/sys/class/power_supply/axp2202-battery/hallkey"
+
+/**
+ * Initializes lid detection via hall sensor.
+ *
+ * Checks if device has lid sensor by testing sysfs path.
+ */
 void PLAT_initLid(void) {
 	lid.has_lid = exists(LID_PATH);
 }
+
+/**
+ * Checks if lid state has changed.
+ *
+ * @param state Optional pointer to store current lid state (1=open, 0=closed)
+ * @return 1 if lid state changed, 0 otherwise
+ */
 int PLAT_lidChanged(int* state) {
 	if (lid.has_lid) {
 		int lid_open = getInt(LID_PATH);
@@ -126,6 +167,19 @@ int PLAT_lidChanged(int* state) {
 	return 0;
 }
 
+///////////////////////////////
+// Input - Gamepad hotplug detection
+///////////////////////////////
+
+/**
+ * Checks for external gamepad connection/disconnection.
+ *
+ * Polls every 2 seconds for gamepad on /dev/input/event3.
+ * Detects gamepad type by device name:
+ * - "Anbernic" -> RG P01 controller
+ * - "Microsoft" -> Xbox-compatible controller
+ * - Other -> Unknown (uses default mappings)
+ */
 static void checkForGamepad(void) {
 	uint32_t now = SDL_GetTicks();
 	static uint32_t last_check = 0;
@@ -136,6 +190,7 @@ static void checkForGamepad(void) {
 			LOG_info("Connecting gamepad: ");
 			char pad_name[256];
 			getFile("/sys/class/input/event3/device/name", pad_name, 256);
+			// Detect gamepad type by device name
 			if (containsString(pad_name,"Anbernic")) {
 				LOG_info("P01\n");
 				pad_type = kGamepadTypeRGP01;
@@ -148,7 +203,7 @@ static void checkForGamepad(void) {
 				LOG_info("Unknown\n");
 				pad_type = kGamepadTypeUnknown;
 			}
-			
+
 			inputs[kPadIndex] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 		}
 		else if (inputs[kPadIndex]>=0 && !connected) {
@@ -160,6 +215,11 @@ static void checkForGamepad(void) {
 	}
 }
 
+/**
+ * Initializes input subsystem.
+ *
+ * Opens built-in input devices (event0, event1) and checks for gamepad.
+ */
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
@@ -377,9 +437,11 @@ int PLAT_shouldWake(void) {
 }
 
 ///////////////////////////////
+// Video
+///////////////////////////////
 
-// based on rgb30 + tg5040 + m17
-#define HDMI_STATE_PATH "/sys/class/switch/hdmi/cable.0/state" // TODO: can detect but doesn't update automatically
+// Paths for HDMI detection and display blanking
+#define HDMI_STATE_PATH "/sys/class/switch/hdmi/cable.0/state"
 #define BLANK_PATH "/sys/class/graphics/fb0/blank"
 
 static struct VID_Context {
@@ -404,10 +466,24 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 static int rotate = 0;
+
+/**
+ * Initializes SDL2 video subsystem with HDMI and variant detection.
+ *
+ * Detects device variant via RGXX_MODEL environment variable:
+ * - RGcubexx: Enables overscan support
+ * - RG34xx: Device-specific features
+ *
+ * Checks HDMI connection and switches to HDMI resolution if connected.
+ * Sets rotation flag for portrait displays.
+ *
+ * @return SDL surface for rendering (vid.screen)
+ */
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
-	
-	char* model = getenv("RGXX_MODEL"); // TODO: use device?
+
+	// Detect device variant
+	char* model = getenv("RGXX_MODEL");
 	is_cubexx = exactMatch("RGcubexx", model);
 	is_rg34xx = prefixMatch("RG34xx", model);
 	
@@ -448,7 +524,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
-	if (getInt(HDMI_STATE_PATH)) { // can't use getHDMI() from settings because it hasn't be initialized yet
+	// Check for HDMI connection before settings init
+	if (getInt(HDMI_STATE_PATH)) {
 		w = HDMI_WIDTH;
 		h = HDMI_HEIGHT;
 		p = HDMI_PITCH;
@@ -464,7 +541,8 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_DisplayMode mode;
 	SDL_GetCurrentDisplayMode(0, &mode);
 	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
-	if (mode.h>mode.w) rotate = 3; // no longer set on 28xx (because of SDL2 rotation patch?)
+	// Set rotation for portrait displays (270 degrees)
+	if (mode.h>mode.w) rotate = 3;
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	// SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
 	

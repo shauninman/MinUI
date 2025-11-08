@@ -1,5 +1,19 @@
-/*
- * include/linux/ion.h
+/**
+ * ion.h - Android ION memory allocator kernel/userspace API
+ *
+ * ION memory manager interface for Trimui Smart device (Allwinner F1C100s SoC).
+ * This header contains both kernel-side and userspace definitions, allowing
+ * direct hardware access from userspace for video framebuffer management.
+ *
+ * ION provides DMA-capable physically contiguous memory buffers that can be
+ * shared between CPU and display/video hardware without copying. Critical for
+ * zero-copy video rendering on embedded devices.
+ *
+ * Trimui Smart uses Allwinner's sunxi ION implementation (see ion_sunxi.h for
+ * platform-specific extensions).
+ *
+ * @note This is an older combined kernel/userspace header (Linux 3.x era)
+ * @note Trimui Smart runs Linux 3.10 with Allwinner sunxi patches
  *
  * Copyright (C) 2011 Google, Inc.
  *
@@ -19,6 +33,12 @@
 
 #include <linux/types.h>
 
+/**
+ * struct ion_handle - Opaque kernel handle to ION buffer
+ *
+ * Kernel-side representation of an ION buffer. Userspace uses integer
+ * handles (ion_user_handle_t), kernel uses struct pointers.
+ */
 struct ion_handle;
 /**
  * enum ion_heap_types - list of all possible types of heaps

@@ -1,12 +1,27 @@
-// gkdpixel/platform/platform.h
+/**
+ * gkdpixel/platform/platform.h - Platform definitions for GKD Pixel handheld
+ *
+ * The GKD Pixel is a compact retro handheld gaming device with:
+ * - 320x240 display (QVGA resolution)
+ * - D-pad and face buttons (A/B/X/Y)
+ * - Shoulder buttons (L1/R1/L2/R2)
+ * - Menu and power buttons
+ * - Uses evdev/keyboard input codes (no SDL keycodes or joystick)
+ * - Software scaler for video output
+ */
 
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
 ///////////////////////////////
+// Dependencies
+///////////////////////////////
 
 #include "sdl.h"
 
+///////////////////////////////
+// SDL Keyboard Button Mappings
+// GKD Pixel does not use SDL keyboard input
 ///////////////////////////////
 
 #define	BUTTON_UP		BUTTON_NA
@@ -35,35 +50,41 @@
 #define	BUTTON_MINUS	BUTTON_NA
 
 ///////////////////////////////
+// Evdev/Keyboard Input Codes
+// Hardware keycodes from the kernel input subsystem
+///////////////////////////////
 
-#define CODE_UP			103
-#define CODE_DOWN		108
-#define CODE_LEFT		105
-#define CODE_RIGHT		106
+#define CODE_UP			103  // KEY_UP
+#define CODE_DOWN		108  // KEY_DOWN
+#define CODE_LEFT		105  // KEY_LEFT
+#define CODE_RIGHT		106  // KEY_RIGHT
 
-#define CODE_SELECT		1
-#define CODE_START		28
+#define CODE_SELECT		1    // KEY_ESC
+#define CODE_START		28   // KEY_ENTER
 
-#define CODE_A			29
-#define CODE_B			56
-#define CODE_X			57
-#define CODE_Y			42
+#define CODE_A			29   // KEY_LEFTCTRL
+#define CODE_B			56   // KEY_LEFTALT
+#define CODE_X			57   // KEY_SPACE
+#define CODE_Y			42   // KEY_LEFTSHIFT
 
-#define CODE_L1			15
-#define CODE_R1			14
-#define CODE_L2			104
-#define CODE_R2			109
+#define CODE_L1			15   // KEY_TAB
+#define CODE_R1			14   // KEY_BACKSPACE
+#define CODE_L2			104  // KEY_PAGEUP
+#define CODE_R2			109  // KEY_PAGEDOWN
 #define CODE_L3			CODE_NA
 #define CODE_R3			CODE_NA
 
-#define CODE_MENU		102
-#define CODE_MENU_ALT	107
-#define CODE_POWER		116
-#define CODE_POWEROFF	68
+#define CODE_MENU		102  // KEY_HOME
+#define CODE_MENU_ALT	107  // KEY_END (alternate menu button)
+#define CODE_POWER		116  // KEY_POWER
+#define CODE_POWEROFF	68   // KEY_F10 (power off trigger)
 
-#define CODE_PLUS		78
-#define CODE_MINUS		74
+#define CODE_PLUS		78   // KEY_KPPLUS (volume up)
+#define CODE_MINUS		74   // KEY_KPMINUS (volume down)
 
+///////////////////////////////
+// Joystick Button Mappings
+// GKD Pixel does not use joystick input
 ///////////////////////////////
 
 #define JOY_UP			JOY_NA
@@ -92,30 +113,37 @@
 #define JOY_MINUS		JOY_NA
 
 ///////////////////////////////
-
-#define BTN_RESUME			BTN_X
-#define BTN_SLEEP 			BTN_POWER
-#define BTN_WAKE 			BTN_POWER
-#define BTN_MOD_VOLUME 		BTN_NONE
-#define BTN_MOD_BRIGHTNESS 	BTN_MENU
-#define BTN_MOD_PLUS 		BTN_PLUS
-#define BTN_MOD_MINUS 		BTN_MINUS
-
+// Function Button Mappings
+// System-level button combinations
 ///////////////////////////////
 
-#define FIXED_SCALE 	1
-#define FIXED_WIDTH		320
-#define FIXED_HEIGHT	240
-#define FIXED_BPP		2
-#define FIXED_DEPTH		(FIXED_BPP * 8)
-#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
-#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
+#define BTN_RESUME			BTN_X       // Button to resume from save state
+#define BTN_SLEEP 			BTN_POWER   // Button to enter sleep mode
+#define BTN_WAKE 			BTN_POWER   // Button to wake from sleep
+#define BTN_MOD_VOLUME 		BTN_NONE    // Modifier for volume control (none - direct buttons)
+#define BTN_MOD_BRIGHTNESS 	BTN_MENU    // Hold MENU for brightness control
+#define BTN_MOD_PLUS 		BTN_PLUS    // Increase with PLUS
+#define BTN_MOD_MINUS 		BTN_MINUS   // Decrease with MINUS
 
 ///////////////////////////////
+// Display Specifications
+///////////////////////////////
 
-#define SDCARD_PATH "/media/roms"
-#define MUTE_VOLUME_RAW 0
-#define USES_SWSCALER
+#define FIXED_SCALE 	1              // No scaling factor needed
+#define FIXED_WIDTH		320            // Screen width in pixels
+#define FIXED_HEIGHT	240            // Screen height in pixels (QVGA)
+#define FIXED_BPP		2              // Bytes per pixel (RGB565)
+#define FIXED_DEPTH		(FIXED_BPP * 8) // Bit depth (16-bit color)
+#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)  // Row stride in bytes
+#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT) // Total framebuffer size
+
+///////////////////////////////
+// Platform-Specific Paths and Settings
+///////////////////////////////
+
+#define SDCARD_PATH "/media/roms"  // Path to SD card mount point
+#define MUTE_VOLUME_RAW 0          // Raw value for muted volume
+#define USES_SWSCALER              // Platform uses software scaler for video
 
 ///////////////////////////////
 

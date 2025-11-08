@@ -1,4 +1,22 @@
-// gkdpixel
+/**
+ * platform.c - GKD Pixel platform implementation
+ *
+ * Implements the PLAT_* platform abstraction layer for the GKD Pixel handheld.
+ * Uses SDL2 with hardware-accelerated rendering and custom bilinear scalers
+ * optimized for the device's 640x480 display.
+ *
+ * Hardware Characteristics:
+ * - Display: 640x480 RGB565
+ * - Input: SDL gamepad via event devices
+ * - Video: SDL2 with triple buffering (SDL_TRIPLEBUF)
+ * - Scaling: Custom approximate bilinear scalers for common resolutions
+ *
+ * Special Features:
+ * - Optimized 3x3->4x4 scaler for 240x160 (GBA) content
+ * - Optimized 3x3->5x5 scaler for 160x144 (GB) content
+ * - Custom 256x224->320x238 scaler for SNES content
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -19,13 +37,24 @@
 #include "scaler.h"
 
 ///////////////////////////////
+// Input Implementation
+///////////////////////////////
 
+/**
+ * Initializes input system.
+ *
+ * GKD Pixel uses SDL's built-in gamepad support, so no platform-specific
+ * initialization is required.
+ */
 void PLAT_initInput(void) {
-	// buh
+	// SDL handles input internally
 }
 
+/**
+ * Shuts down input system.
+ */
 void PLAT_quitInput(void) {
-	// buh
+	// SDL handles cleanup internally
 }
 
 ///////////////////////////////

@@ -1,33 +1,105 @@
+/**
+ * sunxi_display2.h - Allwinner Display Engine 2.0 (DE2) userspace API
+ *
+ * Comprehensive display subsystem interface for Allwinner sunxi SoCs with
+ * Display Engine 2.0 (F1C100s in Trimui Smart). Provides complete control
+ * over the video output pipeline including:
+ *
+ * - Layer management (overlays, blending, z-order)
+ * - Framebuffer configuration (RGB/YUV formats, scaling, rotation)
+ * - Output device control (LCD, HDMI, TV-out)
+ * - Color space conversion and color correction
+ * - Video capture (screen recording)
+ * - Enhancement features (contrast, saturation, gamma)
+ *
+ * Architecture:
+ * - Managers: Output pipelines (typically 2: LCD + HDMI/TV)
+ * - Layers: Compositable video planes (4+ per manager)
+ * - Devices: Physical outputs (LCD panel, HDMI, etc.)
+ *
+ * Ioctl workflow:
+ * 1. Open /dev/disp
+ * 2. Configure layers via DISP_LAYER_SET_CONFIG
+ * 3. Set output mode via DISP_DEVICE_SWITCH
+ * 4. Update display via DISP_HWC_COMMIT or DISP_SHADOW_PROTECT
+ *
+ * @note This is the DE 2.0 API (newer than DE 1.0 on older Allwinner SoCs)
+ * @note Trimui Smart uses this interface for framebuffer output
+ * @warning Direct ioctl access bypasses Linux DRM/KMS subsystem
+ */
+
 #ifndef __SUNXI_DISPLAY_H__
 #define __SUNXI_DISPLAY_H__
 
 typedef int bool;
 typedef unsigned int u32;
 
+// Forward declarations for display subsystem structures
 struct disp_manager;
 struct disp_device;
 struct disp_smbl;
 struct disp_enhance;
 struct disp_capture;
 
+///////////////////////////////
+// Basic display types
+///////////////////////////////
+
+/** ARGB color with alpha channel */
 typedef struct {unsigned char  alpha;unsigned char red;unsigned char green; unsigned char blue; }disp_color;
+
+/** Rectangle with position and size */
 typedef struct {int x; int y; unsigned int width; unsigned int height;}disp_rect;
+
+/** Size without position */
 typedef struct {unsigned int width;unsigned int height;                   }disp_rectsz;
+
+/** 2D position */
 typedef struct {int x; int y;                           }disp_position;
 
+/**
+ * enum disp_pixel_format - Supported framebuffer pixel formats
+ *
+ * Defines all RGB and YUV pixel formats supported by the display engine.
+ * Format naming: [Color][Bits]_[Type]_[Layout]
+ *
+ * RGB formats (0x00-0x1F):
+ * - ARGB/RGBA/etc: Component order from MSB to LSB
+ * - 8888: 8 bits per component (32-bit total)
+ * - 888: 8 bits per component (24-bit total)
+ * - 565: 5 red, 6 green, 5 blue bits (16-bit)
+ * - 4444: 4 bits per component (16-bit)
+ * - 1555: 1 alpha bit, 5 bits per RGB component (16-bit)
+ *
+ * YUV formats (0x40-0x4F):
+ * - I: Interleaved (all components in single buffer)
+ * - P: Planar (separate buffers for Y, U, V)
+ * - SP: Semi-planar (Y in one buffer, UV interleaved in another)
+ * - 444: Full chroma resolution (4:4:4)
+ * - 422: Half horizontal chroma resolution (4:2:2)
+ * - 420: Half horizontal and vertical chroma resolution (4:2:0)
+ * - 411: Quarter horizontal chroma resolution (4:1:1)
+ *
+ * @note Hardware accelerates YUV to RGB conversion
+ */
 typedef enum
 {
-	DISP_FORMAT_ARGB_8888                    = 0x00,//MSB  A-R-G-B  LSB
+	// RGB formats - 32-bit
+	DISP_FORMAT_ARGB_8888                    = 0x00,  // MSB A-R-G-B LSB (standard)
 	DISP_FORMAT_ABGR_8888                    = 0x01,
 	DISP_FORMAT_RGBA_8888                    = 0x02,
 	DISP_FORMAT_BGRA_8888                    = 0x03,
-	DISP_FORMAT_XRGB_8888                    = 0x04,
+	DISP_FORMAT_XRGB_8888                    = 0x04,  // No alpha
 	DISP_FORMAT_XBGR_8888                    = 0x05,
 	DISP_FORMAT_RGBX_8888                    = 0x06,
 	DISP_FORMAT_BGRX_8888                    = 0x07,
+
+	// RGB formats - 24-bit
 	DISP_FORMAT_RGB_888                      = 0x08,
 	DISP_FORMAT_BGR_888                      = 0x09,
-	DISP_FORMAT_RGB_565                      = 0x0a,
+
+	// RGB formats - 16-bit
+	DISP_FORMAT_RGB_565                      = 0x0a,  // Most common 16-bit format
 	DISP_FORMAT_BGR_565                      = 0x0b,
 	DISP_FORMAT_ARGB_4444                    = 0x0c,
 	DISP_FORMAT_ABGR_4444                    = 0x0d,
@@ -38,24 +110,27 @@ typedef enum
 	DISP_FORMAT_RGBA_5551                    = 0x12,
 	DISP_FORMAT_BGRA_5551                    = 0x13,
 
-	/* SP: semi-planar, P:planar, I:interleaved
-	 * UVUV: U in the LSBs;     VUVU: V in the LSBs */
-	DISP_FORMAT_YUV444_I_AYUV                = 0x40,//MSB  A-Y-U-V  LSB, reserved
-	DISP_FORMAT_YUV444_I_VUYA                = 0x41,//MSB  V-U-Y-A  LSB
-	DISP_FORMAT_YUV422_I_YVYU                = 0x42,//MSB  Y-V-Y-U  LSB
-	DISP_FORMAT_YUV422_I_YUYV                = 0x43,//MSB  Y-U-Y-V  LSB
-	DISP_FORMAT_YUV422_I_UYVY                = 0x44,//MSB  U-Y-V-Y  LSB
-	DISP_FORMAT_YUV422_I_VYUY                = 0x45,//MSB  V-Y-U-Y  LSB
-	DISP_FORMAT_YUV444_P                     = 0x46,//MSB  P3-2-1-0 LSB,  YYYY UUUU VVVV, reserved
-	DISP_FORMAT_YUV422_P                     = 0x47,//MSB  P3-2-1-0 LSB   YYYY UU   VV
-	DISP_FORMAT_YUV420_P                     = 0x48,//MSB  P3-2-1-0 LSB   YYYY U    V
-	DISP_FORMAT_YUV411_P                     = 0x49,//MSB  P3-2-1-0 LSB   YYYY U    V
-	DISP_FORMAT_YUV422_SP_UVUV               = 0x4a,//MSB  V-U-V-U  LSB
-	DISP_FORMAT_YUV422_SP_VUVU               = 0x4b,//MSB  U-V-U-V  LSB
-	DISP_FORMAT_YUV420_SP_UVUV               = 0x4c,
-	DISP_FORMAT_YUV420_SP_VUVU               = 0x4d,
-	DISP_FORMAT_YUV411_SP_UVUV               = 0x4e,
-	DISP_FORMAT_YUV411_SP_VUVU               = 0x4f,
+	// YUV formats - Interleaved
+	DISP_FORMAT_YUV444_I_AYUV                = 0x40,  // MSB A-Y-U-V LSB (reserved)
+	DISP_FORMAT_YUV444_I_VUYA                = 0x41,  // MSB V-U-Y-A LSB
+	DISP_FORMAT_YUV422_I_YVYU                = 0x42,  // MSB Y-V-Y-U LSB
+	DISP_FORMAT_YUV422_I_YUYV                = 0x43,  // MSB Y-U-Y-V LSB (common)
+	DISP_FORMAT_YUV422_I_UYVY                = 0x44,  // MSB U-Y-V-Y LSB
+	DISP_FORMAT_YUV422_I_VYUY                = 0x45,  // MSB V-Y-U-Y LSB
+
+	// YUV formats - Planar (3 separate buffers)
+	DISP_FORMAT_YUV444_P                     = 0x46,  // YYYY UUUU VVVV (reserved)
+	DISP_FORMAT_YUV422_P                     = 0x47,  // YYYY UU VV
+	DISP_FORMAT_YUV420_P                     = 0x48,  // YYYY U V (I420/YV12)
+	DISP_FORMAT_YUV411_P                     = 0x49,  // YYYY U V
+
+	// YUV formats - Semi-planar (Y + interleaved UV)
+	DISP_FORMAT_YUV422_SP_UVUV               = 0x4a,  // Y + UVUV
+	DISP_FORMAT_YUV422_SP_VUVU               = 0x4b,  // Y + VUVU
+	DISP_FORMAT_YUV420_SP_UVUV               = 0x4c,  // Y + UVUV (NV12)
+	DISP_FORMAT_YUV420_SP_VUVU               = 0x4d,  // Y + VUVU (NV21)
+	DISP_FORMAT_YUV411_SP_UVUV               = 0x4e,  // Y + UVUV
+	DISP_FORMAT_YUV411_SP_VUVU               = 0x4f,  // Y + VUVU
 }disp_pixel_format;
 
 typedef enum
@@ -95,13 +170,19 @@ typedef enum
 	DISP_COLOR_RANGE_16_235 = 2,
 }disp_color_range;
 
+/**
+ * enum disp_output_type - Display output device types
+ *
+ * Identifies physical output devices. Values are bit flags that can
+ * be combined for multi-output scenarios.
+ */
 typedef enum
 {
-	DISP_OUTPUT_TYPE_NONE   = 0,
-	DISP_OUTPUT_TYPE_LCD    = 1,
-	DISP_OUTPUT_TYPE_TV     = 2,
-	DISP_OUTPUT_TYPE_HDMI   = 4,
-	DISP_OUTPUT_TYPE_VGA    = 8,
+	DISP_OUTPUT_TYPE_NONE   = 0,  // No output
+	DISP_OUTPUT_TYPE_LCD    = 1,  // LCD panel (most common on handhelds)
+	DISP_OUTPUT_TYPE_TV     = 2,  // Composite/component video output
+	DISP_OUTPUT_TYPE_HDMI   = 4,  // HDMI digital output
+	DISP_OUTPUT_TYPE_VGA    = 8,  // VGA analog output
 }disp_output_type;
 
 typedef enum
@@ -426,96 +507,137 @@ typedef enum
     DISP_TV_SVIDEO  = 4,
 }disp_tv_output;
 
+/**
+ * enum __DISP_t - Display subsystem ioctl commands
+ *
+ * Comprehensive set of ioctl commands for /dev/disp device. Commands are
+ * grouped by functional area with reserved ranges for future expansion.
+ *
+ * Command groups:
+ * - 0x00-0x3F: Global display control (output routing, vsync, blanking)
+ * - 0x40-0x7F: Layer management (enable, configure, z-order)
+ * - 0xC0-0xFF: HDMI/TV output control
+ * - 0x100-0x13F: LCD panel control (brightness, backlight, gamma)
+ * - 0x140-0x17F: Screen capture (framebuffer readback)
+ * - 0x180-0x1FF: Image enhancement (contrast, saturation)
+ * - 0x200-0x23F: Smart backlight management
+ * - 0x280-0x2BF: Framebuffer allocation (testing)
+ * - 0x2C0-0x2FF: Memory management (testing)
+ *
+ * Usage: ioctl(fd, command, argument_pointer)
+ */
 typedef enum tag_DISP_CMD
 {
-	//----disp global----
+	///////////////////////////////
+	// Global display control
+	///////////////////////////////
 	DISP_RESERVE0 = 0x00,
 	DISP_RESERVE1 = 0x01,
-	DISP_SET_BKCOLOR = 0x03,
-	DISP_GET_BKCOLOR = 0x04,
-	DISP_SET_COLORKEY = 0x05,
-	DISP_GET_COLORKEY = 0x06,
-	DISP_GET_SCN_WIDTH = 0x07,
-	DISP_GET_SCN_HEIGHT = 0x08,
-	DISP_GET_OUTPUT_TYPE = 0x09,
-	DISP_SET_EXIT_MODE = 0x0A,
-	DISP_VSYNC_EVENT_EN = 0x0B,
-	DISP_BLANK = 0x0C,
-	DISP_SHADOW_PROTECT = 0x0D,
-	DISP_HWC_COMMIT = 0x0E,
-	DISP_DEVICE_SWITCH = 0x0F,
-	DISP_GET_OUTPUT = 0x10,
-	DISP_SET_COLOR_RANGE = 0x11,
-	DISP_GET_COLOR_RANGE = 0x12,
+	DISP_SET_BKCOLOR = 0x03,           // Set background color
+	DISP_GET_BKCOLOR = 0x04,           // Get background color
+	DISP_SET_COLORKEY = 0x05,          // Set transparent color key
+	DISP_GET_COLORKEY = 0x06,          // Get color key settings
+	DISP_GET_SCN_WIDTH = 0x07,         // Get screen width
+	DISP_GET_SCN_HEIGHT = 0x08,        // Get screen height
+	DISP_GET_OUTPUT_TYPE = 0x09,       // Get current output type (LCD/HDMI/etc)
+	DISP_SET_EXIT_MODE = 0x0A,         // Set cleanup mode on exit
+	DISP_VSYNC_EVENT_EN = 0x0B,        // Enable vsync interrupt events
+	DISP_BLANK = 0x0C,                 // Blank/unblank display
+	DISP_SHADOW_PROTECT = 0x0D,        // Atomic update protection
+	DISP_HWC_COMMIT = 0x0E,            // Commit hardware composer changes
+	DISP_DEVICE_SWITCH = 0x0F,         // Switch output device
+	DISP_GET_OUTPUT = 0x10,            // Get output configuration
+	DISP_SET_COLOR_RANGE = 0x11,       // Set RGB color range (full/limited)
+	DISP_GET_COLOR_RANGE = 0x12,       // Get color range
 
-	//----layer----
-	DISP_LAYER_ENABLE = 0x40,
-	DISP_LAYER_DISABLE = 0x41,
-	DISP_LAYER_SET_INFO = 0x42,
-	DISP_LAYER_GET_INFO = 0x43,
-	DISP_LAYER_TOP = 0x44,
-	DISP_LAYER_BOTTOM = 0x45,
-	DISP_LAYER_GET_FRAME_ID = 0x46,
-	DISP_LAYER_SET_CONFIG = 0x47,
-	DISP_LAYER_GET_CONFIG = 0x48,
+	///////////////////////////////
+	// Layer management
+	///////////////////////////////
+	DISP_LAYER_ENABLE = 0x40,          // Enable layer
+	DISP_LAYER_DISABLE = 0x41,         // Disable layer
+	DISP_LAYER_SET_INFO = 0x42,        // Set layer properties
+	DISP_LAYER_GET_INFO = 0x43,        // Get layer properties
+	DISP_LAYER_TOP = 0x44,             // Move layer to top (highest z-order)
+	DISP_LAYER_BOTTOM = 0x45,          // Move layer to bottom (lowest z-order)
+	DISP_LAYER_GET_FRAME_ID = 0x46,    // Get current frame ID
+	DISP_LAYER_SET_CONFIG = 0x47,      // Set layer configuration (preferred)
+	DISP_LAYER_GET_CONFIG = 0x48,      // Get layer configuration
 
-	//----hdmi----
-	DISP_HDMI_SUPPORT_MODE = 0xc4,
-	DISP_SET_TV_HPD = 0xc5,
-	DISP_HDMI_GET_EDID = 0xc6,
+	///////////////////////////////
+	// HDMI/TV control
+	///////////////////////////////
+	DISP_HDMI_SUPPORT_MODE = 0xc4,     // Query supported HDMI modes
+	DISP_SET_TV_HPD = 0xc5,            // Set hotplug detect
+	DISP_HDMI_GET_EDID = 0xc6,         // Read EDID from connected display
 
-	//----lcd----
-	DISP_LCD_ENABLE = 0x100,
-	DISP_LCD_DISABLE = 0x101,
-	DISP_LCD_SET_BRIGHTNESS = 0x102,
-	DISP_LCD_GET_BRIGHTNESS = 0x103,
-	DISP_LCD_BACKLIGHT_ENABLE  = 0x104,
-	DISP_LCD_BACKLIGHT_DISABLE  = 0x105,
-	DISP_LCD_SET_SRC = 0x106,
-	DISP_LCD_SET_FPS  = 0x107,
-	DISP_LCD_GET_FPS  = 0x108,
-	DISP_LCD_GET_SIZE = 0x109,
-	DISP_LCD_GET_MODEL_NAME = 0x10a,
-	DISP_LCD_SET_GAMMA_TABLE = 0x10b,
-	DISP_LCD_GAMMA_CORRECTION_ENABLE = 0x10c,
-	DISP_LCD_GAMMA_CORRECTION_DISABLE = 0x10d,
-	DISP_LCD_USER_DEFINED_FUNC = 0x10e,
-	DISP_LCD_CHECK_OPEN_FINISH = 0x10f,
-	DISP_LCD_CHECK_CLOSE_FINISH = 0x110,
+	///////////////////////////////
+	// LCD panel control
+	///////////////////////////////
+	DISP_LCD_ENABLE = 0x100,           // Enable LCD output
+	DISP_LCD_DISABLE = 0x101,          // Disable LCD output
+	DISP_LCD_SET_BRIGHTNESS = 0x102,   // Set backlight brightness
+	DISP_LCD_GET_BRIGHTNESS = 0x103,   // Get backlight brightness
+	DISP_LCD_BACKLIGHT_ENABLE  = 0x104,// Enable backlight
+	DISP_LCD_BACKLIGHT_DISABLE  = 0x105,// Disable backlight
+	DISP_LCD_SET_SRC = 0x106,          // Set LCD data source
+	DISP_LCD_SET_FPS  = 0x107,         // Set refresh rate
+	DISP_LCD_GET_FPS  = 0x108,         // Get refresh rate
+	DISP_LCD_GET_SIZE = 0x109,         // Get panel resolution
+	DISP_LCD_GET_MODEL_NAME = 0x10a,   // Get panel model string
+	DISP_LCD_SET_GAMMA_TABLE = 0x10b,  // Upload gamma correction table
+	DISP_LCD_GAMMA_CORRECTION_ENABLE = 0x10c,  // Enable gamma
+	DISP_LCD_GAMMA_CORRECTION_DISABLE = 0x10d, // Disable gamma
+	DISP_LCD_USER_DEFINED_FUNC = 0x10e,// Call custom panel function
+	DISP_LCD_CHECK_OPEN_FINISH = 0x10f,// Wait for panel initialization
+	DISP_LCD_CHECK_CLOSE_FINISH = 0x110,// Wait for panel shutdown
 
-	//---- capture ---
-	DISP_CAPTURE_START = 0x140,//caputre screen and scaler to dram
-	DISP_CAPTURE_STOP = 0x141,
-	DISP_CAPTURE_COMMIT = 0x142,
+	///////////////////////////////
+	// Screen capture
+	///////////////////////////////
+	DISP_CAPTURE_START = 0x140,        // Start screen capture to memory
+	DISP_CAPTURE_STOP = 0x141,         // Stop capture
+	DISP_CAPTURE_COMMIT = 0x142,       // Commit capture operation
 
-	//---enhance ---
-	DISP_ENHANCE_ENABLE = 0x180,
-	DISP_ENHANCE_DISABLE = 0x181,
-	DISP_ENHANCE_GET_EN = 0x182,
-	DISP_ENHANCE_SET_WINDOW = 0x183,
-	DISP_ENHANCE_GET_WINDOW = 0x184,
-	DISP_ENHANCE_SET_MODE = 0x185,
-	DISP_ENHANCE_GET_MODE = 0x186,
-	DISP_ENHANCE_DEMO_ENABLE = 0x187,
-	DISP_ENHANCE_DEMO_DISABLE = 0x188,
+	///////////////////////////////
+	// Image enhancement
+	///////////////////////////////
+	DISP_ENHANCE_ENABLE = 0x180,       // Enable enhancement engine
+	DISP_ENHANCE_DISABLE = 0x181,      // Disable enhancement
+	DISP_ENHANCE_GET_EN = 0x182,       // Get enhancement state
+	DISP_ENHANCE_SET_WINDOW = 0x183,   // Set enhancement region
+	DISP_ENHANCE_GET_WINDOW = 0x184,   // Get enhancement region
+	DISP_ENHANCE_SET_MODE = 0x185,     // Set enhancement mode/strength
+	DISP_ENHANCE_GET_MODE = 0x186,     // Get enhancement mode
+	DISP_ENHANCE_DEMO_ENABLE = 0x187,  // Enable split-screen demo
+	DISP_ENHANCE_DEMO_DISABLE = 0x188, // Disable demo mode
 
-	//---smart backlight ---
-	DISP_SMBL_ENABLE = 0x200,
-	DISP_SMBL_DISABLE = 0x201,
-	DISP_SMBL_GET_EN = 0x202,
-	DISP_SMBL_SET_WINDOW = 0x203,
-	DISP_SMBL_GET_WINDOW = 0x204,
+	///////////////////////////////
+	// Smart backlight
+	///////////////////////////////
+	DISP_SMBL_ENABLE = 0x200,          // Enable adaptive backlight
+	DISP_SMBL_DISABLE = 0x201,         // Disable adaptive backlight
+	DISP_SMBL_GET_EN = 0x202,          // Get backlight state
+	DISP_SMBL_SET_WINDOW = 0x203,      // Set analysis window
+	DISP_SMBL_GET_WINDOW = 0x204,      // Get analysis window
 
-	//---- for test
-	DISP_FB_REQUEST = 0x280,
-	DISP_FB_RELEASE = 0x281,
+	///////////////////////////////
+	// Testing/debugging
+	///////////////////////////////
+	DISP_FB_REQUEST = 0x280,           // Allocate framebuffer
+	DISP_FB_RELEASE = 0x281,           // Free framebuffer
 
-	DISP_MEM_REQUEST = 0x2c0,
-	DISP_MEM_RELEASE = 0x2c1,
-	DISP_MEM_GETADR = 0x2c2,
+	DISP_MEM_REQUEST = 0x2c0,          // Request memory allocation
+	DISP_MEM_RELEASE = 0x2c1,          // Release memory
+	DISP_MEM_GETADR = 0x2c2,           // Get memory address
 }__DISP_t;
 
-#define FBIOGET_LAYER_HDL_0 0x4700
-#define FBIOGET_LAYER_HDL_1 0x4701
+/**
+ * Framebuffer device ioctl commands
+ *
+ * Used with /dev/fb0, /dev/fb1 to get layer handles for display configuration.
+ * These allow mapping framebuffer devices to display engine layers.
+ */
+#define FBIOGET_LAYER_HDL_0 0x4700  // Get layer handle for primary framebuffer
+#define FBIOGET_LAYER_HDL_1 0x4701  // Get layer handle for secondary framebuffer
 
 #endif
