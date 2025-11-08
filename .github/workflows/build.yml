@@ -5,24 +5,11 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  workflow_dispatch:
-    inputs:
-      platforms:
-        description: 'Platforms to build (space-separated, or "all")'
-        required: false
-        default: 'miyoomini trimuismart rg35xxplus'
 
 jobs:
   build:
-    name: Build ${{ matrix.platform }}
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - miyoomini
-          - trimuismart
-          - rg35xxplus
 
     steps:
       - name: Checkout code
@@ -31,40 +18,5 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build platform ${{ matrix.platform }}
-        run: make PLATFORM=${{ matrix.platform }} build
-
-      - name: Copy system files
-        run: make PLATFORM=${{ matrix.platform }} system
-
-      - name: Build cores
-        run: make PLATFORM=${{ matrix.platform }} cores
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: minui-${{ matrix.platform }}-${{ github.sha }}
-          path: build/
-          retention-days: 7
-
-  build-all:
-    name: Build All Platforms
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.platforms == 'all'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build all platforms
-        run: make all
-
-      - name: Upload all artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: minui-all-platforms-${{ github.sha }}
-          path: releases/
-          retention-days: 7
+      - name: Build rg35xxplus (compile only)
+        run: make PLATFORM=rg35xxplus build

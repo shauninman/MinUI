@@ -9,46 +9,38 @@ This directory contains the continuous integration workflows for MinUI.
 Runs on every push and pull request to `main` and `develop` branches.
 
 **Jobs:**
-- **Unit Tests** - Runs comprehensive test suite in Debian Buster Docker container (GCC 8.3.0)
-- **Static Analysis** - cppcheck on workspace/all/ (platform-independent code)
-- **Code Formatting** - Validates code formatting with clang-format
-- **Shell Script Linting** - shellcheck on all shell scripts
+- **Lint** - Runs all linting checks (cppcheck, clang-format, shellcheck)
+- **Test** - Runs comprehensive test suite in Debian Buster Docker container (GCC 8.3.0)
 
-All QA jobs run on standard `ubuntu-latest` runners.
+All QA jobs run on standard `ubuntu-latest` runners in parallel.
 
 ### Platform Builds (`build.yml`)
 
-Validates that builds work for multiple platforms.
+Validates compilation works (compile-only, no artifacts).
 
-**Default platforms tested on every PR:**
-- miyoomini (Miyoo Mini)
-- trimuismart (Trimui Smart)
-- rg35xxplus (Anbernic RG35XX Plus)
+**Platform tested:** rg35xxplus (Anbernic RG35XX Plus)
 
-**Workflow dispatch:**
-Can manually trigger builds for specific platforms or all platforms using the "Run workflow" button in GitHub Actions.
-
-**Artifacts:**
-Build artifacts are uploaded and retained for 7 days for testing.
+**Note:** This only tests compilation (`make PLATFORM=rg35xxplus build`), not full builds with system file copying. This catches compilation errors quickly without needing the full skeleton setup.
 
 ## Running Workflows Locally
 
 ### QA Checks
 
-You can run the same QA checks locally that run in CI:
+You can run the **exact same commands** locally that run in CI:
 
 ```bash
-# Run all tests (uses Docker)
-make test
-
-# Run static analysis
+# Run all linting checks (cppcheck, format-check, shellcheck)
 make lint
 
-# Check code formatting
-make format-check
+# Run all tests (uses Docker)
+make test
+```
 
-# Lint shell scripts
-make -f Makefile.qa lint-shell
+Individual targets are also available if needed:
+```bash
+make lint-code      # Just cppcheck
+make format-check   # Just formatting
+make lint-shell     # Just shellcheck
 ```
 
 ### Platform Builds
@@ -62,6 +54,12 @@ make PLATFORM=miyoomini cores
 # Build everything for all platforms
 make all
 ```
+
+## CI Strategy Summary
+
+| Event | Runs | Duration | Purpose |
+|-------|------|----------|---------|
+| **PR/Push to main/develop** | Lint + Test + Build (rg35xxplus) | ~5-7 min | Fast feedback, catch compilation errors |
 
 ## Status Badges
 
