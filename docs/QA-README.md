@@ -11,8 +11,11 @@ make -f Makefile.qa lint
 # Run tests
 make -f Makefile.qa test
 
-# Run both
-make -f Makefile.qa lint test
+# Check code formatting (safe, no changes)
+make -f Makefile.qa format-check
+
+# Run all checks
+make -f Makefile.qa lint test format-check
 ```
 
 ## What's Set Up
@@ -29,6 +32,12 @@ make -f Makefile.qa lint test
 - **Coverage:** 9 tests for string utilities
 - **Status:** All passing ✓
 - **Doc:** [testing-setup.md](testing-setup.md)
+
+### ✅ Code Formatting (clang-format)
+- **Tool:** clang-format
+- **Style:** Tabs, K&R braces, 100 char lines
+- **Status:** Available (use on new/modified code)
+- **Doc:** [formatting-setup.md](formatting-setup.md)
 
 ## Current Status
 

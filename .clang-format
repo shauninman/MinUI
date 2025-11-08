@@ -1,0 +1,46 @@
+# MinUI clang-format style
+# Preserves existing code style while improving consistency
+
+# Based on LLVM style with MinUI customizations
+BasedOnStyle: LLVM
+
+# Indentation - MinUI uses tabs
+UseTab: ForIndentation
+TabWidth: 4
+IndentWidth: 4
+
+# Braces - Opening brace on same line (actual MinUI style)
+BreakBeforeBraces: Attach
+
+# Line length - be reasonable
+ColumnLimit: 100
+
+# Pointers and references - MinUI uses left-aligned (char* p, not char *p)
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+
+# Functions
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Includes - sort and group
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# Comments - don't reflow them (preserve manual formatting)
+ReflowComments: false
+
+# Alignment - minimal (don't over-align, it causes churn)
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: false
+
+# Other
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2

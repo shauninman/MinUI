@@ -1,7 +1,7 @@
 # Quality Assurance Makefile
 # Run static analysis and tests
 
-.PHONY: help lint lint-full test clean-qa
+.PHONY: help lint lint-full test format format-check clean-qa
 
 help:
 	@echo "MinUI Quality Assurance Tools"
@@ -9,12 +9,14 @@ help:
 	@echo "Available targets:"
 	@echo "  make lint          - Run cppcheck on workspace/all/ (serious issues only)"
 	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
-	@echo "  make test          - Run unit tests (when implemented)"
+	@echo "  make test          - Run unit tests"
+	@echo "  make format        - Format code with clang-format (MODIFIES FILES)"
+	@echo "  make format-check  - Check if code is formatted (no changes)"
 	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
-	@echo "Installing cppcheck:"
-	@echo "  macOS:  brew install cppcheck"
-	@echo "  Linux:  sudo apt-get install cppcheck"
+	@echo "Installing tools:"
+	@echo "  macOS:  brew install cppcheck llvm"
+	@echo "  Linux:  sudo apt-get install cppcheck clang-format"
 
 # Focus on serious issues: warning (not style/performance yet)
 # Start gentle - just catch obvious bugs
@@ -66,6 +68,35 @@ tests/utils_test: tests/utils/test_utils_simple.c tests/unity/unity.c
 
 clean-tests:
 	rm -f tests/utils_test tests/*.o
+
+# Code formatting with clang-format
+CLANG_FORMAT = clang-format
+FORMAT_PATHS = workspace/all/minui/*.c \
+               workspace/all/minarch/*.c \
+               workspace/all/common/*.c \
+               workspace/all/common/*.h \
+               workspace/all/clock/*.c \
+               workspace/all/minput/*.c \
+               workspace/all/say/*.c \
+               workspace/all/syncsettings/*.c
+
+check-clang-format:
+	@which $(CLANG_FORMAT) > /dev/null || (echo "Error: clang-format not installed. Run 'brew install llvm' or 'apt-get install clang-format'" && exit 1)
+
+# Format code in-place (MODIFIES FILES)
+format: check-clang-format
+	@echo "Formatting code with clang-format..."
+	@$(CLANG_FORMAT) -i $(FORMAT_PATHS)
+	@echo "✓ Code formatted"
+	@echo ""
+	@echo "NOTE: Files were modified. Review changes with 'git diff'"
+
+# Check if code is formatted (no modifications)
+format-check: check-clang-format
+	@echo "Checking code formatting..."
+	@$(CLANG_FORMAT) --dry-run -Werror $(FORMAT_PATHS) 2>&1 || \
+		(echo "✗ Code is not formatted. Run 'make -f Makefile.qa format' to fix." && exit 1)
+	@echo "✓ Code is properly formatted"
 
 clean-qa:
 	@echo "Cleaning QA artifacts..."
