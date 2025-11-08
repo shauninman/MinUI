@@ -1,0 +1,18 @@
+# ShellCheck configuration for MinUI
+# Start forgiving, tighten over time
+
+# Disable these common warnings that are too noisy for now
+# SC2086: Double quote to prevent globbing
+# SC2034: Variable appears unused
+# SC2164: Use 'cd ... || exit' (many scripts rely on cd working)
+# SC2046: Quote to prevent word splitting
+# SC2006: Use $() instead of backticks (style, too many to fix now)
+# SC2005: Useless echo (style issue)
+# SC2003: expr is antiquated (style issue)
+# SC1090: Can't follow non-constant source (too many dynamic sources)
+# SC2295: Expansions inside ${..} (minor issue)
+
+disable=SC2086,SC2034,SC2164,SC2046,SC2006,SC2005,SC2003,SC1090,SC2295,SC3010,SC3014,SC2181,SC2115,SC2155
+
+# Only show errors and warnings (not info/style)
+severity=warning

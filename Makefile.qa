@@ -1,7 +1,7 @@
 # Quality Assurance Makefile
 # Run static analysis and tests
 
-.PHONY: help lint lint-full test format format-check clean-qa
+.PHONY: help lint lint-full lint-shell test format format-check clean-qa
 
 help:
 	@echo "MinUI Quality Assurance Tools"
@@ -9,14 +9,15 @@ help:
 	@echo "Available targets:"
 	@echo "  make lint          - Run cppcheck on workspace/all/ (serious issues only)"
 	@echo "  make lint-full     - Run cppcheck on entire workspace (verbose)"
+	@echo "  make lint-shell    - Run shellcheck on shell scripts"
 	@echo "  make test          - Run unit tests"
 	@echo "  make format        - Format code with clang-format (MODIFIES FILES)"
 	@echo "  make format-check  - Check if code is formatted (no changes)"
 	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
 	@echo "Installing tools:"
-	@echo "  macOS:  brew install cppcheck llvm"
-	@echo "  Linux:  sudo apt-get install cppcheck clang-format"
+	@echo "  macOS:  brew install cppcheck llvm shellcheck"
+	@echo "  Linux:  sudo apt-get install cppcheck clang-format shellcheck"
 
 # Focus on serious issues: warning (not style/performance yet)
 # Start gentle - just catch obvious bugs
@@ -29,6 +30,9 @@ CPPCHECK_FLAGS = --enable=warning \
 # Check if cppcheck is installed
 check-cppcheck:
 	@which cppcheck > /dev/null || (echo "Error: cppcheck not installed. Run 'brew install cppcheck' or 'apt-get install cppcheck'" && exit 1)
+
+check-shellcheck:
+	@which shellcheck > /dev/null || (echo "Error: shellcheck not installed. Run 'brew install shellcheck' or 'apt-get install shellcheck'" && exit 1)
 
 # Lint common code (most important, least platform-specific)
 lint: check-cppcheck
@@ -97,6 +101,33 @@ format-check: check-clang-format
 	@$(CLANG_FORMAT) --dry-run -Werror $(FORMAT_PATHS) 2>&1 || \
 		(echo "✗ Code is not formatted. Run 'make -f Makefile.qa format' to fix." && exit 1)
 	@echo "✓ Code is properly formatted"
+
+# Shell script linting with shellcheck
+# Exclude cores, toolchains, and scripts with embedded binary data
+SHELL_SCRIPTS = $(shell find skeleton workspace -name "*.sh" -type f \
+                 -not -path "*/cores/*" \
+                 -not -path "*/toolchains/*" \
+                 -not -path "*/em_ui.sh" \
+                 2>/dev/null)
+ROOT_SCRIPTS = commits.sh
+
+lint-shell: check-shellcheck
+	@echo "Running shellcheck on shell scripts..."
+	@echo "Checking $(shell echo $(SHELL_SCRIPTS) $(ROOT_SCRIPTS) | wc -w | tr -d ' ') scripts (forgiving rules)"
+	@echo ""
+	@ERROR_COUNT=0; \
+	for script in $(ROOT_SCRIPTS) $(SHELL_SCRIPTS); do \
+		if [ -f "$$script" ]; then \
+			shellcheck "$$script" || ERROR_COUNT=$$((ERROR_COUNT + 1)); \
+		fi; \
+	done; \
+	if [ $$ERROR_COUNT -gt 0 ]; then \
+		echo ""; \
+		echo "Found issues in $$ERROR_COUNT script(s)"; \
+		echo "Note: Using forgiving rules (see .shellcheckrc)"; \
+	else \
+		echo "✓ All shell scripts passed"; \
+	fi
 
 clean-qa:
 	@echo "Cleaning QA artifacts..."

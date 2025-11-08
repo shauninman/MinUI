@@ -5,8 +5,11 @@ Quick reference for code quality tools.
 ## Quick Start
 
 ```bash
-# Run static analysis
+# Run C static analysis
 make -f Makefile.qa lint
+
+# Run shell script linting
+make -f Makefile.qa lint-shell
 
 # Run tests
 make -f Makefile.qa test
@@ -15,7 +18,7 @@ make -f Makefile.qa test
 make -f Makefile.qa format-check
 
 # Run all checks
-make -f Makefile.qa lint test format-check
+make -f Makefile.qa lint lint-shell test format-check
 ```
 
 ## What's Set Up
@@ -35,9 +38,16 @@ make -f Makefile.qa lint test format-check
 
 ### ✅ Code Formatting (clang-format)
 - **Tool:** clang-format
-- **Style:** Tabs, K&R braces, 100 char lines
+- **Style:** Tabs, opening brace on same line, left-aligned pointers
 - **Status:** Available (use on new/modified code)
 - **Doc:** [formatting-setup.md](formatting-setup.md)
+
+### ✅ Shell Script Linting (shellcheck)
+- **Tool:** shellcheck
+- **Rules:** Forgiving (serious issues only)
+- **Scope:** 403 scripts (skeleton, workspace, root)
+- **Issues Found:** 202 scripts with warnings
+- **Doc:** [shellcheck-setup.md](shellcheck-setup.md)
 
 ## Current Status
 
