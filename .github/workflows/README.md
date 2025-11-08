@@ -6,10 +6,10 @@ This directory contains the continuous integration workflows for MinUI.
 
 ### Quality Assurance (`qa.yml`)
 
-Runs on every push and pull request to `main`, `develop`, and `ci` branches.
+Runs on every push and pull request to `main` and `develop` branches.
 
 **Jobs:**
-- **Unit Tests** - Runs comprehensive test suite in Debian Buster ARM64 Docker container
+- **Unit Tests** - Runs comprehensive test suite in Debian Buster Docker container (GCC 8.3.0)
 - **Static Analysis** - cppcheck on workspace/all/ (platform-independent code)
 - **Code Formatting** - Validates code formatting with clang-format
 - **Shell Script Linting** - shellcheck on all shell scripts

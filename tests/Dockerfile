@@ -1,5 +1,6 @@
 # Lightweight Docker image for running MinUI tests
-# Uses Debian Buster to match most platform toolchains
+# Uses Debian Buster to match platform toolchains (GCC 8.3.0)
+# Note: Uses native platform (AMD64 on CI, ARM64 on Apple Silicon)
 FROM debian:buster-slim
 ENV DEBIAN_FRONTEND=noninteractive
 

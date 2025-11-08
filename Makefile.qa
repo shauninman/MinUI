@@ -16,7 +16,7 @@ help:
 	@echo "  make clean-qa      - Clean QA artifacts"
 	@echo ""
 	@echo "Docker targets (default):"
-	@echo "  make docker-test   - Run tests in Debian Buster ARM64 container"
+	@echo "  make docker-test   - Run tests in Debian Buster container"
 	@echo "  make docker-build  - Build test Docker image"
 	@echo "  make docker-shell  - Enter Docker container for debugging"
 	@echo ""
@@ -166,15 +166,15 @@ report: check-cppcheck
 
 # Docker-based testing targets
 DOCKER_IMAGE = minui-test
-DOCKER_RUN = docker run --rm -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE)
+DOCKER_RUN = docker run --rm -v $(shell pwd):/minui -w /minui $(DOCKER_IMAGE)
 
 docker-build:
-	@echo "Building test Docker image (Debian Buster ARM64)..."
-	docker build --platform linux/arm64 -t $(DOCKER_IMAGE) -f tests/Dockerfile .
+	@echo "Building test Docker image (Debian Buster)..."
+	docker build -t $(DOCKER_IMAGE) -f tests/Dockerfile .
 	@echo "✓ Docker image ready"
 
 docker-test: docker-build
-	@echo "Running tests in Docker container (Debian Buster ARM64)..."
+	@echo "Running tests in Docker container (Debian Buster)..."
 	@echo ""
 	$(DOCKER_RUN) make -f Makefile.qa clean-tests test-native
 
@@ -184,4 +184,4 @@ docker-lint: docker-build
 
 docker-shell: docker-build
 	@echo "Entering Docker container shell..."
-	docker run --rm -it -v $(shell pwd):/minui -w /minui --platform linux/arm64 $(DOCKER_IMAGE) /bin/bash
+	docker run --rm -it -v $(shell pwd):/minui -w /minui $(DOCKER_IMAGE) /bin/bash
