@@ -1,4 +1,19 @@
-// rgb30
+/**
+ * platform.c - Powkiddy RGB30 platform implementation
+ *
+ * Platform-specific code for the Powkiddy RGB30 handheld device.
+ * Key features:
+ * - Dual analog sticks with swapped right stick axes (X/Y reversed)
+ * - WiFi support with status monitoring
+ * - Grid and line visual effects for retro aesthetics
+ * - Rotation support for display output
+ * - Dynamic device model detection from device tree
+ * - Overscan support (PLAT_supportsOverscan returns 1)
+ *
+ * The RGB30 uses the Rockchip RK3566 SoC with 720x720 display.
+ * Input events are read directly from /dev/input/event* devices.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -18,6 +33,8 @@
 
 #include "scaler.h"
 
+///////////////////////////////
+// Input Handling
 ///////////////////////////////
 
 #define RAW_UP		544
@@ -53,12 +70,22 @@
 #define INPUT_COUNT 4
 static int inputs[INPUT_COUNT];
 
+/**
+ * Initializes input system by opening event device files.
+ *
+ * Opens all four /dev/input/event* devices in non-blocking mode
+ * to read button and analog stick input events.
+ */
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[1] = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[2] = open("/dev/input/event2", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	inputs[3] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 }
+
+/**
+ * Closes all input device file descriptors.
+ */
 void PLAT_quitInput(void) {
 	for (int i=0; i<INPUT_COUNT; i++) {
 		close(inputs[i]);
@@ -75,6 +102,16 @@ struct input_event {
 #define EV_KEY			0x01
 #define EV_ABS			0x03
 
+/**
+ * Polls input devices and updates global pad state.
+ *
+ * Reads events from all input devices and updates button states,
+ * analog stick positions, and repeat timing. Handles both key events
+ * (buttons) and absolute events (analog sticks).
+ *
+ * @note Right analog stick has swapped X/Y axes - hardware quirk
+ * @note Key repeat handled in software with configurable delay
+ */
 void PLAT_pollInput(void) {
 	// reset transient state
 	pad.just_pressed = BTN_NONE;
@@ -89,7 +126,7 @@ void PLAT_pollInput(void) {
 			pad.repeat_at[i] += PAD_REPEAT_INTERVAL;
 		}
 	}
-	
+
 	// the actual poll
 	int input;
 	static struct input_event event;
@@ -104,11 +141,11 @@ void PLAT_pollInput(void) {
 			int type = event.type;
 			int code = event.code;
 			int value = event.value;
-			
+
 			// TODO: tmp, hardcoded, missing some buttons
 			if (type==EV_KEY) {
 				if (value>1) continue; // ignore repeats
-			
+
 				pressed = value;
 				LOG_info("key event: %i (%i)\n", code,pressed);
 					 if (code==RAW_UP) 	{ btn = BTN_DPAD_UP; 		id = BTN_ID_DPAD_UP; }
@@ -136,18 +173,18 @@ void PLAT_pollInput(void) {
 			}
 			else if (type==EV_ABS) {
 				LOG_info("abs event: %i (%i==%i)\n",code,value,(value * 32767) / 1800);
-				
+
 					 if (code==RAW_LSX) { pad.laxis.x = (value * 32767) / 1800; PAD_setAnalog(BTN_ID_ANALOG_LEFT, BTN_ID_ANALOG_RIGHT, pad.laxis.x, tick+PAD_REPEAT_DELAY); }
 				else if (code==RAW_LSY) { pad.laxis.y = (value * 32767) / 1800; PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY); }
-				// TODO: these seem to be switched on the rgb30 according to the padtest rom
+				// Right stick axes are swapped in hardware - X reports as Y, Y reports as X
 				else if (code==RAW_RSX) pad.raxis.y = (value * 32767) / 1800;
 				else if (code==RAW_RSY) pad.raxis.x = (value * 32767) / 1800;
-				
+
 				btn = BTN_NONE; // already handled, force continue
 			}
-			
+
 			if (btn==BTN_NONE) continue;
-		
+
 			if (!pressed) {
 				pad.is_pressed		&= ~btn; // unset
 				pad.just_repeated	&= ~btn; // unset
@@ -163,6 +200,14 @@ void PLAT_pollInput(void) {
 	}
 }
 
+/**
+ * Checks if device should wake from sleep.
+ *
+ * Reads input events to detect power button release, which is
+ * the signal to wake the device from sleep mode.
+ *
+ * @return 1 if power button was released, 0 otherwise
+ */
 int PLAT_shouldWake(void) {
 	int input;
 	static struct input_event event;
@@ -175,6 +220,8 @@ int PLAT_shouldWake(void) {
 	return 0;
 }
 
+///////////////////////////////
+// Video System
 ///////////////////////////////
 
 // based on rg35xxplus
@@ -200,9 +247,18 @@ static struct VID_Context {
 static int device_width;
 static int device_height;
 static int device_pitch;
+
+/**
+ * Initializes SDL video subsystem and creates display surfaces.
+ *
+ * Sets up the SDL window, renderer, and textures for hardware-accelerated
+ * rendering. Creates RGB565 surfaces for the screen buffer.
+ *
+ * @return Pointer to the main screen surface for rendering
+ */
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
-	
+
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
@@ -322,6 +378,11 @@ static void clearVideo(void) {
 	}
 }
 
+/**
+ * Shuts down video system and frees all resources.
+ *
+ * Destroys all SDL surfaces, textures, renderer, and window.
+ */
 void PLAT_quitVideo(void) {
 	// clearVideo();
 
@@ -332,19 +393,33 @@ void PLAT_quitVideo(void) {
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
-	
+
 	// system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	SDL_Quit();
 }
 
+/**
+ * Clears a surface to black.
+ *
+ * @param screen Surface to clear
+ */
 void PLAT_clearVideo(SDL_Surface* screen) {
 	SDL_FillRect(screen, NULL, 0); // TODO: revisit
 }
+
+/**
+ * Clears both screen surface and renderer.
+ */
 void PLAT_clearAll(void) {
 	PLAT_clearVideo(vid.screen); // TODO: revist
 	SDL_RenderClear(vid.renderer);
 }
 
+/**
+ * Sets vertical sync mode (not implemented on this platform).
+ *
+ * @param vsync 1 to enable vsync, 0 to disable
+ */
 void PLAT_setVsync(int vsync) {
 	// buh
 }
@@ -384,17 +459,48 @@ static void resizeVideo(int w, int h, int p) {
 	vid.pitch	= p;
 }
 
+/**
+ * Resizes video output to match new dimensions.
+ *
+ * @param w New width in pixels
+ * @param h New height in pixels
+ * @param p New pitch in bytes
+ * @return Pointer to screen surface
+ */
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 	resizeVideo(w,h,p);
 	return vid.screen;
 }
 
+/**
+ * Sets video scaling and clipping region (not implemented).
+ *
+ * @param x Clip region X offset
+ * @param y Clip region Y offset
+ * @param width Clip region width
+ * @param height Clip region height
+ */
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 	// buh
 }
+
+/**
+ * Enables or disables nearest-neighbor scaling (not implemented).
+ *
+ * @param enabled 1 to enable, 0 to disable
+ */
 void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
+
+/**
+ * Sets sharpness filter for video scaling.
+ *
+ * Changes between soft (linear) and crisp (nearest-neighbor with
+ * intermediate scaling) modes by recreating textures.
+ *
+ * @param sharpness SHARPNESS_SOFT or SHARPNESS_CRISP
+ */
 void PLAT_setSharpness(int sharpness) {
 	if (vid.sharpness==sharpness) return;
 	int p = vid.pitch;
@@ -530,28 +636,75 @@ static void updateEffect(void) {
 		effect.live_type = effect.type;
 	}
 	}
+
+/**
+ * Sets the visual effect type for next frame.
+ *
+ * Effects are applied as texture overlays for retro aesthetics.
+ *
+ * @param next_type EFFECT_NONE, EFFECT_LINE, or EFFECT_GRID
+ */
 void PLAT_setEffect(int next_type) {
 	effect.next_type = next_type;
 }
+
+/**
+ * Sets the color tint for grid effects.
+ *
+ * Used to colorize DMG-style monochrome displays.
+ *
+ * @param next_color RGB565 color value
+ */
 void PLAT_setEffectColor(int next_color) {
 	effect.next_color = next_color;
 }
+
+/**
+ * Delays to maintain consistent frame timing.
+ *
+ * @param remaining Milliseconds to delay
+ */
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
+/**
+ * Gets the scaler function for rendering.
+ *
+ * Updates effect scale for size-appropriate overlay selection.
+ *
+ * @param renderer Current renderer state
+ * @return Pointer to scaler function
+ */
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 	// LOG_info("getScaler for scale: %i\n", renderer->scale);
 	effect.next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
+/**
+ * Prepares renderer for blitting frame.
+ *
+ * Resizes video output to match source dimensions and clears renderer.
+ *
+ * @param renderer Current renderer with source dimensions
+ */
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
 	SDL_RenderClear(vid.renderer);
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
+/**
+ * Presents rendered frame to display.
+ *
+ * Updates texture from source buffer, applies scaling and effects,
+ * then presents to screen. Handles both menu (no blit) and game
+ * rendering modes with appropriate aspect ratio handling.
+ *
+ * @param IGNORED Unused legacy parameter
+ * @param ignored Unused legacy parameter
+ */
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
@@ -627,8 +780,17 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	vid.blit = NULL;
 }
 
+/**
+ * Indicates whether platform supports overscan adjustment.
+ *
+ * The RGB30 supports overscan adjustment for CRT-style displays.
+ *
+ * @return 1 (overscan supported)
+ */
 int PLAT_supportsOverscan(void) { return 1; }
 
+///////////////////////////////
+// Overlay System
 ///////////////////////////////
 
 // TODO: 
@@ -642,20 +804,50 @@ static struct OVL_Context {
 	SDL_Surface* overlay;
 } ovl;
 
+/**
+ * Initializes overlay surface for on-screen indicators.
+ *
+ * Creates an ARGB surface for rendering UI overlays like volume
+ * and brightness indicators.
+ *
+ * @return Pointer to overlay surface
+ */
 SDL_Surface* PLAT_initOverlay(void) {
 	ovl.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE, SCALE2(OVERLAY_WIDTH,OVERLAY_HEIGHT),OVERLAY_DEPTH,OVERLAY_RGBA_MASK);
 	return ovl.overlay;
 }
+
+/**
+ * Frees overlay surface resources.
+ */
 void PLAT_quitOverlay(void) {
 	if (ovl.overlay) SDL_FreeSurface(ovl.overlay);
 }
+
+/**
+ * Enables or disables overlay display (not implemented).
+ *
+ * @param enable 1 to enable, 0 to disable
+ */
 void PLAT_enableOverlay(int enable) {
 
 }
 
 ///////////////////////////////
+// Power Management
+///////////////////////////////
 
 static int online = 0;
+
+/**
+ * Reads battery charge status and WiFi state.
+ *
+ * Polls battery capacity from sysfs and quantizes to discrete levels.
+ * Also checks WiFi connection status for display in UI.
+ *
+ * @param is_charging Output: 1 if charging, 0 if on battery
+ * @param charge Output: Battery level (10, 20, 40, 60, 80, or 100)
+ */
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
@@ -678,10 +870,22 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	online = prefixMatch("up", status);
 }
 
+/**
+ * Enables or disables display backlight.
+ *
+ * @param enable 1 to turn on, 0 to turn off
+ */
 void PLAT_enableBacklight(int enable) {
 	putInt("/sys/class/backlight/backlight/bl_power", enable ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN);
 }
 
+/**
+ * Powers off the device.
+ *
+ * Mutes audio, disables backlight, cleans up subsystems, and
+ * executes system shutdown command. Waits indefinitely for
+ * shutdown to complete.
+ */
 void PLAT_powerOff(void) {
 	sleep(2);
 
@@ -691,14 +895,25 @@ void PLAT_powerOff(void) {
 	VIB_quit();
 	PWR_quit();
 	GFX_quit();
-	
+
 	system("shutdown");
 	while (1) pause(); // lolwat
 }
 
 ///////////////////////////////
+// CPU and Hardware Control
+///////////////////////////////
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed"
+
+/**
+ * Sets CPU frequency for power/performance balance.
+ *
+ * Adjusts CPU clock speed based on workload requirements.
+ *
+ * @param speed CPU_SPEED_MENU (600MHz), CPU_SPEED_POWERSAVE (1104MHz),
+ *              CPU_SPEED_NORMAL (1608MHz), or CPU_SPEED_PERFORMANCE (1992MHz)
+ */
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
@@ -710,26 +925,59 @@ void PLAT_setCPUSpeed(int speed) {
 	putInt(GOVERNOR_PATH, freq);
 }
 
+/**
+ * Sets rumble motor strength (not supported on this device).
+ *
+ * @param strength Rumble intensity (0-255)
+ */
 void PLAT_setRumble(int strength) {
 	// buh
 }
 
+/**
+ * Chooses audio sample rate within hardware limits.
+ *
+ * @param requested Desired sample rate in Hz
+ * @param max Maximum supported rate
+ * @return Selected sample rate (minimum of requested and max)
+ */
 int PLAT_pickSampleRate(int requested, int max) {
 	return MIN(requested, max);
 }
 
 static char model[256];
+
+/**
+ * Reads device model name from device tree.
+ *
+ * Extracts model name from /proc/device-tree/model, which contains
+ * the full hardware description. Returns just the model identifier
+ * (e.g., "RGB30") rather than the full string.
+ *
+ * @return Pointer to static buffer with model name
+ *
+ * @note Device tree model format: "Manufacturer Model"
+ *       Function extracts the last word after space
+ */
 char* PLAT_getModel(void) {
 	char buffer[256];
 	getFile("/proc/device-tree/model", buffer, 256);
-	
+
+	// Extract model name from device tree string (e.g., "Powkiddy RGB30" -> "RGB30")
 	char* tmp = strrchr(buffer, ' ');
 	if (tmp) strcpy(model, tmp+1);
 	else strcpy(model, "RGB30");
-	
+
 	return model;
 }
 
+/**
+ * Checks if device is connected to WiFi network.
+ *
+ * @return 1 if connected, 0 if offline
+ *
+ * @note Status updated in PLAT_getBatteryStatus() polling
+ */
 int PLAT_isOnline(void) {
 	return online;
 }

@@ -1,4 +1,22 @@
-// gkdpixel
+/**
+ * platform.c - GKD Pixel platform implementation
+ *
+ * Implements the PLAT_* platform abstraction layer for the GKD Pixel handheld.
+ * Uses SDL2 with hardware-accelerated rendering and custom bilinear scalers
+ * optimized for the device's 640x480 display.
+ *
+ * Hardware Characteristics:
+ * - Display: 640x480 RGB565
+ * - Input: SDL gamepad via event devices
+ * - Video: SDL2 with triple buffering (SDL_TRIPLEBUF)
+ * - Scaling: Custom approximate bilinear scalers for common resolutions
+ *
+ * Special Features:
+ * - Optimized 3x3->4x4 scaler for 240x160 (GBA) content
+ * - Optimized 3x3->5x5 scaler for 160x144 (GB) content
+ * - Custom 256x224->320x238 scaler for SNES content
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -19,13 +37,24 @@
 #include "scaler.h"
 
 ///////////////////////////////
+// Input Implementation
+///////////////////////////////
 
+/**
+ * Initializes input system.
+ *
+ * GKD Pixel uses SDL's built-in gamepad support, so no platform-specific
+ * initialization is required.
+ */
 void PLAT_initInput(void) {
-	// buh
+	// SDL handles input internally
 }
 
+/**
+ * Shuts down input system.
+ */
 void PLAT_quitInput(void) {
-	// buh
+	// SDL handles cleanup internally
 }
 
 ///////////////////////////////
@@ -240,7 +269,6 @@ static inline void scale_240x160_320x213(void* __restrict src_, void* __restrict
 	// upscale 3x3 pixel chunks to 4x4
 	for (uint_fast16_t chunk_y=0; chunk_y<src_h/3; chunk_y++) {
 		for (uint_fast16_t chunk_x=0; chunk_x<src_w/3; chunk_x++) {
-			uint_fast16_t r = (chunk_x==src_w/3-1) ? 4 : 6;
 
 			// a b c
 			// e f g
@@ -302,7 +330,6 @@ static inline void scale_240x160_320x213(void* __restrict src_, void* __restrict
 	
 	if (src_h%3==1) {
 		for (uint_fast16_t chunk_x=0; chunk_x<src_w/3; chunk_x++) {
-			uint_fast16_t r = (chunk_x==src_w/3-1) ? 4 : 6;
 
 			// a b c
 			
@@ -427,7 +454,6 @@ static inline void scale_256x224_320x238(void* __restrict src_, void* __restrict
 	dst -= (320 - dst_w)/2;
 	dst += dst_pitch * (dst_h-238)/2;
 	dst_w = 320;
-	dst_h = 238;
 	
 	const uint32_t src_skip = src_pitch - src_w * FIXED_BPP;
 	const uint32_t dst_skip = dst_pitch - dst_w * FIXED_BPP;
@@ -579,7 +605,6 @@ scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 				// renderer->dst_x = 0;
 				// renderer->dst_y = 1;
 				// renderer->dst_w = 320;
-				// renderer->dst_h = 238;
 				return scale_256x224_320x238;
 			}
 			if (renderer->src_w==240 && renderer->src_h==160) return renderer->dst_h==240 ? GFX_getAAScaler(renderer) : scale_240x160_320x213;

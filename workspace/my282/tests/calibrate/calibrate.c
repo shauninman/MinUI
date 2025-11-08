@@ -16,11 +16,8 @@ int main(int argc , char* argv[]) {
 	SDL_Surface* screen = GFX_init(MODE_MAIN);
 	PAD_init();
 
-	SDL_Event event;
 	int quit = 0;
 	while(!quit) {
-		uint32_t frame_start = SDL_GetTicks();
-		
 		PAD_poll();
 		if (PAD_justPressed(BTN_A)) quit = 1;
 		if (PAD_justPressed(BTN_B)) GFX_clear(screen);

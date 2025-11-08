@@ -1,5 +1,23 @@
-/*
- * drivers/staging/android/uapi/ion.h
+/**
+ * ion.h - Android ION memory allocator userspace API
+ *
+ * Standard Android ION (Input/Output Memory Manager) interface for allocating
+ * and sharing physically contiguous memory buffers. Used on RG35xx for video
+ * framebuffers that need to be accessed by both CPU and display hardware.
+ *
+ * ION workflow:
+ * 1. Open /dev/ion to create a client
+ * 2. Allocate buffer via ION_IOC_ALLOC (returns handle)
+ * 3. Get file descriptor via ION_IOC_MAP or ION_IOC_SHARE
+ * 4. mmap() the fd to access buffer from userspace
+ * 5. Share fd with other processes or drivers as needed
+ * 6. Free buffer via ION_IOC_FREE when done
+ *
+ * This is the standard upstream ION interface from Android kernel staging tree.
+ * Platform-specific extensions are in ion-owl.h.
+ *
+ * @note Deprecated in newer kernels (4.12+) in favor of DMA-BUF heaps
+ * @note RG35xx uses Linux 3.10 kernel with ION support
  *
  * Copyright (C) 2011 Google, Inc.
  *
@@ -20,6 +38,12 @@
 #include <linux/ioctl.h>
 #include <linux/types.h>
 
+/**
+ * ion_user_handle_t - Opaque handle to an ION buffer
+ *
+ * Returned by ION_IOC_ALLOC and used to reference the buffer in subsequent
+ * operations. Handle is only valid within the client that allocated it.
+ */
 typedef int ion_user_handle_t;
 
 /**

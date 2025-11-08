@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     uint32_t r = val;
  
     p = (uint32_t *)(&mem[0xc00 + 0x258]);
-    printf("%d\n", (*p & 0xff)); fflush(stdout);
+    printf("%u\n", (*p & 0xff)); fflush(stdout);
 	if (val>-1) *p = (l << 8) | r;
   
     munmap(mem, 4096);

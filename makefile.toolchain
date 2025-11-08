@@ -13,7 +13,7 @@ GIT_IF_NECESSARY=toolchains/$(PLATFORM)-toolchain
 INIT_IF_NECESSARY=toolchains/$(PLATFORM)-toolchain/.build
 
 all: $(INIT_IF_NECESSARY)
-	docker run -it --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) $(PLATFORM)-toolchain /bin/bash
+	docker run --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) $(PLATFORM)-toolchain /bin/bash
 
 $(INIT_IF_NECESSARY): $(GIT_IF_NECESSARY)
 	cd toolchains/$(PLATFORM)-toolchain && make .build
@@ -37,4 +37,4 @@ clean:
 	cd toolchains/$(PLATFORM)-toolchain && make clean
 
 build: $(INIT_IF_NECESSARY)
-	docker run -it --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) $(PLATFORM)-toolchain /bin/bash -c '. ~/.bashrc && cd /root/workspace && make'
+	docker run --rm -v $(HOST_WORKSPACE):$(GUEST_WORKSPACE) $(PLATFORM)-toolchain /bin/bash -c '. ~/.bashrc && cd /root/workspace && make'

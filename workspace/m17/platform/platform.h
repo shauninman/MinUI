@@ -1,12 +1,27 @@
-// m17
+/**
+ * m17/platform/platform.h - Platform definitions for M17 handheld
+ *
+ * The M17 is a retro handheld gaming device with:
+ * - 480x273 widescreen display (16:9 aspect ratio)
+ * - D-pad and face buttons (A/B/X/Y)
+ * - Shoulder buttons (L1/R1/L2/R2)
+ * - Menu button with alternate
+ * - Uses hybrid input (SDL keyboard + joystick)
+ * - NEON optimization support (potentially available)
+ */
 
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
 ///////////////////////////////
+// Dependencies
+///////////////////////////////
 
 #include "sdl.h"
 
+///////////////////////////////
+// SDL Keyboard Button Mappings
+// Maps physical buttons to SDL key codes
 ///////////////////////////////
 
 #define BUTTON_UP		SDLK_UP
@@ -17,6 +32,7 @@
 #define BUTTON_SELECT	SDLK_RSHIFT
 #define BUTTON_START	SDLK_RETURN
 
+// Note: A/B and X/Y labels are swapped from typical layout
 #define BUTTON_A		SDLK_B
 #define BUTTON_B		SDLK_A
 #define BUTTON_X		SDLK_Y
@@ -35,6 +51,9 @@
 #define	BUTTON_PLUS		BUTTON_NA
 #define	BUTTON_MINUS	BUTTON_NA
 
+///////////////////////////////
+// Evdev/Keyboard Input Codes
+// M17 does not use keyboard input codes
 ///////////////////////////////
 
 #define CODE_UP			CODE_NA
@@ -65,6 +84,9 @@
 #define CODE_MINUS		CODE_NA
 
 ///////////////////////////////
+// Joystick Button Mappings
+// Hardware joystick button indices
+///////////////////////////////
 
 #define JOY_UP			11
 #define JOY_DOWN		14
@@ -87,38 +109,45 @@
 #define JOY_R3			JOY_NA
 
 #define JOY_MENU		15
-#define JOY_MENU_ALT	16
+#define JOY_MENU_ALT	16  // Secondary menu button
 #define JOY_POWER		JOY_NA
 #define JOY_PLUS		JOY_NA
 #define JOY_MINUS		JOY_NA
 
 ///////////////////////////////
-
-#define BTN_RESUME 			BTN_X
-#define BTN_SLEEP 			BTN_MENU
-#define BTN_WAKE 			BTN_MENU
-#define BTN_MOD_VOLUME 		BTN_SELECT
-#define BTN_MOD_BRIGHTNESS 	BTN_START
-#define BTN_MOD_PLUS 		BTN_R1
-#define BTN_MOD_MINUS 		BTN_L1
-
+// Function Button Mappings
+// System-level button combinations
 ///////////////////////////////
 
-#define FIXED_SCALE 	1
-#define FIXED_WIDTH		480
-#define FIXED_HEIGHT	273
-#define FIXED_BPP		2
-#define FIXED_DEPTH		(FIXED_BPP * 8)
-#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
-#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
+#define BTN_RESUME 			BTN_X       // Button to resume from save state
+#define BTN_SLEEP 			BTN_MENU    // Button to enter sleep mode
+#define BTN_WAKE 			BTN_MENU    // Button to wake from sleep
+#define BTN_MOD_VOLUME 		BTN_SELECT  // Hold SELECT for volume control
+#define BTN_MOD_BRIGHTNESS 	BTN_START   // Hold START for brightness control
+#define BTN_MOD_PLUS 		BTN_R1      // Increase with R1
+#define BTN_MOD_MINUS 		BTN_L1      // Decrease with L1
 
 ///////////////////////////////
+// Display Specifications
+///////////////////////////////
 
-#define SDCARD_PATH "/sdcard"
-#define MUTE_VOLUME_RAW 0
-#define HAS_NEON // maybe?
+#define FIXED_SCALE 	1              // No scaling factor needed
+#define FIXED_WIDTH		480            // Screen width in pixels
+#define FIXED_HEIGHT	273            // Screen height in pixels (16:9 widescreen)
+#define FIXED_BPP		2              // Bytes per pixel (RGB565)
+#define FIXED_DEPTH		(FIXED_BPP * 8) // Bit depth (16-bit color)
+#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)  // Row stride in bytes
+#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT) // Total framebuffer size
 
-#define MAIN_ROW_COUNT 7
+///////////////////////////////
+// Platform-Specific Paths and Settings
+///////////////////////////////
+
+#define SDCARD_PATH "/sdcard"     // Path to SD card mount point
+#define MUTE_VOLUME_RAW 0         // Raw value for muted volume
+#define HAS_NEON                  // May have NEON SIMD support (uncertain)
+
+#define MAIN_ROW_COUNT 7          // Number of rows visible in menu
 
 ///////////////////////////////
 

@@ -1,12 +1,28 @@
-// trimuismart
+/**
+ * trimuismart/platform/platform.h - Platform definitions for Trimui Smart handheld
+ *
+ * The Trimui Smart is a compact retro handheld gaming device with:
+ * - 320x240 display (QVGA resolution, 1x scale - no scaling)
+ * - D-pad and face buttons (A/B/X/Y)
+ * - Shoulder buttons (L1/R1 only, no L2/R2)
+ * - Menu and power buttons
+ * - Uses hybrid input (SDL keyboard + evdev codes)
+ * - NEON SIMD optimization support
+ * - Compact form factor with smaller screen
+ */
 
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
 ///////////////////////////////
+// Dependencies
+///////////////////////////////
 
 #include "sdl.h"
 
+///////////////////////////////
+// SDL Keyboard Button Mappings
+// Maps physical buttons to SDL key codes
 ///////////////////////////////
 
 #define BUTTON_UP		SDLK_UP
@@ -24,8 +40,8 @@
 
 #define BUTTON_L1		SDLK_TAB
 #define BUTTON_R1		SDLK_BACKSPACE
-#define BUTTON_L2		BUTTON_NA
-#define BUTTON_R2		BUTTON_NA
+#define BUTTON_L2		BUTTON_NA  // No L2 button on hardware
+#define BUTTON_R2		BUTTON_NA  // No R2 button on hardware
 #define	BUTTON_L3		BUTTON_NA
 #define	BUTTON_R3		BUTTON_NA
 
@@ -35,33 +51,39 @@
 #define	BUTTON_MINUS	BUTTON_NA
 
 ///////////////////////////////
+// Evdev/Keyboard Input Codes
+// Hardware keycodes from kernel input subsystem
+///////////////////////////////
 
-#define CODE_UP			103
-#define CODE_DOWN		108
-#define CODE_LEFT		105
-#define CODE_RIGHT		106
+#define CODE_UP			103  // KEY_UP
+#define CODE_DOWN		108  // KEY_DOWN
+#define CODE_LEFT		105  // KEY_LEFT
+#define CODE_RIGHT		106  // KEY_RIGHT
 
-#define CODE_SELECT		97
-#define CODE_START		28
+#define CODE_SELECT		97   // KEY_RIGHTCTRL
+#define CODE_START		28   // KEY_ENTER
 
-#define CODE_A			57
-#define CODE_B			29
-#define CODE_X			42
-#define CODE_Y			56
+#define CODE_A			57   // KEY_SPACE
+#define CODE_B			29   // KEY_LEFTCTRL
+#define CODE_X			42   // KEY_LEFTSHIFT
+#define CODE_Y			56   // KEY_LEFTALT
 
-#define CODE_L1			15
-#define CODE_R1			14
+#define CODE_L1			15   // KEY_TAB
+#define CODE_R1			14   // KEY_BACKSPACE
 #define CODE_L2			CODE_NA
 #define CODE_R2			CODE_NA
 #define CODE_L3			CODE_NA
 #define CODE_R3			CODE_NA
 
-#define CODE_MENU		1
+#define CODE_MENU		1    // KEY_ESC
 #define CODE_POWER		CODE_NA
 
 #define CODE_PLUS		CODE_NA
 #define CODE_MINUS		CODE_NA
 
+///////////////////////////////
+// Joystick Button Mappings
+// Trimui Smart does not use joystick input
 ///////////////////////////////
 
 #define JOY_UP			JOY_NA
@@ -90,30 +112,37 @@
 #define JOY_MINUS		JOY_NA
 
 ///////////////////////////////
-
-#define BTN_RESUME 			BTN_X
-#define BTN_SLEEP 			BTN_MENU
-#define BTN_WAKE 			BTN_MENU
-#define BTN_MOD_VOLUME 		BTN_SELECT
-#define BTN_MOD_BRIGHTNESS 	BTN_START
-#define BTN_MOD_PLUS 		BTN_R1
-#define BTN_MOD_MINUS 		BTN_L1
-
+// Function Button Mappings
+// System-level button combinations
 ///////////////////////////////
 
-#define FIXED_SCALE 	1
-#define FIXED_WIDTH		320
-#define FIXED_HEIGHT	240
-#define FIXED_BPP		2
-#define FIXED_DEPTH		(FIXED_BPP * 8)
-#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
-#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
+#define BTN_RESUME 			BTN_X       // Button to resume from save state
+#define BTN_SLEEP 			BTN_MENU    // Button to enter sleep mode
+#define BTN_WAKE 			BTN_MENU    // Button to wake from sleep
+#define BTN_MOD_VOLUME 		BTN_SELECT  // Hold SELECT for volume control
+#define BTN_MOD_BRIGHTNESS 	BTN_START   // Hold START for brightness control
+#define BTN_MOD_PLUS 		BTN_R1      // Increase with R1
+#define BTN_MOD_MINUS 		BTN_L1      // Decrease with L1
 
 ///////////////////////////////
+// Display Specifications
+///////////////////////////////
 
-#define SDCARD_PATH "/mnt/SDCARD"
-#define MUTE_VOLUME_RAW 0
-#define HAS_NEON
+#define FIXED_SCALE 	1              // No scaling (1:1 pixel mapping)
+#define FIXED_WIDTH		320            // Screen width in pixels
+#define FIXED_HEIGHT	240            // Screen height in pixels (QVGA)
+#define FIXED_BPP		2              // Bytes per pixel (RGB565)
+#define FIXED_DEPTH		(FIXED_BPP * 8) // Bit depth (16-bit color)
+#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)  // Row stride in bytes
+#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT) // Total framebuffer size
+
+///////////////////////////////
+// Platform-Specific Paths and Settings
+///////////////////////////////
+
+#define SDCARD_PATH "/mnt/SDCARD"  // Path to SD card mount point
+#define MUTE_VOLUME_RAW 0          // Raw value for muted volume
+#define HAS_NEON                   // ARM NEON SIMD optimizations available
 
 ///////////////////////////////
 

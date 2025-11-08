@@ -192,7 +192,6 @@ static int uart_init(int fd, int speed, int flow_ctrl, int databits, int stopbit
 }
 static int uart_read(int fd, char *rcv_buf, int data_len) {
 	int f_sel;
-	fd_set f_set;
 	fd_set f_read;
 	struct timeval time = {0};
 
@@ -298,8 +297,8 @@ static int miyoo_frame_to_axis_y(uint8_t rawY) {
 }
 
 static int parser_miyoo_input(const char *cmd, int len) {
-	int i = 0;
-	int p = 0;
+	int i;
+	int p;
 
 	if ((!cmd) || (len < MIYOO_PAD_FRAME_LEN)) {
 		return - 1;
@@ -323,13 +322,11 @@ static int parser_miyoo_input(const char *cmd, int len) {
 }
 
 static int miyoo_init_serial_input(void) {
-	int err = 0;
-
 	memset(&s_frame, 0, sizeof(s_frame));
 	memset(s_miyoo_axis, 0, sizeof(s_miyoo_axis));
 	memset(s_miyoo_axis_last, 0, sizeof(s_miyoo_axis_last));
 	s_fd = uart_open(SERIAL_GAMEDECK);
-	err = uart_init(s_fd, 9600, 0, 8, 1, 'N');
+	uart_init(s_fd, 9600, 0, 8, 1, 'N');
 	if (s_fd <= 0) {
 		return -1;
 	}

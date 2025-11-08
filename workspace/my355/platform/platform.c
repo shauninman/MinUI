@@ -1,4 +1,23 @@
-// my355
+/**
+ * platform.c - Platform implementation for Miyoo Flip (MY355)
+ *
+ * Implements the hardware abstraction layer for the Miyoo Flip device,
+ * featuring:
+ * - Hall sensor lid detection (lid open/close events)
+ * - HDMI output detection and handling
+ * - Display rotation (disabled when using HDMI)
+ * - WiFi status monitoring
+ * - Rumble support (disabled when using HDMI)
+ * - Sharpness scaling (crisp/soft) with multi-pass rendering
+ * - Overlay effects (scanlines/grids) with configurable scales
+ *
+ * Hardware specifics:
+ * - Built-in screen: 640x480 display (rotatable)
+ * - HDMI output: 720x720 (no rotation)
+ * - Hall sensor for lid detection at /sys/devices/platform/hall-mh248/hallvalue
+ * - Rumble motor controlled via GPIO20
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -19,14 +38,40 @@
 
 #include "scaler.h"
 
+// Tracks whether HDMI is currently enabled
+// Updated on every flip to detect hotplug events
+// When enabled: disables rotation and rumble, changes resolution to HDMI_WIDTH x HDMI_HEIGHT
 int on_hdmi = 0;
 
 ///////////////////////////////
+// Lid Detection (Hall Sensor)
+///////////////////////////////
 
-#define LID_PATH "/sys/devices/platform/hall-mh248/hallvalue" // 1 open, 0 closed
+// Hall sensor path: reports 1 when lid is open, 0 when closed
+#define LID_PATH "/sys/devices/platform/hall-mh248/hallvalue"
+
+/**
+ * Initializes lid detection hardware.
+ *
+ * Checks for the presence of the hall sensor sysfs interface
+ * to determine if the device supports lid detection.
+ * Updates the global lid.has_lid flag accordingly.
+ */
 void PLAT_initLid(void) {
 	lid.has_lid = exists(LID_PATH);
 }
+
+/**
+ * Checks if lid state has changed since last call.
+ *
+ * Polls the hall sensor to detect lid open/close events.
+ * This enables automatic sleep when the lid is closed.
+ *
+ * @param state Output pointer to receive new lid state (1=open, 0=closed), can be NULL
+ * @return 1 if lid state changed, 0 if unchanged or no lid sensor present
+ *
+ * @note Updates global lid.is_open state on change
+ */
 int PLAT_lidChanged(int* state) {
 	if (lid.has_lid) {
 		int lid_open = getInt(LID_PATH);
@@ -40,22 +85,48 @@ int PLAT_lidChanged(int* state) {
 }
 
 ///////////////////////////////
+// Input Management
+///////////////////////////////
 
 static SDL_Joystick *joystick;
+
+/**
+ * Initializes input subsystem.
+ *
+ * Opens the device's joystick/gamepad interface via SDL.
+ */
 void PLAT_initInput(void) {
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	joystick = SDL_JoystickOpen(0);
 }
+
+/**
+ * Shuts down input subsystem.
+ *
+ * Closes joystick handle and cleans up SDL input resources.
+ */
 void PLAT_quitInput(void) {
 	SDL_JoystickClose(joystick);
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
 ///////////////////////////////
+// Video Management
+///////////////////////////////
 
 #define BLANK_PATH "/sys/class/backlight/backlight/bl_power"
 #define HDMI_STATE_PATH "/sys/class/drm/card0-HDMI-A-1/status"
 
+/**
+ * Checks if HDMI cable is currently connected.
+ *
+ * Reads the DRM subsystem status to detect HDMI hotplug events.
+ * Used during video initialization to select appropriate resolution.
+ *
+ * @return 1 if HDMI connected, 0 if disconnected
+ *
+ * @note This is the low-level hardware check; use GetHDMI() for user settings
+ */
 static int HDMI_enabled(void) {
 	char value[64];
 	getFile(HDMI_STATE_PATH, value, 64);
@@ -84,6 +155,23 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 static int rotate = 0;
+
+/**
+ * Initializes video subsystem and creates rendering surfaces.
+ *
+ * Sets up SDL window, renderer, and textures for the appropriate output:
+ * - Built-in LCD: 640x480 with optional 270-degree rotation
+ * - HDMI output: 720x720 with no rotation
+ *
+ * The function automatically detects HDMI connection at startup and
+ * configures resolution accordingly. Logs detailed SDL configuration
+ * information for debugging.
+ *
+ * @return Pointer to main screen surface for rendering
+ *
+ * @note Rotation is applied only for built-in screen (when display is taller than wide)
+ * @note HDMI detection happens before settings are loaded, uses hardware check
+ */
 SDL_Surface* PLAT_initVideo(void) {
 	LOG_info("PLAT_initVideo\n");
 	
@@ -204,6 +292,12 @@ SDL_Surface* PLAT_initVideo(void) {
 	return vid.screen;
 }
 
+/**
+ * Clears the screen to black.
+ *
+ * Fills the screen surface and presents three black frames to ensure
+ * all buffering is cleared out.
+ */
 static void clearVideo(void) {
 	SDL_FillRect(vid.screen, NULL, 0);
 	for (int i=0; i<3; i++) {
@@ -212,6 +306,11 @@ static void clearVideo(void) {
 	}
 }
 
+/**
+ * Shuts down video subsystem and frees all resources.
+ *
+ * Destroys SDL surfaces, textures, renderer, and window.
+ */
 void PLAT_quitVideo(void) {
 	// clearVideo();
 
@@ -227,20 +326,55 @@ void PLAT_quitVideo(void) {
 	SDL_Quit();
 }
 
+/**
+ * Clears the given screen surface to black.
+ *
+ * @param screen Surface to clear
+ */
 void PLAT_clearVideo(SDL_Surface* screen) {
-	SDL_FillRect(screen, NULL, 0); // TODO: revisit
+	SDL_FillRect(screen, NULL, 0);
 }
+
+/**
+ * Clears both the screen surface and renderer.
+ *
+ * Used to ensure complete clearing of all video buffers.
+ */
 void PLAT_clearAll(void) {
-	PLAT_clearVideo(vid.screen); // TODO: revist
+	PLAT_clearVideo(vid.screen);
 	SDL_RenderClear(vid.renderer);
 }
 
+/**
+ * Sets vsync mode (not implemented).
+ *
+ * @param vsync Desired vsync state (ignored)
+ *
+ * @note Vsync is always enabled on this platform via SDL_RENDERER_PRESENTVSYNC
+ */
 void PLAT_setVsync(int vsync) {
-	// buh
+	// Vsync is always on, controlled by SDL_RENDERER_PRESENTVSYNC flag
 }
 
-static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4
+// Maximum integer upscale factor for nearest-neighbor when crisp sharpness enabled
+// Used for small source resolutions (e.g., GB at 160x144 can use 4x)
+// Larger sources limited to 1x or 2x to avoid excessive memory usage
+static int hard_scale = 4;
 
+/**
+ * Resizes video textures and surfaces to match new dimensions.
+ *
+ * Recreates SDL textures with new dimensions and updates scaling mode
+ * based on sharpness setting. For crisp sharpness, creates intermediate
+ * target texture at hard_scale multiple for nearest-neighbor upscaling.
+ *
+ * @param w New width in pixels
+ * @param h New height in pixels
+ * @param p New pitch in bytes
+ *
+ * @note No-op if dimensions haven't changed
+ * @note Automatically adjusts hard_scale based on source resolution
+ */
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
 	
@@ -274,17 +408,53 @@ static void resizeVideo(int w, int h, int p) {
 	vid.pitch	= p;
 }
 
+/**
+ * Public API to resize video and return screen surface.
+ *
+ * @param w New width in pixels
+ * @param h New height in pixels
+ * @param p New pitch in bytes
+ * @return Screen surface pointer (unchanged)
+ */
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 	resizeVideo(w,h,p);
 	return vid.screen;
 }
 
+/**
+ * Sets video scale clipping region (not implemented).
+ *
+ * @param x X offset
+ * @param y Y offset
+ * @param width Clip width
+ * @param height Clip height
+ */
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
-	// buh
+	// Not used on this platform
 }
+
+/**
+ * Sets nearest-neighbor scaling mode (not implemented).
+ *
+ * @param enabled Whether to enable nearest-neighbor scaling
+ *
+ * @note Use PLAT_setSharpness() instead for scaling control
+ */
 void PLAT_setNearestNeighbor(int enabled) {
-	// buh
+	// Use sharpness setting instead
 }
+
+/**
+ * Sets sharpness/scaling mode.
+ *
+ * Controls how video is scaled to screen:
+ * - SHARPNESS_SOFT: Linear interpolation (smooth)
+ * - SHARPNESS_CRISP: Nearest-neighbor upscale then linear downscale
+ *
+ * @param sharpness Desired sharpness mode
+ *
+ * @note Triggers video resize to apply new scaling textures
+ */
 void PLAT_setSharpness(int sharpness) {
 	if (vid.sharpness==sharpness) return;
 	int p = vid.pitch;
@@ -310,6 +480,17 @@ static struct FX_Context {
 	.color = 0,
 	.next_color = 0,
 };
+/**
+ * Converts RGB565 pixel to RGB888 components.
+ *
+ * Expands 16-bit RGB565 (5-6-5 bit channels) to full 8-bit components.
+ * Uses bit replication to fill lower bits for smooth gradients.
+ *
+ * @param rgb565 Input pixel in RGB565 format
+ * @param r Output pointer for 8-bit red component
+ * @param g Output pointer for 8-bit green component
+ * @param b Output pointer for 8-bit blue component
+ */
 static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b) {
     // Extract the red component (5 bits)
     uint8_t red = (rgb565 >> 11) & 0x1F;
@@ -318,11 +499,23 @@ static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b
     // Extract the blue component (5 bits)
     uint8_t blue = rgb565 & 0x1F;
 
-    // Scale the values to 8-bit range
+    // Scale the values to 8-bit range using bit replication
     *r = (red << 3) | (red >> 2);
     *g = (green << 2) | (green >> 4);
     *b = (blue << 3) | (blue >> 2);
 }
+
+/**
+ * Loads and updates scanline/grid overlay texture.
+ *
+ * Selects appropriate overlay image based on effect type and scale factor.
+ * For grid effects, applies color tinting if specified (e.g., DMG green).
+ * Adjusts alpha opacity based on grid size to maintain consistent appearance.
+ *
+ * Only updates when effect parameters change to avoid redundant loading.
+ *
+ * @note Updates effect.live_type to track currently loaded effect
+ */
 static void updateEffect(void) {
 	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	
@@ -420,28 +613,82 @@ static void updateEffect(void) {
 		effect.live_type = effect.type;
 	}
 	}
+
+/**
+ * Queues a scanline/grid overlay effect for next frame.
+ *
+ * @param next_type Effect type (EFFECT_NONE, EFFECT_LINE, EFFECT_GRID)
+ */
 void PLAT_setEffect(int next_type) {
 	effect.next_type = next_type;
 }
+
+/**
+ * Sets the color tint for grid effects.
+ *
+ * Used to colorize grid overlay (e.g., for DMG green tint).
+ *
+ * @param next_color RGB565 color value, or 0 for white
+ */
 void PLAT_setEffectColor(int next_color) {
 	effect.next_color = next_color;
 }
+
+/**
+ * Delays for remaining frame time to maintain target framerate.
+ *
+ * @param remaining Milliseconds remaining in frame budget
+ */
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
+/**
+ * Returns software scaler function for renderer.
+ *
+ * Always returns simple 1x1 scaler as this platform uses hardware
+ * scaling via SDL renderer. Updates effect scale for overlay sizing.
+ *
+ * @param renderer Renderer context
+ * @return Software scaler function pointer
+ */
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
-	// LOG_info("getScaler for scale: %i\n", renderer->scale);
 	effect.next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
+/**
+ * Prepares to blit from a GFX_Renderer.
+ *
+ * Saves renderer pointer and resizes video to match source dimensions.
+ * The actual blit happens in PLAT_flip().
+ *
+ * @param renderer Renderer containing source image and scaling info
+ */
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
 	SDL_RenderClear(vid.renderer);
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
+/**
+ * Presents rendered frame to display.
+ *
+ * Handles multiple rendering paths:
+ * 1. Direct screen surface blit (launcher/menu)
+ * 2. GFX_Renderer blit with scaling and effects (games)
+ *
+ * For renderer path:
+ * - Applies sharpness (crisp uses 2-pass: NN upscale -> linear downscale)
+ * - Handles aspect ratio modes (native/cropped/aspect-correct)
+ * - Applies rotation for built-in screen (disabled on HDMI)
+ * - Overlays scanline/grid effects if enabled
+ *
+ * Updates HDMI status on every flip to detect hotplug events.
+ *
+ * @param IGNORED Unused (kept for API compatibility)
+ * @param ignored Unused (kept for API compatibility)
+ */
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	
 	on_hdmi = GetHDMI(); // use settings instead of getInt(HDMI_STATE_PATH)
@@ -531,11 +778,17 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	vid.blit = NULL;
 }
 
+/**
+ * Checks if platform supports overscan adjustment.
+ *
+ * @return 0 (overscan not supported on this platform)
+ */
 int PLAT_supportsOverscan(void) { return 0; }
 
 ///////////////////////////////
+// Overlay (HUD Icons)
+///////////////////////////////
 
-// TODO: 
 #define OVERLAY_WIDTH PILL_SIZE // unscaled
 #define OVERLAY_HEIGHT PILL_SIZE // unscaled
 #define OVERLAY_BPP 4
@@ -546,20 +799,53 @@ static struct OVL_Context {
 	SDL_Surface* overlay;
 } ovl;
 
+/**
+ * Initializes overlay surface for HUD icons.
+ *
+ * Creates ARGB surface for battery, volume, and other status icons.
+ *
+ * @return Overlay surface pointer
+ */
 SDL_Surface* PLAT_initOverlay(void) {
 	ovl.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE, SCALE2(OVERLAY_WIDTH,OVERLAY_HEIGHT),OVERLAY_DEPTH,OVERLAY_RGBA_MASK);
 	return ovl.overlay;
 }
+
+/**
+ * Cleans up overlay resources.
+ */
 void PLAT_quitOverlay(void) {
 	if (ovl.overlay) SDL_FreeSurface(ovl.overlay);
 }
-void PLAT_enableOverlay(int enable) {
 
+/**
+ * Enables or disables overlay rendering (not implemented).
+ *
+ * @param enable Whether to enable overlay
+ *
+ * @note Overlay is always composited with main screen
+ */
+void PLAT_enableOverlay(int enable) {
+	// Overlay always enabled
 }
 
 ///////////////////////////////
+// Power and Battery Management
+///////////////////////////////
 
 static int online = 0;
+
+/**
+ * Gets battery charge level and charging status.
+ *
+ * Also monitors WiFi connection status as a side effect (updates online flag).
+ * Battery percentage is simplified into 6 levels to reduce icon flickering.
+ *
+ * @param is_charging Output pointer for charging state (1=charging, 0=on battery)
+ * @param charge Output pointer for charge level (10/20/40/60/80/100)
+ *
+ * @note Also updates global 'online' flag from wlan0 interface state
+ */
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
@@ -583,6 +869,22 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 }
 
 #define LED_PATH "/sys/class/leds/work/brightness"
+
+/**
+ * Enables or disables screen backlight.
+ *
+ * When disabling:
+ * - Powers down display completely (FB_BLANK_POWERDOWN)
+ * - Sets brightness to 0
+ * - Turns on LED indicator (255 = full brightness)
+ *
+ * When enabling:
+ * - Wakes display (FB_BLANK_UNBLANK)
+ * - Restores user brightness setting
+ * - Turns off LED indicator
+ *
+ * @param enable 1 to enable backlight, 0 to disable
+ */
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		putInt(BLANK_PATH, FB_BLANK_UNBLANK); // wake
@@ -596,6 +898,16 @@ void PLAT_enableBacklight(int enable) {
 	}
 }
 
+/**
+ * Performs graceful system shutdown.
+ *
+ * Shutdown sequence:
+ * 1. Remove exec marker and sync filesystem
+ * 2. Mute audio
+ * 3. Turn off backlight and enable LED
+ * 4. Clean up all subsystems (SND, VIB, PWR, GFX)
+ * 5. Exit process (shutdown handled by system)
+ */
 void PLAT_powerOff(void) {
 	system("rm -f /tmp/minui_exec && sync");
 	sleep(2);
@@ -619,8 +931,22 @@ void PLAT_powerOff(void) {
 }
 
 ///////////////////////////////
+// CPU and Performance
+///////////////////////////////
 
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed"
+
+/**
+ * Sets CPU clock speed based on performance level.
+ *
+ * Speed mappings:
+ * - CPU_SPEED_MENU:        600 MHz (minimal power for menus)
+ * - CPU_SPEED_POWERSAVE:  1104 MHz (battery-friendly gaming)
+ * - CPU_SPEED_NORMAL:     1608 MHz (default gaming)
+ * - CPU_SPEED_PERFORMANCE: 1992 MHz (demanding games)
+ *
+ * @param speed CPU speed constant
+ */
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
@@ -632,20 +958,59 @@ void PLAT_setCPUSpeed(int speed) {
 	putInt(GOVERNOR_PATH, freq);
 }
 
+///////////////////////////////
+// Rumble
+///////////////////////////////
+
 #define RUMBLE_PATH "/sys/class/gpio/gpio20/value"
+
+/**
+ * Controls rumble motor.
+ *
+ * Disabled when HDMI is active (assumes external controller is in use).
+ *
+ * @param strength Rumble strength (0=off, non-zero=on, binary control only)
+ */
 void PLAT_setRumble(int strength) {
-	if (GetHDMI()) return; // assume we're using a controller?
+	if (GetHDMI()) return; // Disable rumble on HDMI (likely using controller)
 	putInt(RUMBLE_PATH, strength?1:0);
 }
 
+///////////////////////////////
+// Audio
+///////////////////////////////
+
+/**
+ * Selects audio sample rate based on constraints.
+ *
+ * @param requested Desired sample rate
+ * @param max Maximum supported sample rate
+ * @return Selected sample rate (minimum of requested and max)
+ */
 int PLAT_pickSampleRate(int requested, int max) {
 	return MIN(requested, max);
 }
 
+///////////////////////////////
+// Platform Info
+///////////////////////////////
+
+/**
+ * Returns platform model name.
+ *
+ * @return "Miyoo Flip"
+ */
 char* PLAT_getModel(void) {
 	return "Miyoo Flip";
 }
 
+/**
+ * Checks if WiFi is currently connected.
+ *
+ * @return 1 if WiFi connected, 0 if disconnected
+ *
+ * @note Updated by PLAT_getBatteryStatus() which polls wlan0 state
+ */
 int PLAT_isOnline(void) {
 	return online;
 }

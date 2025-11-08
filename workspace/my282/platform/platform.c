@@ -1,4 +1,19 @@
-// rgb30
+/**
+ * platform.c - Miyoo A30 (MY282) platform implementation
+ *
+ * Platform-specific code for the Miyoo A30 handheld device. This platform
+ * features analog stick support, display rotation, LED control, rumble
+ * feedback, and grid/line visual effects.
+ *
+ * Key features:
+ * - Analog stick input via mstick library
+ * - Automatic rotation detection (portrait/landscape)
+ * - LED brightness control on low-power states
+ * - Motor rumble support via sysfs interface
+ * - CPU frequency scaling via overclock.elf
+ * - Overlay effects (scanlines/grid) with DMG color support
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -20,6 +35,8 @@
 
 #include "scaler.h"
 
+///////////////////////////////
+// Input Handling
 ///////////////////////////////
 
 #define RAW_UP		103
@@ -44,11 +61,22 @@
 #define INPUT_COUNT 2
 static int inputs[INPUT_COUNT];
 
+/**
+ * Initializes input system (buttons and analog stick).
+ *
+ * Opens input event devices for power button (event0) and
+ * controller buttons/dpad (event3). Also initializes analog
+ * stick support via Stick_init() from mstick library.
+ */
 void PLAT_initInput(void) {
 	inputs[0] = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC); // power
 	inputs[1] = open("/dev/input/event3", O_RDONLY | O_NONBLOCK | O_CLOEXEC); // controller
 	Stick_init(); // analog
 }
+
+/**
+ * Shuts down input system and closes file descriptors.
+ */
 void PLAT_quitInput(void) {
 	Stick_quit();
 	for (int i=0; i<INPUT_COUNT; i++) {
@@ -66,6 +94,13 @@ struct input_event {
 #define EV_KEY			0x01
 #define EV_ABS			0x03
 
+/**
+ * Polls input devices and updates global pad state.
+ *
+ * Reads from all input event devices, processes button presses/releases,
+ * handles key repeat logic, and updates analog stick position. Updates
+ * the global pad structure with current button and analog state.
+ */
 void PLAT_pollInput(void) {
 	// reset transient state
 	pad.just_pressed = BTN_NONE;
@@ -143,6 +178,14 @@ void PLAT_pollInput(void) {
 	PAD_setAnalog(BTN_ID_ANALOG_UP,   BTN_ID_ANALOG_DOWN,  pad.laxis.y, tick+PAD_REPEAT_DELAY);
 }
 
+/**
+ * Checks if device should wake from sleep.
+ *
+ * Polls input devices looking for power button release event.
+ * Used to wake device from low-power sleep state.
+ *
+ * @return 1 if power button was released, 0 otherwise
+ */
 int PLAT_shouldWake(void) {
 	int input;
 	static struct input_event event;
@@ -158,8 +201,8 @@ int PLAT_shouldWake(void) {
 }
 
 ///////////////////////////////
-
-// based on rg35xxplus
+// Video Handling
+///////////////////////////////
 
 static struct VID_Context {
 	SDL_Window* window;
@@ -183,9 +226,20 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 static int rotate = 0;
+
+/**
+ * Initializes SDL video subsystem and creates rendering context.
+ *
+ * Creates SDL window and renderer at native device resolution.
+ * Automatically detects display orientation (portrait mode sets
+ * rotation to 270 degrees). Sets up textures and surfaces for
+ * rendering pipeline.
+ *
+ * @return Pointer to main screen surface for drawing
+ */
 SDL_Surface* PLAT_initVideo(void) {
 	// LOG_info("PLAT_initVideo\n");
-	
+
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 	SDL_ShowCursor(0);
 	
@@ -238,6 +292,7 @@ SDL_Surface* PLAT_initVideo(void) {
 	SDL_DisplayMode mode;
 	SDL_GetCurrentDisplayMode(0, &mode);
 	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
+	// Detect portrait orientation and enable 270-degree rotation
 	if (mode.h>mode.w) rotate = 3;
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	// SDL_RenderSetLogicalSize(vid.renderer, w,h); // TODO: wrong, but without and with the below it's even wrong-er
@@ -306,6 +361,12 @@ static void clearVideo(void) {
 	}
 }
 
+/**
+ * Shuts down video subsystem and frees all resources.
+ *
+ * Destroys all SDL surfaces, textures, renderer, and window.
+ * Calls SDL_Quit() to cleanly shutdown SDL.
+ */
 void PLAT_quitVideo(void) {
 	// clearVideo();
 
@@ -316,19 +377,33 @@ void PLAT_quitVideo(void) {
 	SDL_DestroyTexture(vid.texture);
 	SDL_DestroyRenderer(vid.renderer);
 	SDL_DestroyWindow(vid.window);
-	
+
 	// system("cat /dev/zero > /dev/fb0 2>/dev/null");
 	SDL_Quit();
 }
 
+/**
+ * Clears video surface to black.
+ *
+ * @param screen Surface to clear
+ */
 void PLAT_clearVideo(SDL_Surface* screen) {
 	SDL_FillRect(screen, NULL, 0); // TODO: revisit
 }
+
+/**
+ * Clears both screen surface and renderer.
+ */
 void PLAT_clearAll(void) {
 	PLAT_clearVideo(vid.screen); // TODO: revist
 	SDL_RenderClear(vid.renderer);
 }
 
+/**
+ * Sets vsync mode (not implemented on this platform).
+ *
+ * @param vsync Desired vsync state (ignored)
+ */
 void PLAT_setVsync(int vsync) {
 	// buh
 }
@@ -368,17 +443,38 @@ static void resizeVideo(int w, int h, int p) {
 	vid.pitch	= p;
 }
 
+/**
+ * Resizes video output to specified dimensions.
+ *
+ * @param w Width in pixels
+ * @param h Height in pixels
+ * @param p Pitch in bytes
+ * @return Pointer to screen surface
+ */
 SDL_Surface* PLAT_resizeVideo(int w, int h, int p) {
 	resizeVideo(w,h,p);
 	return vid.screen;
 }
 
+/**
+ * Sets video scale clipping region (not implemented on this platform).
+ */
 void PLAT_setVideoScaleClip(int x, int y, int width, int height) {
 	// buh
 }
+
+/**
+ * Sets nearest-neighbor scaling mode (not implemented on this platform).
+ */
 void PLAT_setNearestNeighbor(int enabled) {
 	// buh
 }
+
+/**
+ * Sets video sharpness filtering mode.
+ *
+ * @param sharpness SHARPNESS_SOFT (linear) or SHARPNESS_CRISP (nearest-neighbor + linear)
+ */
 void PLAT_setSharpness(int sharpness) {
 	if (vid.sharpness==sharpness) return;
 	int p = vid.pitch;
@@ -404,6 +500,18 @@ static struct FX_Context {
 	.color = 0,
 	.next_color = 0,
 };
+
+/**
+ * Converts RGB565 color to RGB888 format.
+ *
+ * Used to convert DMG palette colors for colorizing grid effects.
+ * Expands 5/6-bit components to full 8-bit range.
+ *
+ * @param rgb565 16-bit RGB565 color value
+ * @param r Output red component (0-255)
+ * @param g Output green component (0-255)
+ * @param b Output blue component (0-255)
+ */
 static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b) {
     // Extract the red component (5 bits)
     uint8_t red = (rgb565 >> 11) & 0x1F;
@@ -514,28 +622,75 @@ static void updateEffect(void) {
 		effect.live_type = effect.type;
 	}
 	}
+
+/**
+ * Sets the overlay effect type.
+ *
+ * @param next_type EFFECT_NONE, EFFECT_LINE (scanlines), or EFFECT_GRID
+ */
 void PLAT_setEffect(int next_type) {
 	effect.next_type = next_type;
 }
+
+/**
+ * Sets the effect color for DMG-style grid colorization.
+ *
+ * @param next_color RGB565 color value (0 for no colorization)
+ */
 void PLAT_setEffectColor(int next_color) {
 	effect.next_color = next_color;
 }
+
+/**
+ * Delays for remaining frame time to maintain target framerate.
+ *
+ * @param remaining Milliseconds remaining in frame budget
+ */
 void PLAT_vsync(int remaining) {
 	if (remaining>0) SDL_Delay(remaining);
 }
 
+/**
+ * Gets appropriate scaler function for renderer.
+ *
+ * Updates effect scale based on renderer scale factor.
+ *
+ * @param renderer Renderer context with scale information
+ * @return Scaler function pointer
+ */
 scaler_t PLAT_getScaler(GFX_Renderer* renderer) {
 	// LOG_info("getScaler for scale: %i\n", renderer->scale);
 	effect.next_scale = renderer->scale;
 	return scale1x1_c16;
 }
 
+/**
+ * Prepares renderer for blitting.
+ *
+ * Stores renderer reference and resizes video output to match
+ * renderer dimensions.
+ *
+ * @param renderer Renderer to prepare for blitting
+ */
 void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	vid.blit = renderer;
 	SDL_RenderClear(vid.renderer);
 	resizeVideo(vid.blit->true_w,vid.blit->true_h,vid.blit->src_p);
 }
 
+/**
+ * Renders frame to screen with rotation and effects.
+ *
+ * Handles two rendering paths:
+ * 1. Direct screen rendering (when vid.blit is NULL)
+ * 2. Renderer-based blitting with aspect ratio, sharpness, and effects
+ *
+ * Applies rotation (270 degrees for portrait mode), aspect ratio scaling,
+ * and overlay effects (scanlines/grid) before presenting.
+ *
+ * @param IGNORED Unused surface parameter
+ * @param ignored Unused int parameter
+ */
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
@@ -623,8 +778,8 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 }
 
 ///////////////////////////////
-
-// TODO: 
+// Overlay Handling
+/////////////////////////////// 
 #define OVERLAY_WIDTH PILL_SIZE // unscaled
 #define OVERLAY_HEIGHT PILL_SIZE // unscaled
 #define OVERLAY_BPP 4
@@ -635,25 +790,50 @@ static struct OVL_Context {
 	SDL_Surface* overlay;
 } ovl;
 
+/**
+ * Initializes overlay surface for status pills.
+ *
+ * @return Pointer to overlay surface
+ */
 SDL_Surface* PLAT_initOverlay(void) {
 	ovl.overlay = SDL_CreateRGBSurface(SDL_SWSURFACE, SCALE2(OVERLAY_WIDTH,OVERLAY_HEIGHT),OVERLAY_DEPTH,OVERLAY_RGBA_MASK);
 	return ovl.overlay;
 }
+
+/**
+ * Shuts down overlay and frees resources.
+ */
 void PLAT_quitOverlay(void) {
 	if (ovl.overlay) SDL_FreeSurface(ovl.overlay);
 }
+
+/**
+ * Enables or disables overlay rendering (not implemented).
+ */
 void PLAT_enableOverlay(int enable) {
 
 }
 
 ///////////////////////////////
+// Power Management
+///////////////////////////////
 
 static int online = 0;
+
+/**
+ * Reads battery status from sysfs.
+ *
+ * Reads charging state and capacity from kernel power supply interface.
+ * Battery level is quantized into 6 levels (10%, 20%, 40%, 60%, 80%, 100%).
+ *
+ * @param is_charging Output: 1 if USB power connected, 0 otherwise
+ * @param charge Output: Battery percentage (10-100)
+ */
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
 	// return;
-	
+
 	*is_charging = getInt("/sys/class/power_supply/usb/online");
 
 	int i = getInt("/sys/class/power_supply/battery/capacity");
@@ -672,17 +852,33 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 }
 
 #define LED_PATH "/sys/class/leds/led1/brightness"
+
+/**
+ * Enables or disables backlight and LED indicator.
+ *
+ * When disabled (sleep mode), turns off LCD backlight and enables
+ * LED indicator at full brightness. When enabled, restores backlight
+ * to saved brightness level and turns off LED.
+ *
+ * @param enable 1 to enable backlight, 0 to disable (sleep)
+ */
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		SetBrightness(GetBrightness());
-		putInt(LED_PATH, 0);
+		putInt(LED_PATH, 0); // Turn off LED indicator
 	}
 	else {
 		SetRawBrightness(0);
-		putInt(LED_PATH, 255);
+		putInt(LED_PATH, 255); // Full brightness LED during sleep
 	}
 }
 
+/**
+ * Powers off the device.
+ *
+ * Performs orderly shutdown: syncs filesystem, mutes audio, turns off
+ * backlight, enables LED, and quits all subsystems before exiting.
+ */
 void PLAT_powerOff(void) {
 	system("rm -f /tmp/minui_exec && sync");
 	sleep(2);
@@ -698,7 +894,23 @@ void PLAT_powerOff(void) {
 }
 
 ///////////////////////////////
+// System Control
+///////////////////////////////
 
+/**
+ * Sets CPU frequency and core count.
+ *
+ * Uses overclock.elf utility to adjust CPU governor, core count,
+ * and frequency based on performance profile:
+ * - MENU: 576MHz, 1 core (lowest power)
+ * - POWERSAVE: 1056MHz, 1 core
+ * - NORMAL: 1344MHz, 2 cores
+ * - PERFORMANCE: 1512MHz, 2 cores (highest performance)
+ *
+ * Command format: overclock.elf userspace <cores> <freq> 384 1080 0
+ *
+ * @param speed CPU_SPEED_MENU/POWERSAVE/NORMAL/PERFORMANCE
+ */
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	int cpu  = 1;
@@ -710,23 +922,50 @@ void PLAT_setCPUSpeed(int speed) {
 	}
 
 	char cmd[128];
+	// Set CPU governor to userspace mode with specified cores and frequency
 	sprintf(cmd,"overclock.elf userspace %d %d 384 1080 0", cpu, freq);
 	system(cmd);
 }
 
 #define RUMBLE_PATH "/sys/devices/virtual/timed_output/vibrator/enable"
+
+/**
+ * Activates rumble motor.
+ *
+ * Controls vibration motor via sysfs timed output interface.
+ * When enabled, motor runs for 1000ms (1 second).
+ *
+ * @param strength Non-zero to enable rumble, 0 to disable
+ */
 void PLAT_setRumble(int strength) {
-	putInt(RUMBLE_PATH, strength?1000:0);
+	putInt(RUMBLE_PATH, strength?1000:0); // 1000ms vibration duration
 }
 
+/**
+ * Selects appropriate audio sample rate.
+ *
+ * @param requested Requested sample rate
+ * @param max Maximum supported sample rate
+ * @return Actual sample rate to use (min of requested and max)
+ */
 int PLAT_pickSampleRate(int requested, int max) {
 	return MIN(requested, max);
 }
 
+/**
+ * Returns device model name.
+ *
+ * @return "Miyoo A30"
+ */
 char* PLAT_getModel(void) {
 	return "Miyoo A30";
 }
 
+/**
+ * Checks if device is online (WiFi connected).
+ *
+ * @return 1 if online, 0 otherwise
+ */
 int PLAT_isOnline(void) {
 	return online;
 }

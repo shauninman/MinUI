@@ -1,12 +1,28 @@
-// tg5040
+/**
+ * macos/platform/platform.h - Platform definitions for macOS development/testing
+ *
+ * This is a development platform for testing MinUI on macOS:
+ * - 640x480 display (VGA resolution, 2x scaled)
+ * - Uses evdev/keyboard input codes
+ * - FAKESD path for local development
+ * - No joystick input support
+ * - Inverted volume scale (63 = mute, 0 = max volume)
+ *
+ * @note This platform is for development only, not production deployment
+ */
 
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
 ///////////////////////////////
+// Dependencies
+///////////////////////////////
 
 #include "sdl.h"
 
+///////////////////////////////
+// SDL Keyboard Button Mappings
+// macOS development platform does not use SDL keyboard input
 ///////////////////////////////
 
 #define BUTTON_UP		BUTTON_NA
@@ -36,19 +52,22 @@
 #define	BUTTON_MINUS	BUTTON_NA
 
 ///////////////////////////////
+// Evdev/Keyboard Input Codes
+// Maps to USB HID keycodes for keyboard input
+///////////////////////////////
 
-#define CODE_UP			82
-#define CODE_DOWN		81
-#define CODE_LEFT		80
-#define CODE_RIGHT		79
+#define CODE_UP			82  // HID Up Arrow
+#define CODE_DOWN		81  // HID Down Arrow
+#define CODE_LEFT		80  // HID Left Arrow
+#define CODE_RIGHT		79  // HID Right Arrow
 
-#define CODE_SELECT		52
-#define CODE_START		40
+#define CODE_SELECT		52  // HID 4
+#define CODE_START		40  // HID Enter
 
-#define CODE_A			22
-#define CODE_B			4
-#define CODE_X			26
-#define CODE_Y			20
+#define CODE_A			22  // HID S
+#define CODE_B			4   // HID A
+#define CODE_X			26  // HID W
+#define CODE_Y			20  // HID Q
 
 #define CODE_L1			CODE_NA
 #define CODE_R1			CODE_NA
@@ -57,15 +76,18 @@
 #define CODE_L3			CODE_NA
 #define CODE_R3			CODE_NA
 
-#define CODE_MENU		44
-#define CODE_POWER		42
+#define CODE_MENU		44  // HID Space
+#define CODE_POWER		42  // HID Backspace
 
 #define CODE_PLUS		CODE_NA
 #define CODE_MINUS		CODE_NA
 
 ///////////////////////////////
-						// HATS
-#define JOY_UP			JOY_NA
+// Joystick Button Mappings
+// macOS development platform uses D-pad (HAT) only
+///////////////////////////////
+
+#define JOY_UP			JOY_NA  // D-pad handled separately
 #define JOY_DOWN		JOY_NA
 #define JOY_LEFT		JOY_NA
 #define JOY_RIGHT		JOY_NA
@@ -73,7 +95,6 @@
 #define JOY_SELECT		JOY_NA
 #define JOY_START		JOY_NA
 
-// TODO: these ended up swapped in the first public release of stock :sob:
 #define JOY_A			JOY_NA
 #define JOY_B			JOY_NA
 #define JOY_X			JOY_NA
@@ -92,25 +113,31 @@
 #define JOY_MINUS		JOY_NA
 
 ///////////////////////////////
-
-#define BTN_RESUME			BTN_X
-#define BTN_SLEEP 			BTN_POWER
-#define BTN_WAKE 			BTN_POWER
-#define BTN_MOD_VOLUME 		BTN_NONE
-#define BTN_MOD_BRIGHTNESS 	BTN_MENU
-#define BTN_MOD_PLUS 		BTN_PLUS
-#define BTN_MOD_MINUS 		BTN_MINUS
-
+// Function Button Mappings
+// System-level button combinations
 ///////////////////////////////
 
-#define FIXED_SCALE 	2
-#define FIXED_WIDTH		640
-#define FIXED_HEIGHT	480
-#define FIXED_BPP		2
-#define FIXED_DEPTH		(FIXED_BPP * 8)
-#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)
-#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT)
+#define BTN_RESUME			BTN_X       // Button to resume from save state
+#define BTN_SLEEP 			BTN_POWER   // Button to enter sleep mode
+#define BTN_WAKE 			BTN_POWER   // Button to wake from sleep
+#define BTN_MOD_VOLUME 		BTN_NONE    // Modifier for volume control (none - direct buttons)
+#define BTN_MOD_BRIGHTNESS 	BTN_MENU    // Hold MENU for brightness control
+#define BTN_MOD_PLUS 		BTN_PLUS    // Increase with PLUS
+#define BTN_MOD_MINUS 		BTN_MINUS   // Decrease with MINUS
 
+///////////////////////////////
+// Display Specifications
+///////////////////////////////
+
+#define FIXED_SCALE 	2              // 2x scaling factor for UI
+#define FIXED_WIDTH		640            // Screen width in pixels
+#define FIXED_HEIGHT	480            // Screen height in pixels (VGA)
+#define FIXED_BPP		2              // Bytes per pixel (RGB565)
+#define FIXED_DEPTH		(FIXED_BPP * 8) // Bit depth (16-bit color)
+#define FIXED_PITCH		(FIXED_WIDTH * FIXED_BPP)  // Row stride in bytes
+#define FIXED_SIZE		(FIXED_PITCH * FIXED_HEIGHT) // Total framebuffer size
+
+// HDMI output support (currently disabled)
 // #define HAS_HDMI	1
 // #define HDMI_WIDTH 	1280
 // #define HDMI_HEIGHT 720
@@ -118,14 +145,18 @@
 // #define HDMI_SIZE	(HDMI_PITCH * HDMI_HEIGHT)
 
 ///////////////////////////////
+// UI Layout Configuration
+///////////////////////////////
 
-#define MAIN_ROW_COUNT 6
-#define PADDING 10
+#define MAIN_ROW_COUNT 6           // Number of rows visible in menu
+#define PADDING 10                 // Padding for UI elements in pixels
 
+///////////////////////////////
+// Platform-Specific Paths and Settings
 ///////////////////////////////
 
 #define SDCARD_PATH "/Users/shauninman/Projects/Personal/MinUI/workspace/macos/FAKESD"
-#define MUTE_VOLUME_RAW 63 // 0 unintuitively is 100% volume
+#define MUTE_VOLUME_RAW 63         // Volume scale is inverted: 63 = mute, 0 = max volume
 
 ///////////////////////////////
 

@@ -1,4 +1,15 @@
-// macos
+/**
+ * platform.c - macOS platform implementation
+ *
+ * Development platform for testing MinUI on macOS. Provides minimal
+ * implementations of platform functions for development and debugging.
+ * Most hardware-specific features (brightness, volume, power) are stubbed.
+ *
+ * Video: Uses SDL2 window with optional rotation
+ * Input: SDL2 joystick subsystem
+ * Audio/Power: No-op stubs for development
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 // #include <linux/fb.h>
@@ -17,6 +28,10 @@
 #include "utils.h"
 
 #include "scaler.h"
+
+///////////////////////////////
+// Settings (stub implementations for development)
+///////////////////////////////
 
 void InitSettings(void){}
 void QuitSettings(void){}
@@ -39,17 +54,29 @@ void SetHDMI(int value) {}
 int GetMute(void) { return 0; }
 
 ///////////////////////////////
+// Input
+///////////////////////////////
 
 static SDL_Joystick *joystick;
+
+/**
+ * Initializes SDL2 joystick subsystem for development input.
+ */
 void PLAT_initInput(void) {
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	joystick = SDL_JoystickOpen(0);
 }
+
+/**
+ * Closes joystick and shuts down SDL2 joystick subsystem.
+ */
 void PLAT_quitInput(void) {
 	SDL_JoystickClose(joystick);
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
+///////////////////////////////
+// Video
 ///////////////////////////////
 
 static struct VID_Context {
@@ -70,6 +97,15 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 static int rotate = 0;
+
+/**
+ * Initializes SDL2 video subsystem with window and renderer.
+ *
+ * Creates a rotated window for portrait display (simulating vertical handhelds).
+ * Window dimensions are swapped (h,w) and rotate flag is set for rendering.
+ *
+ * @return SDL surface for rendering (vid.screen)
+ */
 SDL_Surface* PLAT_initVideo(void) {
 	// SDL_InitSubSystem(SDL_INIT_VIDEO);
 	// SDL_ShowCursor(0);
@@ -94,13 +130,14 @@ SDL_Surface* PLAT_initVideo(void) {
 	// 	LOG_info("- %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	// }
 	SDL_GetCurrentDisplayMode(0, &mode);
-	// if (mode.h>mode.w)
+	// Rotate display to simulate vertical handheld
 	rotate = 1;
 	LOG_info("Current display mode: %ix%i (%s)\n", mode.w,mode.h, SDL_GetPixelFormatName(mode.format));
 	
 	int w = FIXED_WIDTH;
 	int h = FIXED_HEIGHT;
 	int p = FIXED_PITCH;
+	// Create window with swapped dimensions (h,w) for rotated display
 	vid.window   = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, h,w, SDL_WINDOW_SHOWN);
 	vid.renderer = SDL_CreateRenderer(vid.window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
 	
@@ -127,20 +164,28 @@ SDL_Surface* PLAT_initVideo(void) {
 	return vid.screen;
 }
 
+/**
+ * Clears video output by rendering black frames.
+ *
+ * Presents three black frames to ensure complete screen clear.
+ */
 static void clearVideo(void) {
 	for (int i=0; i<3; i++) {
 		SDL_RenderClear(vid.renderer);
 		SDL_FillRect(vid.screen, NULL, 0);
-		
+
 		SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
 		SDL_FillRect(vid.buffer, NULL, 0);
 		SDL_UnlockTexture(vid.texture);
 		SDL_RenderCopy(vid.renderer, vid.texture, NULL, NULL);
-		
+
 		SDL_RenderPresent(vid.renderer);
 	}
 }
 
+/**
+ * Cleans up SDL2 video resources and quits SDL.
+ */
 void PLAT_quitVideo(void) {
 	clearVideo();
 
@@ -165,18 +210,28 @@ void PLAT_setVsync(int vsync) {
 	
 }
 
+/**
+ * Resizes video buffer and texture to new dimensions.
+ *
+ * Called when emulator core changes resolution. Recreates texture
+ * and buffer at new size. No-op if dimensions haven't changed.
+ *
+ * @param w New width in pixels
+ * @param h New height in pixels
+ * @param p New pitch in bytes
+ */
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
-	
+
 	LOG_info("resizeVideo(%i,%i,%i)\n",w,h,p);
 
 	SDL_FreeSurface(vid.buffer);
 	SDL_DestroyTexture(vid.texture);
 	// PLAT_clearVideo(vid.screen);
-	
+
 	vid.texture = SDL_CreateTexture(vid.renderer,SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w,h);
 	// SDL_SetTextureScaleMode(vid.texture, SDL_ScaleModeNearest);
-	
+
 	vid.buffer	= SDL_CreateRGBSurfaceFrom(NULL, w,h, FIXED_DEPTH, p, RGBA_MASK_565);
 
 	vid.width	= w;
@@ -218,8 +273,20 @@ void PLAT_blitRenderer(GFX_Renderer* renderer) {
 	);
 }
 
+/**
+ * Presents rendered frame to the display.
+ *
+ * Handles two rendering paths:
+ * 1. Direct screen rendering (no blit): Updates texture from screen surface
+ * 2. Renderer blitting: Processes aspect ratio and scaling from GFX_Renderer
+ *
+ * Applies 90-degree rotation when rotate flag is set (portrait orientation).
+ *
+ * @param IGNORED Unused SDL_Surface parameter
+ * @param ignored Unused integer parameter
+ */
 void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
-	
+
 	if (!vid.blit) {
 		resizeVideo(device_width,device_height,FIXED_PITCH); // !!!???
 		SDL_UpdateTexture(vid.texture,NULL,vid.screen->pixels,vid.screen->pitch);
@@ -234,13 +301,13 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		SDL_RenderPresent(vid.renderer);
 		return;
 	}
-	
+
 	if (!vid.blit) resizeVideo(FIXED_WIDTH,FIXED_HEIGHT,FIXED_PITCH); // !!!???
-	
+
 	SDL_LockTexture(vid.texture,NULL,&vid.buffer->pixels,&vid.buffer->pitch);
 	SDL_BlitSurface(vid.screen, NULL, vid.buffer, NULL);
 	SDL_UnlockTexture(vid.texture);
-	
+
 	SDL_Rect* src_rect = NULL;
 	SDL_Rect* dst_rect = NULL;
 	SDL_Rect src_r = {0};
@@ -251,13 +318,14 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 		src_r.w = vid.blit->src_w;
 		src_r.h = vid.blit->src_h;
 		src_rect = &src_r;
-		
+
+		// Calculate destination rectangle based on aspect ratio mode
 		if (vid.blit->aspect==0) { // native (or cropped?)
 			int w = vid.blit->src_w * vid.blit->scale;
 			int h = vid.blit->src_h * vid.blit->scale;
 			int x = (FIXED_WIDTH - w) / 2;
 			int y = (FIXED_HEIGHT - h) / 2;
-						
+
 			dst_r.x = x;
 			dst_r.y = y;
 			dst_r.w = w;
@@ -288,8 +356,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 }
 
 ///////////////////////////////
+// Overlay
+///////////////////////////////
 
-// TODO: 
 #define OVERLAY_WIDTH PILL_SIZE // unscaled
 #define OVERLAY_HEIGHT PILL_SIZE // unscaled
 #define OVERLAY_BPP 4
@@ -312,18 +381,37 @@ void PLAT_enableOverlay(int enable) {
 }
 
 ///////////////////////////////
+// Power and Hardware
+///////////////////////////////
 
 static int online = 1;
+
+/**
+ * Returns stub battery status for development.
+ *
+ * Always reports full battery and charging on macOS.
+ *
+ * @param is_charging Set to 1 (always charging)
+ * @param charge Set to 100 (full battery)
+ */
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	*is_charging = 1;
 	*charge = 100;
 	return;
 }
 
+/**
+ * Stub backlight control (no-op on macOS).
+ */
 void PLAT_enableBacklight(int enable) {
-	// buh
+	// No backlight control on macOS
 }
 
+/**
+ * Shuts down MinUI and exits.
+ *
+ * Cleans up subsystems and exits process.
+ */
 void PLAT_powerOff(void) {
 	SND_quit();
 	VIB_quit();
@@ -332,24 +420,38 @@ void PLAT_powerOff(void) {
 	exit(0);
 }
 
-///////////////////////////////
-
+/**
+ * Stub CPU speed control (no-op on macOS).
+ */
 void PLAT_setCPUSpeed(int speed) {
-	// buh
+	// No CPU speed control on macOS
 }
 
+/**
+ * Stub rumble control (no-op on macOS).
+ */
 void PLAT_setRumble(int strength) {
-	// buh
+	// No rumble on macOS
 }
 
 int PLAT_pickSampleRate(int requested, int max) {
 	return MIN(requested, max);
 }
 
+/**
+ * Returns platform model name.
+ *
+ * @return "macOS" string
+ */
 char* PLAT_getModel(void) {
 	return "macOS";
 }
 
+/**
+ * Returns network online status.
+ *
+ * @return 1 (always online for development)
+ */
 int PLAT_isOnline(void) {
 	return online;
 }

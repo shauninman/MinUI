@@ -1,4 +1,23 @@
-// tg5040
+/**
+ * platform.c - Trimui Smart Pro (TG5040) platform implementation
+ *
+ * Supports Trimui Smart Pro and Brick variant. Hardware differences
+ * detected via DEVICE environment variable.
+ *
+ * Hardware features:
+ * - SDL2-based video with sharpness control
+ * - Joystick input via SDL2
+ * - Display effects (scanlines, grid with DMG color support)
+ * - AXP2202 power management
+ * - LED control (multi-LED on Brick variant)
+ * - CPU frequency scaling
+ * - Rumble motor support
+ *
+ * Brick variant differences:
+ * - Multiple LED zones (max_scale, max_scale_lr, max_scale_f1f2)
+ * - Different backlight behavior (minimum brightness of 8)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/fb.h>
@@ -18,8 +37,11 @@
 
 #include "scaler.h"
 
+// Device variant flag (set during init)
 int is_brick = 0;
 
+///////////////////////////////
+// Input
 ///////////////////////////////
 
 static SDL_Joystick *joystick;
@@ -32,6 +54,8 @@ void PLAT_quitInput(void) {
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
+///////////////////////////////
+// Video
 ///////////////////////////////
 
 static struct VID_Context {
@@ -55,7 +79,16 @@ static int device_width;
 static int device_height;
 static int device_pitch;
 
+/**
+ * Initializes SDL2 video subsystem with variant detection.
+ *
+ * Detects Brick variant via DEVICE environment variable.
+ * Brick variant has additional LED controls and different backlight behavior.
+ *
+ * @return SDL surface for rendering (vid.screen)
+ */
 SDL_Surface* PLAT_initVideo(void) {
+	// Detect Brick variant
 	char* device = getenv("DEVICE");
 	is_brick = exactMatch("brick", device);
 	// LOG_info("DEVICE: %s is_brick: %i\n", device, is_brick);
@@ -166,11 +199,21 @@ void PLAT_setVsync(int vsync) {
 
 static int hard_scale = 4; // TODO: base src size, eg. 160x144 can be 4
 
+/**
+ * Resizes video buffer and texture to new dimensions.
+ *
+ * Calculates hard_scale multiplier for crisp upscaling:
+ * - Native size or larger: 1x (no upscaling)
+ * - Smaller: 4x upscale before linear downscale
+ *
+ * @param w New width in pixels
+ * @param h New height in pixels
+ * @param p New pitch in bytes
+ */
 static void resizeVideo(int w, int h, int p) {
 	if (w==vid.width && h==vid.height && p==vid.pitch) return;
-	
-	// TODO: minarch disables crisp (and nn upscale before linear downscale) when native, is this true?
-	
+
+	// Calculate hard scale based on source resolution
 	if (w>=device_width && h>=device_height) hard_scale = 1;
 	// else if (h>=160) hard_scale = 2; // limits gba and up to 2x (seems sufficient for 640x480)
 	else hard_scale = 4;
@@ -235,6 +278,21 @@ static struct FX_Context {
 	.color = 0,
 	.next_color = 0,
 };
+///////////////////////////////
+// Video - Display effects
+///////////////////////////////
+
+/**
+ * Converts RGB565 pixel to RGB888 components.
+ *
+ * Expands 5-bit red/blue and 6-bit green to full 8-bit range.
+ * Used for colorizing DMG grid effects.
+ *
+ * @param rgb565 Input RGB565 pixel value
+ * @param r Output red component (0-255)
+ * @param g Output green component (0-255)
+ * @param b Output blue component (0-255)
+ */
 static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b) {
     // Extract the red component (5 bits)
     uint8_t red = (rgb565 >> 11) & 0x1F;
@@ -248,6 +306,14 @@ static void rgb565_to_rgb888(uint32_t rgb565, uint8_t *r, uint8_t *g, uint8_t *b
     *g = (green << 2) | (green >> 4);
     *b = (blue << 3) | (blue >> 2);
 }
+
+/**
+ * Updates display effect texture based on current settings.
+ *
+ * Loads appropriate scanline or grid overlay based on scale factor.
+ * For grid effects with color set, recolors the grid texture.
+ * No-op if effect settings haven't changed.
+ */
 static void updateEffect(void) {
 	if (effect.next_scale==effect.scale && effect.next_type==effect.type && effect.next_color==effect.color) return; // unchanged
 	
@@ -317,14 +383,16 @@ static void updateEffect(void) {
 	// LOG_info("effect: %s opacity: %i\n", effect_path, opacity);
 	SDL_Surface* tmp = IMG_Load(effect_path);
 	if (tmp) {
+		// Recolor grid effect for DMG palette emulation
 		if (effect.type==EFFECT_GRID) {
 			if (effect.color) {
 				// LOG_info("dmg color grid...\n");
-			
+
 				uint8_t r,g,b;
 				rgb565_to_rgb888(effect.color,&r,&g,&b);
-				// LOG_info("rgb %i,%i,%i\n",r,g,b); 
-			
+				// LOG_info("rgb %i,%i,%i\n",r,g,b);
+
+				// Replace white grid pixels with specified color
 				uint32_t* pixels = (uint32_t*)tmp->pixels;
 				int width = tmp->w;
 				int height = tmp->h;
@@ -336,7 +404,7 @@ static void updateEffect(void) {
 				        if (a) pixels[y * width + x] = SDL_MapRGBA(tmp->format, r,g,b, a);
 				    }
 				}
-				
+
 				// if (r==247 && g==243 & b==247) opacity = 64;
 			}
 		}
@@ -446,8 +514,9 @@ void PLAT_flip(SDL_Surface* IGNORED, int ignored) {
 }
 
 ///////////////////////////////
+// Overlay
+///////////////////////////////
 
-// TODO: 
 #define OVERLAY_WIDTH PILL_SIZE // unscaled
 #define OVERLAY_HEIGHT PILL_SIZE // unscaled
 #define OVERLAY_BPP 4
@@ -470,8 +539,20 @@ void PLAT_enableOverlay(int enable) {
 }
 
 ///////////////////////////////
+// Power and Hardware
+///////////////////////////////
 
 static int online = 0;
+
+/**
+ * Reads battery status from AXP2202 power management IC.
+ *
+ * Quantizes battery level to reduce UI noise during gameplay.
+ * Also checks WiFi status via network interface state.
+ *
+ * @param is_charging Set to 1 if USB power connected
+ * @param charge Set to quantized battery level (10-100)
+ */
 void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	// *is_charging = 0;
 	// *charge = PWR_LOW_CHARGE;
@@ -480,7 +561,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	*is_charging = getInt("/sys/class/power_supply/axp2202-usb/online");
 
 	int i = getInt("/sys/class/power_supply/axp2202-battery/capacity");
-	// worry less about battery and more about the game you're playing
+	// Quantize battery level to reduce UI flicker during gameplay
 	     if (i>80) *charge = 100;
 	else if (i>60) *charge =  80;
 	else if (i>40) *charge =  60;
@@ -488,7 +569,7 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 	else if (i>10) *charge =  20;
 	else           *charge =  10;
 
-	// // wifi status, just hooking into the regular PWR polling
+	// WiFi status (polled during battery check)
 	char status[16];
 	getFile("/sys/class/net/wlan0/operstate", status,16);
 	online = prefixMatch("up", status);
@@ -496,7 +577,16 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 
 #define LED_PATH1 "/sys/class/led_anim/max_scale"
 #define LED_PATH2 "/sys/class/led_anim/max_scale_lr"
-#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
+#define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing (Brick only)
+
+/**
+ * Enables or disables LED indicators.
+ *
+ * Brick variant has three LED zones that are all controlled.
+ * LED brightness is 0 (off) when enabled, 60 when disabled (sleep mode).
+ *
+ * @param enable 1 to turn LEDs off (active state), 0 for sleep mode
+ */
 static void PLAT_enableLED(int enable) {
 	if (enable) {
 		putInt(LED_PATH1,0);
@@ -511,9 +601,19 @@ static void PLAT_enableLED(int enable) {
 }
 
 #define BLANK_PATH "/sys/class/graphics/fb0/blank"
+
+/**
+ * Enables or disables backlight and LEDs.
+ *
+ * On Brick variant, sets minimum brightness to 8 when waking
+ * to prevent completely black screen.
+ *
+ * @param enable 1 to wake, 0 to sleep
+ */
 void PLAT_enableBacklight(int enable) {
 	if (enable) {
 		// putInt(BLANK_PATH,0);
+		// Brick needs minimum brightness to be visible
 		if (is_brick) SetRawBrightness(8);
 		SetBrightness(GetBrightness());
 	}
@@ -524,24 +624,40 @@ void PLAT_enableBacklight(int enable) {
 	PLAT_enableLED(enable);
 }
 
+/**
+ * Powers off the device.
+ *
+ * Breaks MinUI launch loop by removing /tmp/minui_exec.
+ * Actual shutdown handled by PLATFORM/bin/shutdown script.
+ */
 void PLAT_powerOff(void) {
-	// break the MinUI.pak/launch.sh while loop
+	// Break the MinUI.pak/launch.sh while loop
 	unlink("/tmp/minui_exec");
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
-	PLAT_enableLED(0); // leave display alone
+	PLAT_enableLED(0); // Leave display alone
 	SND_quit();
 	VIB_quit();
 	PWR_quit();
 	GFX_quit();
-	
-	exit(0); // poweroff handled by PLATFORM/bin/shutdown
+
+	exit(0); // Poweroff handled by PLATFORM/bin/shutdown
 }
 
-///////////////////////////////
-
 #define GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed"
+
+/**
+ * Sets CPU frequency based on performance mode.
+ *
+ * Frequencies:
+ * - MENU: 600MHz (minimal power for UI)
+ * - POWERSAVE: 1.2GHz
+ * - NORMAL: 1.608GHz
+ * - PERFORMANCE: 2GHz (maximum)
+ *
+ * @param speed CPU_SPEED_* constant
+ */
 void PLAT_setCPUSpeed(int speed) {
 	int freq = 0;
 	switch (speed) {
@@ -554,6 +670,14 @@ void PLAT_setCPUSpeed(int speed) {
 }
 
 #define RUMBLE_PATH "/sys/class/gpio/gpio227/value"
+
+/**
+ * Controls rumble motor.
+ *
+ * Rumble disabled when muted to respect user audio preferences.
+ *
+ * @param strength 0=off, non-zero=on
+ */
 void PLAT_setRumble(int strength) {
 	putInt(RUMBLE_PATH, (strength && !GetMute())?1:0);
 }
@@ -562,12 +686,24 @@ int PLAT_pickSampleRate(int requested, int max) {
 	return MIN(requested, max);
 }
 
+/**
+ * Returns device model name.
+ *
+ * Uses TRIMUI_MODEL environment variable if set.
+ *
+ * @return Model string (e.g., "Trimui Smart Pro")
+ */
 char* PLAT_getModel(void) {
 	char* model = getenv("TRIMUI_MODEL");
 	if (model) return model;
 	return "Trimui Smart Pro";
 }
 
+/**
+ * Returns network online status.
+ *
+ * @return 1 if WiFi connected, 0 otherwise
+ */
 int PLAT_isOnline(void) {
 	return online;
 }

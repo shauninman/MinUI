@@ -809,6 +809,7 @@ static enum _state get_state(enum _type t)
     else if (t == T_SWAP) {
         return ret_state(swap_val[0], swap_val[1]);
     }
+    return S_DISABLED; // Should never reach here
 }
 
 static int find_best_match_cpu_clock(int clk)
@@ -839,16 +840,13 @@ static int find_best_match_gpu_clock(int clk)
 
 static void read_value(void)
 {
-    uint32_t m, p, n, k;
+    uint32_t m, n, k;
     uint32_t v = 0;
-    uint32_t p_idx[] = {1, 2, 4, 8};
 
     core_val[0] = get_core(0) + get_core(1) + get_core(2) + get_core(3);
     v = *((uint32_t *)&pmem[0x00]);
-    m = (v & 3) + 1;
     k = ((v >> 4) & 3) + 1;
     n = ((v >> 8) & 0x1f) + 1;
-    p = p_idx[(v >> 16) & 3];
     cpu_val[0] = find_best_match_cpu_clock(24 * n * k);
     // printf("CPU %dMHz,%dMHz (0x%08x,0x%08x, n:%d, k:%d, m:%d, p:%d)\n",
     //     (24 * n * k) / (m * p), cpu_clock[cpu_val[0]].clk,
@@ -1004,7 +1002,7 @@ static void set_ram(uint32_t v)
     uint32_t *p = (uint32_t *)&pmem[0x4c];
 
     v &= 0x3f;
-    *p = (1 << 31) | (v << 8);
+    *p = (1U << 31) | (v << 8);
     // printf("New DDR1 Clock is %dMHz\n", (24 * v));
 }
 

@@ -1,3 +1,33 @@
+/**
+ * minui.c - MinUI launcher application
+ *
+ * The main launcher UI for MinUI, providing a simple file browser interface
+ * for navigating ROMs, recently played games, collections, and tools.
+ *
+ * Architecture:
+ * - File browser with directory stack navigation
+ * - Recently played games tracking (up to 24 entries)
+ * - ROM collections support via .txt files
+ * - Multi-disc game support via .m3u playlists
+ * - Display name aliasing via map.txt files
+ * - Auto-resume support for returning to last played game
+ * - Alphabetical indexing with L1/R1 shoulder button navigation
+ *
+ * Key Features:
+ * - Platform-agnostic ROM paths (stored relative to SDCARD_PATH)
+ * - Collating ROM folders (e.g., "GB (Game Boy)" and "GB (Game Boy Color)" appear as "GB")
+ * - Thumbnail support from .res/ subdirectories
+ * - Simple mode (hides Tools, disables sleep)
+ * - HDMI hotplug detection and restart
+ *
+ * Data Structures:
+ * - Array: Dynamic array for entries, directories, recents
+ * - Hash: Simple key-value map for name aliasing
+ * - Directory: Represents a folder with entries and rendering state
+ * - Entry: Represents a file/folder (ROM, PAK, or directory)
+ * - Recent: Recently played game with path and optional alias
+ */
+
 #include <ctype.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -11,14 +41,29 @@
 #include "defines.h"
 #include "utils.h"
 
-///////////////////////////////////////
+///////////////////////////////
+// Dynamic array implementation
+///////////////////////////////
 
+/**
+ * Generic dynamic array with automatic growth.
+ *
+ * Stores pointers to any type. Initial capacity is 8,
+ * doubles when full. Used for directories, entries, and recents.
+ */
 typedef struct Array {
 	int count;
 	int capacity;
 	void** items;
 } Array;
 
+/**
+ * Creates a new empty array.
+ *
+ * @return Pointer to allocated Array
+ *
+ * @warning Caller must free with Array_free() or type-specific free function
+ */
 static Array* Array_new(void) {
 	Array* self = malloc(sizeof(Array));
 	self->count = 0;
@@ -26,6 +71,15 @@ static Array* Array_new(void) {
 	self->items = malloc(sizeof(void*) * self->capacity);
 	return self;
 }
+
+/**
+ * Appends an item to the end of the array.
+ *
+ * Automatically doubles capacity when full.
+ *
+ * @param self Array to modify
+ * @param item Pointer to add (not copied, caller retains ownership)
+ */
 static void Array_push(Array* self, void* item) {
 	if (self->count >= self->capacity) {
 		self->capacity *= 2;
@@ -33,6 +87,16 @@ static void Array_push(Array* self, void* item) {
 	}
 	self->items[self->count++] = item;
 }
+
+/**
+ * Inserts an item at the beginning of the array.
+ *
+ * Shifts all existing items to the right. Used to add most
+ * recent game to top of recents list.
+ *
+ * @param self Array to modify
+ * @param item Pointer to insert
+ */
 static void Array_unshift(Array* self, void* item) {
 	if (self->count == 0)
 		return Array_push(self, item);
@@ -42,11 +106,26 @@ static void Array_unshift(Array* self, void* item) {
 	}
 	self->items[0] = item;
 }
+
+/**
+ * Removes and returns the last item from the array.
+ *
+ * @param self Array to modify
+ * @return Pointer to removed item, or NULL if array is empty
+ *
+ * @note Caller assumes ownership of returned pointer
+ */
 static void* Array_pop(Array* self) {
 	if (self->count == 0)
 		return NULL;
 	return self->items[--self->count];
 }
+
+/**
+ * Reverses the order of all items in the array.
+ *
+ * @param self Array to modify
+ */
 static void Array_reverse(Array* self) {
 	int end = self->count - 1;
 	int mid = self->count / 2;
@@ -56,11 +135,26 @@ static void Array_reverse(Array* self) {
 		self->items[end - i] = item;
 	}
 }
+
+/**
+ * Frees the array structure.
+ *
+ * @param self Array to free
+ *
+ * @warning Does NOT free the items themselves - use type-specific free functions
+ */
 static void Array_free(Array* self) {
 	free(self->items);
 	free(self);
 }
 
+/**
+ * Finds the index of a string in a string array.
+ *
+ * @param self Array of string pointers
+ * @param str String to find
+ * @return Index of first matching string, or -1 if not found
+ */
 static int StringArray_indexOf(Array* self, char* str) {
 	for (int i = 0; i < self->count; i++) {
 		if (exactMatch(self->items[i], str))
@@ -68,6 +162,12 @@ static int StringArray_indexOf(Array* self, char* str) {
 	}
 	return -1;
 }
+
+/**
+ * Frees a string array and all strings it contains.
+ *
+ * @param self Array to free
+ */
 static void StringArray_free(Array* self) {
 	for (int i = 0; i < self->count; i++) {
 		free(self->items[i]);
@@ -75,28 +175,70 @@ static void StringArray_free(Array* self) {
 	Array_free(self);
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Simple hash map (key-value store)
+///////////////////////////////
 
+/**
+ * Simple key-value map using parallel arrays.
+ *
+ * Used for loading map.txt files that alias ROM display names.
+ * Not a true hash - just linear search through keys array.
+ */
 typedef struct Hash {
 	Array* keys;
 	Array* values;
 } Hash; // not really a hash
 
+/**
+ * Creates a new empty hash map.
+ *
+ * @return Pointer to allocated Hash
+ *
+ * @warning Caller must free with Hash_free()
+ */
 static Hash* Hash_new(void) {
 	Hash* self = malloc(sizeof(Hash));
 	self->keys = Array_new();
 	self->values = Array_new();
 	return self;
 }
+
+/**
+ * Frees a hash map and all its keys and values.
+ *
+ * @param self Hash to free
+ */
 static void Hash_free(Hash* self) {
 	StringArray_free(self->keys);
 	StringArray_free(self->values);
 	free(self);
 }
+
+/**
+ * Stores a key-value pair in the hash map.
+ *
+ * Both key and value are duplicated with strdup().
+ * Does not check for duplicate keys - allows multiple entries.
+ *
+ * @param self Hash to modify
+ * @param key Key string
+ * @param value Value string
+ */
 static void Hash_set(Hash* self, char* key, char* value) {
 	Array_push(self->keys, strdup(key));
 	Array_push(self->values, strdup(value));
 }
+
+/**
+ * Retrieves a value by key from the hash map.
+ *
+ * @param self Hash to search
+ * @param key Key to look up
+ * @return Pointer to value string, or NULL if key not found
+ *
+ * @note Returned pointer is owned by the Hash - do not free
+ */
 static char* Hash_get(Hash* self, char* key) {
 	int i = StringArray_indexOf(self->keys, key);
 	if (i == -1)
@@ -104,21 +246,45 @@ static char* Hash_get(Hash* self, char* key) {
 	return self->values->items[i];
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// File browser entries
+///////////////////////////////
 
+/**
+ * Type of entry in the file browser.
+ */
 enum EntryType {
-	ENTRY_DIR,
-	ENTRY_PAK,
-	ENTRY_ROM,
+	ENTRY_DIR, // Directory (open to browse contents)
+	ENTRY_PAK, // .pak folder (executable tool/app)
+	ENTRY_ROM, // ROM file (launch with emulator)
 };
+
+/**
+ * Represents a file or folder in the browser.
+ *
+ * Entries can be ROMs, directories, or .pak applications.
+ * Display names are processed to remove region codes and extensions.
+ */
 typedef struct Entry {
-	char* path;
-	char* name;
-	char* unique;
-	int type;
-	int alpha; // index in parent Directory's alphas Array, which points to the index of an Entry in its entries Array :sweat_smile:
+	char* path; // Full path to file/folder
+	char* name; // Cleaned display name (may be aliased via map.txt)
+	char* unique; // Disambiguating text when multiple entries have same name
+	int type; // ENTRY_DIR, ENTRY_PAK, or ENTRY_ROM
+	int alpha; // Index into parent Directory's alphas array for L1/R1 navigation
 } Entry;
 
+/**
+ * Creates a new entry from a path.
+ *
+ * Automatically processes the display name to remove extensions,
+ * region codes, and other metadata.
+ *
+ * @param path Full path to the file/folder
+ * @param type ENTRY_DIR, ENTRY_PAK, or ENTRY_ROM
+ * @return Pointer to allocated Entry
+ *
+ * @warning Caller must free with Entry_free()
+ */
 static Entry* Entry_new(char* path, int type) {
 	char display_name[256];
 	getDisplayName(path, display_name);
@@ -130,6 +296,12 @@ static Entry* Entry_new(char* path, int type) {
 	self->alpha = 0;
 	return self;
 }
+
+/**
+ * Frees an entry and all its strings.
+ *
+ * @param self Entry to free
+ */
 static void Entry_free(Entry* self) {
 	free(self->path);
 	free(self->name);
@@ -138,6 +310,13 @@ static void Entry_free(Entry* self) {
 	free(self);
 }
 
+/**
+ * Finds an entry by path in an entry array.
+ *
+ * @param self Array of Entry pointers
+ * @param path Path to search for
+ * @return Index of matching entry, or -1 if not found
+ */
 static int EntryArray_indexOf(Array* self, char* path) {
 	for (int i = 0; i < self->count; i++) {
 		Entry* entry = self->items[i];
@@ -146,15 +325,34 @@ static int EntryArray_indexOf(Array* self, char* path) {
 	}
 	return -1;
 }
+
+/**
+ * Comparison function for qsort - sorts entries alphabetically by name.
+ *
+ * @param a First entry pointer (Entry**)
+ * @param b Second entry pointer (Entry**)
+ * @return Negative if a < b, 0 if equal, positive if a > b
+ */
 static int EntryArray_sortEntry(const void* a, const void* b) {
 	Entry* item1 = *(Entry**)a;
 	Entry* item2 = *(Entry**)b;
 	return strcasecmp(item1->name, item2->name);
 }
+
+/**
+ * Sorts an entry array alphabetically by display name.
+ *
+ * @param self Array to sort (modified in place)
+ */
 static void EntryArray_sort(Array* self) {
 	qsort(self->items, self->count, sizeof(void*), EntryArray_sortEntry);
 }
 
+/**
+ * Frees an entry array and all entries it contains.
+ *
+ * @param self Array to free
+ */
 static void EntryArray_free(Array* self) {
 	for (int i = 0; i < self->count; i++) {
 		Entry_free(self->items[i]);
@@ -162,39 +360,85 @@ static void EntryArray_free(Array* self) {
 	Array_free(self);
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Fixed-size integer array
+///////////////////////////////
 
+/**
+ * Fixed-size array of integers for alphabetical indexing.
+ *
+ * Stores up to 27 indices (one for # and one for each letter A-Z).
+ * Each value is the index of the first entry starting with that letter.
+ */
 #define INT_ARRAY_MAX 27
 typedef struct IntArray {
 	int count;
 	int items[INT_ARRAY_MAX];
 } IntArray;
+/**
+ * Creates a new empty integer array.
+ *
+ * @return Pointer to allocated IntArray
+ *
+ * @warning Caller must free with IntArray_free()
+ */
 static IntArray* IntArray_new(void) {
 	IntArray* self = malloc(sizeof(IntArray));
 	self->count = 0;
 	memset(self->items, 0, sizeof(int) * INT_ARRAY_MAX);
 	return self;
 }
+
+/**
+ * Appends an integer to the array.
+ *
+ * @param self Array to modify
+ * @param i Value to append
+ *
+ * @warning Does not check capacity - caller must ensure count < INT_ARRAY_MAX
+ */
 static void IntArray_push(IntArray* self, int i) {
 	self->items[self->count++] = i;
 }
+
+/**
+ * Frees an integer array.
+ *
+ * @param self Array to free
+ */
 static void IntArray_free(IntArray* self) {
 	free(self);
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Directory structure and indexing
+///////////////////////////////
 
+/**
+ * Represents a directory in the file browser.
+ *
+ * Maintains list of entries, alphabetical index, and rendering state
+ * (selected item, visible window start/end).
+ */
 typedef struct Directory {
-	char* path;
-	char* name;
-	Array* entries;
-	IntArray* alphas;
-	// rendering
-	int selected;
-	int start;
-	int end;
+	char* path; // Full path to directory
+	char* name; // Display name
+	Array* entries; // Array of Entry pointers
+	IntArray* alphas; // Alphabetical index for L1/R1 navigation
+	// Rendering state
+	int selected; // Currently selected entry index
+	int start; // First visible entry index
+	int end; // One past last visible entry index
 } Directory;
 
+/**
+ * Gets the alphabetical index for a string.
+ *
+ * Used to group entries by first letter for L1/R1 shoulder button navigation.
+ *
+ * @param str String to index
+ * @return 0 for non-alphabetic, 1-26 for A-Z (case-insensitive)
+ */
 static int getIndexChar(char* str) {
 	char i = 0;
 	char c = tolower(str[0]);
@@ -203,6 +447,17 @@ static int getIndexChar(char* str) {
 	return i;
 }
 
+/**
+ * Generates a unique name for an entry when duplicates exist.
+ *
+ * Appends the emulator name in parentheses to disambiguate entries
+ * with identical display names but from different systems.
+ *
+ * Example: "Tetris" becomes "Tetris (GB)" or "Tetris (NES)"
+ *
+ * @param entry Entry to generate unique name for
+ * @param out_name Output buffer for unique name (min 256 bytes)
+ */
 static void getUniqueName(Entry* entry, char* out_name) {
 	char* filename = strrchr(entry->path, '/') + 1;
 	char emu_tag[256];
@@ -218,10 +473,33 @@ static void getUniqueName(Entry* entry, char* out_name) {
 	strcpy(tmp, ")");
 }
 
+/**
+ * Indexes a directory's entries and applies name aliasing.
+ *
+ * This function performs several important tasks:
+ * 1. Loads map.txt (if present) to alias display names
+ * 2. Filters out entries marked as hidden via map.txt
+ * 3. Re-sorts entries if any names were aliased
+ * 4. Detects duplicate display names and generates unique names
+ * 5. Builds alphabetical index for L1/R1 navigation
+ *
+ * Map.txt format: Each line is "filename<TAB>display name"
+ * - If display name starts with '.', the entry is hidden
+ * - Collections use a shared map.txt in COLLECTIONS_PATH
+ *
+ * Duplicate handling:
+ * - If two entries have the same display name but different filenames,
+ *   shows the filename to disambiguate
+ * - If filenames are also identical (cross-platform ROMs), appends
+ *   the emulator name in parentheses
+ *
+ * @param self Directory to index (modified in place)
+ */
 static void Directory_index(Directory* self) {
 	int is_collection = prefixMatch(COLLECTIONS_PATH, self->path);
 	int skip_index = exactMatch(FAUX_RECENT_PATH, self->path) || is_collection; // not alphabetized
 
+	// Load map.txt for name aliasing if present
 	Hash* map = NULL;
 	char map_path[256];
 	sprintf(map_path, "%s/map.txt", is_collection ? COLLECTIONS_PATH : self->path);
@@ -236,6 +514,7 @@ static void Directory_index(Directory* self) {
 				if (strlen(line) == 0)
 					continue; // skip empty lines
 
+				// Parse "filename\tdisplay name" format
 				char* tmp = strchr(line, '\t');
 				if (tmp) {
 					tmp[0] = '\0';
@@ -246,6 +525,7 @@ static void Directory_index(Directory* self) {
 			}
 			fclose(file);
 
+			// Apply aliases from map
 			int resort = 0;
 			int filter = 0;
 			for (int i = 0; i < self->entries->count; i++) {
@@ -256,11 +536,13 @@ static void Directory_index(Directory* self) {
 					free(entry->name);
 					entry->name = strdup(alias);
 					resort = 1;
+					// Check if any alias starts with '.' (hidden)
 					if (!filter && hide(entry->name))
 						filter = 1;
 				}
 			}
 
+			// Remove hidden entries (those with aliases starting with '.')
 			if (filter) {
 				Array* entries = Array_new();
 				for (int i = 0; i < self->entries->count; i++) {
@@ -271,8 +553,8 @@ static void Directory_index(Directory* self) {
 						Array_push(entries, entry);
 					}
 				}
-				Array_free(
-				    self->entries); // not EntryArray_free because we've just moved the entries from the original to the filtered one!
+				// Not EntryArray_free - entries were moved, not freed
+				Array_free(self->entries);
 				self->entries = entries;
 			}
 			if (resort)
@@ -280,6 +562,7 @@ static void Directory_index(Directory* self) {
 		}
 	}
 
+	// Detect duplicates and build alphabetical index
 	Entry* prior = NULL;
 	int alpha = -1;
 	int index = 0;
@@ -294,6 +577,7 @@ static void Directory_index(Directory* self) {
 			}
 		}
 
+		// Detect duplicate display names
 		if (prior != NULL && exactMatch(prior->name, entry->name)) {
 			if (prior->unique)
 				free(prior->unique);
@@ -302,7 +586,10 @@ static void Directory_index(Directory* self) {
 
 			char* prior_filename = strrchr(prior->path, '/') + 1;
 			char* entry_filename = strrchr(entry->path, '/') + 1;
+
+			// If filenames differ, use them to disambiguate
 			if (exactMatch(prior_filename, entry_filename)) {
+				// Same filename (cross-platform ROM) - use emulator name
 				char prior_unique[256];
 				char entry_unique[256];
 				getUniqueName(prior, prior_unique);
@@ -311,11 +598,13 @@ static void Directory_index(Directory* self) {
 				prior->unique = strdup(prior_unique);
 				entry->unique = strdup(entry_unique);
 			} else {
+				// Different filenames - show them
 				prior->unique = strdup(prior_filename);
 				entry->unique = strdup(entry_filename);
 			}
 		}
 
+		// Build alphabetical index for L1/R1 navigation
 		if (!skip_index) {
 			int a = getIndexChar(entry->name);
 			if (a != alpha) {
@@ -333,12 +622,30 @@ static void Directory_index(Directory* self) {
 		Hash_free(map);
 }
 
+// Forward declarations for directory entry getters
 static Array* getRoot(void);
 static Array* getRecents(void);
 static Array* getCollection(char* path);
 static Array* getDiscs(char* path);
 static Array* getEntries(char* path);
 
+/**
+ * Creates a new directory from a path.
+ *
+ * Automatically determines which type of directory this is and
+ * populates its entries accordingly:
+ * - Root (SDCARD_PATH): Shows systems, recents, collections, tools
+ * - Recently played (FAUX_RECENT_PATH): Shows recent games
+ * - Collection (.txt file): Loads games from text file
+ * - Multi-disc (.m3u file): Shows disc list
+ * - Regular directory: Shows files and subdirectories
+ *
+ * @param path Full path to directory
+ * @param selected Initial selected index
+ * @return Pointer to allocated Directory
+ *
+ * @warning Caller must free with Directory_free()
+ */
 static Directory* Directory_new(char* path, int selected) {
 	char display_name[256];
 	getDisplayName(path, display_name);
@@ -363,6 +670,12 @@ static Directory* Directory_new(char* path, int selected) {
 	Directory_index(self);
 	return self;
 }
+
+/**
+ * Frees a directory and all its contents.
+ *
+ * @param self Directory to free
+ */
 static void Directory_free(Directory* self) {
 	free(self->path);
 	free(self->name);
@@ -371,9 +684,20 @@ static void Directory_free(Directory* self) {
 	free(self);
 }
 
+/**
+ * Pops and frees the top directory from a directory array.
+ *
+ * @param self Array of Directory pointers
+ */
 static void DirectoryArray_pop(Array* self) {
 	Directory_free(Array_pop(self));
 }
+
+/**
+ * Frees a directory array and all directories it contains.
+ *
+ * @param self Array to free
+ */
 static void DirectoryArray_free(Array* self) {
 	for (int i = 0; i < self->count; i++) {
 		Directory_free(self->items[i]);
@@ -381,21 +705,42 @@ static void DirectoryArray_free(Array* self) {
 	Array_free(self);
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Recently played games
+///////////////////////////////
 
+/**
+ * Represents a recently played game.
+ *
+ * Paths are stored relative to SDCARD_PATH for platform portability.
+ * This allows the same SD card to work across different devices.
+ */
 typedef struct Recent {
-	char* path; // NOTE: this is without the SDCARD_PATH prefix!
-	char* alias;
-	int available;
+	char* path; // Path relative to SDCARD_PATH (without prefix)
+	char* alias; // Optional custom display name
+	int available; // 1 if emulator exists, 0 if not
 } Recent;
-// yiiikes
+
+// Global used to pass alias when opening ROM from recents/collections
+// This is a workaround to avoid changing function signatures
 static char* recent_alias = NULL;
 
 static int hasEmu(char* emu_name);
+
+/**
+ * Creates a new recent entry.
+ *
+ * @param path ROM path relative to SDCARD_PATH (without prefix)
+ * @param alias Optional custom display name, or NULL
+ * @return Pointer to allocated Recent
+ *
+ * @warning Caller must free with Recent_free()
+ */
 static Recent* Recent_new(char* path, char* alias) {
 	Recent* self = malloc(sizeof(Recent));
 
-	char sd_path[256]; // only need to get emu name
+	// Need full path to determine emulator
+	char sd_path[256];
 	sprintf(sd_path, "%s%s", SDCARD_PATH, path);
 
 	char emu_name[256];
@@ -406,6 +751,12 @@ static Recent* Recent_new(char* path, char* alias) {
 	self->available = hasEmu(emu_name);
 	return self;
 }
+
+/**
+ * Frees a recent entry.
+ *
+ * @param self Recent to free
+ */
 static void Recent_free(Recent* self) {
 	free(self->path);
 	if (self->alias)
@@ -413,6 +764,13 @@ static void Recent_free(Recent* self) {
 	free(self);
 }
 
+/**
+ * Finds a recent by path in a recent array.
+ *
+ * @param self Array of Recent pointers
+ * @param str Path to search for (relative to SDCARD_PATH)
+ * @return Index of matching recent, or -1 if not found
+ */
 static int RecentArray_indexOf(Array* self, char* str) {
 	for (int i = 0; i < self->count; i++) {
 		Recent* item = self->items[i];
@@ -421,6 +779,12 @@ static int RecentArray_indexOf(Array* self, char* str) {
 	}
 	return -1;
 }
+
+/**
+ * Frees a recent array and all recents it contains.
+ *
+ * @param self Array to free
+ */
 static void RecentArray_free(Array* self) {
 	for (int i = 0; i < self->count; i++) {
 		Recent_free(self->items[i]);
@@ -428,27 +792,39 @@ static void RecentArray_free(Array* self) {
 	Array_free(self);
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Global state
+///////////////////////////////
 
-static Directory* top;
-static Array* stack; // DirectoryArray
-static Array* recents; // RecentArray
+static Directory* top; // Current directory being viewed
+static Array* stack; // Stack of open directories for navigation
+static Array* recents; // Recently played games list
 
-static int quit = 0;
-static int can_resume = 0;
-static int should_resume = 0; // set to 1 on BTN_RESUME but only if can_resume==1
-static int simple_mode = 0;
-static char slot_path[256];
+static int quit = 0; // Set to 1 to exit main loop
+static int can_resume = 0; // 1 if selected ROM has a save state
+static int should_resume = 0; // Set to 1 when X button pressed to resume
+static int simple_mode = 0; // 1 if simple mode enabled (hides Tools, disables sleep)
+static char slot_path[256]; // Path to save state slot file for can_resume check
 
+// State restoration variables for preserving selection when navigating
 static int restore_depth = -1;
 static int restore_relative = -1;
 static int restore_selected = 0;
 static int restore_start = 0;
 static int restore_end = 0;
 
-///////////////////////////////////////
+///////////////////////////////
+// Recents management
+///////////////////////////////
 
-#define MAX_RECENTS 24 // a multiple of all menu rows
+#define MAX_RECENTS 24 // A multiple of all menu row counts (4, 6, 8, 12)
+
+/**
+ * Saves the recently played list to disk.
+ *
+ * Format: One entry per line, "path\talias\n" or just "path\n"
+ * Paths are relative to SDCARD_PATH for platform portability.
+ */
 static void saveRecents(void) {
 	FILE* file = fopen(RECENT_PATH, "w");
 	if (file) {
@@ -464,24 +840,49 @@ static void saveRecents(void) {
 		fclose(file);
 	}
 }
+
+/**
+ * Adds a ROM to the recently played list.
+ *
+ * If the ROM is already in the list, it's moved to the top.
+ * If the list is full, the oldest entry is removed.
+ *
+ * @param path Full ROM path (will be made relative to SDCARD_PATH)
+ * @param alias Optional custom display name, or NULL
+ */
 static void addRecent(char* path, char* alias) {
 	path += strlen(SDCARD_PATH); // makes paths platform agnostic
 	int id = RecentArray_indexOf(recents, path);
-	if (id == -1) { // add
+	if (id == -1) { // add new entry
 		while (recents->count >= MAX_RECENTS) {
 			Recent_free(Array_pop(recents));
 		}
 		Array_unshift(recents, Recent_new(path, alias));
-	} else if (id > 0) { // bump to top
+	} else if (id > 0) { // bump existing entry to top
 		for (int i = id; i > 0; i--) {
 			void* tmp = recents->items[i - 1];
 			recents->items[i - 1] = recents->items[i];
 			recents->items[i] = tmp;
 		}
 	}
+	// If id == 0, already at top, no action needed
 	saveRecents();
 }
 
+///////////////////////////////
+// ROM/emulator detection
+///////////////////////////////
+
+/**
+ * Checks if an emulator is installed.
+ *
+ * Searches in two locations:
+ * 1. Shared: /mnt/SDCARD/Roms/Emus/<emu>.pak/launch.sh
+ * 2. Platform-specific: /mnt/SDCARD/Emus/<platform>/<emu>.pak/launch.sh
+ *
+ * @param emu_name Emulator name (e.g., "GB", "NES")
+ * @return 1 if emulator exists, 0 otherwise
+ */
 static int hasEmu(char* emu_name) {
 	char pak_path[256];
 	sprintf(pak_path, "%s/Emus/%s.pak/launch.sh", PAKS_PATH, emu_name);
@@ -491,12 +892,38 @@ static int hasEmu(char* emu_name) {
 	sprintf(pak_path, "%s/Emus/%s/%s.pak/launch.sh", SDCARD_PATH, PLATFORM, emu_name);
 	return exists(pak_path);
 }
-static int hasCue(char* dir_path, char* cue_path) { // NOTE: dir_path not rom_path
+
+/**
+ * Checks if a directory contains a .cue file for multi-disc games.
+ *
+ * The .cue file must be named after the directory itself.
+ * Example: /Roms/PS1/Final Fantasy VII/Final Fantasy VII.cue
+ *
+ * @param dir_path Full path to directory
+ * @param cue_path Output buffer for .cue file path (modified in place)
+ * @return 1 if .cue file exists, 0 otherwise
+ *
+ * @note cue_path is always written, even if file doesn't exist
+ */
+static int hasCue(char* dir_path, char* cue_path) {
 	char* tmp = strrchr(dir_path, '/') + 1; // folder name
 	sprintf(cue_path, "%s/%s.cue", dir_path, tmp);
 	return exists(cue_path);
 }
-static int hasM3u(char* rom_path, char* m3u_path) { // NOTE: rom_path not dir_path
+
+/**
+ * Checks if a ROM has an associated .m3u playlist for multi-disc games.
+ *
+ * The .m3u file must be in the parent directory and named after that directory.
+ * Example: For /Roms/PS1/Game/disc1.bin, looks for /Roms/PS1/Game.m3u
+ *
+ * @param rom_path Full path to ROM file
+ * @param m3u_path Output buffer for .m3u file path (modified in place)
+ * @return 1 if .m3u file exists, 0 otherwise
+ *
+ * @note m3u_path is always written, even if file doesn't exist
+ */
+static int hasM3u(char* rom_path, char* m3u_path) {
 	char* tmp;
 
 	strcpy(m3u_path, rom_path);
@@ -526,10 +953,29 @@ static int hasM3u(char* rom_path, char* m3u_path) { // NOTE: rom_path not dir_pa
 	return exists(m3u_path);
 }
 
+/**
+ * Loads recently played games from disk.
+ *
+ * This function performs several important tasks:
+ * 1. Handles disc change requests (from in-game disc swapping)
+ * 2. Loads recent games from RECENT_PATH file
+ * 3. Filters out games whose emulators no longer exist
+ * 4. Deduplicates multi-disc games (shows only most recent disc)
+ * 5. Populates the global recents array
+ *
+ * Multi-disc handling:
+ * - If a game has an .m3u file, only the most recently played disc
+ *   from that game is shown in recents
+ * - This prevents the recents list from being flooded with discs
+ *   from the same game
+ *
+ * @return 1 if any playable recents exist, 0 otherwise
+ */
 static int hasRecents(void) {
 	LOG_info("hasRecents %s\n", RECENT_PATH);
 	int has = 0;
 
+	// Track parent directories to avoid duplicate multi-disc entries
 	Array* parent_paths = Array_new();
 	if (exists(CHANGE_DISC_PATH)) {
 		char sd_path[256];
@@ -612,6 +1058,12 @@ static int hasRecents(void) {
 	StringArray_free(parent_paths);
 	return has > 0;
 }
+
+/**
+ * Checks if any ROM collections exist.
+ *
+ * @return 1 if collections directory contains any non-hidden files, 0 otherwise
+ */
 static int hasCollections(void) {
 	int has = 0;
 	if (!exists(COLLECTIONS_PATH))
@@ -628,6 +1080,17 @@ static int hasCollections(void) {
 	closedir(dh);
 	return has;
 }
+
+/**
+ * Checks if a ROM system directory has any playable ROMs.
+ *
+ * A system is considered to have ROMs if:
+ * 1. The emulator .pak exists
+ * 2. The directory contains at least one non-hidden file
+ *
+ * @param dir_name Name of ROM directory (e.g., "GB (Game Boy)")
+ * @return 1 if system has playable ROMs, 0 otherwise
+ */
 static int hasRoms(char* dir_name) {
 	int has = 0;
 	char emu_name[256];
@@ -639,7 +1102,7 @@ static int hasRoms(char* dir_name) {
 	if (!hasEmu(emu_name))
 		return has;
 
-	// check for at least one non-hidden file (we're going to assume it's a rom)
+	// check for at least one non-hidden file (assume it's a rom)
 	sprintf(rom_path, "%s/%s/", ROMS_PATH, dir_name);
 	DIR* dh = opendir(rom_path);
 	if (dh != NULL) {
@@ -652,9 +1115,27 @@ static int hasRoms(char* dir_name) {
 		}
 		closedir(dh);
 	}
-	// if (!has) printf("No roms for %s!\n", dir_name);
 	return has;
 }
+
+///////////////////////////////
+// Directory entry generation
+///////////////////////////////
+
+/**
+ * Generates the root directory entry list.
+ *
+ * Root shows:
+ * 1. Recently Played (if any recent games exist)
+ * 2. ROM systems (folders in Roms/ with available emulators)
+ *    - Deduplicates systems with the same display name (collating)
+ *    - Applies aliases from Roms/map.txt
+ * 3. Collections (if any exist)
+ *    - Either as a "Collections" folder or promoted to root if no systems
+ * 4. Tools (platform-specific, hidden in simple mode)
+ *
+ * @return Array of Entry pointers for root directory
+ */
 static Array* getRoot(void) {
 	Array* root = Array_new();
 
@@ -780,6 +1261,15 @@ static Array* getRoot(void) {
 
 	return root;
 }
+
+/**
+ * Generates the Recently Played directory entry list.
+ *
+ * Filters out games whose emulators no longer exist.
+ * Applies custom aliases if present.
+ *
+ * @return Array of Entry pointers for recently played games
+ */
 static Array* getRecents(void) {
 	Array* entries = Array_new();
 	for (int i = 0; i < recents->count; i++) {
@@ -789,7 +1279,7 @@ static Array* getRecents(void) {
 
 		char sd_path[256];
 		sprintf(sd_path, "%s%s", SDCARD_PATH, recent->path);
-		int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM; // ???
+		int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM;
 		Entry* entry = Entry_new(sd_path, type);
 		if (recent->alias) {
 			free(entry->name);
@@ -799,6 +1289,18 @@ static Array* getRecents(void) {
 	}
 	return entries;
 }
+
+/**
+ * Generates entry list from a collection text file.
+ *
+ * Collection format: One ROM path per line (relative to SDCARD_PATH)
+ * Example: /Roms/GB/Tetris.gb
+ *
+ * Only includes ROMs that currently exist on the SD card.
+ *
+ * @param path Full path to collection .txt file
+ * @return Array of Entry pointers for collection items
+ */
 static Array* getCollection(char* path) {
 	Array* entries = Array_new();
 	FILE* file = fopen(path, "r");
@@ -813,23 +1315,27 @@ static Array* getCollection(char* path) {
 			char sd_path[256];
 			sprintf(sd_path, "%s%s", SDCARD_PATH, line);
 			if (exists(sd_path)) {
-				int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM; // ???
+				int type = suffixMatch(".pak", sd_path) ? ENTRY_PAK : ENTRY_ROM;
 				Array_push(entries, Entry_new(sd_path, type));
-
-				// char emu_name[256];
-				// getEmuName(sd_path, emu_name);
-				// if (hasEmu(emu_name)) {
-				// Array_push(entries, Entry_new(sd_path, ENTRY_ROM));
-				// }
 			}
 		}
 		fclose(file);
 	}
 	return entries;
 }
-static Array* getDiscs(char* path) {
-	// TODO: does path have SDCARD_PATH prefix?
 
+/**
+ * Generates disc list from an .m3u playlist file.
+ *
+ * M3U format: One disc file per line (relative to .m3u file location)
+ * Example: disc1.bin
+ *
+ * Entries are named "Disc 1", "Disc 2", etc.
+ *
+ * @param path Full path to .m3u file
+ * @return Array of Entry pointers for each disc
+ */
+static Array* getDiscs(char* path) {
 	Array* entries = Array_new();
 
 	char base_path[256];
@@ -837,7 +1343,6 @@ static Array* getDiscs(char* path) {
 	char* tmp = strrchr(base_path, '/') + 1;
 	tmp[0] = '\0';
 
-	// TODO: limit number of discs supported (to 9?)
 	FILE* file = fopen(path, "r");
 	if (file) {
 		char line[256];
@@ -865,7 +1370,17 @@ static Array* getDiscs(char* path) {
 	}
 	return entries;
 }
-static int getFirstDisc(char* m3u_path, char* disc_path) { // based on getDiscs() natch
+
+/**
+ * Gets the first disc from an .m3u playlist.
+ *
+ * Used when auto-launching a multi-disc game.
+ *
+ * @param m3u_path Full path to .m3u file
+ * @param disc_path Output buffer for first disc path
+ * @return 1 if first disc found, 0 otherwise
+ */
+static int getFirstDisc(char* m3u_path, char* disc_path) {
 	int found = 0;
 
 	char base_path[256];
@@ -978,13 +1493,37 @@ static Array* getEntries(char* path) {
 
 ///////////////////////////////////////
 
+///////////////////////////////
+// Command execution
+///////////////////////////////
+
+/**
+ * Queues a command to run after launcher exits.
+ *
+ * Writes the command to /tmp/next and sets quit flag.
+ * The system's init script watches for this file and executes it.
+ *
+ * @param cmd Shell command to execute (must be properly quoted)
+ */
 static void queueNext(char* cmd) {
 	LOG_info("cmd: %s\n", cmd);
 	putFile("/tmp/next", cmd);
 	quit = 1;
 }
 
-// based on https://stackoverflow.com/a/31775567/145965
+/**
+ * Replaces all occurrences of a substring in a string.
+ *
+ * Modifies the string in place. Handles overlapping replacements
+ * by recursing after each replacement.
+ *
+ * @param line String to modify (modified in place)
+ * @param search Substring to find
+ * @param replace Replacement string
+ * @return Number of replacements made
+ *
+ * @note Based on https://stackoverflow.com/a/31775567/145965
+ */
 static int replaceString(char* line, const char* search, const char* replace) {
 	char* sp; // start of pattern
 	if ((sp = strstr(line, search)) == NULL) {
@@ -1017,17 +1556,37 @@ static int replaceString(char* line, const char* search, const char* replace) {
 	count += replaceString(sp + rLen, search, replace);
 	return count;
 }
+
+/**
+ * Escapes single quotes in a string for shell command safety.
+ *
+ * Replaces ' with '\'' which safely handles quotes in bash strings.
+ * Example: "it's" becomes "it'\''s"
+ *
+ * @param str String to escape (modified in place)
+ * @return The modified string (same pointer as input)
+ */
 static char* escapeSingleQuotes(char* str) {
-	// why not call replaceString directly?
-	// call points require the modified string be returned
-	// but replaceString is recursive and depends on its
-	// own return value (but does it need to?)
 	replaceString(str, "'", "'\\''");
 	return str;
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Resume state checking
+///////////////////////////////
 
+/**
+ * Checks if a ROM has a save state and prepares resume state.
+ *
+ * Sets global can_resume flag and slot_path if a state exists.
+ * Handles multi-disc games by checking for .m3u files.
+ *
+ * Save state path format:
+ * /.userdata/.minui/<emu>/<romname>.ext.txt
+ *
+ * @param rom_path Full ROM path
+ * @param type ENTRY_DIR, ENTRY_PAK, or ENTRY_ROM
+ */
 static void readyResumePath(char* rom_path, int type) {
 	char* tmp;
 	can_resume = 0;
@@ -1111,9 +1670,20 @@ static int autoResume(void) {
 	return 1;
 }
 
+///////////////////////////////
+// Entry opening (launching ROMs/apps)
+///////////////////////////////
+
+/**
+ * Launches a .pak application.
+ *
+ * .pak folders are applications (tools, emulators) with a launch.sh script.
+ * Saves to recents if in Roms path. Saves current path for state restoration.
+ *
+ * @param path Full path to .pak directory
+ */
 static void openPak(char* path) {
-	// NOTE: escapeSingleQuotes() modifies the passed string
-	// so we need to save the path before we call that
+	// Save path before escaping (escapeSingleQuotes modifies string)
 	if (prefixMatch(ROMS_PATH, path)) {
 		addRecent(path, NULL);
 	}
@@ -1123,6 +1693,25 @@ static void openPak(char* path) {
 	sprintf(cmd, "'%s/launch.sh'", escapeSingleQuotes(path));
 	queueNext(cmd);
 }
+
+/**
+ * Launches a ROM with its emulator.
+ *
+ * This function handles:
+ * - Multi-disc games (.m3u playlists)
+ * - Resume states (saves/loads save state slot)
+ * - Disc swapping for multi-disc games
+ * - Adding to recently played list
+ * - State restoration path tracking
+ *
+ * Multi-disc logic:
+ * - If ROM has .m3u, add .m3u to recents (not individual disc)
+ * - If launching .m3u directly, get first disc from playlist
+ * - If resuming multi-disc game, load the disc that was saved
+ *
+ * @param path Full ROM path (may be .m3u or actual disc file)
+ * @param last Path to save for state restoration (may differ from path)
+ */
 static void openRom(char* path, char* last) {
 	LOG_info("openRom(%s,%s)\n", path, last);
 
@@ -1185,13 +1774,31 @@ static void openRom(char* path, char* last) {
 	sprintf(cmd, "'%s' '%s'", escapeSingleQuotes(emu_path), escapeSingleQuotes(sd_path));
 	queueNext(cmd);
 }
+/**
+ * Opens a directory for browsing or auto-launches its contents.
+ *
+ * Auto-launch logic (when auto_launch=1):
+ * - If directory contains a .cue file, launch it
+ * - If directory contains a .m3u file, launch first disc
+ * - Otherwise, open directory for browsing
+ *
+ * Used for:
+ * - Multi-disc game folders (auto-launch .cue or .m3u)
+ * - Regular folder navigation (auto_launch=0)
+ * - State restoration (preserves selection/scroll position)
+ *
+ * @param path Full path to directory
+ * @param auto_launch 1 to auto-launch contents, 0 to browse
+ */
 static void openDirectory(char* path, int auto_launch) {
 	char auto_path[256];
+	// Auto-launch .cue file if present
 	if (hasCue(path, auto_path) && auto_launch) {
 		openRom(auto_path, path);
 		return;
 	}
 
+	// Auto-launch .m3u playlist if present
 	char m3u_path[256];
 	strcpy(m3u_path, auto_path);
 	char* tmp = strrchr(m3u_path, '.') + 1; // extension
@@ -1202,7 +1809,6 @@ static void openDirectory(char* path, int auto_launch) {
 			openRom(auto_path, path);
 			return;
 		}
-		// TODO: doesn't handle empty m3u files
 	}
 
 	int selected = 0;
@@ -1223,6 +1829,12 @@ static void openDirectory(char* path, int auto_launch) {
 
 	Array_push(stack, top);
 }
+/**
+ * Closes the current directory and returns to parent.
+ *
+ * Saves current scroll position and selection for potential restoration.
+ * Updates global restore state and pops directory from stack.
+ */
 static void closeDirectory(void) {
 	restore_selected = top->selected;
 	restore_start = top->start;
@@ -1233,10 +1845,24 @@ static void closeDirectory(void) {
 	restore_relative = top->selected;
 }
 
+/**
+ * Opens an entry (ROM, directory, or application).
+ *
+ * Dispatches to appropriate handler based on entry type:
+ * - ENTRY_ROM: Launch with emulator
+ * - ENTRY_PAK: Launch application
+ * - ENTRY_DIR: Open for browsing (with auto-launch)
+ *
+ * Special handling for collections: Uses collection path for
+ * state restoration instead of actual ROM path.
+ *
+ * @param self Entry to open
+ */
 static void Entry_open(Entry* self) {
-	recent_alias = self->name; // yiiikes
+	recent_alias = self->name; // Passed to addRecent via global
 	if (self->type == ENTRY_ROM) {
 		char* last = NULL;
+		// Collection ROMs use collection path for state restoration
 		if (prefixMatch(COLLECTIONS_PATH, top->path)) {
 			char* tmp;
 			char filename[256];
@@ -1257,19 +1883,43 @@ static void Entry_open(Entry* self) {
 	}
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// State persistence (last played/position)
+///////////////////////////////
 
+/**
+ * Saves the last accessed path for state restoration.
+ *
+ * Special case: Recently played path is implicit (always first item)
+ * so we don't need to save the specific ROM, just that recents was open.
+ *
+ * @param path Path to save
+ */
 static void saveLast(char* path) {
 	// special case for recently played
 	if (exactMatch(top->path, FAUX_RECENT_PATH)) {
-		// NOTE: that we don't have to save the file because
-		// your most recently played game will always be at
-		// the top which is also the default selection
+		// Most recent game is always at top, no need to save specific ROM
 		path = FAUX_RECENT_PATH;
 	}
 	putFile(LAST_PATH, path);
 }
-static void loadLast(void) { // call after loading root directory
+
+/**
+ * Loads and restores the last accessed path and selection.
+ *
+ * Rebuilds the directory stack from the saved path, restoring:
+ * - Which directories were open
+ * - Which item was selected
+ * - Scroll position
+ *
+ * Handles special cases:
+ * - Collated ROM folders (matches by prefix)
+ * - Collection entries (matches by filename)
+ * - Auto-launch directories (doesn't re-launch)
+ *
+ * Called after loading root directory during startup.
+ */
+static void loadLast(void) {
 	if (!exists(LAST_PATH))
 		return;
 
@@ -1345,6 +1995,19 @@ static void loadLast(void) { // call after loading root directory
 
 ///////////////////////////////////////
 
+///////////////////////////////
+// Menu initialization and cleanup
+///////////////////////////////
+
+/**
+ * Initializes the menu system.
+ *
+ * Sets up:
+ * - Directory navigation stack
+ * - Recently played games list
+ * - Root directory
+ * - Last accessed path restoration
+ */
 static void Menu_init(void) {
 	stack = Array_new(); // array of open Directories
 	recents = Array_new();
@@ -1352,20 +2015,55 @@ static void Menu_init(void) {
 	openDirectory(SDCARD_PATH, 0);
 	loadLast(); // restore state when available
 }
+
+/**
+ * Cleans up menu system resources.
+ *
+ * Frees all allocated memory for recents and directory stack.
+ */
 static void Menu_quit(void) {
 	RecentArray_free(recents);
 	DirectoryArray_free(stack);
 }
 
-///////////////////////////////////////
+///////////////////////////////
+// Main entry point
+///////////////////////////////
 
+/**
+ * MinUI launcher main function.
+ *
+ * Initialization:
+ * 1. Check for auto-resume (return from sleep with game running)
+ * 2. Initialize graphics, input, power management
+ * 3. Load menu state and recents
+ *
+ * Main Loop:
+ * - Polls input (D-pad, buttons, shoulder buttons)
+ * - Updates selection and scroll window
+ * - Handles:
+ *   - Navigation (up/down/left/right)
+ *   - Alphabetical jump (L1/R1 shoulder buttons)
+ *   - Open entry (A button)
+ *   - Go back (B button)
+ *   - Resume game (X button if save state exists)
+ *   - Menu button (show version info or sleep)
+ *   - Hardware settings (brightness/volume via PWR_update)
+ * - Renders:
+ *   - Entry list with selection highlight
+ *   - Thumbnails from .res/ folders (if available)
+ *   - Hardware status icons (battery, brightness, etc.)
+ *   - Button hints at bottom
+ * - Handles HDMI hotplug detection
+ *
+ * Exit:
+ * - Saves state and cleans up resources
+ * - If a ROM/app was launched, it's queued in /tmp/next
+ */
 int main(int argc, char* argv[]) {
-	// LOG_info("time from launch to:\n");
-	// unsigned long main_begin = SDL_GetTicks();
-	// unsigned long first_draw = 0;
-
+	// Check for auto-resume first (fast path)
 	if (autoResume())
-		return 0; // nothing to do
+		return 0;
 
 	simple_mode = exists(SIMPLE_MODE_PATH);
 
@@ -1388,14 +2086,14 @@ int main(int argc, char* argv[]) {
 	Menu_init();
 	// LOG_info("- menu init: %lu\n", SDL_GetTicks() - main_begin);
 
-	// now that (most of) the heavy lifting is done, take a load off
+	// Reduce CPU speed for menu browsing (saves power and heat)
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 	GFX_setVsync(VSYNC_STRICT);
 
 	PAD_reset();
-	int dirty = 1;
-	int show_version = 0;
-	int show_setting = 0; // 1=brightness,2=volume
+	int dirty = 1; // Set to 1 when screen needs redraw
+	int show_version = 0; // 1 when showing version overlay
+	int show_setting = 0; // 1=brightness, 2=volume overlay
 	int was_online = PLAT_isOnline();
 
 	// LOG_info("- loop start: %lu\n", SDL_GetTicks() - main_begin);
@@ -1408,13 +2106,16 @@ int main(int argc, char* argv[]) {
 		int selected = top->selected;
 		int total = top->entries->count;
 
+		// Update power management (handles brightness/volume adjustments)
 		PWR_update(&dirty, &show_setting, NULL, NULL);
 
+		// Track online status changes (wifi icon)
 		int is_online = PLAT_isOnline();
 		if (was_online != is_online)
 			dirty = 1;
 		was_online = is_online;
 
+		// Input handling - version overlay mode
 		if (show_version) {
 			if (PAD_justPressed(BTN_B) || PAD_tappedMenu(now)) {
 				show_version = 0;
@@ -1423,6 +2124,7 @@ int main(int argc, char* argv[]) {
 					PWR_disableSleep();
 			}
 		} else {
+			// Input handling - normal browsing mode
 			if (PAD_tappedMenu(now)) {
 				show_version = 1;
 				dirty = 1;
@@ -1487,8 +2189,9 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
+			// Alphabetical navigation with shoulder buttons
 			if (PAD_justRepeated(BTN_L1) && !PAD_isPressed(BTN_R1) &&
-			    !PWR_ignoreSettingInput(BTN_L1, show_setting)) { // previous alpha
+			    !PWR_ignoreSettingInput(BTN_L1, show_setting)) {
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha - 1;
 				if (i >= 0) {
@@ -1502,7 +2205,7 @@ int main(int argc, char* argv[]) {
 					}
 				}
 			} else if (PAD_justRepeated(BTN_R1) && !PAD_isPressed(BTN_L1) &&
-			           !PWR_ignoreSettingInput(BTN_R1, show_setting)) { // next alpha
+			           !PWR_ignoreSettingInput(BTN_R1, show_setting)) {
 				Entry* entry = top->entries->items[selected];
 				int i = entry->alpha + 1;
 				if (i < top->alphas->count) {
@@ -1517,14 +2220,17 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
+			// Update selection and mark dirty if changed
 			if (selected != top->selected) {
 				top->selected = selected;
 				dirty = 1;
 			}
 
+			// Check if selected ROM has save state for resume
 			if (dirty && total > 0)
 				readyResume(top->entries->items[top->selected]);
 
+			// Entry opening/navigation actions
 			if (total > 0 && can_resume && PAD_justReleased(BTN_RESUME)) {
 				should_resume = 1;
 				Entry_open(top->entries->items[top->selected]);
@@ -1540,20 +2246,21 @@ int main(int argc, char* argv[]) {
 				closeDirectory();
 				total = top->entries->count;
 				dirty = 1;
-				// can_resume = 0;
 				if (total > 0)
 					readyResume(top->entries->items[top->selected]);
 			}
 		}
 
+		// Rendering
 		if (dirty) {
 			GFX_clear(screen);
 
 			int ox;
 			int oy;
 
-			// simple thumbnail support a thumbnail for a file or folder named NAME.EXT needs a corresponding /.res/NAME.EXT.png
-			// that is no bigger than platform FIXED_HEIGHT x FIXED_HEIGHT
+			// Thumbnail support:
+			// For an entry named "NAME.EXT", check for /.res/NAME.EXT.png
+			// Image must be <= FIXED_HEIGHT x FIXED_HEIGHT pixels
 			int had_thumb = 0;
 			if (!show_version && total > 0) {
 				Entry* entry = top->entries->items[top->selected];
@@ -1764,7 +2471,9 @@ int main(int argc, char* argv[]) {
 		// 	LOG_info("- first draw: %lu\n", first_draw - main_begin);
 		// }
 
-		// handle HDMI change
+		// HDMI hotplug detection
+		// When HDMI is connected/disconnected, restart to reinit graphics
+		// with correct resolution. Save state so we return to same position.
 		static int had_hdmi = -1;
 		int has_hdmi = GetHDMI();
 		if (had_hdmi == -1)
@@ -1774,8 +2483,8 @@ int main(int argc, char* argv[]) {
 
 			Entry* entry = top->entries->items[top->selected];
 			LOG_info("restarting after HDMI change... (%s)\n", entry->path);
-			saveLast(entry->path); // NOTE: doesn't work in Recents (by design)
-			sleep(4);
+			saveLast(entry->path);
+			sleep(4); // Brief pause for HDMI to stabilize
 			quit = 1;
 		}
 	}
