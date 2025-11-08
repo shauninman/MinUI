@@ -8,7 +8,7 @@ help:
 	@echo ""
 	@echo "Main targets (use these):"
 	@echo "  make test          - Run unit tests (Docker, recommended)"
-	@echo "  make lint          - Run ALL linting checks (cppcheck, format, shellcheck)"
+	@echo "  make lint          - Run ALL linting checks (cppcheck, format-check, shellcheck)"
 	@echo "  make format        - Format code with clang-format (MODIFIES FILES)"
 	@echo ""
 	@echo "Individual lint targets:"
@@ -48,19 +48,19 @@ check-shellcheck:
 
 # Main lint target - runs all linting checks
 lint: check-cppcheck check-clang-format check-shellcheck
-	@echo "================================="
-	@echo "Running ALL linting checks..."
-	@echo "================================="
-	@echo ""
-	@$(MAKE) -f Makefile.qa lint-code
-	@echo ""
-	@$(MAKE) -f Makefile.qa format-check
-	@echo ""
-	@$(MAKE) -f Makefile.qa lint-shell
-	@echo ""
-	@echo "================================="
-	@echo "✓ All linting checks passed"
-	@echo "================================="
+	@echo "=================================" && \
+	echo "Running ALL linting checks..." && \
+	echo "=================================" && \
+	echo "" && \
+	$(MAKE) -f Makefile.qa lint-code && \
+	echo "" && \
+	$(MAKE) -f Makefile.qa format-check && \
+	echo "" && \
+	$(MAKE) -f Makefile.qa lint-shell && \
+	echo "" && \
+	echo "=================================" && \
+	echo "✓ All linting checks passed" && \
+	echo "================================="
 
 # Lint common code (most important, least platform-specific)
 lint-code: check-cppcheck
