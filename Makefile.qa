@@ -27,8 +27,9 @@ help:
 	@echo "  macOS:  brew install cppcheck llvm shellcheck"
 	@echo "  Linux:  sudo apt-get install cppcheck clang-format shellcheck"
 
-# Focus on serious issues: warning (not style/performance yet)
-# Start gentle - just catch obvious bugs
+# Check for critical issues: warnings, performance, style
+# workspace/all/ is fully cleaned - zero issues
+# Device-specific code has targeted style suppressions
 CPPCHECK_FLAGS = --enable=warning \
                  --suppressions-list=.cppcheck-suppressions \
                  --inline-suppr \

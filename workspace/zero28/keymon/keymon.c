@@ -90,16 +90,15 @@ int main (int argc, char *argv[]) {
 				if (ev.type==EV_SW) {
 					printf("switch: %i\n", ev.code);
 					if (ev.code==CODE_JACK) {
-						printf("jack: %i\n", val);
+						printf("jack: %u\n", val);
 						SetJack(val);
 					}
 				}
 				if (( ev.type != EV_KEY ) || ( val > REPEAT )) continue;
-				printf("code: %i (%i)\n", ev.code, val); fflush(stdout);
+				printf("code: %i (%u)\n", ev.code, val); fflush(stdout);
 				switch (ev.code) {
 					case CODE_MENU:
 						menu_pressed = val;
-					break;
 					break;
 					case CODE_PLUS:
 						up_pressed = up_just_pressed = val;

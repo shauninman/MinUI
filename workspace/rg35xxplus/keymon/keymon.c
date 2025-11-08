@@ -72,7 +72,6 @@ int main (int argc, char *argv[]) {
 	
 	input_fd = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 	
-	uint32_t input;
 	uint32_t val;
 	uint32_t menu_pressed = 0;
 	
@@ -108,7 +107,6 @@ int main (int argc, char *argv[]) {
 			switch (ev.code) {
 				case CODE_MENU:
 					menu_pressed = val;
-				break;
 				break;
 				case CODE_PLUS:
 					up_pressed = up_just_pressed = val;

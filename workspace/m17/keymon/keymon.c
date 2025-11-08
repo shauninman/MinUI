@@ -80,7 +80,6 @@ int main (int argc, char *argv[]) {
 	}
 	
 	// TODO: make sure manually handling repeat is necessary on this device
-	uint32_t input;
 	uint32_t val;
 	uint32_t start_pressed = 0;
 	uint32_t select_pressed = 0;
