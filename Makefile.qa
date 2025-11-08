@@ -52,10 +52,20 @@ lint-full: check-cppcheck
 		-I workspace/all/common \
 		workspace/
 
-# Test target (placeholder for now)
-test:
-	@echo "Test infrastructure not yet set up"
-	@echo "Run 'make setup-tests' to initialize"
+# Test targets
+test: tests/utils_test
+	@echo "Running tests..."
+	@./tests/utils_test
+	@echo ""
+	@echo "✓ All tests passed"
+
+tests/utils_test: tests/utils/test_utils_simple.c tests/unity/unity.c
+	@echo "Building utils tests..."
+	@$(CC) -o $@ $^ -I tests -std=c99
+	@echo "✓ Tests compiled"
+
+clean-tests:
+	rm -f tests/utils_test tests/*.o
 
 clean-qa:
 	@echo "Cleaning QA artifacts..."
