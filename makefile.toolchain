@@ -21,6 +21,17 @@ $(INIT_IF_NECESSARY): $(GIT_IF_NECESSARY)
 $(GIT_IF_NECESSARY):
 	mkdir -p toolchains
 	git clone https://github.com/shauninman/union-$(PLATFORM)-toolchain/ toolchains/$(PLATFORM)-toolchain
+	@echo "Patching Dockerfile for archived Debian versions..."
+	@if [ -f toolchains/$(PLATFORM)-toolchain/Dockerfile ]; then \
+		DOCKERFILE=toolchains/$(PLATFORM)-toolchain/Dockerfile; \
+		if grep -q "^FROM debian:buster" $$DOCKERFILE; then \
+			awk '/^FROM debian:buster/ {print; print "RUN echo \"deb http://archive.debian.org/debian buster main\" > /etc/apt/sources.list && \\"; print "    echo \"deb http://archive.debian.org/debian-security buster/updates main\" >> /etc/apt/sources.list && \\"; print "    echo \"deb http://archive.debian.org/debian buster-updates main\" >> /etc/apt/sources.list && \\"; print "    echo \"Acquire::Check-Valid-Until false;\" > /etc/apt/apt.conf.d/99no-check-valid-until"; next}1' $$DOCKERFILE > $$DOCKERFILE.tmp && \
+			mv $$DOCKERFILE.tmp $$DOCKERFILE; \
+			echo "✓ Dockerfile patched successfully"; \
+		else \
+			echo "✓ No Debian Buster found, skipping patch"; \
+		fi; \
+	fi
 
 clean:
 	cd toolchains/$(PLATFORM)-toolchain && make clean
