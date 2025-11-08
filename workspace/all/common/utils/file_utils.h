@@ -10,18 +10,18 @@ int exists(char* path);
 void touch(char* path);
 
 // Write string contents to a file
-void putFile(char* path, char* contents);
+void putFile(const char* path, const char* contents);
 
 // Read file contents into a buffer
-void getFile(char* path, char* buffer, size_t buffer_size);
+void getFile(const char* path, char* buffer, size_t buffer_size);
 
 // Allocate and read file contents (caller must free)
-char* allocFile(char* path);
+char* allocFile(const char* path);
 
 // Write an integer to a file
-void putInt(char* path, int value);
+void putInt(const char* path, int value);
 
 // Read an integer from a file
-int getInt(char* path);
+int getInt(const char* path);
 
 #endif

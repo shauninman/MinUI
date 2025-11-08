@@ -9,13 +9,12 @@
 #include "utils.h"
 
 static int getButtonWidth(char* label) {
-	SDL_Surface* text;
 	int w = 0;
 
 	if (strlen(label) <= 2)
 		w = SCALE1(BUTTON_SIZE);
 	else {
-		text = TTF_RenderUTF8_Blended(font.tiny, label, COLOR_BUTTON_TEXT);
+		SDL_Surface* text = TTF_RenderUTF8_Blended(font.tiny, label, COLOR_BUTTON_TEXT);
 		w = SCALE1(BUTTON_SIZE) + text->w;
 		SDL_FreeSurface(text);
 	}
@@ -63,8 +62,6 @@ int main(int argc, char* argv[]) {
 	    (BUTTON_R2 != BUTTON_NA || CODE_R2 != CODE_NA || JOY_R2 != JOY_NA || AXIS_R2 != AXIS_NA);
 	int has_L3 = (BUTTON_L3 != BUTTON_NA || CODE_L3 != CODE_NA || JOY_L3 != JOY_NA);
 	int has_R3 = (BUTTON_R3 != BUTTON_NA || CODE_R3 != CODE_NA || JOY_R3 != JOY_NA);
-	int has_LS = (AXIS_LX != AXIS_NA);
-	int has_RS = (AXIS_RX != AXIS_NA);
 
 	int has_volume = (BUTTON_PLUS != BUTTON_NA || CODE_PLUS != CODE_NA || JOY_PLUS != JOY_NA);
 	int has_power = HAS_POWER_BUTTON;
@@ -75,14 +72,11 @@ int main(int argc, char* argv[]) {
 	if (!has_L3 && !has_R3)
 		oy += SCALE1(PILL_SIZE);
 
-	SDL_Event event;
 	int quit = 0;
 	int dirty = 1;
 	// int show_setting = 0;
 	// int was_online = PLAT_isOnline();
 	while (!quit) {
-		uint32_t frame_start = SDL_GetTicks();
-
 		PAD_poll();
 
 		if (PAD_anyPressed() || PAD_anyJustReleased())
@@ -223,7 +217,6 @@ int main(int argc, char* argv[]) {
 				blitButton("VOL. -", screen, PAD_isPressed(BTN_MINUS), x, y, w);
 				x += w + SCALE1(BUTTON_MARGIN);
 				blitButton("VOL. +", screen, PAD_isPressed(BTN_PLUS), x, y, w);
-				x += w + SCALE1(BUTTON_MARGIN);
 			}
 
 			// SYSTEM group
@@ -244,7 +237,6 @@ int main(int argc, char* argv[]) {
 				}
 				if (has_power) {
 					blitButton("POWER", screen, PAD_isPressed(BTN_POWER), x, y, w);
-					x += w + SCALE1(BUTTON_MARGIN);
 				}
 			}
 

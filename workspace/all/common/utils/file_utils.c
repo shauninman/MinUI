@@ -14,7 +14,7 @@ void touch(char* path) {
 	close(open(path, O_RDWR | O_CREAT, 0777));
 }
 
-void putFile(char* path, char* contents) {
+void putFile(const char* path, const char* contents) {
 	FILE* file = fopen(path, "w");
 	if (file) {
 		fputs(contents, file);
@@ -22,7 +22,7 @@ void putFile(char* path, char* contents) {
 	}
 }
 
-void getFile(char* path, char* buffer, size_t buffer_size) {
+void getFile(const char* path, char* buffer, size_t buffer_size) {
 	FILE* file = fopen(path, "r");
 	if (file) {
 		fseek(file, 0L, SEEK_END);
@@ -36,7 +36,7 @@ void getFile(char* path, char* buffer, size_t buffer_size) {
 	}
 }
 
-char* allocFile(char* path) { // caller must free!
+char* allocFile(const char* path) { // caller must free!
 	char* contents = NULL;
 	FILE* file = fopen(path, "r");
 	if (file) {
@@ -53,7 +53,7 @@ char* allocFile(char* path) { // caller must free!
 	return contents;
 }
 
-int getInt(char* path) {
+int getInt(const char* path) {
 	int i = 0;
 	FILE* file = fopen(path, "r");
 	if (file != NULL) {
@@ -63,7 +63,7 @@ int getInt(char* path) {
 	return i;
 }
 
-void putInt(char* path, int value) {
+void putInt(const char* path, int value) {
 	char buffer[8];
 	sprintf(buffer, "%d", value);
 	putFile(path, buffer);

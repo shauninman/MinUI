@@ -18,7 +18,7 @@ int suffixMatch(char* suf, char* str) {
 	return (offset >= 0 && strncasecmp(suf, str + offset, len) == 0);
 }
 
-int exactMatch(char* str1, char* str2) {
+int exactMatch(const char* str1, const char* str2) {
 	if (!str1 || !str2)
 		return 0; // NULL isn't safe here
 	size_t len1 = strlen(str1);

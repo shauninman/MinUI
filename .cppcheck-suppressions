@@ -9,6 +9,9 @@ normalCheckLevelMaxBranches
 # Platform-specific code that looks wrong but isn't
 ConfigurationNotChecked
 unknownMacro:*PLATFORM*
+unknownMacro:*PAKS_PATH*
+unknownMacro:*SYSTEM_PATH*
+unknownMacro:*USERDATA_PATH*
 
 # SDL and libretro headers we don't control
 missingInclude:*/SDL*
@@ -16,3 +19,19 @@ missingInclude:*/libretro*
 
 # Third-party code we don't maintain (libretro-common)
 *:*/libretro-common/*
+
+# Inline assembly - cppcheck doesn't understand dst parameters are modified
+constParameterPointer:*/scaler.c:723
+constParameterPointer:*/scaler.c:3204
+constParameterPointer:*/scaler.c:3290
+constParameterPointer:*/scaler.c:3368
+constParameterPointer:*/scaler.c:3456
+
+# Callback function signatures (dummy function)
+constParameterCallback:*/scaler.c:24
+
+# Thread callbacks and fallback implementations
+constParameterCallback:*/api.c:1523
+constParameterCallback:*/api.c:1583
+knownConditionTrueFalse:*/api.c:1444
+knownConditionTrueFalse:*/api.c:1449

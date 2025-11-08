@@ -269,7 +269,6 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {
 	char* prev = NULL;
 	char* tmp = line;
 	int lines = 1;
-	int i = 0;
 	while (!max_lines || lines < max_lines) {
 		tmp = strchr(tmp, ' ');
 		if (!tmp) {
@@ -302,7 +301,6 @@ int GFX_wrapText(TTF_Font* font, char* str, int max_width, int max_lines) {
 			prev = tmp;
 			tmp += 1;
 		}
-		i += 1;
 	}
 
 	line_width = GFX_truncateText(font, line, buffer, max_width, 0);
@@ -346,11 +344,11 @@ static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint
 
 	int rat_w = blend_args.w_ratio_in;
 	int rat_dst_w = blend_args.w_ratio_out;
-	uint16_t* bw = blend_args.w_bp;
+	const uint16_t* bw = blend_args.w_bp;
 
 	int rat_h = blend_args.h_ratio_in;
 	int rat_dst_h = blend_args.h_ratio_out;
-	uint16_t* bh = blend_args.h_bp;
+	const uint16_t* bh = blend_args.h_bp;
 
 	while (lines--) {
 		while (dy < rat_dst_h) {
@@ -434,7 +432,7 @@ static void scaleAA(void* __restrict src, void* __restrict dst, uint32_t w, uint
 	}
 }
 
-scaler_t GFX_getAAScaler(GFX_Renderer* renderer) {
+scaler_t GFX_getAAScaler(const GFX_Renderer* renderer) {
 	int gcd_w, div_w, gcd_h, div_h;
 	blend_args.blend_line = calloc(renderer->src_w, sizeof(uint16_t));
 
@@ -471,8 +469,8 @@ void GFX_freeAAScaler(void) {
 
 ///////////////////////////////
 
-void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect) {
-	SDL_Rect* rect = &asset_rects[asset];
+void GFX_blitAsset(int asset, const SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* dst_rect) {
+	const SDL_Rect* rect = &asset_rects[asset];
 	SDL_Rect adj_rect = {
 	    .x = rect->x,
 	    .y = rect->y,
@@ -487,7 +485,7 @@ void GFX_blitAsset(int asset, SDL_Rect* src_rect, SDL_Surface* dst, SDL_Rect* ds
 	}
 	SDL_BlitSurface(gfx.assets, &adj_rect, dst, dst_rect);
 }
-void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
+void GFX_blitPill(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	int x = dst_rect->x;
 	int y = dst_rect->y;
 	int w = dst_rect->w;
@@ -509,14 +507,14 @@ void GFX_blitPill(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	}
 	GFX_blitAsset(asset, &(SDL_Rect){r, 0, r, h}, dst, &(SDL_Rect){x, y});
 }
-void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
+void GFX_blitRect(int asset, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	int x = dst_rect->x;
 	int y = dst_rect->y;
 	int w = dst_rect->w;
 	int h = dst_rect->h;
 	int c = asset_rgbs[asset];
 
-	SDL_Rect* rect = &asset_rects[asset];
+	const SDL_Rect* rect = &asset_rects[asset];
 	int d = rect->w;
 	int r = d / 2;
 
@@ -528,7 +526,7 @@ void GFX_blitRect(int asset, SDL_Surface* dst, SDL_Rect* dst_rect) {
 	SDL_FillRect(dst, &(SDL_Rect){x + r, y + h - r, w - d, r}, c);
 	GFX_blitAsset(asset, &(SDL_Rect){r, r, r, r}, dst, &(SDL_Rect){x + w - r, y + h - r});
 }
-void GFX_blitBattery(SDL_Surface* dst, SDL_Rect* dst_rect) {
+void GFX_blitBattery(SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	// LOG_info("dst: %p\n", dst);
 	int x = 0;
 	int y = 0;
@@ -624,7 +622,7 @@ void GFX_blitButton(char* hint, char* button, SDL_Surface* dst, SDL_Rect* dst_re
 	                            text->w, text->h});
 	SDL_FreeSurface(text);
 }
-void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, SDL_Rect* dst_rect) {
+void GFX_blitMessage(TTF_Font* font, char* msg, SDL_Surface* dst, const SDL_Rect* dst_rect) {
 	if (!dst_rect)
 		dst_rect = &(SDL_Rect){0, 0, dst->w, dst->h};
 
@@ -672,10 +670,6 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 	int oy;
 	int ow = 0;
 
-	int setting_value;
-	int setting_min;
-	int setting_max;
-
 	if (show_setting && !GetHDMI()) {
 		ow = SCALE1(PILL_SIZE + SETTINGS_WIDTH + 10 + 4);
 		ox = dst->w - SCALE1(PADDING) - ow;
@@ -683,6 +677,9 @@ int GFX_blitHardwareGroup(SDL_Surface* dst, int show_setting) {
 		GFX_blitPill(gfx.mode == MODE_MAIN ? ASSET_DARK_GRAY_PILL : ASSET_BLACK_PILL, dst,
 		             &(SDL_Rect){ox, oy, ow, SCALE1(PILL_SIZE)});
 
+		int setting_value;
+		int setting_min;
+		int setting_max;
 		if (show_setting == 1) {
 			setting_value = GetBrightness();
 			setting_min = BRIGHTNESS_MIN;
@@ -999,7 +996,7 @@ size_t SND_batchSamples(const SND_Frame* frames,
 	SDL_LockAudio();
 
 	int consumed = 0;
-	int consumed_frames = 0;
+	int consumed_frames;
 	while (frame_count > 0) {
 		int tries = 0;
 		int amount = MIN(BATCH_SIZE, frame_count);
@@ -1088,7 +1085,7 @@ LID_Context lid = {
 };
 
 FALLBACK_IMPLEMENTATION void PLAT_initLid(void) {}
-FALLBACK_IMPLEMENTATION int PLAT_lidChanged(int* state) {
+FALLBACK_IMPLEMENTATION int PLAT_lidChanged(const int* state) {
 	return 0;
 }
 
@@ -1691,8 +1688,6 @@ void PWR_update(int* _dirty, int* _show_setting, PWR_callback_t before_sleep,
 		power_pressed_at = 0;
 		dirty = 1;
 	}
-
-	int was_dirty = dirty; // dirty list (not including settings/battery)
 
 	// TODO: only delay hiding setting changes if that setting didn't require a modifier button be held, otherwise release as soon as modifier is released
 

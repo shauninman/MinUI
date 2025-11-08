@@ -40,7 +40,7 @@ void scale1x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, ui
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 2) {
 			pix = s[x];
@@ -49,12 +49,10 @@ void scale1x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, ui
 			dpix2 = 0xFF000000 | ((pix & 0xF8000000) >> 8) | ((pix & 0x07E00000) >> 11) |
 			        ((pix & 0x001F0000) >> 13);
 			d[dx] = dpix1;
-			d[dx + 1] = dpix1;
-			d[dx] = dpix1;
 			d[dx + 1] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t pix16 = s16[x * 2];
 			pix16 = 0xFF000000 | ((pix16 & 0xF800) << 8) | ((pix16 & 0x07E0) << 5) |
 			        ((pix16 & 0x001F) << 3);
@@ -77,7 +75,7 @@ void scale2x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, ui
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 4) {
 			pix = s[x];
@@ -91,14 +89,14 @@ void scale2x_c16to32(void* __restrict src, void* __restrict dst, uint32_t sw, ui
 			d[dx + 3] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t pix16 = s16[x * 2];
 			pix16 = 0xFF000000 | ((pix16 & 0xF800) << 8) | ((pix16 & 0x07E0) << 5) |
 			        ((pix16 & 0x001F) << 3);
 			d[dx] = pix16;
 			d[dx + 1] = pix16;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		memcpy(dst, dstsrc, swl);
 		dst = (uint8_t*)dst + dp;
@@ -199,7 +197,7 @@ void scale2x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 2) {
 			pix = s[x];
@@ -209,11 +207,11 @@ void scale2x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 1] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t pix16 = s16[x * 2];
 			d[dx] = pix16 | (pix16 << 16);
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -250,14 +248,14 @@ void scale2x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < sw; x++, dx += 2) {
 			pix = s[x];
 			d[dx] = pix;
 			d[dx + 1] = pix;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -294,7 +292,7 @@ void scale3x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 3) {
 			pix = s[x];
@@ -305,14 +303,14 @@ void scale3x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 2] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t* d16 = (uint16_t*)d;
 			uint16_t pix16 = s16[x * 2];
 			dpix1 = pix16 | (pix16 << 16);
 			d[dx] = dpix1;
 			d16[(dx + 1) * 2] = pix16;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -349,7 +347,7 @@ void scale3x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < sw; x++, dx += 3) {
 			pix = s[x];
@@ -357,7 +355,7 @@ void scale3x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 1] = pix;
 			d[dx + 2] = pix;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -394,7 +392,7 @@ void scale4x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 4) {
 			pix = s[x];
@@ -406,13 +404,13 @@ void scale4x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 3] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t pix16 = s16[x * 2];
 			dpix1 = pix16 | (pix16 << 16);
 			d[dx] = dpix1;
 			d[dx + 1] = dpix1;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -449,7 +447,7 @@ void scale4x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < sw; x++, dx += 4) {
 			pix = s[x];
@@ -458,7 +456,7 @@ void scale4x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 2] = pix;
 			d[dx + 3] = pix;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -495,7 +493,7 @@ void scale5x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 5) {
 			pix = s[x];
@@ -508,7 +506,7 @@ void scale5x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 4] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t* d16 = (uint16_t*)d;
 			uint16_t pix16 = s16[x * 2];
 			dpix1 = pix16 | (pix16 << 16);
@@ -516,7 +514,7 @@ void scale5x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 1] = dpix1;
 			d16[(dx + 2) * 2] = pix16;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -557,7 +555,7 @@ void scale5x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < sw; x++, dx += 5) {
 			pix = s[x];
@@ -567,7 +565,7 @@ void scale5x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 3] = pix;
 			d[dx + 4] = pix;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -608,7 +606,7 @@ void scale6x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < (sw / 2); x++, dx += 6) {
 			pix = s[x];
@@ -622,14 +620,14 @@ void scale6x_c16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 5] = dpix2;
 		}
 		if (sw & 1) {
-			uint16_t* s16 = (uint16_t*)s;
+			const uint16_t* s16 = (const uint16_t*)s;
 			uint16_t pix16 = s16[x * 2];
 			dpix1 = pix16 | (pix16 << 16);
 			d[dx] = dpix1;
 			d[dx + 1] = dpix1;
 			d[dx + 2] = dpix1;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -674,7 +672,7 @@ void scale6x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		dp = swl;
 	}
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
-		uint32_t* s = (uint32_t* __restrict)src;
+		const uint32_t* s = (const uint32_t* __restrict)src;
 		uint32_t* d = (uint32_t* __restrict)dst;
 		for (x = dx = 0; x < sw; x++, dx += 6) {
 			pix = s[x];
@@ -685,7 +683,7 @@ void scale6x_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 			d[dx + 4] = pix;
 			d[dx + 5] = pix;
 		}
-		void* __restrict dstsrc = dst;
+		const void* __restrict dstsrc = dst;
 		dst = (uint8_t*)dst + dp;
 		for (uint32_t i = ymul - 1; i > 0; i--, dst = (uint8_t*)dst + dp)
 			memcpy(dst, dstsrc, swl);
@@ -722,7 +720,7 @@ void scale6x6_c32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 //
 //	memcpy_neon (dst/src must be aligned 4, size must be aligned 2)
 //
-void memcpy_neon(void* dst, void* src, uint32_t size) {
+void memcpy_neon(void* dst, const void* src, uint32_t size) {
 	asm volatile("	bic r4, %[sz], #127	;"
 	             "	add r3, %[s], %[sz]	;" // r3 = endofs
 	             "	add r4, %[s], r4	;" // r4 = s128ofs
@@ -816,7 +814,7 @@ void scale1x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x128bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -888,7 +886,7 @@ void scale1x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x128bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -967,7 +965,7 @@ void scale1x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x128bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -1084,7 +1082,7 @@ void scale1x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x128bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -1156,7 +1154,7 @@ void scale1x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x128bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -1235,7 +1233,7 @@ void scale1x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl128 = swl & ~127;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x128bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -1331,7 +1329,7 @@ void scale2x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x64bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	cmp %0, lr		;"
@@ -1453,7 +1451,7 @@ void scale2x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x64bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -1579,7 +1577,7 @@ void scale2x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x64bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -1709,7 +1707,7 @@ void scale2x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x64bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -1853,7 +1851,7 @@ void scale2x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x64bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	cmp %0, lr		;"
@@ -1913,7 +1911,7 @@ void scale2x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x64bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -1976,7 +1974,7 @@ void scale2x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x64bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -2042,7 +2040,7 @@ void scale2x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl64 = swl & ~63;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl * 2;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x64bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -2121,7 +2119,7 @@ void scale3x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	cmp %0, lr		;"
@@ -2194,7 +2192,7 @@ void scale3x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -2271,7 +2269,7 @@ void scale3x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -2352,7 +2350,7 @@ void scale3x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -2447,7 +2445,7 @@ void scale3x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	cmp %0, lr		;"
@@ -2506,7 +2504,7 @@ void scale3x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -2569,7 +2567,7 @@ void scale3x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -2636,7 +2634,7 @@ void scale3x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl * 3;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -2717,7 +2715,7 @@ void scale4x1_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	cmp %0, lr		;"
@@ -2777,7 +2775,7 @@ void scale4x2_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -2840,7 +2838,7 @@ void scale4x3_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -2906,7 +2904,7 @@ void scale4x4_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr  = x32bytes offset
 	             "	add r8, %0, %3		;" // r8  = lineend offset
 	             "	add r9, %1, %7		;" // r9  = 2x line offset
@@ -2985,7 +2983,7 @@ void scale4x1_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	cmp %0, lr		;"
@@ -3037,7 +3035,7 @@ void scale4x2_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 2 - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -3092,7 +3090,7 @@ void scale4x3_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 3 - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -3150,7 +3148,7 @@ void scale4x4_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	uint32_t swl32 = swl & ~31;
 	uint32_t sadd = sp - swl;
 	uint32_t dadd = dp * 4 - swl * 4;
-	uint8_t* finofs = (uint8_t*)src + (sp * sh);
+	const uint8_t* finofs = (const uint8_t*)src + (sp * sh);
 	asm volatile("1:	add lr, %0, %2		;" // lr = x32bytes offset
 	             "	add r8, %0, %3		;" // r8 = lineend offset
 	             "	add r9, %1, %7		;" // r9 = 2x line offset
@@ -3203,7 +3201,7 @@ void scale4x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 	return;
 }
 
-void scale5x_n16line(void* src, void* dst, uint32_t swl) {
+void scale5x_n16line(const void* src, void* dst, uint32_t swl) {
 	asm volatile("	bic r4, %2, #15		;" // r4 = swl16
 	             "	add r3, %0, %2		;" // r3 = lineend offset
 	             "	add r4, %0, r4		;" // r4 = x16bytes offset
@@ -3258,7 +3256,7 @@ void scale5x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		scale5x_c16(src, dst, sw, sh, sp, dw, dh, dp, ymul);
 		return;
 	}
-	void* __restrict dstsrc;
+	const void* __restrict dstsrc;
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
 		scale5x_n16line(src, dst, swl);
 		dstsrc = dst;
@@ -3289,7 +3287,7 @@ void scale5x5_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	scale5x_n16(src, dst, sw, sh, sp, dw, dh, dp, 5);
 }
 
-void scale5x_n32line(void* src, void* dst, uint32_t swl) {
+void scale5x_n32line(const void* src, void* dst, uint32_t swl) {
 	asm volatile("	bic r4, %2, #15		;" // r4 = swl16
 	             "	add r3, %0, %2		;" // r3 = lineend offset
 	             "	add r4, %0, r4		;" // r4 = x16bytes offset
@@ -3336,7 +3334,7 @@ void scale5x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		scale5x_c32(src, dst, sw, sh, sp, dw, dh, dp, ymul);
 		return;
 	}
-	void* __restrict dstsrc;
+	const void* __restrict dstsrc;
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
 		scale5x_n32line(src, dst, swl);
 		dstsrc = dst;
@@ -3367,7 +3365,7 @@ void scale5x5_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	scale5x_n32(src, dst, sw, sh, sp, dw, dh, dp, 5);
 }
 
-void scale6x_n16line(void* src, void* dst, uint32_t swl) {
+void scale6x_n16line(const void* src, void* dst, uint32_t swl) {
 	asm volatile("	bic r4, %2, #15		;" // r4 = swl16
 	             "	add r3, %0, %2		;" // r3 = lineend offset
 	             "	add r4, %0, r4		;" // r4 = x16bytes offset
@@ -3420,7 +3418,7 @@ void scale6x_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		scale6x_c16(src, dst, sw, sh, sp, dw, dh, dp, ymul);
 		return;
 	}
-	void* __restrict dstsrc;
+	const void* __restrict dstsrc;
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
 		scale6x_n16line(src, dst, swl);
 		dstsrc = dst;
@@ -3455,7 +3453,7 @@ void scale6x6_n16(void* __restrict src, void* __restrict dst, uint32_t sw, uint3
 	scale6x_n16(src, dst, sw, sh, sp, dw, dh, dp, 6);
 }
 
-void scale6x_n32line(void* src, void* dst, uint32_t swl) {
+void scale6x_n32line(const void* src, void* dst, uint32_t swl) {
 	asm volatile("	bic r4, %2, #15		;" // r4 = swl16
 	             "	add r3, %0, %2		;" // r3 = lineend offset
 	             "	add r4, %0, r4		;" // r4 = x16bytes offset
@@ -3501,7 +3499,7 @@ void scale6x_n32(void* __restrict src, void* __restrict dst, uint32_t sw, uint32
 		scale6x_c32(src, dst, sw, sh, sp, dw, dh, dp, ymul);
 		return;
 	}
-	void* __restrict dstsrc;
+	const void* __restrict dstsrc;
 	for (; sh > 0; sh--, src = (uint8_t*)src + sp) {
 		scale6x_n32line(src, dst, swl);
 		dstsrc = dst;
