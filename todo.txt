@@ -10,6 +10,9 @@ EXTRAS
 
 ---
 
+tg5040
+	testing https://github.com/Helaas/nextui-brick-poweroff-hook/
+
 all
 	deprecate everything
 	start fresh with even less

@@ -25,6 +25,8 @@ export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
 export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt"
 
+insmod $SYSTEM_PATH/bin/poweroff_hook.ko
+
 mkdir -p "$BIOS_PATH"
 mkdir -p "$ROMS_PATH"
 mkdir -p "$SAVES_PATH"
@@ -133,4 +135,5 @@ while [ -f $EXEC_PATH ]; do
 	fi
 done
 
-exec shutdown
+# exec shutdown
+touch /tmp/poweroff
