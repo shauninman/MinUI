@@ -2,7 +2,12 @@
 
 Platform implementation for the Magic Mini retro handheld device.
 
-> **Note**: This platform is marked as deprecated in the main MinUI distribution. Support may be limited for newer features.
+> [!WARNING]
+> **This platform is deprecated and will be removed in a future MinUI release.**
+>
+> **Reason**: RK3326 chipset scandal and supplier fraud issues affecting device availability and support.
+>
+> While the platform will continue to work with current MinUI releases, it will not receive new features or platform-specific bug fixes.
 
 ## Hardware Specifications
 
@@ -263,19 +268,6 @@ When testing changes:
 4. Verify brightness control with MENU+PLUS/MINUS
 5. Confirm MinUI launches after update extraction
 6. Test shutdown behavior when launcher exits
-
-## Deprecation Notes
-
-This platform is marked as **deprecated** in the main MinUI distribution. Consider:
-- Limited or no support for new MinUI features
-- May be removed in future releases
-- Users should migrate to actively supported platforms
-- Bug fixes may not be prioritized
-
-The deprecation is likely due to:
-- Discontinued hardware availability
-- Complexity of dual SD card setup
-- Better alternatives available (newer MagicX variants, other devices)
 
 ## Related Documentation
 

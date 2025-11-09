@@ -2,6 +2,13 @@
 
 Platform implementation for the GKD Pixel retro handheld device.
 
+> [!WARNING]
+> **This platform is deprecated and will be removed in a future MinUI release.**
+>
+> **Reason**: Unique chipset (Ingenic X1830) with limited community support value.
+>
+> While the platform will continue to work with current MinUI releases, it will not receive new features or platform-specific bug fixes.
+
 ## Hardware Specifications
 
 ### Display

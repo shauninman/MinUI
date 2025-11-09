@@ -2,6 +2,13 @@
 
 Platform implementation for the M17 retro handheld device.
 
+> [!WARNING]
+> **This platform is deprecated and will be removed in a future MinUI release.**
+>
+> **Reason**: Old/weak Cortex-A7 chipset, ultra-budget outlier with limited performance.
+>
+> While the platform will continue to work with current MinUI releases, it will not receive new features or platform-specific bug fixes.
+
 ## Hardware Specifications
 
 ### Display

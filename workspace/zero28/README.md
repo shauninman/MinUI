@@ -2,8 +2,6 @@
 
 Platform implementation for the Mini Zero 28 retro handheld device.
 
-> **Note**: This platform is marked as deprecated in the main MinUI distribution. Support may be limited for newer features.
-
 ## Hardware Specifications
 
 ### Display
@@ -302,11 +300,10 @@ Input configuration utility
 ## Known Issues / Quirks
 
 ### Platform Quirks
-1. **Deprecated Status**: Platform marked as deprecated - newer MinUI features may not be supported
-2. **Button Swap**: A/B and X/Y mappings were swapped in first stock firmware release
-3. **Inverted Volume**: Volume scale is inverted (63 = mute, 0 = max) unlike most platforms
-4. **Joystick-Only**: No SDL keyboard support - all input via joystick API
-5. **HAT D-Pad**: D-pad uses HAT events instead of discrete button events
+1. **Button Swap**: A/B and X/Y mappings were swapped in first stock firmware release
+2. **Inverted Volume**: Volume scale is inverted (63 = mute, 0 = max) unlike most platforms
+3. **Joystick-Only**: No SDL keyboard support - all input via joystick API
+4. **HAT D-Pad**: D-pad uses HAT events instead of discrete button events
 6. **Power-Off on Exit**: Boot script powers off if MinUI exits (prevents stock firmware access)
 
 ### Development Notes
@@ -344,20 +341,6 @@ When testing changes:
 7. Test both portrait and landscape display orientations
 8. Confirm battery and WiFi status indicators work
 
-## Deprecation Notes
-
-This platform is marked as **deprecated** in the main MinUI distribution. Consider:
-- Limited or no support for new MinUI features
-- May be removed in future releases
-- Users should migrate to actively supported platforms
-- Bug fixes may not be prioritized
-
-The deprecation is likely due to:
-- Discontinued hardware availability
-- Low user base compared to other platforms
-- MagicX releasing newer devices with better support
-- Complexity of inverted volume scale and button swap issues
-
 ## Related Documentation
 
 - Main project docs: `../../README.md`
@@ -377,7 +360,7 @@ This platform represents several **unique characteristics** in MinUI:
 - **AXP2202 PMIC**: Different battery monitoring IC than most platforms
 - **Display rotation**: Automatic portrait mode detection and rotation
 
-While deprecated, it demonstrates MinUI's flexibility in adapting to:
+This platform demonstrates MinUI's flexibility in adapting to:
 - Modern SDL2 graphics stack
 - Joystick-based input systems
 - Advanced rendering features (effects, crisp mode, rotation)

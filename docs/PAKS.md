@@ -24,6 +24,21 @@ In all cases please make clear to your users that I (@shauninman) can't support 
 
 MinUI maps roms to paks based on the tag in parentheses at the end the name of the rom's parent folder (eg. "/Roms/Game Boy (GB)/Dr. Mario (World).gb" will launch the "GB.pak"). A tag should be all uppercase. When choosing a tag, start with common abbreviations used by other emulation frontends like Retroarch or EmulationStation (eg. FC for Famicom/Nintendo or MD for MegaDrive/Genesis). If that tag is already being used by another pak, use the core name if short (eg. MGBA) or an abbreviation (eg. PKM for pokemini) or truncation (eg. SUPA for mednafen_supafaust) of the core name.
 
+# Environment variables
+
+MinUI sets up these variables before launching your pak:
+
+- `PLATFORM` - Platform identifier (e.g., "miyoomini", "rg35xxplus")
+- `DEVICE` - Device variant (e.g., "cube" for RG CubeXX, "wide" for RG34XX)
+- `SDCARD_PATH` - SD card root (e.g., "/mnt/SDCARD")
+- `SYSTEM_PATH` - Platform system files
+- `CORES_PATH` - Libretro cores location
+- `BIOS_PATH` - BIOS files
+- `SAVES_PATH` - Save files
+- `USERDATA_PATH` - Platform-specific user data
+- `SHARED_USERDATA_PATH` - Shared user data
+- `LOGS_PATH` - Log files
+
 # Launching your core
 
 Here's an example "launch.sh":
@@ -50,7 +65,7 @@ There's no need to edit anything below the line of hash marks. The rest is boile
 
 That's it! Feel free to experiement with cores from the stock firmware, other compatible devices, or building your own.
 
-Oh, if you're creating a pak for Anbernic's RG*XX line you'll need to change the last part of the last line from ` &> "$LOGS_PATH/$EMU_TAG.txt"` to ` > "$LOGS_PATH/$EMU_TAG.txt" 2>&1` because its default shell is whack.
+Some platforms may require `nice -20` before `minarch.elf` for proper CPU priority. Check existing paks for your target platform for examples.
 
 # Option defaults and button bindings
 
