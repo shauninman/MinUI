@@ -78,16 +78,3 @@ index 1f8b3c2b46a79372860c928a47a840b18cc60710..9e849f174c05e78c7808a63ad151db64
  	if (PokeMini_LoadSSStream((uint8_t*)data, size)) {
  		if (log_cb) log_cb(RETRO_LOG_INFO, "Save state loaded successfully.\n");
  	} else {
-diff --git a/source/PokeMini.c b/source/PokeMini.c
-index 06140261ba4d4c36e9605ecfee471bcfddba5f25..9b6f6912185cc1017c129c1d5953688fe5e0019a 100644
---- a/source/PokeMini.c
-+++ b/source/PokeMini.c
-@@ -489,7 +489,7 @@ int PokeMini_LoadSSStream(uint8_t *buffer, uint64_t size)
- 				memstream_set_buffer(NULL, 0);
- 				return 0;
- 			}
--		} else if (!strcmp(PMiniStr, "LCD-")) {		// Audio
-+		} else if (!strcmp(PMiniStr, "AUD-")) {		// Audio
- 			if (!MinxAudio_LoadStateStream(stream, BSize)) {
- 				memstream_close(stream);
- 				memstream_set_buffer(NULL, 0);
