@@ -3,12 +3,12 @@
 # becomes /usr/miyoo/bin/runmiyoo.sh on my355
 
 #wait for sdcard mounted
-mounted=`cat /proc/mounts | grep SDCARD`
+mounted=`cat /proc/mounts | grep sdcard`
 cnt=0
 while [ "$mounted" == "" ] && [ $cnt -lt 6 ] ; do
    sleep 0.5
    cnt=`expr $cnt + 1`
-   mounted=`cat /proc/mounts | grep SDCARD`
+   mounted=`cat /proc/mounts | grep sdcard`
 done
 
 UPDATER_PATH=/mnt/SDCARD/.tmp_update/updater

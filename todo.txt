@@ -10,6 +10,14 @@ EXTRAS
 
 ---
 
+my355
+	boot takes 2.5 seconds longer than it needs to because
+		tests for /mnt/SDCARD
+		but it's mounted to /mnt/sdcard
+		with a symlink from /mnt/SDCARD
+		so the grep fails for SDCARD
+		but then the -f passes ffffffff
+
 tg5040
 	testing https://github.com/Helaas/nextui-brick-poweroff-hook/
 		if it looks good, integrate source instead of blob
