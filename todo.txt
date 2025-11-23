@@ -2,34 +2,14 @@ Changes
 
 BASE
 
-- 
+- tg5040: revised limbo reduction based on Helaas' poweroff-hook
+- my355: reduced boot time
 
 EXTRAS
 
 -
 
 ---
-
-my355
-	boot takes 2.5 seconds longer than it needs to because
-		tests for /mnt/SDCARD
-		but it's mounted to /mnt/sdcard
-		with a symlink from /mnt/SDCARD
-		so the grep fails for SDCARD
-		but then the -f passes ffffffff
-
-tg5040
-	testing https://github.com/Helaas/nextui-brick-poweroff-hook/
-		if it looks good, integrate source instead of blob
-		will require special casing because it builds in a docker
-		which might not be compatible with the tg5040 docker
-			see my trimui-brick-gcc74 docker
-		this seems wildly overengineered
-			so many noops caused by calling binaries that don't exist
-				killall5
-				fuser
-	switched to shell only version
-		seems solid even after 20+ hours of continuous manual power cycling
 
 all
 	deprecate everything
