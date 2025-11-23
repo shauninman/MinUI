@@ -499,14 +499,14 @@ void PLAT_getBatteryStatus(int* is_charging, int* charge) {
 #define LED_PATH3 "/sys/class/led_anim/max_scale_f1f2" // front facing
 static void PLAT_enableLED(int enable) {
 	if (enable) {
-		putInt(LED_PATH1,0);
-		if (is_brick) putInt(LED_PATH2,0);
-		if (is_brick) putInt(LED_PATH3,0);
-	}
-	else {
 		putInt(LED_PATH1,60);
 		if (is_brick) putInt(LED_PATH2,60);
 		if (is_brick) putInt(LED_PATH3,60);
+	}
+	else {
+		putInt(LED_PATH1,0);
+		if (is_brick) putInt(LED_PATH2,0);
+		if (is_brick) putInt(LED_PATH3,0);
 	}
 }
 
@@ -521,7 +521,7 @@ void PLAT_enableBacklight(int enable) {
 		// putInt(BLANK_PATH,4);
 		SetRawBrightness(0);
 	}
-	PLAT_enableLED(enable);
+	PLAT_enableLED(!enable);
 }
 
 void PLAT_powerOff(void) {
@@ -530,7 +530,8 @@ void PLAT_powerOff(void) {
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
-	PLAT_enableLED(0); // leave display alone
+	PLAT_enableBacklight(0);
+	PLAT_enableLED(1);
 	SND_quit();
 	VIB_quit();
 	PWR_quit();

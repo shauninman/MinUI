@@ -1,16 +1,6 @@
 #!/bin/sh
 # MiniUI.pak
 
-# recover from readonly SD card -------------------------------
-# touch /mnt/writetest
-# sync
-# if [ -f /mnt/writetest ] ; then
-# 	rm -f /mnt/writetest
-# else
-# 	e2fsck -p /dev/root > /mnt/SDCARD/RootRecovery.txt
-# 	reboot
-# fi
-
 #######################################
 
 export PLATFORM="tg5040"
@@ -24,8 +14,6 @@ export USERDATA_PATH="$SDCARD_PATH/.userdata/$PLATFORM"
 export SHARED_USERDATA_PATH="$SDCARD_PATH/.userdata/shared"
 export LOGS_PATH="$USERDATA_PATH/logs"
 export DATETIME_PATH="$SHARED_USERDATA_PATH/datetime.txt"
-
-insmod $SYSTEM_PATH/bin/poweroff_hook.ko
 
 mkdir -p "$BIOS_PATH"
 mkdir -p "$ROMS_PATH"
@@ -66,6 +54,8 @@ echo -n in > /sys/class/gpio/gpio243/direction
 export LD_LIBRARY_PATH=$SYSTEM_PATH/lib:/usr/trimui/lib:$LD_LIBRARY_PATH
 export PATH=$SYSTEM_PATH/bin:/usr/trimui/bin:$PATH
 
+#######################################
+
 # leds_off
 echo 0 > /sys/class/led_anim/max_scale
 if [ "$TRIMUI_MODEL" = "Trimui Brick" ]; then
@@ -80,16 +70,9 @@ usb_device.sh
 tinymix set 9 1
 tinymix set 1 0
 
-# run stock keymon (in background) for a moment
-( keymon & PID=$!; sleep 1; kill -s TERM $PID ) &
-
 # start stock gpio input daemon
 mkdir -p /tmp/trimui_inputd
 trimui_inputd &
-
-# start stock hardware daemon
-# no effect but also no harm (so far)
-hardwareservice &
 
 echo userspace > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 CPU_PATH=/sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
@@ -135,5 +118,4 @@ while [ -f $EXEC_PATH ]; do
 	fi
 done
 
-# exec shutdown
-touch /tmp/poweroff
+exec shutdown

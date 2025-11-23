@@ -12,6 +12,16 @@ EXTRAS
 
 tg5040
 	testing https://github.com/Helaas/nextui-brick-poweroff-hook/
+		if it looks good, integrate source instead of blob
+		will require special casing because it builds in a docker
+		which might not be compatible with the tg5040 docker
+			see my trimui-brick-gcc74 docker
+		this seems wildly overengineered
+			so many noops caused by calling binaries that don't exist
+				killall5
+				fuser
+	switched to shell only version
+		seems solid even after 20+ hours of continuous manual power cycling
 
 all
 	deprecate everything
@@ -22,7 +32,10 @@ all
 			but before SND is even initialized :\
 
 my285:
-	
+
+miyoomini
+	added blobs to Remove Loading.pak
+	source them from buildroot during build like my282?
 	
 h700/a133
 	the power/shutdown issues are becoming a nuisance
