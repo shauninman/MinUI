@@ -2,8 +2,7 @@ Changes
 
 BASE
 
-- tg5040: revised limbo reduction based on Helaas' poweroff-hook
-- my355: reduced boot time
+- zero28: fixed screen not turning back on after sleep when on lowest brightness (only affects some board revs)
 
 EXTRAS
 
