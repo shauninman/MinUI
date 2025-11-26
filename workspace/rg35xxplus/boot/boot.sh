@@ -129,6 +129,11 @@ else
 	fi
 fi
 
-sync && poweroff
+sync
+poweroff
+
+# wait for poweroff
+# exiting can lead to erroneous restart
+sleep 60
 
 exit 0
