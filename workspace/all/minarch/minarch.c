@@ -558,6 +558,10 @@ static void State_write(void) { // from picoarch
 		goto error;
 	}
 
+	// Ensure data is flushed to disk before closing
+	fflush(state_file);
+	fsync(fileno(state_file));
+
 error:
 	if (state) free(state);
 	if (state_file) fclose(state_file);
@@ -3115,6 +3119,10 @@ void Menu_beforeSleep(void) {
 	RTC_write();
 	State_autosave();
 	putFile(AUTO_RESUME_PATH, game.path + strlen(SDCARD_PATH));
+
+	// Ensure all file operations are committed to disk before power-off
+	sync();
+
 	PWR_setCPUSpeed(CPU_SPEED_MENU);
 }
 void Menu_afterSleep(void) {

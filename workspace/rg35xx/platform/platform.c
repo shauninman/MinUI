@@ -550,6 +550,10 @@ void PLAT_enableBacklight(int enable) {
 	putInt("/sys/class/backlight/backlight.2/bl_power", enable ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN);
 }
 void PLAT_powerOff(void) {
+	// First sync to ensure all pending writes are committed
+	sync();
+
+	// Give filesystem time to complete all writes (especially important for slow SD cards)
 	sleep(2);
 
 	SetRawVolume(MUTE_VOLUME_RAW);
@@ -558,7 +562,10 @@ void PLAT_powerOff(void) {
 	VIB_quit();
 	PWR_quit();
 	GFX_quit();
-	
+
+	// Final sync before shutdown
+	sync();
+
 	system("shutdown");
 }
 
