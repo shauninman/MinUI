@@ -144,11 +144,11 @@ static int eased_charge = 0;
 static int sar_fd = 0;
 static struct input_event	ev;
 static int	input_fd = 0;
-static pthread_t adc_pt;
+static pthread_t check_pt;
 
 void quit(int exitcode) {
-	pthread_cancel(adc_pt);
-	pthread_join(adc_pt, NULL);
+	pthread_cancel(check_pt);
+	pthread_join(check_pt, NULL);
 	QuitSettings();
 	
 	if (input_fd > 0) close(input_fd);
@@ -177,16 +177,27 @@ static int getADCValue(void) {
 	
 	return current_charge;
 }
-static int isCharging(void) {
-	if (is_plus) return (axp_read(0x00) & 0x4) > 0;
-		
+static int getInt(const char* path) {
     int i = 0;
-    FILE *file = fopen("/sys/devices/gpiochip0/gpio/gpio59/value", "r");
+    FILE *file = fopen(path, "r");
     if (file!=NULL) {
         fscanf(file, "%i", &i);
         fclose(file);
     }
 	return i;
+}
+static void putInt(const char* path, int i) {
+	int fd = open(path, O_CREAT | O_WRONLY | O_TRUNC);
+	if (fd<0) return;
+	
+	char buffer[16];
+	int len = snprintf(buffer, sizeof(buffer), "%d", i);
+	if (len>0) write(fd, buffer, len);
+	close(fd);
+}
+static int isCharging(void) {
+	if (is_plus) return (axp_read(0x00) & 0x4) > 0;
+	return getInt("/sys/devices/gpiochip0/gpio/gpio59/value");
 }
 static void initADC(void) {
 	is_plus = access("/customer/app/axp_test", F_OK)==0;
@@ -213,19 +224,41 @@ static void checkADC(void) {
 		if (eased_charge<0) eased_charge = 0;
 	}
 	
-	// new implementation
-	int bat_fd = open("/tmp/battery", O_CREAT | O_WRONLY | O_TRUNC);
-	if (bat_fd>0) {
-		char value[3];
-		sprintf(value, "%d", eased_charge);
-		write(bat_fd, value, strlen(value));
-		close(bat_fd);
+	putInt("/tmp/battery", eased_charge);
+}
+#define LID_PATH "/sys/devices/soc0/soc/soc:hall-mh248/hallvalue"
+static void checkUSB(void) {
+	static int init = 0;
+	static int is_flip;
+	if (!init) {
+		is_flip = access(LID_PATH, F_OK)==0;
+		int has_gpio = access("/sys/class/gpio/gpio45/value", F_OK)==0;
+		if (!has_gpio) putInt("/sys/class/gpio/export", 45);
+		init = 1;
+	}
+	if (!is_flip) return;
+		
+	static int last_state = -1;
+	int current_state = getInt("/sys/class/gpio/gpio45/value");
+	if (last_state==-1 || current_state!=last_state) {
+		last_state = current_state;
+		putInt("/sys/class/gpio/gpio44/value", current_state);
 	}
 }
-static void* runADC(void *arg) {
-	while(1) {
-		sleep(5);
-		checkADC();
+static void* runChecks(void *arg) {
+	static int ticks = 0;
+	while (1) {
+		usleep(500000);
+
+		// every half second
+		checkUSB();
+		ticks += 1;
+		
+		// every 5 seconds
+		if (ticks==10) {
+			checkADC();
+			ticks = 0;
+		}
 	}
 	return 0;
 }
@@ -233,7 +266,8 @@ static void* runADC(void *arg) {
 int main (int argc, char *argv[]) {
 	initADC();
 	checkADC();
-	pthread_create(&adc_pt, NULL, &runADC, NULL);
+	checkUSB();
+	pthread_create(&check_pt, NULL, &runChecks, NULL);
 	
 	// Set Initial Volume / Brightness
 	InitSettings();
