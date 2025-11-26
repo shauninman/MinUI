@@ -23,6 +23,13 @@ my285:
 miyoomini
 	added blobs to Remove Loading.pak
 	source them from buildroot during build like my282?
+	headphone state
+		export and poll gpio45 (1=speaker, 0=usb)
+		toggle speaker with gpio44 (0=off/mute,1=on)
+		add separate headphone volume to settings
+			base on tg5040?
+		poll in keymon
+		test on non-flip miyoominis
 	
 h700/a133
 	the power/shutdown issues are becoming a nuisance

@@ -243,6 +243,7 @@ static void checkUSB(void) {
 	if (last_state==-1 || current_state!=last_state) {
 		last_state = current_state;
 		putInt("/sys/class/gpio/gpio44/value", current_state);
+		SetJack(!current_state);
 	}
 }
 static void* runChecks(void *arg) {
@@ -264,13 +265,13 @@ static void* runChecks(void *arg) {
 }
 
 int main (int argc, char *argv[]) {
+	// Set Initial Volume / Brightness
+	InitSettings();
+
 	initADC();
 	checkADC();
 	checkUSB();
 	pthread_create(&check_pt, NULL, &runChecks, NULL);
-	
-	// Set Initial Volume / Brightness
-	InitSettings();
 	
 	input_fd = open("/dev/input/event0", O_RDONLY);
 
