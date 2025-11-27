@@ -66,34 +66,34 @@ Extras:
 
 | Device | Added | Status |
 | -- | -- | -- |
-| Anbernic RG28xx | MinUI-20240429b-2 | Deprecated |
-| Anbernic RG34xx | MinUI-20241227-0 | Deprecated |
-| Anbernic RG34xxSP | MinUI-20250920-0 | Deprecated |
-| Anbernic RG35xx | MinUI-20230922b-2 | Deprecated |
-| Anbernic RG35xx Plus | MinUI-20240106b-0 | Deprecated |
-| Anbernic RG35xxH | MinUI-20240120b-1 | Deprecated |
-| Anbernic RG35xxSP | MinUI-20240525-0 | Deprecated |
-| Anbernic RG40xxH | MinUI-20240717-1 | Deprecated |
-| Anbernic RG40xxV | MinUI-20240831-0 | Deprecated | 
-| Anbernic RG CubeXX | MinUI-202401028-0 | Deprecated | 
-| GKD Pixel | MinUI-20240120b-1 | Deprecated |
-| M17 | MinUI-20231126b-2 | Deprecated |
-| MagicX XU Mini M | MinUI-20240831-0 | Deprecated | 
-| MagicX Mini Zero 28 | MinUI-20250111-0 | Deprecated |
-| Miyoo A30 | MinUI-20240705-0 | Deprecated |
-| Miyoo Flip | MinUI-20250111-0 | Deprecated |
-| Miyoo Mini | MinUI-20230922b-2 | Deprecated |
-| Miyoo Mini Flip | MinUI-20251023-0 | Deprecated |
-| Miyoo Mini Plus | MinUI-20230922b-2 | Deprecated |
-| Powkiddy RGB30 | MinUI-20231014b-1 | Deprecated |
-| Trimui Brick | MinUI-20241028-0 | Deprecated |
-| Trimui Smart | MinUI-20230922b-2 | Deprecated |
-| Trimui Smart Pro | MinUI-20231111b-2 | Deprecated |
+| Anbernic RG28xx | MinUI-20240429b-2 | Legacy |
+| Anbernic RG34xx | MinUI-20241227-0 | Legacy |
+| Anbernic RG34xxSP | MinUI-20250920-0 | Legacy |
+| Anbernic RG35xx | MinUI-20230922b-2 | Legacy |
+| Anbernic RG35xx Plus | MinUI-20240106b-0 | Legacy |
+| Anbernic RG35xxH | MinUI-20240120b-1 | Legacy |
+| Anbernic RG35xxSP | MinUI-20240525-0 | Legacy |
+| Anbernic RG40xxH | MinUI-20240717-1 | Legacy |
+| Anbernic RG40xxV | MinUI-20240831-0 | Legacy | 
+| Anbernic RG CubeXX | MinUI-202401028-0 | Legacy | 
+| GKD Pixel | MinUI-20240120b-1 | Legacy |
+| M17 | MinUI-20231126b-2 | Legacy |
+| MagicX XU Mini M | MinUI-20240831-0 | Legacy | 
+| MagicX Mini Zero 28 | MinUI-20250111-0 | Legacy |
+| Miyoo A30 | MinUI-20240705-0 | Legacy |
+| Miyoo Flip | MinUI-20250111-0 | Legacy |
+| Miyoo Mini | MinUI-20230922b-2 | Legacy |
+| Miyoo Mini Flip | MinUI-20251023-0 | Legacy |
+| Miyoo Mini Plus | MinUI-20230922b-2 | Legacy |
+| Powkiddy RGB30 | MinUI-20231014b-1 | Legacy |
+| Trimui Brick | MinUI-20241028-0 | Legacy |
+| Trimui Smart | MinUI-20230922b-2 | Legacy |
+| Trimui Smart Pro | MinUI-20231111b-2 | Legacy |
 
 > [!NOTE]
 > **Active** actively working on compatibility and improvements specific to this device  
 > **Maintained** inheriting improvements to common functionality  
-> **Deprecated** will be retired in a future update  
+> **Legacy** will be retired in a future update  
 > **Retired** removed from repo, no longer updated or packaged with new releases
 
 ## Legacy versions
