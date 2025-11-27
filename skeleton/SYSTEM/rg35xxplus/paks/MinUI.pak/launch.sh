@@ -86,3 +86,7 @@ while [ -f "$EXEC_PATH" ]; do
 done
 
 shutdown
+
+# wait for shutdown
+# exiting can lead to erroneous restart
+sleep 60
