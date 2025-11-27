@@ -602,3 +602,4 @@ replace
 with
 	git clone --depth 1 --branch branch repo
 note: doesn't work with commits only branches
+
