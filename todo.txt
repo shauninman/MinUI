@@ -2,7 +2,11 @@ Changes
 
 BASE
 
-- zero28: fixed screen not turning back on after sleep when on lowest brightness (only affects some board revs)
+- my355: fixed right analog stick axes (ht Turro75)
+- rg35xxplus: fixed random mid-poweroff resume on newer ofw (ht anderbubble)
+- miyoomini: separate speaker and headphone volumes (mini flip)
+- miyoomini: added support for usb audio (mini flip)
+- zero28: fixed screen not turning back on after sleep when on lowest brightness (only affects some board revs?)
 
 EXTRAS
 
@@ -23,13 +27,6 @@ my285:
 miyoomini
 	added blobs to Remove Loading.pak
 	source them from buildroot during build like my282?
-	headphone state
-		export and poll gpio45 (1=speaker, 0=usb)
-		toggle speaker with gpio44 (0=off/mute,1=on)
-		add separate headphone volume to settings
-			base on tg5040?
-		poll in keymon
-		test on non-flip miyoominis
 	
 h700/a133
 	the power/shutdown issues are becoming a nuisance
