@@ -7,6 +7,4 @@ fi
 
 cat /dev/zero > /dev/fb0
 poweroff
-# echo s > /proc/sysrq-trigger
-# echo u > /proc/sysrq-trigger
-# echo o > /proc/sysrq-trigger
+sleep 60
